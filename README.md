@@ -109,6 +109,20 @@ npm run dev
 # → http://localhost:5173/?sku=filippo-berio-500ml
 ```
 
+### Test Mode (Stage 1 Development)
+
+For PC-based testing without mobile camera:
+
+```bash
+# Start dev server
+npm run dev
+
+# Open test mode
+# → http://localhost:5173/?test=true
+```
+
+See [TEST-MODE.md](./TEST-MODE.md) for detailed testing instructions.
+
 ### Worker Setup
 
 ```bash

@@ -27,3 +27,7 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+
+# Test images (user-specific test data)
+public/test-images/*
+!public/test-images/README.md

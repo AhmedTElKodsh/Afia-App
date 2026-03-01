@@ -1,6 +1,10 @@
 import { useState, useCallback } from "react";
 import "./App.css";
-import type { AppState, AnalysisResult, BottleContext } from "./state/appState.ts";
+import type {
+  AppState,
+  AnalysisResult,
+  BottleContext,
+} from "./state/appState.ts";
 import { getBottleBySku } from "./data/bottleRegistry.ts";
 import { QrLanding } from "./components/QrLanding.tsx";
 import { UnknownBottle } from "./components/UnknownBottle.tsx";
@@ -8,13 +12,22 @@ import { CameraCapture } from "./components/CameraCapture.tsx";
 import { ApiStatus } from "./components/ApiStatus.tsx";
 import { ResultDisplay } from "./components/ResultDisplay.tsx";
 import { IosWarning } from "./components/IosWarning.tsx";
-import { PrivacyNotice, hasAcceptedPrivacy } from "./components/PrivacyNotice.tsx";
+import {
+  PrivacyNotice,
+  hasAcceptedPrivacy,
+} from "./components/PrivacyNotice.tsx";
+import { TestHarness } from "./components/TestHarness.tsx";
 import { useIosInAppBrowser } from "./hooks/useIosInAppBrowser.ts";
 import { analyzeBottle } from "./api/apiClient.ts";
 
 function getSkuFromUrl(): string | null {
   const params = new URLSearchParams(window.location.search);
   return params.get("sku");
+}
+
+function isTestMode(): boolean {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("test") === "true";
 }
 
 export default function App() {
@@ -25,6 +38,11 @@ export default function App() {
   const [privacyAccepted, setPrivacyAccepted] = useState(hasAcceptedPrivacy);
 
   const isIosInApp = useIosInAppBrowser();
+
+  // Test mode: Show test harness for PC-based testing
+  if (isTestMode()) {
+    return <TestHarness />;
+  }
 
   const sku = getSkuFromUrl();
   const bottle = sku ? getBottleBySku(sku) : null;
@@ -67,7 +85,9 @@ export default function App() {
       const analysisResult = await analyzeBottle(sku, capturedImage);
       setResult(analysisResult);
       setAppState(
-        analysisResult.confidence === "low" ? "API_LOW_CONFIDENCE" : "API_SUCCESS"
+        analysisResult.confidence === "low"
+          ? "API_LOW_CONFIDENCE"
+          : "API_SUCCESS",
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Analysis failed");
