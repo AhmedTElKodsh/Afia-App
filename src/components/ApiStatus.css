@@ -1,0 +1,59 @@
+.api-status {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  text-align: center;
+  gap: var(--space-md);
+}
+
+.analyzing-animation {
+  margin-bottom: var(--space-md);
+}
+
+.bottle-outline {
+  width: 80px;
+  height: 120px;
+  border: 3px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.fill-wave {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: var(--color-primary-light);
+  opacity: 0.6;
+  animation: wave 2s ease-in-out infinite;
+}
+
+@keyframes wave {
+  0%,
+  100% {
+    height: 30%;
+  }
+  50% {
+    height: 70%;
+  }
+}
+
+.analyzing-text {
+  font-size: var(--font-size-h2);
+  font-weight: 600;
+}
+
+.error-icon {
+  font-size: 3rem;
+}
+
+.error-actions {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-sm);
+}

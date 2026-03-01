@@ -1,0 +1,47 @@
+.ios-warning-screen {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  background: var(--color-background);
+}
+
+.ios-warning-card {
+  text-align: center;
+  max-width: 360px;
+  width: 100%;
+}
+
+.ios-warning-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-md);
+}
+
+.ios-warning-title {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.ios-warning-body {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-md);
+}
+
+.ios-warning-steps {
+  text-align: left;
+  padding-left: var(--space-lg);
+  margin-bottom: var(--space-md);
+  line-height: 1.8;
+  color: var(--color-text-primary);
+}
+
+.ios-warning-steps li {
+  margin-bottom: var(--space-xs);
+}
+
+.ios-warning-note {
+  margin-top: var(--space-md);
+}

@@ -1,0 +1,85 @@
+<!DOCTYPE html><html><head><style>
+html{background:#F8F9FA}
+body{width:720pt;height:405pt;margin:0;padding:0;font-family:Arial,sans-serif;display:flex;background:#F5F8F5;}
+.sidebar{width:6pt;height:405pt;position:absolute;left:0;top:0;background:#2D6A4F;}
+.content{margin:22pt 26pt 14pt 42pt;flex:1;display:flex;flex-direction:column;}
+h1{color:#2D6A4F;font-size:22pt;margin:0 0 3pt 0;}
+.bar{width:50pt;height:3pt;background:#E9A820;margin-bottom:10pt;}
+.arch-wrap{display:flex;gap:10pt;flex:1;}
+.layers{display:flex;flex-direction:column;gap:5pt;flex:1.2;}
+.layer-box{border-radius:6pt;padding:6pt 10pt;display:flex;align-items:flex-start;gap:8pt;}
+.layer-num{min-width:18pt;height:18pt;border-radius:9pt;background:#2D6A4F;display:flex;align-items:center;justify-content:center;margin-top:1pt;}
+.layer-content{flex:1;}
+.layer-title{font-size:9pt;font-weight:bold;margin:0 0 1pt 0;}
+.layer-desc{font-size:7.5pt;color:#555;margin:0;line-height:1.4;}
+.poc-note{font-size:7pt;font-weight:bold;padding:1pt 5pt;border-radius:3pt;display:inline-block;margin-top:2pt;}
+.right-panel{width:185pt;display:flex;flex-direction:column;gap:8pt;}
+.flow-box{background:#2D6A4F;border-radius:7pt;padding:8pt 10pt;}
+.why-box{background:#FFF8E1;border-radius:7pt;padding:8pt 10pt;border-left:3pt solid #E9A820;}
+.bottom-note{background:#2D6A4F;border-radius:5pt;padding:4pt 10pt;margin-top:auto;}
+</style></head><body>
+<div class="sidebar"></div>
+<div class="content">
+  <h1>System Architecture</h1>
+  <div class="bar"></div>
+  <div class="arch-wrap">
+    <div class="layers">
+
+      <div class="layer-box" style="background:#EBF5ED;">
+        <div class="layer-num"><p style="color:white;font-size:7pt;font-weight:bold;margin:0;">1</p></div>
+        <div class="layer-content">
+          <p class="layer-title" style="color:#2D6A4F;">User Device — React 19 PWA</p>
+          <p class="layer-desc">QR scan opens app · Camera captures 800px JPEG (~70KB) · Local volume/nutrition logic (no server round-trips)</p>
+        </div>
+      </div>
+
+      <div class="layer-box" style="background:#D4EDDA;">
+        <div class="layer-num"><p style="color:white;font-size:7pt;font-weight:bold;margin:0;">2</p></div>
+        <div class="layer-content">
+          <p class="layer-title" style="color:#155724;">Cloudflare Worker — Edge Proxy</p>
+          <p class="layer-desc">Origin validation · Rate limit 10 req/min/IP · Payload guard &lt;4MB · Routes to AI providers · Stores data</p>
+        </div>
+      </div>
+
+      <div class="layer-box" style="background:#FFF8E1;">
+        <div class="layer-num" style="background:#E9A820;"><p style="color:white;font-size:7pt;font-weight:bold;margin:0;">3</p></div>
+        <div class="layer-content">
+          <p class="layer-title" style="color:#B8860B;">AI Vision Providers</p>
+          <p class="layer-desc"><b>Primary:</b> Gemini 2.5 Flash · JSON mode · 500 req/day free · <b>Fallback:</b> Groq + Llama 4 Scout (online only, POC) → Fine-tuned model (post-POC)</p>
+        </div>
+      </div>
+
+      <div class="layer-box" style="background:#E8EAF6;border-left:3pt solid #E9A820;">
+        <div class="layer-num" style="background:#9FA8DA;"><p style="color:white;font-size:7pt;font-weight:bold;margin:0;">4</p></div>
+        <div class="layer-content">
+          <p class="layer-title" style="color:#283593;">Cloudflare R2 — Object Storage</p>
+          <p class="layer-desc">images/{scanId}.jpg + metadata/{scanId}.json · 10 GB free · ~140K scans · $0 egress · Training data</p>
+          <div style="background:#FFF3E0;border-radius:3pt;padding:1pt 5pt;display:inline-block;margin-top:2pt;"><p style="color:#E65100;font-size:7pt;font-weight:bold;margin:0;">⚠ Requires credit card activation — deferred to post-POC</p></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="right-panel">
+      <div class="flow-box">
+        <p style="color:#E9A820;font-size:8pt;font-weight:bold;margin:0 0 5pt 0;">Request Flow</p>
+        <p style="color:white;font-size:7.5pt;margin:0 0 2pt 0;">POST /analyze</p>
+        <p style="color:#A8D5BA;font-size:7pt;margin:0 0 5pt 0;">→ validate → AI call → store → respond</p>
+        <p style="color:#E9A820;font-size:8pt;font-weight:bold;margin:0 0 4pt 0;">POST /feedback</p>
+        <p style="color:#A8D5BA;font-size:7pt;margin:0;">→ sanity check → update metadata</p>
+      </div>
+      <div class="why-box">
+        <p style="color:#B8860B;font-size:8pt;font-weight:bold;margin:0 0 4pt 0;">Why This Architecture</p>
+        <p style="font-size:7.5pt;color:#444;margin:0 0 2pt 0;">✓ API keys never in browser</p>
+        <p style="font-size:7.5pt;color:#444;margin:0 0 2pt 0;">✓ Zero cold starts (V8 isolates)</p>
+        <p style="font-size:7.5pt;color:#444;margin:0 0 2pt 0;">✓ No DB server to manage</p>
+        <p style="font-size:7.5pt;color:#444;margin:0 0 2pt 0;">✓ Edge CDN globally fast</p>
+        <p style="font-size:7.5pt;color:#444;margin:0;">✓ R2 native binding (no HTTP)</p>
+      </div>
+      <div class="bottom-note">
+        <p style="color:white;font-size:7pt;text-align:center;margin:0;">Serverless · No infra to manage</p>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html><html><head><style>
+html{background:#F8F9FA}
+body{width:720pt;height:405pt;margin:0;padding:0;font-family:Arial,sans-serif;display:flex;background:#F5F8F5;}
+.sidebar{width:6pt;height:405pt;position:absolute;left:0;top:0;background:#2D6A4F;}
+.content{margin:22pt 26pt 14pt 42pt;flex:1;display:flex;flex-direction:column;}
+h1{color:#2D6A4F;font-size:22pt;margin:0 0 3pt 0;}
+.bar{width:50pt;height:3pt;background:#E9A820;margin-bottom:10pt;}
+.cols{display:flex;gap:12pt;flex:1;}
+.layers{flex:1.4;display:flex;flex-direction:column;gap:5pt;}
+.layer{display:flex;align-items:flex-start;background:white;border-radius:7pt;padding:7pt 10pt;box-shadow:0 1px 4px rgba(0,0,0,0.05);}
+.layer-num{background:#2D6A4F;color:white;min-width:20pt;height:20pt;border-radius:10pt;display:flex;align-items:center;justify-content:center;margin-right:10pt;margin-top:1pt;}
+.right-col{flex:1;display:flex;flex-direction:column;gap:7pt;}
+.note-box{border-radius:7pt;padding:8pt 10pt;}
+</style></head><body>
+<div class="sidebar"></div>
+<div class="content">
+  <h1>Security &amp; Privacy</h1>
+  <div class="bar"></div>
+  <div class="cols">
+
+    <!-- 6 layers -->
+    <div class="layers">
+      <div class="layer">
+        <div class="layer-num"><p style="margin:0;color:white;font-size:9pt;font-weight:bold;">1</p></div>
+        <div>
+          <p style="color:#1A1A2E;font-size:9.5pt;font-weight:bold;margin:0;">Origin Validation — CORS Whitelist</p>
+          <p style="color:#6C757D;font-size:7.5pt;margin:1pt 0 0 0;">Only safi-oil-tracker.pages.dev + localhost allowed · All other origins rejected with 403</p>
+        </div>
+      </div>
+      <div class="layer">
+        <div class="layer-num"><p style="margin:0;color:white;font-size:9pt;font-weight:bold;">2</p></div>
+        <div>
+          <p style="color:#1A1A2E;font-size:9.5pt;font-weight:bold;margin:0;">Rate Limiting — 10 req/min per IP</p>
+          <p style="color:#6C757D;font-size:7.5pt;margin:1pt 0 0 0;">Sliding window in Cloudflare KV · Prevents abuse &amp; AI API cost spikes · Returns 429 on breach</p>
+        </div>
+      </div>
+      <div class="layer">
+        <div class="layer-num"><p style="margin:0;color:white;font-size:9pt;font-weight:bold;">3</p></div>
+        <div>
+          <p style="color:#1A1A2E;font-size:9.5pt;font-weight:bold;margin:0;">API Key Protection — Worker Secrets Only</p>
+          <p style="color:#6C757D;font-size:7.5pt;margin:1pt 0 0 0;">Gemini &amp; Groq keys stored as Cloudflare Worker env secrets · Never in client bundle or git history</p>
+        </div>
+      </div>
+      <div class="layer">
+        <div class="layer-num"><p style="margin:0;color:white;font-size:9pt;font-weight:bold;">4</p></div>
+        <div>
+          <p style="color:#1A1A2E;font-size:9.5pt;font-weight:bold;margin:0;">Payload Guard — Reject &gt; 4MB</p>
+          <p style="color:#6C757D;font-size:7.5pt;margin:1pt 0 0 0;">Content-Length checked before processing · Prevents memory exhaustion &amp; oversized AI payloads</p>
+        </div>
+      </div>
+      <div class="layer" style="border-left:3pt solid #2D6A4F;">
+        <div class="layer-num"><p style="margin:0;color:white;font-size:9pt;font-weight:bold;">5</p></div>
+        <div>
+          <p style="color:#1A1A2E;font-size:9.5pt;font-weight:bold;margin:0;">Zero PII — No Accounts, No Identity</p>
+          <p style="color:#6C757D;font-size:7.5pt;margin:1pt 0 0 0;">No names, emails, or phone numbers collected · R2 bucket is private (not web-accessible) · GDPR-safe by design</p>
+        </div>
+      </div>
+      <div class="layer">
+        <div class="layer-num"><p style="margin:0;color:white;font-size:9pt;font-weight:bold;">6</p></div>
+        <div>
+          <p style="color:#1A1A2E;font-size:9.5pt;font-weight:bold;margin:0;">HTTPS Everywhere — Cloudflare Enforced</p>
+          <p style="color:#6C757D;font-size:7.5pt;margin:1pt 0 0 0;">TLS 1.3 · HTTP→HTTPS redirect enforced at CDN edge · HSTS header on all responses</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: clarifications -->
+    <div class="right-col">
+      <div class="note-box" style="background:#EBF5ED;border-left:3pt solid #2D6A4F;">
+        <p style="color:#2D6A4F;font-size:8pt;font-weight:bold;margin:0 0 4pt 0;">What Data Is Stored (R2)</p>
+        <ul style="margin:0;padding-left:12pt;">
+          <li><p style="color:#333;font-size:7.5pt;margin:0;">images/{scanId}.jpg — bottle photo only</p></li>
+          <li><p style="color:#333;font-size:7.5pt;margin:0;">metadata/{scanId}.json — fill %, confidence, timestamp, device type, feedback</p></li>
+          <li><p style="color:#333;font-size:7.5pt;margin:0;">No user ID. No location. No personal data.</p></li>
+        </ul>
+      </div>
+      <div class="note-box" style="background:#FFF8E1;border-left:3pt solid #E9A820;">
+        <p style="color:#B8860B;font-size:8pt;font-weight:bold;margin:0 0 4pt 0;">Feedback Validation (Layer 1 Sanity)</p>
+        <ul style="margin:0;padding-left:12pt;">
+          <li><p style="color:#333;font-size:7.5pt;margin:0;">too_fast: response &lt; 3s (random tap)</p></li>
+          <li><p style="color:#333;font-size:7.5pt;margin:0;">boundary_value: estimate = 0% or 100%</p></li>
+          <li><p style="color:#333;font-size:7.5pt;margin:0;">contradictory: "too low" but estimate &lt; AI</p></li>
+          <li><p style="color:#333;font-size:7.5pt;margin:0;">extreme_delta: &gt; 30% difference from AI</p></li>
+        </ul>
+      </div>
+      <div class="note-box" style="background:#EBF5ED;">
+        <p style="color:#2D6A4F;font-size:8pt;font-weight:bold;margin:0 0 2pt 0;">Post-POC Additions</p>
+        <ul style="margin:0;padding-left:12pt;">
+          <li><p style="color:#333;font-size:7.5pt;margin:0;">User auth: JWT tokens, secure session management</p></li>
+          <li><p style="color:#333;font-size:7.5pt;margin:0;">Admin dashboard: role-based access (Phase 3)</p></li>
+          <li><p style="color:#333;font-size:7.5pt;margin:0;">R2 bucket encryption at rest (enabled by default)</p></li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- PRESENTER NOTES: Layer 1 = Cloudflare network (DDoS, bot). Layer 2-4 = Worker-level guards. Layer 5 = Privacy-by-design (no GDPR obligations). Layer 6 = Transport. The feedback validation is a data quality gate, not a security gate, but it protects training data integrity. In POC, R2 storage is deferred due to credit card requirement — images may be logged transiently during development only. Post-POC: consider adding Content Security Policy headers and subresource integrity for the PWA assets. -->
+</body></html>

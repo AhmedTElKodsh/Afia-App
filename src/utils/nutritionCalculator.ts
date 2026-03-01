@@ -1,0 +1,25 @@
+import { getNutritionByOilType } from "../data/oilNutrition.ts";
+
+export interface NutritionResult {
+  calories: number;
+  totalFatG: number;
+  saturatedFatG: number;
+}
+
+export function calculateNutrition(
+  consumedMl: number,
+  oilType: string
+): NutritionResult | null {
+  const nutrition = getNutritionByOilType(oilType);
+  if (!nutrition) return null;
+
+  const consumedGrams = consumedMl * nutrition.densityGPerMl;
+  const scale = consumedGrams / 100;
+
+  return {
+    calories: Math.round(nutrition.per100g.calories * scale * 10) / 10,
+    totalFatG: Math.round(nutrition.per100g.totalFatG * scale * 10) / 10,
+    saturatedFatG:
+      Math.round(nutrition.per100g.saturatedFatG * scale * 10) / 10,
+  };
+}

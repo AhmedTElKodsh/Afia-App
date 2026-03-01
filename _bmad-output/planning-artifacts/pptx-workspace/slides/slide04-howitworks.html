@@ -1,0 +1,148 @@
+<!DOCTYPE html><html><head><style>
+html{background:#F8F9FA}
+body{width:720pt;height:405pt;margin:0;padding:0;font-family:Arial,sans-serif;display:flex;background:#F5F8F5;}
+.sidebar{width:6pt;height:405pt;position:absolute;left:0;top:0;background:#2D6A4F;}
+.content{margin:22pt 28pt 16pt 42pt;flex:1;display:flex;flex-direction:column;}
+h1{color:#2D6A4F;font-size:22pt;margin:0 0 3pt 0;}
+.bar{width:50pt;height:3pt;background:#E9A820;margin-bottom:12pt;}
+
+/* Large phone screen frame */
+.screen-container{display:flex;justify-content:center;align-items:center;gap:0;margin-bottom:10pt;}
+.phone-frame{background:#1A3C34;border-radius:20pt;padding:6pt;width:580pt;height:240pt;display:flex;flex-direction:column;}
+.phone-inner{background:#F5F8F5;border-radius:14pt;flex:1;display:flex;flex-direction:row;overflow:hidden;}
+
+/* 4 screens inside phone */
+.screen-panel{flex:1;display:flex;flex-direction:column;position:relative;border-right:1pt solid #ddd;}
+.screen-panel:last-child{border-right:none;}
+.screen-header{background:#2D6A4F;padding:5pt 8pt;text-align:center;}
+.screen-num{background:#E9A820;color:white;font-size:7pt;font-weight:bold;width:14pt;height:14pt;border-radius:7pt;display:flex;align-items:center;justify-content:center;margin:0 auto 2pt auto;}
+.screen-title{color:white;font-size:7pt;font-weight:bold;margin:0;text-align:center;}
+.screen-body{flex:1;padding:6pt;display:flex;flex-direction:column;justify-content:center;align-items:center;}
+
+/* Step 1 - QR */
+.qr-box{width:44pt;height:44pt;background:#1A3C34;border-radius:4pt;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:2pt;padding:4pt;margin-bottom:4pt;}
+.qr-cell{background:white;border-radius:1pt;}
+.qr-cell.dark{background:#1A3C34;}
+
+/* Step 2 - Camera */
+.camera-view{width:60pt;height:50pt;background:#333;border-radius:4pt;border:2pt solid #2D6A4F;display:flex;align-items:center;justify-content:center;margin-bottom:4pt;position:relative;}
+.focus-corners{position:absolute;width:100%;height:100%;}
+.corner{position:absolute;width:8pt;height:8pt;border-color:#E9A820;border-style:solid;border-width:0;}
+
+/* Step 3 - AI */
+.ai-pulse{width:44pt;height:44pt;border-radius:50%;background:rgba(233,168,32,0.15);border:2pt solid #E9A820;display:flex;align-items:center;justify-content:center;margin-bottom:4pt;}
+
+/* Step 4 - Results */
+.result-bottle{width:20pt;height:50pt;border:2pt solid #2D6A4F;border-radius:3pt;position:relative;overflow:hidden;margin-bottom:4pt;}
+.fill-level{position:absolute;bottom:0;width:100%;height:68%;background:#2D6A4F;opacity:0.7;}
+
+/* Arrows between panels */
+.arrow-overlay{position:absolute;right:-8pt;top:50%;transform:translateY(-50%);z-index:10;width:14pt;}
+
+/* Timer bar */
+.timer-bar{background:#2D6A4F;border-radius:8pt;padding:7pt 20pt;display:flex;align-items:center;justify-content:center;gap:20pt;}
+</style></head><body>
+<div class="sidebar"></div>
+<div class="content">
+  <h1>How It Works</h1>
+  <div class="bar"></div>
+
+  <!-- Large phone frame with 4 screens inside -->
+  <div class="screen-container">
+    <div class="phone-frame">
+      <div class="phone-inner">
+
+        <!-- Screen 1: QR Scan -->
+        <div class="screen-panel" style="position:relative;">
+          <div class="screen-header">
+            <div class="screen-num"><p style="margin:0;color:white;font-size:7pt;font-weight:bold;">1</p></div>
+            <p class="screen-title">Scan QR Code</p>
+          </div>
+          <div class="screen-body">
+            <div class="qr-box">
+              <div class="qr-cell dark"></div><div class="qr-cell dark"></div><div class="qr-cell"></div>
+              <div class="qr-cell"></div><div class="qr-cell dark"></div><div class="qr-cell dark"></div>
+              <div class="qr-cell dark"></div><div class="qr-cell"></div><div class="qr-cell dark"></div>
+            </div>
+            <p style="color:#2D6A4F;font-size:7pt;margin:0;text-align:center;">QR on bottle</p>
+            <p style="color:#6C757D;font-size:6.5pt;margin:2pt 0 0 0;text-align:center;">Opens PWA with<br>bottle pre-loaded</p>
+          </div>
+          <!-- Arrow right -->
+          <div style="position:absolute;right:-11pt;top:50%;transform:translateY(-50%);z-index:10;">
+            <div style="width:0;height:0;border-top:10pt solid transparent;border-bottom:10pt solid transparent;border-left:11pt solid #2D6A4F;"></div>
+          </div>
+        </div>
+
+        <!-- Screen 2: Camera -->
+        <div class="screen-panel" style="position:relative;">
+          <div class="screen-header" style="background:#40916C;">
+            <div class="screen-num"><p style="margin:0;color:white;font-size:7pt;font-weight:bold;">2</p></div>
+            <p class="screen-title">Take Photo</p>
+          </div>
+          <div class="screen-body">
+            <div class="camera-view">
+              <div style="position:absolute;top:2pt;left:2pt;width:8pt;height:8pt;border-top:2pt solid #E9A820;border-left:2pt solid #E9A820;"></div>
+              <div style="position:absolute;top:2pt;right:2pt;width:8pt;height:8pt;border-top:2pt solid #E9A820;border-right:2pt solid #E9A820;"></div>
+              <div style="position:absolute;bottom:2pt;left:2pt;width:8pt;height:8pt;border-bottom:2pt solid #E9A820;border-left:2pt solid #E9A820;"></div>
+              <div style="position:absolute;bottom:2pt;right:2pt;width:8pt;height:8pt;border-bottom:2pt solid #E9A820;border-right:2pt solid #E9A820;"></div>
+              <p style="color:#999;font-size:7pt;margin:0;">bottle here</p>
+            </div>
+            <p style="color:#2D6A4F;font-size:7pt;margin:0;text-align:center;">Alignment guide</p>
+            <p style="color:#6C757D;font-size:6.5pt;margin:2pt 0 0 0;text-align:center;">Rear camera<br>1 tap capture</p>
+          </div>
+          <div style="position:absolute;right:-11pt;top:50%;transform:translateY(-50%);z-index:10;">
+            <div style="width:0;height:0;border-top:10pt solid transparent;border-bottom:10pt solid transparent;border-left:11pt solid #40916C;"></div>
+          </div>
+        </div>
+
+        <!-- Screen 3: AI Analysis -->
+        <div class="screen-panel" style="position:relative;">
+          <div class="screen-header" style="background:#E9A820;">
+            <div class="screen-num" style="background:#2D6A4F;"><p style="margin:0;color:white;font-size:7pt;font-weight:bold;">3</p></div>
+            <p class="screen-title">AI Analysis</p>
+          </div>
+          <div class="screen-body">
+            <div class="ai-pulse">
+              <p style="color:#E9A820;font-size:10pt;font-weight:bold;margin:0;">AI</p>
+            </div>
+            <p style="color:#E9A820;font-size:7pt;font-weight:bold;margin:0;text-align:center;">3–5 seconds</p>
+            <p style="color:#6C757D;font-size:6.5pt;margin:2pt 0 0 0;text-align:center;">Gemini 2.5 Flash<br>analyzes fill level</p>
+          </div>
+          <div style="position:absolute;right:-11pt;top:50%;transform:translateY(-50%);z-index:10;">
+            <div style="width:0;height:0;border-top:10pt solid transparent;border-bottom:10pt solid transparent;border-left:11pt solid #E9A820;"></div>
+          </div>
+        </div>
+
+        <!-- Screen 4: Results -->
+        <div class="screen-panel">
+          <div class="screen-header">
+            <div class="screen-num"><p style="margin:0;color:white;font-size:7pt;font-weight:bold;">4</p></div>
+            <p class="screen-title">Results</p>
+          </div>
+          <div class="screen-body">
+            <div style="display:flex;align-items:center;gap:8pt;margin-bottom:4pt;">
+              <div class="result-bottle">
+                <div class="fill-level"></div>
+              </div>
+              <div>
+                <p style="color:#2D6A4F;font-size:16pt;font-weight:bold;margin:0;">68%</p>
+                <p style="color:#6C757D;font-size:6pt;margin:0;">fill level</p>
+              </div>
+            </div>
+            <p style="color:#1A1A2E;font-size:6.5pt;margin:0;text-align:center;">340ml · 23 tbsp remaining</p>
+            <p style="color:#E9A820;font-size:6.5pt;margin:2pt 0 0 0;text-align:center;">1,325 cal consumed</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Timer -->
+  <div class="timer-bar">
+    <p style="color:#E9A820;font-size:18pt;font-weight:bold;margin:0;">Under 8 Seconds</p>
+    <p style="color:#A8D5BA;font-size:10pt;margin:0;">From bottle scan to full nutrition results</p>
+  </div>
+
+</div>
+</body></html>

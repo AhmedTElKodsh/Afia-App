@@ -1,0 +1,202 @@
+<!DOCTYPE html><html><head><style>
+html{background:#F8F9FA}
+body{width:720pt;height:405pt;margin:0;padding:0;font-family:Arial,sans-serif;display:flex;background:#F5F8F5;}
+.sidebar{width:6pt;height:405pt;position:absolute;left:0;top:0;background:#2D6A4F;}
+.content{margin:18pt 22pt 12pt 42pt;flex:1;display:flex;flex-direction:column;}
+h1{color:#2D6A4F;font-size:20pt;margin:0 0 2pt 0;}
+.bar{width:50pt;height:3pt;background:#E9A820;margin-bottom:8pt;}
+.main-row{display:flex;gap:14pt;flex:1;}
+
+/* Large phone frame on left */
+.phone-outer{background:#1A3C34;border-radius:22pt;padding:8pt 6pt;width:420pt;box-shadow:0 4pt 20pt rgba(0,0,0,0.25);}
+.phone-notch{background:#0D1F1A;border-radius:8pt;width:40pt;height:8pt;margin:0 auto 5pt auto;}
+.phone-screens-row{display:flex;gap:4pt;height:270pt;}
+
+/* Individual screen mockups */
+.mock{flex:1;border-radius:10pt;overflow:hidden;display:flex;flex-direction:column;border:1pt solid rgba(255,255,255,0.1);}
+.mock-bar{padding:4pt 6pt;text-align:center;}
+.mock-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6pt;}
+.mock-label{background:rgba(0,0,0,0.4);border-radius:3pt;padding:2pt 6pt;margin-top:auto;}
+
+/* Screen 1: QR Landing */
+.s1-header{background:#2D6A4F;padding:6pt;display:flex;flex-direction:column;align-items:center;}
+.s1-body{background:white;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6pt;}
+.mini-qr{width:34pt;height:34pt;background:#1A3C34;border-radius:3pt;margin-bottom:4pt;}
+
+/* Screen 2: Camera */
+.s2-header{background:#111;padding:6pt;display:flex;flex-direction:column;align-items:center;}
+.s2-body{background:#222;flex:1;position:relative;display:flex;align-items:center;justify-content:center;}
+
+/* Screen 3: Analyzing */
+.s3-body{background:white;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6pt;}
+
+/* Screen 4: Results */
+.s4-body{background:white;flex:1;display:flex;flex-direction:column;padding:6pt;gap:3pt;}
+
+/* Right panel */
+.right-panel{display:flex;flex-direction:column;gap:7pt;flex:1;justify-content:flex-start;}
+.design-item{display:flex;align-items:flex-start;gap:7pt;}
+.dot-large{min-width:12pt;height:12pt;border-radius:6pt;margin-top:2pt;}
+.palette-row{display:flex;gap:4pt;margin-top:2pt;}
+.swatch{width:22pt;height:14pt;border-radius:3pt;border:1pt solid rgba(0,0,0,0.1);}
+.swatch-label{font-size:5.5pt;color:#6C757D;text-align:center;margin-top:1pt;}
+</style></head><body>
+<div class="sidebar"></div>
+<div class="content">
+  <h1>User Experience Design</h1>
+  <div class="bar"></div>
+  <div class="main-row">
+
+    <!-- Phone frame with 4 screens -->
+    <div class="phone-outer">
+      <div class="phone-notch"></div>
+      <div class="phone-screens-row">
+
+        <!-- Screen 1: QR Landing -->
+        <div class="mock">
+          <div class="s1-header">
+            <p style="color:#E9A820;font-size:6pt;font-weight:bold;margin:0;">SAFI</p>
+            <p style="color:white;font-size:5.5pt;margin:1pt 0 0 0;text-align:center;">Oil Tracker</p>
+          </div>
+          <div class="s1-body">
+            <div class="mini-qr"></div>
+            <p style="color:#2D6A4F;font-size:6.5pt;font-weight:bold;margin:0;text-align:center;">Filippo Berio<br>500ml</p>
+            <p style="color:#6C757D;font-size:5.5pt;margin:3pt 0;text-align:center;">Extra Virgin Olive</p>
+            <div style="background:#2D6A4F;border-radius:5pt;padding:4pt 10pt;">
+              <p style="color:white;font-size:6pt;margin:0;">Start Scanning</p>
+            </div>
+          </div>
+          <div style="background:#2D6A4F;padding:3pt;text-align:center;">
+            <p style="color:#A8D5BA;font-size:5.5pt;margin:0;">QR Landing</p>
+          </div>
+        </div>
+
+        <!-- Screen 2: Camera -->
+        <div class="mock">
+          <div class="s2-header">
+            <p style="color:#E9A820;font-size:5.5pt;margin:0;text-align:center;">Point at bottle</p>
+          </div>
+          <div class="s2-body">
+            <!-- Camera guide corners -->
+            <div style="position:absolute;top:8pt;left:8pt;width:12pt;height:12pt;border-top:2pt solid #E9A820;border-left:2pt solid #E9A820;"></div>
+            <div style="position:absolute;top:8pt;right:8pt;width:12pt;height:12pt;border-top:2pt solid #E9A820;border-right:2pt solid #E9A820;"></div>
+            <div style="position:absolute;bottom:20pt;left:8pt;width:12pt;height:12pt;border-bottom:2pt solid #E9A820;border-left:2pt solid #E9A820;"></div>
+            <div style="position:absolute;bottom:20pt;right:8pt;width:12pt;height:12pt;border-bottom:2pt solid #E9A820;border-right:2pt solid #E9A820;"></div>
+            <!-- Bottle outline -->
+            <div style="width:22pt;height:70pt;border:1.5pt dashed rgba(255,255,255,0.4);border-radius:3pt;position:relative;">
+              <div style="position:absolute;bottom:0;width:100%;height:65%;background:rgba(233,168,32,0.3);border-radius:0 0 3pt 3pt;"></div>
+            </div>
+          </div>
+          <div style="background:#E9A820;padding:4pt;text-align:center;">
+            <p style="color:white;font-size:7pt;font-weight:bold;margin:0;">⊙ Capture</p>
+          </div>
+          <div style="background:#333;padding:3pt;text-align:center;">
+            <p style="color:#A8D5BA;font-size:5.5pt;margin:0;">Camera View</p>
+          </div>
+        </div>
+
+        <!-- Screen 3: Analyzing -->
+        <div class="mock">
+          <div class="mock-bar" style="background:#E9A820;">
+            <p style="color:white;font-size:5.5pt;margin:0;">Analyzing...</p>
+          </div>
+          <div class="s3-body">
+            <!-- Animated bottle -->
+            <div style="width:26pt;height:70pt;border:2pt solid #2D6A4F;border-radius:4pt;position:relative;overflow:hidden;margin-bottom:6pt;">
+              <div style="position:absolute;bottom:0;width:100%;height:65%;background:#2D6A4F;opacity:0.7;"></div>
+              <!-- fill line animation simulation -->
+              <div style="position:absolute;width:100%;height:2pt;background:#E9A820;bottom:65%;opacity:0.9;"></div>
+            </div>
+            <!-- Pulse ring -->
+            <div style="width:28pt;height:28pt;border-radius:14pt;border:2pt solid #E9A820;display:flex;align-items:center;justify-content:center;margin-bottom:4pt;">
+              <p style="color:#E9A820;font-size:8pt;font-weight:bold;margin:0;">AI</p>
+            </div>
+            <p style="color:#6C757D;font-size:6pt;margin:0;text-align:center;">Gemini 2.5 Flash<br>estimating fill level</p>
+          </div>
+          <div style="background:#2D6A4F;padding:3pt;text-align:center;">
+            <p style="color:#A8D5BA;font-size:5.5pt;margin:0;">Processing</p>
+          </div>
+        </div>
+
+        <!-- Screen 4: Results -->
+        <div class="mock">
+          <div class="mock-bar" style="background:#2D6A4F;">
+            <p style="color:white;font-size:5.5pt;margin:0;text-align:center;">Your Results</p>
+          </div>
+          <div class="s4-body">
+            <!-- Fill gauge row -->
+            <div style="display:flex;align-items:center;gap:5pt;justify-content:center;">
+              <div style="width:18pt;height:52pt;border:1.5pt solid #2D6A4F;border-radius:3pt;position:relative;overflow:hidden;">
+                <div style="position:absolute;bottom:0;width:100%;height:68%;background:#2D6A4F;"></div>
+                <div style="position:absolute;width:100%;height:1.5pt;background:#E9A820;bottom:68%;"></div>
+              </div>
+              <div>
+                <p style="color:#2D6A4F;font-size:18pt;font-weight:bold;margin:0;">68%</p>
+                <p style="color:#6C757D;font-size:5.5pt;margin:0;">High confidence</p>
+              </div>
+            </div>
+            <!-- Stats -->
+            <div style="background:#EBF5ED;border-radius:4pt;padding:4pt 6pt;width:100%;">
+              <p style="color:#2D6A4F;font-size:6pt;font-weight:bold;margin:0;">Remaining: 340ml · 23 tbsp</p>
+              <p style="color:#6C757D;font-size:5.5pt;margin:1pt 0 0 0;">Consumed: 160ml · 10 tbsp</p>
+            </div>
+            <!-- Nutrition -->
+            <div style="background:#FFF8E1;border-radius:4pt;padding:4pt 6pt;width:100%;">
+              <p style="color:#B8860B;font-size:6pt;font-weight:bold;margin:0;">1,325 cal consumed</p>
+              <p style="color:#6C757D;font-size:5.5pt;margin:0;">149.8g fat</p>
+            </div>
+            <!-- Feedback -->
+            <p style="color:#6C757D;font-size:5.5pt;margin:0;text-align:center;">Was this accurate?</p>
+            <div style="display:flex;gap:2pt;">
+              <div style="flex:1;background:#2D6A4F;border-radius:3pt;padding:2pt;"><p style="color:white;font-size:5pt;margin:0;text-align:center;">About right</p></div>
+              <div style="flex:1;background:#E8E8E8;border-radius:3pt;padding:2pt;"><p style="color:#333;font-size:5pt;margin:0;text-align:center;">Too high</p></div>
+            </div>
+          </div>
+          <div style="background:#2D6A4F;padding:3pt;text-align:center;">
+            <p style="color:#A8D5BA;font-size:5.5pt;margin:0;">Result Screen</p>
+          </div>
+        </div>
+
+      </div>
+      <div style="background:#E9A820;border-radius:4pt;margin-top:6pt;padding:3pt 10pt;text-align:center;">
+        <p style="color:white;font-size:7pt;font-weight:bold;margin:0;">4 Key Screens — HTML Mockup</p>
+      </div>
+    </div>
+
+    <!-- Right info panel -->
+    <div class="right-panel">
+      <p style="color:#2D6A4F;font-size:10pt;font-weight:bold;margin:0 0 4pt 0;">Design System</p>
+      <!-- Color palette -->
+      <div style="display:flex;gap:5pt;margin-bottom:8pt;">
+        <div><div class="swatch" style="background:#2D6A4F;"></div><p class="swatch-label">#2D6A4F</p></div>
+        <div><div class="swatch" style="background:#40916C;"></div><p class="swatch-label">#40916C</p></div>
+        <div><div class="swatch" style="background:#E9A820;"></div><p class="swatch-label">#E9A820</p></div>
+        <div><div class="swatch" style="background:#D64045;"></div><p class="swatch-label">#D64045</p></div>
+        <div><div class="swatch" style="background:#F5F8F5;border:1pt solid #ddd;"></div><p class="swatch-label">Surface</p></div>
+      </div>
+
+      <div class="design-item">
+        <div class="dot-large" style="background:#2D6A4F;"></div>
+        <div><p style="font-size:9pt;font-weight:bold;color:#1A1A2E;margin:0;">9 screens designed</p><p style="font-size:7.5pt;color:#6C757D;margin:1pt 0 0 0;">QR · Camera · Preview · Analyzing · Results · Feedback · Errors · iOS</p></div>
+      </div>
+      <div class="design-item">
+        <div class="dot-large" style="background:#40916C;"></div>
+        <div><p style="font-size:9pt;font-weight:bold;color:#1A1A2E;margin:0;">Mobile-first (375–430px)</p><p style="font-size:7.5pt;color:#6C757D;margin:1pt 0 0 0;">WCAG 2.1 AA accessible</p></div>
+      </div>
+      <div class="design-item">
+        <div class="dot-large" style="background:#E9A820;"></div>
+        <div><p style="font-size:9pt;font-weight:bold;color:#1A1A2E;margin:0;">Animated fill gauge</p><p style="font-size:7.5pt;color:#6C757D;margin:1pt 0 0 0;">Smooth bottle fill visualization</p></div>
+      </div>
+      <div class="design-item">
+        <div class="dot-large" style="background:#2D6A4F;"></div>
+        <div><p style="font-size:9pt;font-weight:bold;color:#1A1A2E;margin:0;">Camera overlay guide</p><p style="font-size:7.5pt;color:#6C757D;margin:1pt 0 0 0;">Gold corner markers for alignment</p></div>
+      </div>
+      <div class="design-item">
+        <div class="dot-large" style="background:#E9A820;"></div>
+        <div><p style="font-size:9pt;font-weight:bold;color:#1A1A2E;margin:0;">Linear flow · no navigation</p><p style="font-size:7.5pt;color:#6C757D;margin:1pt 0 0 0;">Zero cognitive load — just scan + see</p></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body></html>

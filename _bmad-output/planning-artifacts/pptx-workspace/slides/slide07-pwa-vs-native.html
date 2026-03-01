@@ -1,0 +1,94 @@
+<!DOCTYPE html><html><head><style>
+html{background:#F8F9FA}
+body{width:720pt;height:405pt;margin:0;padding:0;font-family:Arial,sans-serif;display:flex;background:#F5F8F5;}
+.sidebar{width:6pt;height:405pt;position:absolute;left:0;top:0;background:#2D6A4F;}
+.content{margin:22pt 28pt 14pt 42pt;flex:1;display:flex;flex-direction:column;}
+h1{color:#2D6A4F;font-size:22pt;margin:0 0 3pt 0;}
+.bar{width:50pt;height:3pt;background:#E9A820;margin-bottom:10pt;}
+.cols{display:flex;gap:10pt;flex:1;}
+.col{flex:1;border-radius:8pt;overflow:hidden;display:flex;flex-direction:column;}
+.col-head{padding:8pt 12pt;}
+.col-body{padding:8pt 10pt;flex:1;display:flex;flex-direction:column;gap:5pt;}
+.check-row{display:flex;align-items:flex-start;gap:6pt;padding:4pt 6pt;border-radius:4pt;}
+.check-icon{min-width:14pt;height:14pt;border-radius:7pt;display:flex;align-items:center;justify-content:center;margin-top:0.5pt;}
+.row-text{font-size:8.5pt;color:#333;margin:0;}
+.row-sub{font-size:7pt;color:#6C757D;margin:1pt 0 0 0;}
+.winner-badge{display:inline-block;background:#2D6A4F;color:white;font-size:7pt;font-weight:bold;padding:2pt 8pt;border-radius:10pt;margin-top:auto;}
+.choice-note{background:#2D6A4F;border-radius:6pt;padding:7pt 16pt;text-align:center;margin-top:8pt;}
+</style></head><body>
+<div class="sidebar"></div>
+<div class="content">
+  <h1>PWA vs Native App</h1>
+  <div class="bar"></div>
+
+  <div class="cols">
+
+    <!-- PWA column -->
+    <div class="col" style="border:2pt solid #2D6A4F;background:#EBF5ED;">
+      <div class="col-head" style="background:#2D6A4F;">
+        <p style="color:#E9A820;font-size:9pt;font-weight:bold;margin:0 0 2pt 0;">OUR CHOICE ✓</p>
+        <p style="color:white;font-size:13pt;font-weight:bold;margin:0;">Progressive Web App (PWA)</p>
+        <p style="color:#A8D5BA;font-size:7.5pt;margin:2pt 0 0 0;">Used for: POC v1 + Full Launch</p>
+      </div>
+      <div class="col-body">
+        <div class="check-row" style="background:white;">
+          <div class="check-icon" style="background:#D4EDDA;"><p style="color:#2D6A4F;font-size:9pt;margin:0;">✓</p></div>
+          <div><p class="row-text"><b>No App Store submission</b></p><p class="row-sub">QR code → instant access in browser · No install required</p></div>
+        </div>
+        <div class="check-row" style="background:white;">
+          <div class="check-icon" style="background:#D4EDDA;"><p style="color:#2D6A4F;font-size:9pt;margin:0;">✓</p></div>
+          <div><p class="row-text"><b>Single codebase</b> for iOS + Android</p><p class="row-sub">React + Vite · Deployed as static files on Cloudflare Pages</p></div>
+        </div>
+        <div class="check-row" style="background:white;">
+          <div class="check-icon" style="background:#D4EDDA;"><p style="color:#2D6A4F;font-size:9pt;margin:0;">✓</p></div>
+          <div><p class="row-text"><b>Camera API available</b> in browser</p><p class="row-sub">getUserMedia() · Works on Chrome Android + Safari iOS</p></div>
+        </div>
+        <div class="check-row" style="background:white;">
+          <div class="check-icon" style="background:#D4EDDA;"><p style="color:#2D6A4F;font-size:9pt;margin:0;">✓</p></div>
+          <div><p class="row-text"><b>Offline shell</b> via Service Worker</p><p class="row-sub">App loads instantly from cache · Only scan needs network</p></div>
+        </div>
+        <div class="check-row" style="background:#FFF8E1;">
+          <div class="check-icon" style="background:#FFE082;"><p style="color:#B8860B;font-size:9pt;margin:0;">!</p></div>
+          <div><p class="row-text" style="color:#B8860B;"><b>iOS caveat:</b> Use Safari browser mode</p><p class="row-sub">Standalone PWA mode has a known iOS camera bug → "Open in Safari" prompt shown</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Native column -->
+    <div class="col" style="border:1.5pt solid #CCC;background:#F8F9FA;">
+      <div class="col-head" style="background:#6C757D;">
+        <p style="color:#E0E0E0;font-size:9pt;margin:0 0 2pt 0;">PHASE 4 OPTION</p>
+        <p style="color:white;font-size:13pt;font-weight:bold;margin:0;">Native Mobile App</p>
+        <p style="color:#CCC;font-size:7.5pt;margin:2pt 0 0 0;">React Native or Flutter · After 1000+ scans</p>
+      </div>
+      <div class="col-body">
+        <div class="check-row" style="background:white;">
+          <div class="check-icon" style="background:#FFE0E0;"><p style="color:#D64045;font-size:9pt;margin:0;">✗</p></div>
+          <div><p class="row-text"><b>App Store review required</b></p><p class="row-sub">Apple + Google review process · Days to weeks to publish</p></div>
+        </div>
+        <div class="check-row" style="background:white;">
+          <div class="check-icon" style="background:#FFE0E0;"><p style="color:#D64045;font-size:9pt;margin:0;">✗</p></div>
+          <div><p class="row-text"><b>Separate iOS + Android codebases</b></p><p class="row-sub">Or React Native (adds complexity vs current stack)</p></div>
+        </div>
+        <div class="check-row" style="background:white;">
+          <div class="check-icon" style="background:#D4EDDA;"><p style="color:#2D6A4F;font-size:9pt;margin:0;">✓</p></div>
+          <div><p class="row-text"><b>Full camera + hardware access</b></p><p class="row-sub">No iOS PWA limitation · Better UX for power users</p></div>
+        </div>
+        <div class="check-row" style="background:white;">
+          <div class="check-icon" style="background:#D4EDDA;"><p style="color:#2D6A4F;font-size:9pt;margin:0;">✓</p></div>
+          <div><p class="row-text"><b>Push notifications</b></p><p class="row-sub">Reminders to track oil · Engagement features (Phase 4)</p></div>
+        </div>
+        <div class="check-row" style="background:white;">
+          <div class="check-icon" style="background:#FFE0E0;"><p style="color:#D64045;font-size:9pt;margin:0;">✗</p></div>
+          <div><p class="row-text"><b>Higher dev cost + time</b></p><p class="row-sub">Not justified until product-market fit is proven</p></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="choice-note">
+    <p style="color:white;font-size:9pt;margin:0;"><b style="color:#E9A820;">Decision:</b> PWA for POC + Full Launch. Native app considered only after 1,000+ real scans validate product-market fit.</p>
+  </div>
+</div>
+</body></html>

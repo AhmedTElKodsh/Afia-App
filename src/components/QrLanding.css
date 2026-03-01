@@ -1,0 +1,66 @@
+.qr-landing {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+}
+
+.offline-banner {
+  background: #f8d7da;
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-sm);
+  padding: var(--space-md);
+  text-align: center;
+  color: var(--color-danger);
+  margin-bottom: var(--space-md);
+}
+
+.offline-banner p {
+  margin: 0;
+}
+
+.offline-banner p + p {
+  margin-top: var(--space-xs);
+}
+
+.qr-landing-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.brand-mark {
+  font-size: var(--font-size-h1);
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.05em;
+}
+
+.bottle-info {
+  width: 100%;
+  text-align: center;
+  padding: var(--space-xl) var(--space-md);
+}
+
+.bottle-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-md);
+}
+
+.bottle-name {
+  font-size: var(--font-size-h2);
+  font-weight: 600;
+  margin-bottom: var(--space-xs);
+}
+
+.bottle-details {
+  text-transform: capitalize;
+}
+
+.baseline-note {
+  text-align: center;
+  max-width: 280px;
+}

@@ -1,0 +1,140 @@
+<!DOCTYPE html><html><head><style>
+html{background:#F8F9FA}
+body{width:720pt;height:405pt;margin:0;padding:0;font-family:Arial,sans-serif;display:flex;background:#F5F8F5;}
+.sidebar{width:6pt;height:405pt;position:absolute;left:0;top:0;background:#2D6A4F;}
+.content{margin:20pt 26pt 12pt 42pt;flex:1;display:flex;flex-direction:column;}
+h1{color:#2D6A4F;font-size:22pt;margin:0 0 3pt 0;}
+.bar{width:50pt;height:3pt;background:#E9A820;margin-bottom:8pt;}
+.phases{display:flex;gap:6pt;flex:1;}
+.phase{flex:1;border-radius:8pt;overflow:hidden;display:flex;flex-direction:column;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
+.ph-head{padding:6pt 8pt;text-align:center;}
+.ph-trigger{padding:3pt 8pt;text-align:center;}
+.ph-body{padding:6pt 8pt;flex:1;}
+</style></head><body>
+<div class="sidebar"></div>
+<div class="content">
+  <h1>Product Roadmap</h1>
+  <div class="bar"></div>
+  <div class="phases">
+
+    <!-- Phase 1 -->
+    <div class="phase" style="border:2pt solid #2D6A4F;">
+      <div class="ph-head" style="background:#2D6A4F;">
+        <p style="color:#E9A820;font-size:7pt;font-weight:bold;margin:0;">NOW</p>
+        <p style="color:white;font-size:10pt;font-weight:bold;margin:1pt 0 0 0;">Phase 1: POC</p>
+      </div>
+      <div class="ph-trigger" style="background:#E8F5E9;">
+        <p style="color:#2D6A4F;font-size:6.5pt;font-weight:bold;margin:0;">2–4 weeks · 1 developer</p>
+      </div>
+      <div class="ph-body">
+        <ul style="margin:0;padding-left:12pt;">
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">QR → Scan → Result flow</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">3 bottle SKUs</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">AI vision (Gemini Flash)</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">User feedback loop</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">Training data pipeline</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">CI/CD auto-deploy</p></li>
+          <li><p style="font-size:7.5pt;color:#E65100;margin:0;font-weight:bold;">$0/mo cost</p></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="phase" style="border-top:3pt solid #40916C;">
+      <div class="ph-head" style="background:#40916C;">
+        <p style="color:white;font-size:7pt;margin:0;">POST-POC VALIDATION</p>
+        <p style="color:white;font-size:10pt;font-weight:bold;margin:1pt 0 0 0;">Phase 2</p>
+      </div>
+      <div class="ph-trigger" style="background:#E8F5E9;">
+        <p style="color:#40916C;font-size:6.5pt;font-weight:bold;margin:0;">After 50+ real scans</p>
+      </div>
+      <div class="ph-body">
+        <ul style="margin:0;padding-left:12pt;">
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">Activate Cloudflare R2</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">User accounts (D1 + KV)</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">Scan history per user</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">Custom starting level</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">Push notifications</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">More bottle SKUs</p></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="phase" style="border-top:3pt solid #E9A820;">
+      <div class="ph-head" style="background:#B8860B;">
+        <p style="color:white;font-size:7pt;margin:0;">100+ LABELED SCANS</p>
+        <p style="color:white;font-size:10pt;font-weight:bold;margin:1pt 0 0 0;">Phase 3</p>
+      </div>
+      <div class="ph-trigger" style="background:#FFF8E1;">
+        <p style="color:#B8860B;font-size:6.5pt;font-weight:bold;margin:0;">Model Intelligence</p>
+      </div>
+      <div class="ph-body">
+        <ul style="margin:0;padding-left:12pt;">
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">Prompt refinement</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">Few-shot examples</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">Fine-tune Qwen2.5-VL</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">Admin dashboard</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">A/B accuracy testing</p></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Phase 4 -->
+    <div class="phase" style="border-top:3pt solid #6B8CBA;">
+      <div class="ph-head" style="background:#3A5A8C;">
+        <p style="color:white;font-size:7pt;margin:0;">1,000+ SCANS</p>
+        <p style="color:white;font-size:10pt;font-weight:bold;margin:1pt 0 0 0;">Phase 4</p>
+      </div>
+      <div class="ph-trigger" style="background:#E8EAF6;">
+        <p style="color:#3A5A8C;font-size:6.5pt;font-weight:bold;margin:0;">Platform Scale</p>
+      </div>
+      <div class="ph-body">
+        <ul style="margin:0;padding-left:12pt;">
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">Native mobile app</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">Barcode scanning</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">Multi-brand registry</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">Multi-language</p></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Phase 5 -->
+    <div class="phase" style="border-top:3pt solid #E9A820;">
+      <div class="ph-head" style="background:#7B6B2E;">
+        <p style="color:white;font-size:7pt;margin:0;">10,000+ SCANS</p>
+        <p style="color:white;font-size:10pt;font-weight:bold;margin:1pt 0 0 0;">Phase 5</p>
+      </div>
+      <div class="ph-trigger" style="background:#FFF8E1;">
+        <p style="color:#7B6B2E;font-size:6.5pt;font-weight:bold;margin:0;">Business Intelligence</p>
+      </div>
+      <div class="ph-body">
+        <ul style="margin:0;padding-left:12pt;">
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">Analytics dashboard</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">Regional patterns</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">Size-based insights</p></li>
+          <li><p style="font-size:7.5pt;color:#333;margin:0;">Loyalty program</p></li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- PRESENTER NOTES:
+PHASE 2 DETAILS — Post-POC Validation:
+• Activate Cloudflare R2: Currently deferred because free tier requires credit card. Once activated, all scan images + metadata are stored persistently for training.
+• User Accounts: Cloudflare D1 (SQLite at edge) for user profiles + KV for session tokens. Email/password or social login (Google). No PII stored beyond email.
+• Scan History: Each scan linked to user account. Shows timeline of oil consumption. Track multiple bottles concurrently.
+• Custom Starting Level: User sets initial fill level (e.g., "I opened a new bottle" = 100%, "I started at about 3/4" = 75%). This improves consumption tracking accuracy.
+• Push Notifications: Web push via Service Worker. Reminders to re-scan after cooking. Weekly consumption summaries.
+• More Bottle SKUs: Community-submitted bottles with admin approval. Measure dimensions from photo or manufacturer data. Auto-detect SKU from label (later).
+• Estimated timeline: 4-6 weeks after POC validation.
+• Estimated cost impact: D1 free tier covers 5M rows/month. KV free tier covers 100K reads/day. Total added cost: ~$0-5/month.
+
+PHASE 3 DETAILS — Model Intelligence:
+• After 100 labeled scan pairs, add best examples directly into Gemini prompt as few-shot context
+• After 500 labeled pairs, fine-tune Qwen2.5-VL 7B open-source model (~$50/run) as offline-capable fallback
+• After 1,000 pairs, fine-tune Gemini Flash itself via Google AI Studio (~$100/run)
+• Admin dashboard: Review flagged feedback, export training datasets, monitor accuracy trends
+-->
+</body></html>

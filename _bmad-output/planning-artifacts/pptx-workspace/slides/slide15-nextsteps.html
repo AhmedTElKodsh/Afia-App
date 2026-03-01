@@ -1,0 +1,95 @@
+<!DOCTYPE html><html><head><style>
+html{background:#F8F9FA}
+body{width:720pt;height:405pt;margin:0;padding:0;font-family:Arial,sans-serif;display:flex;background:#F5F8F5;}
+.sidebar{width:6pt;height:405pt;position:absolute;left:0;top:0;background:#2D6A4F;}
+.content{margin:20pt 26pt 38pt 42pt;flex:1;display:flex;flex-direction:column;}
+h1{color:#2D6A4F;font-size:22pt;margin:0 0 3pt 0;}
+.bar{width:50pt;height:3pt;background:#E9A820;margin-bottom:6pt;}
+.steps{display:flex;flex-direction:column;gap:4pt;flex:1;}
+.step{display:flex;align-items:flex-start;padding:5pt 10pt;background:white;border-radius:7pt;box-shadow:0 1px 3px rgba(0,0,0,0.05);}
+.step-num{width:26pt;height:26pt;border-radius:13pt;display:flex;align-items:center;justify-content:center;margin-right:10pt;margin-top:1pt;min-width:26pt;}
+.step-content{flex:1;}
+</style></head><body>
+<div class="sidebar"></div>
+<div class="content">
+  <h1>Next Steps</h1>
+  <div class="bar"></div>
+  <div class="steps">
+
+    <div class="step" style="border-left:3pt solid #2D6A4F;">
+      <div class="step-num" style="background:#2D6A4F;"><p style="color:white;font-size:11pt;font-weight:bold;margin:0;">1</p></div>
+      <div class="step-content">
+        <p style="color:#1A1A2E;font-size:11pt;font-weight:bold;margin:0;">Test AI with Client-Provided Photos</p>
+        <p style="color:#6C757D;font-size:8pt;margin:1pt 0 0 0;">Client sends bottle images directly (no barcode/QR step needed) — split into training set + held-out test set to measure baseline AI accuracy before any prompt tuning</p>
+      </div>
+    </div>
+
+    <div class="step" style="border-left:3pt solid #2D6A4F;">
+      <div class="step-num" style="background:#2D6A4F;"><p style="color:white;font-size:11pt;font-weight:bold;margin:0;">2</p></div>
+      <div class="step-content">
+        <p style="color:#1A1A2E;font-size:11pt;font-weight:bold;margin:0;">Refine Prompts Using Feedback Loop</p>
+        <p style="color:#6C757D;font-size:8pt;margin:1pt 0 0 0;">Use test results + user feedback to iteratively improve Gemini prompts — basic prompt-refinement loop works with sample data even without R2 bucket (no credit card needed)</p>
+      </div>
+    </div>
+
+    <div class="step" style="border-left:3pt solid #40916C;">
+      <div class="step-num" style="background:#40916C;"><p style="color:white;font-size:11pt;font-weight:bold;margin:0;">3</p></div>
+      <div class="step-content">
+        <p style="color:#1A1A2E;font-size:11pt;font-weight:bold;margin:0;">Deploy + Validate QR Code Scan Flow</p>
+        <p style="color:#6C757D;font-size:8pt;margin:1pt 0 0 0;">Push to Cloudflare Pages + Worker · Print QR codes for 3 SKUs · Verify end-to-end QR → Camera → Result flow (standard functionality, no innovation risk)</p>
+      </div>
+    </div>
+
+    <div class="step" style="border-left:3pt solid #40916C;">
+      <div class="step-num" style="background:#40916C;"><p style="color:white;font-size:11pt;font-weight:bold;margin:0;">4</p></div>
+      <div class="step-content">
+        <p style="color:#1A1A2E;font-size:11pt;font-weight:bold;margin:0;">Collect 50+ Real-World Scans</p>
+        <p style="color:#6C757D;font-size:8pt;margin:1pt 0 0 0;">Begin live scan collection with feedback submissions — each scan produces a labeled training pair (image + user-corrected fill level) for continuous improvement</p>
+      </div>
+    </div>
+
+    <div class="step" style="border-left:3pt solid #E9A820;">
+      <div class="step-num" style="background:#E9A820;"><p style="color:white;font-size:11pt;font-weight:bold;margin:0;">5</p></div>
+      <div class="step-content">
+        <p style="color:#1A1A2E;font-size:11pt;font-weight:bold;margin:0;">Go / No-Go Decision: Scale Beyond POC</p>
+        <p style="color:#6C757D;font-size:8pt;margin:1pt 0 0 0;">If AI accuracy hits ≤15% MAE and feedback rate ≥30% → greenlight Phase 2: activate R2 persistent storage, add user accounts, scan history, push notifications, more SKUs ($0–5/mo added). If not → iterate prompts or pivot approach before investing further.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- PRESENTER NOTES:
+STEP 1 — AI Testing with Client Photos:
+• Client provides real bottle photos at various fill levels, labeled with approximate fill %.
+• Photos are fed directly to Gemini Flash API — no QR code or barcode scanning needed at this stage.
+• Split photos into: (a) training examples for few-shot prompt context, (b) held-out test set to measure accuracy.
+• This validates the core AI capability before building the full scan flow.
+
+STEP 2 — Prompt Refinement Loop:
+• After baseline testing, analyze where AI estimates diverge most from ground truth.
+• Iteratively adjust the Gemini system prompt: add edge-case instructions, adjust confidence thresholds, add few-shot examples from the training set.
+• This is a basic version of the refinement loop concept — works entirely with sample data, no R2 bucket or credit card required.
+• Even 10–20 labeled images can significantly improve prompt quality.
+• Goal: reduce Mean Absolute Error from initial baseline toward the ≤15% POC target.
+
+STEP 3 — QR Code Scan Flow:
+• Standard PWA deployment via GitHub Actions → Cloudflare Pages.
+• QR codes encode bottle SKU ID → opens PWA with pre-loaded bottle dimensions.
+• Camera capture → base64 → Worker → Gemini API → JSON result.
+• This is well-understood technology with no innovation risk — left last in priority because the AI accuracy (Steps 1-2) is the true differentiator.
+
+STEP 4 — Real-World Data Collection:
+• Each scan produces: bottle image + AI estimate + user feedback (if provided).
+• Target: 50+ scans in first month, with ≥30% feedback submission rate.
+• This data feeds back into Step 2 for ongoing prompt refinement.
+
+STEP 5 — Phase 2 Investment Decision:
+• Based on POC results (accuracy, user engagement, feedback quality), decide whether to invest in:
+  - Cloudflare R2: Persistent image + metadata storage ($0 within 10GB free tier, but requires credit card on file)
+  - Cloudflare D1: SQLite database for user accounts, scan history (~$0 within free tier)
+  - Push Notifications: Web push via Service Worker for re-scan reminders
+  - More SKUs: Expand from 3 to 10+ bottle types with community submissions
+  - Estimated added cost: $0–5/month (all within Cloudflare free tiers)
+• This is a go/no-go gate before committing to user accounts and persistent storage.
+-->
+</body></html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html><html><head><style>
+html{background:#F8F9FA}
+body{width:720pt;height:405pt;margin:0;padding:0;font-family:Arial,sans-serif;display:flex;background:#F5F8F5;}
+.sidebar{width:6pt;height:405pt;position:absolute;left:0;top:0;background:#2D6A4F;}
+.content{margin:18pt 26pt 50pt 42pt;flex:1;display:flex;flex-direction:column;}
+h1{color:#2D6A4F;font-size:20pt;margin:0 0 2pt 0;}
+.bar{width:50pt;height:3pt;background:#E9A820;margin-bottom:6pt;}
+.two-stage{display:flex;gap:10pt;flex:1;}
+.stage-col{flex:1;border-radius:7pt;overflow:hidden;display:flex;flex-direction:column;}
+.stage-head{padding:3pt 8pt;text-align:center;}
+.metrics-body{padding:3pt 5pt;flex:1;display:flex;flex-direction:column;gap:2pt;}
+.metric-card{background:white;border-radius:5pt;padding:2pt 5pt;display:flex;align-items:center;gap:5pt;box-shadow:0 1px 2px rgba(0,0,0,0.04);}
+.metric-value{font-size:13pt;font-weight:bold;min-width:40pt;text-align:right;}
+.metric-info{flex:1;}
+.metric-label{font-size:7.5pt;color:#1A1A2E;font-weight:bold;margin:0;}
+.metric-sub{font-size:6.5pt;color:#6C757D;margin:1pt 0 0 0;}
+.tag{display:inline-block;font-size:6pt;font-weight:bold;padding:1pt 5pt;border-radius:3pt;vertical-align:middle;}
+</style></head><body>
+<div class="sidebar"></div>
+<div class="content">
+  <h1>Success Criteria</h1>
+  <div class="bar"></div>
+
+  <div class="two-stage">
+
+    <!-- POC Targets -->
+    <div class="stage-col" style="border:1.5pt solid #2D6A4F;background:#F0F7F4;">
+      <div class="stage-head" style="background:#2D6A4F;">
+        <p style="color:#E9A820;font-size:8pt;font-weight:bold;margin:0;">CURRENT TARGETS</p>
+        <p style="color:white;font-size:10pt;font-weight:bold;margin:1pt 0 0 0;">POC v1</p>
+      </div>
+      <div class="metrics-body">
+        <div class="metric-card" style="border-left:3pt solid #2D6A4F;">
+          <p class="metric-value" style="color:#2D6A4F;">&lt; 8s</p>
+          <div class="metric-info"><p class="metric-label">Scan-to-Result Time</p><p class="metric-sub">Photo capture to full nutrition results</p></div>
+        </div>
+        <div class="metric-card" style="border-left:3pt solid #2D6A4F;">
+          <p class="metric-value" style="color:#2D6A4F;">&ge; 50</p>
+          <div class="metric-info"><p class="metric-label">Real Scans (Month 1)</p><p class="metric-sub">With usable training data (image + feedback)</p></div>
+        </div>
+        <div class="metric-card" style="border-left:3pt solid #E9A820;">
+          <p class="metric-value" style="color:#E9A820;">&le; 15%</p>
+          <div class="metric-info"><p class="metric-label">AI Fill-Level MAE</p><p class="metric-sub">Mean absolute error vs. user ground truth</p></div>
+        </div>
+        <div class="metric-card" style="border-left:3pt solid #2D6A4F;">
+          <p class="metric-value" style="color:#2D6A4F;">&ge; 30%</p>
+          <div class="metric-info"><p class="metric-label">Feedback Submission Rate</p><p class="metric-sub">Users who provide accuracy feedback</p></div>
+        </div>
+        <div class="metric-card" style="border-left:3pt solid #2D6A4F;">
+          <p class="metric-value" style="color:#2D6A4F;">$0</p>
+          <div class="metric-info"><p class="metric-label">Monthly Cost</p><p class="metric-sub">All services on free tiers</p></div>
+        </div>
+        <div class="metric-card" style="border-left:3pt solid #2D6A4F;">
+          <p class="metric-value" style="color:#2D6A4F;">34/CI</p>
+          <div class="metric-info"><p class="metric-label">Tests + CI/CD</p><p class="metric-sub">All passing · Clean auto-deploy on every push</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full Launch Targets -->
+    <div class="stage-col" style="border:1.5pt solid #3A5A8C;background:#F3F7FF;">
+      <div class="stage-head" style="background:#3A5A8C;">
+        <p style="color:#AAC4E8;font-size:8pt;font-weight:bold;margin:0;">FUTURE TARGETS</p>
+        <p style="color:white;font-size:10pt;font-weight:bold;margin:1pt 0 0 0;">Full Launch</p>
+      </div>
+      <div class="metrics-body">
+        <div class="metric-card" style="border-left:3pt solid #3A5A8C;">
+          <p class="metric-value" style="color:#3A5A8C;">&lt; 5s</p>
+          <div class="metric-info"><p class="metric-label">Scan-to-Result Time</p><p class="metric-sub">Faster with optimized prompts + fine-tuned model</p></div>
+        </div>
+        <div class="metric-card" style="border-left:3pt solid #3A5A8C;">
+          <p class="metric-value" style="color:#3A5A8C;">10K+</p>
+          <div class="metric-info"><p class="metric-label">Monthly Active Scans</p><p class="metric-sub">With user accounts tracking repeat usage</p></div>
+        </div>
+        <div class="metric-card" style="border-left:3pt solid #3A5A8C;">
+          <p class="metric-value" style="color:#3A5A8C;">&le; 8%</p>
+          <div class="metric-info"><p class="metric-label">AI Fill-Level MAE</p><p class="metric-sub">After fine-tuning on 1,000+ labeled images</p></div>
+        </div>
+        <div class="metric-card" style="border-left:3pt solid #3A5A8C;">
+          <p class="metric-value" style="color:#3A5A8C;">&ge; 80%</p>
+          <div class="metric-info"><p class="metric-label">Scan Completion Rate</p><p class="metric-sub">Initiated scans reaching result screen</p></div>
+        </div>
+        <div class="metric-card" style="border-left:3pt solid #E9A820;">
+          <p class="metric-value" style="color:#E9A820;">$3–30</p>
+          <div class="metric-info"><p class="metric-label">Monthly Cost (10K–100K scans)</p><p class="metric-sub">Gemini Flash tokens + R2 · 50+ bottle SKUs (Phase 4)</p></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body></html>

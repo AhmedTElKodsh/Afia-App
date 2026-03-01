@@ -1,0 +1,25 @@
+name = "safi-worker"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# Non-secret env vars (secrets set via `wrangler secret put`)
+ALLOWED_ORIGINS = "https://safi-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173"
+
+# R2 storage disabled for POC (requires Cloudflare credit card).
+# Re-enable in Phase 2 once R2 is activated:
+# [[r2_buckets]]
+# binding = "TRAINING_BUCKET"
+# bucket_name = "safi-training-data"
+
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "9dc0bcc958de473199e5ded5701b932a"
+preview_id = "d6d688f5cfd04d73a42c7c979c1f1791"
+
+# Secrets (set via wrangler CLI — never commit actual values):
+# wrangler secret put GEMINI_API_KEY
+# wrangler secret put GEMINI_API_KEY2
+# wrangler secret put GEMINI_API_KEY3
+# wrangler secret put GROQ_API_KEY

@@ -1,0 +1,28 @@
+.unknown-bottle {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+}
+
+.unknown-bottle-content {
+  text-align: center;
+  max-width: 320px;
+}
+
+.unknown-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-md);
+}
+
+.unknown-bottle-content h1 {
+  font-size: var(--font-size-h2);
+  margin-bottom: var(--space-sm);
+}
+
+.sku-display {
+  font-family: monospace;
+  font-size: var(--font-size-caption);
+  margin-bottom: var(--space-md);
+}

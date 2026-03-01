@@ -1,0 +1,129 @@
+<!DOCTYPE html><html><head><style>
+html{background:#1A3C34}
+body{width:720pt;height:405pt;margin:0;padding:0;font-family:Arial,sans-serif;display:flex;background:#1E4D3D;}
+.content{margin:20pt 30pt 12pt 30pt;flex:1;display:flex;flex-direction:column;}
+h1{color:white;font-size:20pt;margin:0 0 3pt 0;text-align:center;}
+.bar{width:50pt;height:3pt;background:#E9A820;margin:0 auto 8pt auto;}
+.main-row{display:flex;gap:10pt;flex:1;}
+
+/* POC column */
+.poc-col{width:200pt;display:flex;flex-direction:column;background:rgba(255,255,255,0.06);border-radius:8pt;border-top:3pt solid #E9A820;padding:10pt;}
+.launch-col{flex:1;display:flex;flex-direction:column;gap:6pt;}
+
+/* Service row */
+.svc-row{display:flex;justify-content:space-between;align-items:center;padding:3pt 0;border-bottom:1pt solid rgba(255,255,255,0.08);}
+
+/* Token pricing table */
+.token-tbl{border-radius:6pt;overflow:hidden;background:rgba(255,255,255,0.06);}
+.token-hdr{display:flex;padding:4pt 8pt;background:rgba(255,255,255,0.1);}
+.token-r{display:flex;padding:3pt 8pt;border-bottom:1pt solid rgba(255,255,255,0.06);}
+.token-c{flex:1;}
+
+/* Volume calc table */
+.vol-tbl{border-radius:6pt;overflow:hidden;}
+.vol-hdr{display:flex;padding:4pt 8pt;background:rgba(233,168,32,0.3);}
+.vol-r{display:flex;padding:3pt 8pt;background:rgba(255,255,255,0.04);border-bottom:1pt solid rgba(255,255,255,0.06);}
+.vol-r-alt{display:flex;padding:3pt 8pt;background:rgba(255,255,255,0.08);border-bottom:1pt solid rgba(255,255,255,0.06);}
+.vol-c{flex:1;}
+</style></head><body>
+<div class="content">
+  <h1>Infrastructure Cost</h1>
+  <div class="bar"></div>
+  <div class="main-row">
+
+    <!-- POC column -->
+    <div class="poc-col">
+      <p style="color:#E9A820;font-size:9pt;font-weight:bold;margin:0 0 2pt 0;">POC v1 (Current)</p>
+      <p style="color:#E9A820;font-size:32pt;font-weight:bold;margin:0;">$0 / mo</p>
+      <p style="color:#A8D5BA;font-size:7pt;margin:0 0 8pt 0;">Free tier · Up to ~15K scans/mo</p>
+      <div class="svc-row"><p style="color:white;font-size:7.5pt;margin:0;">Cloudflare Pages</p><p style="color:#E9A820;font-size:7.5pt;font-weight:bold;margin:0;">FREE</p></div>
+      <div class="svc-row"><p style="color:white;font-size:7.5pt;margin:0;">Cloudflare Worker</p><p style="color:#E9A820;font-size:7.5pt;font-weight:bold;margin:0;">FREE</p></div>
+      <div class="svc-row"><p style="color:white;font-size:7.5pt;margin:0;">Gemini 2.5 Flash</p><p style="color:#E9A820;font-size:7.5pt;font-weight:bold;margin:0;">FREE</p></div>
+      <div class="svc-row"><p style="color:white;font-size:7.5pt;margin:0;">Groq Fallback</p><p style="color:#E9A820;font-size:7.5pt;font-weight:bold;margin:0;">FREE</p></div>
+      <div class="svc-row"><p style="color:white;font-size:7.5pt;margin:0;">GitHub Actions</p><p style="color:#E9A820;font-size:7.5pt;font-weight:bold;margin:0;">FREE</p></div>
+      <div class="svc-row"><p style="color:#E9A820;font-size:7pt;margin:0;">R2 Storage</p><p style="color:#E9A820;font-size:7pt;margin:0;">Deferred (CC req.)</p></div>
+    </div>
+
+    <!-- Launch column -->
+    <div class="launch-col">
+      <p style="color:white;font-size:9pt;font-weight:bold;margin:0;">Full Launch Estimate (10K–100K scans/mo)</p>
+
+      <!-- Token pricing -->
+      <div class="token-tbl">
+        <div class="token-hdr">
+          <div class="token-c"><p style="color:#E9A820;font-size:7pt;font-weight:bold;margin:0;">Model</p></div>
+          <div class="token-c"><p style="color:#E9A820;font-size:7pt;font-weight:bold;margin:0;">Input / 1M tkns</p></div>
+          <div class="token-c"><p style="color:#E9A820;font-size:7pt;font-weight:bold;margin:0;">Output / 1M tkns</p></div>
+          <div class="token-c"><p style="color:#E9A820;font-size:7pt;font-weight:bold;margin:0;">Free Tier</p></div>
+        </div>
+        <div class="token-r">
+          <div class="token-c"><p style="color:white;font-size:7.5pt;font-weight:bold;margin:0;">Gemini 2.5 Flash</p></div>
+          <div class="token-c"><p style="color:#A8D5BA;font-size:7.5pt;margin:0;">$0.15</p></div>
+          <div class="token-c"><p style="color:#A8D5BA;font-size:7.5pt;margin:0;">$0.60</p></div>
+          <div class="token-c"><p style="color:#A8D5BA;font-size:7.5pt;margin:0;">500 req/day</p></div>
+        </div>
+        <div class="token-r">
+          <div class="token-c"><p style="color:white;font-size:7.5pt;font-weight:bold;margin:0;">Gemini 2.5 Pro</p></div>
+          <div class="token-c"><p style="color:#A8D5BA;font-size:7.5pt;margin:0;">$1.25</p></div>
+          <div class="token-c"><p style="color:#A8D5BA;font-size:7.5pt;margin:0;">$10.00</p></div>
+          <div class="token-c"><p style="color:#A8D5BA;font-size:7.5pt;margin:0;">50 req/day</p></div>
+        </div>
+      </div>
+
+      <!-- Volume cost breakdown -->
+      <p style="color:#A8D5BA;font-size:7pt;margin:0 0 2pt 0;">~1,550 tokens/scan (1,500 input + 50 output) · Using Gemini 2.5 Flash</p>
+      <div class="vol-tbl">
+        <div class="vol-hdr">
+          <div class="vol-c"><p style="color:white;font-size:7pt;font-weight:bold;margin:0;">Volume</p></div>
+          <div class="vol-c"><p style="color:white;font-size:7pt;font-weight:bold;margin:0;">AI Tokens</p></div>
+          <div class="vol-c"><p style="color:white;font-size:7pt;font-weight:bold;margin:0;">R2 Storage</p></div>
+          <div class="vol-c"><p style="color:white;font-size:7pt;font-weight:bold;margin:0;">Total / mo</p></div>
+        </div>
+        <div class="vol-r">
+          <div class="vol-c"><p style="color:white;font-size:7.5pt;margin:0;">10,000 scans</p></div>
+          <div class="vol-c"><p style="color:#A8D5BA;font-size:7.5pt;margin:0;">$2.55</p></div>
+          <div class="vol-c"><p style="color:#A8D5BA;font-size:7.5pt;margin:0;">$0 (700MB)</p></div>
+          <div class="vol-c"><p style="color:#E9A820;font-size:7.5pt;font-weight:bold;margin:0;">~$3 / mo</p></div>
+        </div>
+        <div class="vol-r-alt">
+          <div class="vol-c"><p style="color:white;font-size:7.5pt;margin:0;">50,000 scans</p></div>
+          <div class="vol-c"><p style="color:#A8D5BA;font-size:7.5pt;margin:0;">$12.75</p></div>
+          <div class="vol-c"><p style="color:#A8D5BA;font-size:7.5pt;margin:0;">$0 (3.5GB)</p></div>
+          <div class="vol-c"><p style="color:#E9A820;font-size:7.5pt;font-weight:bold;margin:0;">~$13 / mo</p></div>
+        </div>
+        <div class="vol-r">
+          <div class="vol-c"><p style="color:white;font-size:7.5pt;margin:0;">100,000 scans</p></div>
+          <div class="vol-c"><p style="color:#A8D5BA;font-size:7.5pt;margin:0;">$25.50</p></div>
+          <div class="vol-c"><p style="color:#A8D5BA;font-size:7.5pt;margin:0;">~$3.50</p></div>
+          <div class="vol-c"><p style="color:#E9A820;font-size:7.5pt;font-weight:bold;margin:0;">~$30 / mo</p></div>
+        </div>
+      </div>
+
+      <!-- Calculation breakdown -->
+      <div style="background:rgba(233,168,32,0.15);border-radius:5pt;padding:5pt 8pt;border-left:3pt solid #E9A820;">
+        <p style="color:#E9A820;font-size:7pt;font-weight:bold;margin:0 0 2pt 0;">Calculation (per scan · Gemini Flash)</p>
+        <p style="color:#A8D5BA;font-size:7pt;margin:0;">Input: 1,500 tkns × $0.15/M = $0.000225 · Output: 50 tkns × $0.60/M = $0.000030 · Total: $0.000255/scan</p>
+        <p style="color:#E9A820;font-size:7pt;font-weight:bold;margin:2pt 0 0 0;">10K = $2.55 · 50K = $12.75 · 100K = $25.50 (AI only)</p>
+      </div>
+
+      <!-- Pro comparison note -->
+      <div style="background:rgba(255,255,255,0.05);border-radius:5pt;padding:4pt 8pt;">
+        <p style="color:#A8D5BA;font-size:6.5pt;margin:0;"><b style="color:white;">If using Gemini Pro:</b> Input $1.25/M + Output $10.00/M → $0.002375/scan → 10K scans = $23.75 · 100K = $237.50 (not recommended for this use case)</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+<!-- PRESENTER NOTES:
+COST MATH DETAILS:
+• Each scan sends ~1,500 input tokens (image base64 + prompt + SKU context) and receives ~50 output tokens (JSON: fill_percentage, confidence).
+• Gemini 2.5 Flash pricing: $0.15/M input tokens + $0.60/M output tokens.
+• Per-scan cost: (1,500/1,000,000 × $0.15) + (50/1,000,000 × $0.60) = $0.000225 + $0.000030 = $0.000255
+• 10,000 scans/mo: AI = $2.55 + R2 = $0 (700MB within 10GB free) + Worker = $0 → Total: ~$3/mo
+• 50,000 scans/mo: AI = $12.75 + R2 = $0 (3.5GB within 10GB free) + Worker = $0 → Total: ~$13/mo
+• 100,000 scans/mo: AI = $25.50 + R2 = ~$3.50 (cumulative ~7GB/mo stored, once exceeding 10GB after ~2 months) + Worker = $0 (within 3M/mo free) → Total: ~$30/mo
+• R2 storage: each image ~70KB. 100K scans = 7GB/mo new. After 2 months cumulative = 14GB (4GB overage at $0.015/GB = $0.06/mo — negligible until hundreds of thousands).
+• Worker: 100K req/day free = 3M/month. Even 100K scans/month is only ~3,300/day, well within free tier.
+• Gemini Pro comparison (not recommended): $1.25/M input + $10.00/M output → $0.001875 + $0.000500 = $0.002375/scan → 83x more expensive than Flash.
+-->
+</body></html>

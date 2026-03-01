@@ -1,0 +1,97 @@
+<!DOCTYPE html><html><head><style>
+html{background:#F8F9FA}
+body{width:720pt;height:405pt;margin:0;padding:0;font-family:Arial,sans-serif;display:flex;background:#F5F8F5;}
+.sidebar{width:6pt;height:405pt;position:absolute;left:0;top:0;background:#2D6A4F;}
+.content{margin:22pt 28pt 14pt 42pt;flex:1;display:flex;flex-direction:column;}
+h1{color:#2D6A4F;font-size:22pt;margin:0 0 3pt 0;}
+.bar{width:50pt;height:3pt;background:#E9A820;margin-bottom:10pt;}
+.two-col{display:flex;gap:12pt;flex:1;}
+.stage{flex:1;border-radius:8pt;overflow:hidden;}
+.stage-header{padding:7pt 12pt;display:flex;align-items:center;gap:8pt;}
+.stage-badge{font-size:7pt;font-weight:bold;padding:2pt 8pt;border-radius:10pt;white-space:nowrap;}
+.stage-title{font-size:11pt;font-weight:bold;}
+.stage-body{padding:8pt 10pt;display:flex;flex-direction:column;gap:6pt;flex:1;}
+.row{display:flex;align-items:flex-start;gap:8pt;padding:5pt 8pt;border-radius:5pt;}
+.layer-name{font-size:7.5pt;color:#6C757D;text-transform:uppercase;letter-spacing:0.5pt;min-width:58pt;}
+.tech-name{font-size:9pt;font-weight:bold;color:#1A1A2E;}
+.tech-note{font-size:7.5pt;color:#6C757D;margin:1pt 0 0 0;}
+.changed{border-left:2pt solid #E9A820;}
+.note-box{background:#FFF8E1;border-radius:5pt;padding:5pt 8pt;margin-top:4pt;}
+</style></head><body>
+<div class="sidebar"></div>
+<div class="content">
+  <h1>Technology Stack</h1>
+  <div class="bar"></div>
+  <div class="two-col">
+
+    <!-- POC Column -->
+    <div class="stage" style="background:#EBF5ED;border:1.5pt solid #2D6A4F;">
+      <div class="stage-header" style="background:#2D6A4F;">
+        <span class="stage-badge" style="background:#E9A820;color:white;">CURRENT</span>
+        <p class="stage-title" style="color:white;margin:0;">POC v1</p>
+      </div>
+      <div class="stage-body">
+        <div class="row" style="background:white;">
+          <p class="layer-name">Frontend</p>
+          <div><p class="tech-name" style="margin:0;">React 19 + TypeScript + Vite 7</p><p class="tech-note" style="margin:1pt 0 0 0;">PWA via vite-plugin-pwa</p></div>
+        </div>
+        <div class="row" style="background:white;">
+          <p class="layer-name">Backend</p>
+          <div><p class="tech-name" style="margin:0;">Cloudflare Worker (Hono.js)</p><p class="tech-note" style="margin:1pt 0 0 0;">Edge proxy, zero cold starts</p></div>
+        </div>
+        <div class="row" style="background:white;">
+          <p class="layer-name">AI Primary</p>
+          <div><p class="tech-name" style="margin:0;">Gemini 2.5 Flash</p><p class="tech-note" style="margin:1pt 0 0 0;">Free 500 req/day · JSON vision mode</p></div>
+        </div>
+        <div class="row" style="background:white;">
+          <p class="layer-name">AI Fallback</p>
+          <div><p class="tech-name" style="margin:0;">Groq + Llama 4 Scout</p><p class="tech-note" style="margin:1pt 0 0 0;">Online only · Auto-failover · Free tier</p></div>
+        </div>
+        <div class="row" style="background:#FFF8E1;border-left:2pt solid #E9A820;">
+          <p class="layer-name">Storage</p>
+          <div><p class="tech-name" style="margin:0;color:#B8860B;">Local JSON / R2 TBD</p><p class="tech-note" style="margin:1pt 0 0 0;">Credit card required for R2 activation</p></div>
+        </div>
+        <div class="row" style="background:white;">
+          <p class="layer-name">CI/CD</p>
+          <div><p class="tech-name" style="margin:0;">GitHub Actions</p><p class="tech-note" style="margin:1pt 0 0 0;">Auto-deploy · 34 unit tests</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Launch Column -->
+    <div class="stage" style="background:#F3F7FF;border:1.5pt solid #6B8CBA;">
+      <div class="stage-header" style="background:#3A5A8C;">
+        <span class="stage-badge" style="background:white;color:#3A5A8C;">POST-POC</span>
+        <p class="stage-title" style="color:white;margin:0;">Full Launch</p>
+      </div>
+      <div class="stage-body">
+        <div class="row" style="background:white;">
+          <p class="layer-name">Frontend</p>
+          <div><p class="tech-name" style="margin:0;">React 19 + TypeScript + Vite 7</p><p class="tech-note" style="margin:1pt 0 0 0;">Same · + React Native option (Phase 4)</p></div>
+        </div>
+        <div class="row" style="background:white;">
+          <p class="layer-name">Backend</p>
+          <div><p class="tech-name" style="margin:0;">Cloudflare Worker (Hono.js)</p><p class="tech-note" style="margin:1pt 0 0 0;">Same · + auth middleware, admin API</p></div>
+        </div>
+        <div class="row" style="background:white;">
+          <p class="layer-name">AI Primary</p>
+          <div><p class="tech-name" style="margin:0;">Gemini 2.5 Flash (paid tier)</p><p class="tech-note" style="margin:1pt 0 0 0;">$0.15/M tokens · scales infinitely</p></div>
+        </div>
+        <div class="row changed" style="background:#EEF3FF;">
+          <p class="layer-name">AI Fallback</p>
+          <div><p class="tech-name" style="margin:0;">Fine-tuned Qwen2.5-VL 7B</p><p class="tech-note" style="margin:1pt 0 0 0;">After 500+ scans · offline capable · self-hosted</p></div>
+        </div>
+        <div class="row changed" style="background:#EEF3FF;">
+          <p class="layer-name">Storage</p>
+          <div><p class="tech-name" style="margin:0;">Cloudflare R2 (activated)</p><p class="tech-note" style="margin:1pt 0 0 0;">10GB free + $0.015/GB · 140K+ scans</p></div>
+        </div>
+        <div class="row changed" style="background:#EEF3FF;">
+          <p class="layer-name">Auth / DB</p>
+          <div><p class="tech-name" style="margin:0;">Cloudflare D1 + KV</p><p class="tech-note" style="margin:1pt 0 0 0;">User accounts · scan history (Phase 2)</p></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body></html>

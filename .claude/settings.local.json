@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(npm create:*)",
+      "Bash(npx --yes create-vite@latest:*)",
+      "Bash(npm install:*)",
+      "Bash(node -e:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx wrangler:*)",
+      "Bash(curl -s https://api.groq.com/openai/v1/models -H \"Authorization: Bearer YOUR_GROQ_API_KEY_HERE\" )",
+      "Bash(python3:*)",
+      "Bash(curl:*)",
+      "Bash(node create-assets.js:*)",
+      "Bash(npm root:*)",
+      "Bash(npm init:*)",
+      "Bash(node create-assets.cjs:*)",
+      "Bash(node build-pptx.cjs:*)",
+      "Bash(npx playwright install:*)",
+      "Bash(# Install deps in the skill''s script directory so html2pptx.js can find them cd \"\"C:/Users/Ahmed/.agents/skills/pptx/scripts\"\" && npm init -y && npm install sharp playwright pptxgenjs --no-save 2>&1)",
+      "Bash(ls:*)",
+      "Bash(for:*)",
+      "Bash(do sed -i \"s|background-image:url\\(''bg-light.png''\\);background-size:cover;|background:#F5F8F5;|g\" \"$f\")",
+      "Bash(done)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(node:*)",
+      "WebFetch(domain:www.aifreeapi.com)",
+      "WebFetch(domain:devtk.ai)",
+      "Bash(cp:*)",
+      "Bash(wc:*)",
+      "WebFetch(domain:developers.cloudflare.com)",
+      "WebFetch(domain:ai.google.dev)",
+      "WebFetch(domain:console.groq.com)",
+      "WebFetch(domain:pages.cloudflare.com)"
+    ]
+  }
+}
