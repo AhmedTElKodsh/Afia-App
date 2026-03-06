@@ -1,0 +1,101 @@
+# Sprint Status - Safi Oil Tracker
+# Generated: 2026-03-06
+# Project: Safi Oil Tracker
+# Project Key: NOKEY
+# Tracking System: file-system
+# Story Location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: "2026-03-06"
+project: "Safi Oil Tracker"
+project_key: "NOKEY"
+tracking_system: "file-system"
+story_location: "_bmad-output/implementation-artifacts"
+
+development_status:
+  # Epic 1: Core Scan Experience (End-to-End MVP)
+  epic-1: in-progress
+  1-1-project-foundation-pwa-setup: review
+  1-2-cloudflare-infrastructure-setup: backlog
+  1-3-bottle-registry-nutrition-data: backlog
+  1-4-qr-landing-page: backlog
+  1-5-unknown-bottle-handling: backlog
+  1-6-camera-activation-viewfinder: backlog
+  1-7-photo-capture-preview: backlog
+  1-8-image-retake-flow: backlog
+  1-9-worker-api-proxy-analyze-endpoint: backlog
+  1-10-gemini-vision-integration: backlog
+  1-11-groq-fallback-integration: backlog
+  1-12-ai-analysis-loading-state: backlog
+  1-13-confidence-level-handling: backlog
+  1-14-image-quality-issue-detection: backlog
+  epic-1-retrospective: optional
+
+  # Epic 2: Rich Consumption Insights
+  epic-2: backlog
+  2-1-volume-calculation-engine: backlog
+  2-2-unit-conversion-system: backlog
+  2-3-nutrition-calculator: backlog
+  2-4-fill-gauge-visual-component: backlog
+  2-5-volume-breakdown-display: backlog
+  2-6-nutrition-facts-panel: backlog
+  2-7-result-screen-layout: backlog
+  2-8-confidence-indicator-integration: backlog
+  2-9-estimate-disclaimer: backlog
+  2-10-low-confidence-retake-prompt: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3: Continuous Improvement Loop
+  epic-3: backlog
+  3-1-feedback-prompt-ui: backlog
+  3-2-corrected-estimate-slider: backlog
+  3-3-feedback-submission-flow: backlog
+  3-4-worker-feedback-endpoint: backlog
+  3-5-feedback-validation-logic: backlog
+  3-6-image-storage-to-r2: backlog
+  3-7-scan-metadata-storage: backlog
+  3-8-feedback-update-to-metadata: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: Resilience & Edge Cases
+  epic-4: backlog
+  4-1-ai-analysis-failure-handling: backlog
+  4-2-network-unavailability-detection: backlog
+  4-3-ios-browser-compatibility-check: backlog
+  4-4-camera-permission-denied-handling: backlog
+  4-5-privacy-notice-first-scan: backlog
+  4-6-estimate-accuracy-disclaimer: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: Deployment & Operations
+  epic-5: backlog
+  5-1-deployment-operations-setup: backlog
+  epic-5-retrospective: optional

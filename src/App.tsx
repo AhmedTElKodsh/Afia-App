@@ -20,6 +20,7 @@ import {
 import { TestHarness } from "./components/TestHarness.tsx";
 import { ScanHistory } from "./components/ScanHistory.tsx";
 import { BottleSelector } from "./components/BottleSelector.tsx";
+import { AdminDashboard } from "./components/AdminDashboard.tsx";
 import { useIosInAppBrowser } from "./hooks/useIosInAppBrowser.ts";
 import { analyzeBottle } from "./api/apiClient.ts";
 import { calculateVolumes } from "./utils/volumeCalculator.ts";
@@ -35,7 +36,7 @@ function isTestMode(): boolean {
   return params.get("test") === "true";
 }
 
-type CurrentView = "scan" | "history" | "test";
+type CurrentView = "scan" | "history" | "test" | "admin";
 
 export default function App() {
   const [currentView, setCurrentView] = useState<CurrentView>("scan");
@@ -259,6 +260,14 @@ function Navigation({ currentView, onViewChange }: NavigationProps) {
       >
         <span className="nav-icon">🧪</span>
         <span className="nav-label">Test</span>
+      </button>
+      <button
+        className={`nav-item ${currentView === "admin" ? "active" : ""}`}
+        onClick={() => onViewChange("admin")}
+        aria-label="Admin"
+      >
+        <span className="nav-icon">⚙️</span>
+        <span className="nav-label">Admin</span>
       </button>
     </nav>
   );

@@ -13,7 +13,7 @@ export function QrLanding({ bottle, onStartScan }: QrLandingProps) {
   return (
     <div className="qr-landing">
       <div className="qr-landing-content">
-        <div className="brand-mark">Safi</div>
+        <div className="brand-mark">Afia</div>
 
         {!isOnline && (
           <div className="offline-banner" role="alert">

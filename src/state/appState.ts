@@ -11,6 +11,7 @@ export type AppState =
 export interface AnalysisResult {
   scanId: string;
   fillPercentage: number;
+  remainingMl: number;
   confidence: "high" | "medium" | "low";
   aiProvider: "gemini" | "groq";
   latencyMs: number;
