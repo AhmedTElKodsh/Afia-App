@@ -1,15 +1,18 @@
 import { useState, useMemo } from "react";
 import { useScanHistory, type StoredScan } from "../hooks/useScanHistory";
+import { ConsumptionTrends } from "./ConsumptionTrends";
 import { formatDate, formatTime } from "../utils/formatters";
 import "./ScanHistory.css";
 
 type DateRange = "all" | 7 | 30;
+type Tab = "history" | "trends";
 
 export function ScanHistory() {
   const { scans, searchScans, getScansByDateRange, deleteScan, clearHistory, getStats } = useScanHistory();
   const [dateRange, setDateRange] = useState<DateRange>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedScan, setSelectedScan] = useState<StoredScan | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>("history");
 
   // Filter scans by date range and search
   const filteredScans = useMemo(() => {
@@ -43,15 +46,41 @@ export function ScanHistory() {
   return (
     <div className="scan-history">
       <header className="history-header">
-        <h2>Scan History</h2>
+        <h2>History & Trends</h2>
         <div className="history-stats">
           <span className="stat">{stats.totalScans} scans</span>
           <span className="stat">{stats.totalConsumedMl}ml total</span>
         </div>
       </header>
 
-      {/* Filters */}
-      <div className="history-filters">
+      {/* Tabs */}
+      <div className="history-tabs">
+        <button
+          className={activeTab === "history" ? "active" : ""}
+          onClick={() => setActiveTab("history")}
+        >
+          History
+        </button>
+        <button
+          className={activeTab === "trends" ? "active" : ""}
+          onClick={() => setActiveTab("trends")}
+        >
+          Trends
+        </button>
+      </div>
+
+      {/* Trends Tab */}
+      {activeTab === "trends" && <ConsumptionTrends />}
+
+      {/* History Tab */}
+      {activeTab === "history" && (
+        <>
+
+      {/* History Tab */}
+      {activeTab === "history" && (
+        <>
+          {/* Filters */}
+          <div className="history-filters">
         <div className="date-range-filter">
           <button
             className={dateRange === 7 ? "active" : ""}
@@ -220,7 +249,9 @@ function ScanDetailModal({ scan, onClose, onDelete }: ScanDetailModalProps) {
             Close
           </button>
         </footer>
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
