@@ -26,7 +26,6 @@ export function ConsumptionTrends() {
   const dailyData = useMemo(() => {
     if (scans.length === 0) return [];
 
-    const now = new Date();
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - timeRange);
 

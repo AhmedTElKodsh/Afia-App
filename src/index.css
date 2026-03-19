@@ -1,49 +1,235 @@
-:root {
-  /* Colors */
-  --color-primary: #2d6a4f;
-  --color-primary-light: #40916c;
-  --color-surface: #ffffff;
-  --color-background: #f8f9fa;
-  --color-text-primary: #1a1a2e;
-  --color-text-secondary: #6c757d;
-  --color-text-on-primary: #ffffff;
-  --color-success: #2d6a4f;
-  --color-warning: #e9a820;
-  --color-danger: #d64045;
-  --color-fill-high: #40916c;
-  --color-fill-medium: #e9a820;
-  --color-fill-low: #d64045;
-  --color-overlay: rgba(0, 0, 0, 0.5);
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap");
 
-  /* Typography */
-  --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  --font-size-hero: 3rem;
-  --font-size-h1: 1.5rem;
-  --font-size-h2: 1.25rem;
+/* ========================================
+   PREMIUM DESIGN TOKENS - Afia App
+   Premium Glassmorphic Design System
+   ======================================== */
+
+:root {
+  /* Brand Colors - Afia Egypt Official Palette */
+  --color-primary: #008844; /* Afia Green */
+  --color-primary-light: #00a854;
+  --color-primary-dark: #006633;
+  --color-primary-glow: rgba(0, 136, 68, 0.30);
+
+  /* Accent - Golden Yellow */
+  --color-accent: #ffcc00; /* Golden Yellow */
+  --color-accent-light: #ffd633;
+  --color-accent-dark: #e6b800;
+  --color-accent-glow: rgba(255, 204, 0, 0.45);
+
+  /* Background Palette - Deep Obsidian Navy (Gold Noir) */
+  --color-bg-primary: #020810;
+  --color-bg-secondary: #050e1d;
+  --color-bg-tertiary: #091b36;
+  --color-bg-elevated: #0f2847;
+
+  /* Ambient Background Gradient - richer, more vivid orbs */
+  --gradient-ambient:
+    radial-gradient(circle at 15% 55%, rgba(0, 136, 68, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 82% 28%, rgba(255, 204, 0, 0.14) 0%, transparent 50%),
+    radial-gradient(circle at 50% 92%, rgba(14, 80, 200, 0.13) 0%, transparent 58%);
+
+  /* Brand Gradient */
+  --gradient-brand: linear-gradient(90deg, #ffcc00, #008844);
+
+  /* Text Colors — boosted secondary contrast */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.72);
+  --color-text-tertiary: rgba(255, 255, 255, 0.44);
+  --color-text-inverse: #020810;
+
+  /* Semantic Colors */
+  --color-success: #4ade80;
+  --color-success-bg: rgba(74, 222, 128, 0.12);
+  --color-warning: #f57c00;
+  --color-warning-bg: rgba(245, 124, 0, 0.12);
+  --color-danger: #ef4444;
+  --color-danger-bg: rgba(239, 68, 68, 0.12);
+
+  /* Fill Level Indicators (semantic, independent from brand primary) */
+  --color-fill-high: #008844;
+  --color-fill-medium: #ffcc00;
+  --color-fill-low: #ef4444;
+
+  /* Glass Effects - Green Noir: darker base, crisper green borders */
+  --glass-bg: rgba(0, 136, 68, 0.07);
+  --glass-bg-hover: rgba(0, 136, 68, 0.14);
+  --glass-bg-light: rgba(0, 136, 68, 0.10);
+  --glass-bg-subtle: rgba(0, 136, 68, 0.03);
+  --glass-border: rgba(0, 136, 68, 0.24);
+  --glass-border-strong: rgba(0, 136, 68, 0.44);
+  --glass-shadow: 0 8px 40px 0 rgba(0, 3, 14, 0.72);
+  --glass-inset: inset 0 0 0 1px rgba(0, 136, 68, 0.09);
+  --glass-blur: blur(20px);
+
+  /* Typography Scale */
+  --font-family: "Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --font-size-hero: clamp(3rem, 8vw, 6rem);
+  --font-size-section: clamp(2rem, 5vw, 3rem);
+  --font-size-headline: clamp(1.5rem, 3vw, 1.875rem);
+  --font-size-subhead: clamp(1.125rem, 2vw, 1.25rem);
   --font-size-body: 1rem;
   --font-size-caption: 0.875rem;
   --font-size-small: 0.75rem;
 
-  /* Spacing */
+  /* Font Weights */
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Spacing System */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
   --space-lg: 24px;
   --space-xl: 32px;
   --space-2xl: 48px;
+  --space-3xl: 64px;
+  --space-section: 112px;
 
   /* Border Radius */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
+  --radius-xl: 24px;
   --radius-full: 9999px;
 
   /* Shadows */
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-button: 0 2px 4px rgba(0, 0, 0, 0.12);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 20px 40px -5px rgba(0, 0, 0, 0.7);
+  --shadow-button: 0 8px 28px 0 rgba(245, 197, 24, 0.52);
+  --shadow-glow: 0 0 44px rgba(245, 197, 24, 0.56);
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 500ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  /* Z-Index Scale */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal: 300;
+  --z-toast: 400;
+
+  /* ── Compatibility aliases (for legacy component CSS) ── */
+  --color-background:    var(--color-bg-primary);
+  --color-surface:       var(--color-bg-elevated);
+  --color-border:        var(--glass-border);
+  --color-text:          var(--color-text-primary);
+
+  /* Confidence badge fill colours */
+  --color-success-light: rgba(74, 222, 128, 0.15);
+  --color-warning-light: rgba(245, 124, 0, 0.15);
+  --color-danger-light:  rgba(239, 68, 68, 0.15);
+
+  /* Font-size aliases for legacy component CSS */
+  --font-size-xs:   0.6875rem;
+  --font-size-sm:   0.75rem;
+  --font-size-base: 1rem;
+  --font-size-lg:   1.125rem;
+  --font-size-xl:   1.25rem;
+  --font-size-h2:   clamp(1.25rem, 3vw, 1.5rem);
+
+  /* Misc missing tokens */
+  --radius-xs: 4px;
 }
 
+/* ========================================
+   LIGHT MODE — toggled by html.theme-light class
+   ======================================== */
+html.theme-light {
+  /* Gold Noir Light — warm cream, rich amber, high-contrast text */
+  --color-bg-primary:    #fdfbf4;
+  --color-bg-secondary:  #f7f3e8;
+  --color-bg-tertiary:   #ede7d2;
+  --color-bg-elevated:   #ffffff;
+
+  --color-text-primary:   #0a0e17;
+  --color-text-secondary: rgba(10, 14, 23, 0.72);
+  --color-text-tertiary:  rgba(10, 14, 23, 0.50);
+  --color-text-inverse:   #ffffff;
+
+  --color-primary:       #b8860a;
+  --color-primary-light: #e8b010;
+  --color-primary-dark:  #8f6806;
+  --color-primary-glow:  rgba(184, 134, 10, 0.38);
+
+  --gradient-ambient:
+    radial-gradient(circle at 20% 60%, rgba(245, 124, 0, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 78% 22%, rgba(184, 134, 10, 0.10) 0%, transparent 50%);
+  --gradient-brand: linear-gradient(90deg, #9e7406, #c49208);
+
+  --glass-bg:            rgba(255, 255, 255, 0.74);
+  --glass-bg-hover:      rgba(255, 255, 255, 0.90);
+  --glass-bg-light:      rgba(255, 255, 255, 0.58);
+  --glass-bg-subtle:     rgba(255, 255, 255, 0.42);
+  --glass-border:        rgba(184, 134, 10, 0.28);
+  --glass-border-strong: rgba(184, 134, 10, 0.50);
+  --glass-shadow:        0 8px 32px rgba(80, 50, 0, 0.12);
+  --glass-inset:         inset 0 0 0 1px rgba(184, 134, 10, 0.18);
+
+  --shadow-button: 0 8px 28px 0 rgba(184, 134, 10, 0.40);
+  --shadow-glow:   0 0 40px rgba(184, 134, 10, 0.40);
+
+  /* Shadow scale — warm amber-tinted for light's glassy depth */
+  --shadow-sm: 0 1px 3px 0  rgba(100, 65, 0, 0.14),
+               0 1px 2px -1px rgba(100, 65, 0, 0.10);
+  --shadow-md: 0 4px 10px -1px rgba(100, 65, 0, 0.18),
+               0 2px 6px  -2px rgba(100, 65, 0, 0.12);
+  --shadow-lg: 0 12px 24px -4px rgba(100, 65, 0, 0.22),
+               0 4px 10px  -3px rgba(100, 65, 0, 0.14);
+  --shadow-xl: 0 20px 48px -6px rgba(100, 65, 0, 0.26),
+               0 8px 18px  -4px rgba(100, 65, 0, 0.18);
+
+  /* Glass inset: white top-edge specular hit + amber inner border */
+  --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.88),
+                 inset 0 -1px 0 rgba(184, 134, 10, 0.10),
+                 inset 0 0 0 1px rgba(184, 134, 10, 0.16);
+
+  /* Glass shadow: warm tinted ambient glow beneath elements */
+  --glass-shadow: 0 8px 32px rgba(120, 78, 0, 0.18),
+                  0 2px 8px  rgba(120, 78, 0, 0.10);
+  --color-success:    #15803d;
+  --color-success-bg: rgba(21, 128, 61, 0.10);
+  --color-success-light: rgba(21, 128, 61, 0.12);
+
+  --color-fill-high:   #b8860a;
+  --color-fill-medium: #d4670a;
+  --color-fill-low:    #dc2626;
+
+  /* Light mode compatibility aliases */
+  --color-background: var(--color-bg-primary);
+  --color-surface:    var(--color-bg-elevated);
+  --color-border:     var(--glass-border);
+  --color-text:       var(--color-text-primary);
+}
+
+/* ========================================
+   HIGH CONTRAST MODE
+   ======================================== */
+@media (prefers-contrast: high) {
+  :root {
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #e5e5e5;
+    --glass-border: rgba(255, 255, 255, 0.35);
+    --glass-border-strong: rgba(255, 255, 255, 0.5);
+    --color-success: #4ade80;
+    --color-warning: #fbbf24;
+    --color-danger: #f87171;
+  }
+}
+
+/* ========================================
+   GLOBAL RESET
+   ======================================== */
 *,
 *::before,
 *::after {
@@ -60,84 +246,245 @@ html {
 body {
   font-family: var(--font-family);
   font-size: var(--font-size-body);
-  line-height: 1.5;
+  line-height: 1.6;
   color: var(--color-text-primary);
-  background-color: var(--color-background);
+  background-color: var(--color-bg-primary);
+  background-image: var(--gradient-ambient);
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.4s ease, color 0.3s ease, background-image 0.4s ease;
+}
+
+/* ========================================
+   RTL SUPPORT
+   ======================================== */
+html[dir="rtl"] {
+  --font-family: "Outfit", "Tajawal", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+html[dir="rtl"] body {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] .btn {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .volume-grid {
+  direction: rtl;
+}
+
+html[dir="rtl"] .icon-flip {
+  transform: scaleX(-1);
 }
 
 #root {
-  max-width: 430px;
+  max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
+  padding: 0 var(--space-md);
   min-height: 100dvh;
+  position: relative;
+  overflow-x: hidden;
 }
 
-/* Utility classes */
+/* ========================================
+   GLASS CARD
+   ======================================== */
 .card {
-  background: var(--color-surface);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  box-shadow: var(--glass-shadow);
+  transition: background var(--transition-slow), border-color var(--transition-slow);
+}
+
+.card:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-strong);
+}
+
+.card-compact {
   padding: var(--space-md);
 }
 
+.card-elevated {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ========================================
+   BUTTONS
+   ======================================== */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   min-height: 48px;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-sm);
+  padding: var(--space-sm) var(--space-xl);
+  border-radius: var(--radius-full);
   font-family: var(--font-family);
   font-size: var(--font-size-body);
-  font-weight: 600;
+  font-weight: var(--font-weight-bold);
   cursor: pointer;
-  border: 2px solid transparent;
-  transition: background-color 0.15s, border-color 0.15s;
+  border: none;
+  transition: all var(--transition-base);
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  gap: var(--space-sm);
+  letter-spacing: 0.02em;
 }
 
+/* Primary: Mint gradient with glow */
 .btn-primary {
-  background-color: var(--color-primary);
-  color: var(--color-text-on-primary);
-  border-color: var(--color-primary);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: var(--color-text-inverse);
+  box-shadow: var(--shadow-button);
 }
 
 .btn-primary:hover {
-  background-color: var(--color-primary-light);
-  border-color: var(--color-primary-light);
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px var(--color-primary-glow);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  filter: brightness(0.96);
 }
 
 .btn-primary:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
+  transform: none;
 }
 
+/* Outline: Glass border */
 .btn-outline {
-  background-color: transparent;
-  color: var(--color-primary);
-  border-color: var(--color-primary);
+  background: var(--glass-bg);
+  color: var(--color-text-primary);
+  border: 1px solid var(--glass-border-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
 }
 
 .btn-outline:hover {
-  background-color: var(--color-primary);
-  color: var(--color-text-on-primary);
+  background: var(--glass-bg-hover);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.btn-ghost:hover {
+  background: var(--glass-bg);
+  color: var(--color-text-primary);
+}
+
+/* Danger: Red gradient */
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #ffffff;
+  box-shadow: 0 8px 24px 0 rgba(239, 68, 68, 0.35);
+}
+
+.btn-danger:hover {
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(239, 68, 68, 0.50);
+}
+
+.btn-danger:active {
+  transform: translateY(0);
+  filter: brightness(0.96);
 }
 
 .btn-full {
   width: 100%;
 }
 
+.btn-sm {
+  min-height: 44px;
+  padding: var(--space-xs) var(--space-md);
+  font-size: var(--font-size-small);
+}
+
+.btn-lg {
+  min-height: 56px;
+  padding: var(--space-md) var(--space-2xl);
+  font-size: var(--font-size-subhead);
+}
+
+/* ========================================
+   TYPOGRAPHY UTILITIES
+   ======================================== */
 .text-secondary {
   color: var(--color-text-secondary);
 }
 
-.text-caption {
-  font-size: var(--font-size-caption);
+.text-tertiary {
+  color: var(--color-text-tertiary);
 }
 
-/* Reduced motion */
+.text-caption {
+  font-size: var(--font-size-caption);
+  line-height: 1.5;
+}
+
+.text-small {
+  font-size: var(--font-size-small);
+}
+
+.text-headline {
+  font-size: var(--font-size-headline);
+  font-weight: var(--font-weight-semibold);
+}
+
+.text-section {
+  font-size: var(--font-size-section);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.02em;
+}
+
+.text-hero {
+  font-size: var(--font-size-hero);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.focus-visible:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   REDUCED MOTION
+   ======================================== */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

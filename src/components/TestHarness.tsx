@@ -82,11 +82,11 @@ export function TestHarness() {
   return (
     <div className="test-harness">
       <header className="test-header">
-        <h1>🧪 AI Analysis Test Harness</h1>
-        <p>Stage 1: Test image analysis with pre-captured photos</p>
+        <h1 className="text-section">🧪 Test Harness</h1>
+        <p className="text-caption text-secondary">Stage 1: Test image analysis with pre-captured photos</p>
       </header>
 
-      <div className="test-container">
+      <div className="card test-container">
         <div className="test-controls">
           <div className="control-group">
             <label htmlFor="sku-select">Select Bottle:</label>
@@ -129,7 +129,10 @@ export function TestHarness() {
 
           {error && (
             <div className="error-message">
-              <strong>Error:</strong> {error}
+              <span aria-hidden="true">⚠️</span>
+              <div>
+                <strong>Error:</strong> {error}
+              </div>
             </div>
           )}
         </div>
@@ -137,7 +140,7 @@ export function TestHarness() {
         {currentResult && (
           <div className="current-result">
             <h2>Latest Result</h2>
-            <div className="result-card">
+            <div className="card card-compact result-card">
               <div className="result-row">
                 <span className="label">Fill Level:</span>
                 <span className="value">{currentResult.fillPercentage}%</span>
@@ -168,14 +171,14 @@ export function TestHarness() {
           <h2>Test History ({testHistory.length})</h2>
           <div className="export-buttons">
             <button
-              className="btn btn-small"
+              className="btn btn-outline btn-sm"
               onClick={handleExportJSON}
               disabled={testHistory.length === 0}
             >
               Export JSON
             </button>
             <button
-              className="btn btn-small"
+              className="btn btn-outline btn-sm"
               onClick={handleExportCSV}
               disabled={testHistory.length === 0}
             >
@@ -189,11 +192,11 @@ export function TestHarness() {
         ) : (
           <div className="history-list">
             {testHistory.map((test) => (
-              <div key={test.id} className="history-item">
+              <div key={test.id} className="card card-compact history-item">
                 <div className="history-info">
                   <strong>{test.bottleName}</strong>
                   <span className="history-meta">
-                    {test.imageName} •{" "}
+                    {test.imageName} &middot;{" "}
                     {new Date(test.timestamp).toLocaleString()}
                   </span>
                 </div>
@@ -203,6 +206,7 @@ export function TestHarness() {
                   </span>
                   <span
                     className={`confidence confidence-${test.analysisResult.confidence}`}
+                    style={{ fontSize: 'var(--font-size-caption)', textTransform: 'uppercase' }}
                   >
                     {test.analysisResult.confidence}
                   </span>

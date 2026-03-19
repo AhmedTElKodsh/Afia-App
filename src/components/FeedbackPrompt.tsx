@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { submitFeedback } from "../api/apiClient.ts";
 import "./FeedbackPrompt.css";
 
@@ -11,16 +11,38 @@ interface FeedbackPromptProps {
   onSubmitted: () => void;
 }
 
+/**
+ * Employee-only feedback flag checker
+ * Uses localStorage to persist employee/tester status
+ * Set via query param: ?employee=true or manual toggle in dev
+ */
+function isEmployeeMode(): boolean {
+  // Check URL param first (for easy testing)
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlEmployee = urlParams.get("employee");
+  if (urlEmployee === "true") {
+    localStorage.setItem("afia_employee", "true");
+    return true;
+  }
+  // Check persisted state
+  return localStorage.getItem("afia_employee") === "true";
+}
+
 export function FeedbackPrompt({
   scanId,
   fillPercentage,
   resultTimestamp,
   onSubmitted,
 }: FeedbackPromptProps) {
+  const [isEmployee, setIsEmployee] = useState(false);
   const [rating, setRating] = useState<AccuracyRating | null>(null);
   const [sliderValue, setSliderValue] = useState(fillPercentage);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIsEmployee(isEmployeeMode());
+  }, []);
 
   const showSlider = rating && rating !== "about_right";
 
@@ -70,9 +92,17 @@ export function FeedbackPrompt({
     { value: "way_off", label: "Way off" },
   ];
 
+  // Employee-only: Don't show feedback prompt to public users
+  if (!isEmployee) {
+    return null;
+  }
+
   return (
     <div className="feedback-prompt card">
-      <h3 className="feedback-question">Was this estimate accurate?</h3>
+      <div className="feedback-header">
+        <h3 className="feedback-question">Was this estimate accurate?</h3>
+        <span className="employee-badge">Employee/Test Mode</span>
+      </div>
 
       <div className="rating-grid">
         {ratings.map((r) => (
@@ -114,6 +144,10 @@ export function FeedbackPrompt({
       )}
 
       {error && <p className="feedback-error">{error}</p>}
+
+      <p className="feedback-note">
+        ℹ️ Feedback is only collected from internal testers and employees
+      </p>
     </div>
   );
 }

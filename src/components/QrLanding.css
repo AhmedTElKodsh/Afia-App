@@ -1,66 +1,189 @@
+/* ========================================
+   QR LANDING (IDLE Dashboard)
+   Premium Glassmorphic Design
+   ======================================== */
 .qr-landing {
   min-height: 100dvh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-lg);
-}
-
-.offline-banner {
-  background: #f8d7da;
-  border: 1px solid var(--color-danger);
-  border-radius: var(--radius-sm);
-  padding: var(--space-md);
-  text-align: center;
-  color: var(--color-danger);
-  margin-bottom: var(--space-md);
-}
-
-.offline-banner p {
-  margin: 0;
-}
-
-.offline-banner p + p {
-  margin-top: var(--space-xs);
-}
-
-.qr-landing-content {
-  width: 100%;
+  padding: var(--space-lg) var(--space-lg) var(--space-2xl);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-lg);
+  animation: qrl-fade-up var(--transition-slow) ease-out both;
 }
 
-.brand-mark {
-  font-size: var(--font-size-h1);
-  font-weight: 700;
-  color: var(--color-primary);
-  letter-spacing: 0.05em;
+@keyframes qrl-fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.bottle-info {
+/* ── Header ── */
+.qrl-header {
   width: 100%;
-  text-align: center;
-  padding: var(--space-xl) var(--space-md);
+  max-width: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) 0;
 }
 
-.bottle-icon {
-  font-size: 3rem;
+.qrl-logo {
+  font-weight: var(--font-weight-bold);
+  font-size: 1.25rem;
+  letter-spacing: 0.22em;
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.qrl-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.qrl-status-icon {
+  flex-shrink: 0;
+}
+
+.qrl-status-online  { color: var(--color-primary); }
+.qrl-status-offline { color: var(--color-danger); }
+
+/* ── Offline banner ── */
+.qrl-offline-banner {
+  width: 100%;
+  max-width: 400px;
+  background: var(--color-danger-bg) !important;
+  border-color: var(--color-danger) !important;
+  color: var(--color-danger);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
+.qrl-offline-title {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-caption);
+  margin: 0;
+}
+
+/* ── Bottle selector pill ── */
+.qrl-selector-wrap {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  justify-content: center;
+}
+
+.qrl-selector-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+/* ── Gauge ── */
+.qrl-gauge-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl) 0; /* was var(--space-md) — more hero breathing room */
+}
+
+/* ── Camera Guidance ── */
+.qrl-camera-guide {
+  width: 100%;
+  max-width: 400px;
+  text-align: left;
+  background: var(--glass-bg-subtle, rgba(255, 255, 255, 0.03));
+}
+
+/* ── CTA ── */
+.qrl-cta-wrapper {
+  width: 100%;
+  max-width: 400px;
+}
+
+.qrl-cta {
+  width: 100%;
+  font-size: var(--font-size-body);
+  letter-spacing: 0.05em;
+  padding: var(--space-lg) var(--space-xl);
+  min-height: 56px;
+}
+
+/* ── Sparkline card ── */
+.qrl-sparkline-card {
+  width: 100%;
+  max-width: 400px;
+}
+
+.qrl-sparkline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: var(--space-md);
 }
 
-.bottle-name {
-  font-size: var(--font-size-h2);
-  font-weight: 600;
-  margin-bottom: var(--space-xs);
+.qrl-sparkline-label {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.bottle-details {
-  text-transform: capitalize;
+.qrl-sparkline-count {
+  font-size: var(--font-size-small);
+  color: var(--color-text-tertiary);
 }
 
-.baseline-note {
+.qrl-sparkline {
+  height: 72px; /* M2 FIX: was 56px — increased for better data visual range */
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-sm);
+}
+
+.qrl-bar {
+  flex: 1;
+  background: var(--glass-bg-light);
+  border-radius: 4px;
+  min-height: 8%;
+  transition: height var(--transition-slow);
+}
+
+.qrl-bar--active {
+  background: rgba(245, 197, 24, 0.28);
+  border: 1px solid var(--color-primary);
+  box-shadow: 0 0 8px var(--color-primary-glow);
+}
+
+/* Focus states for keyboard navigation */
+.qrl-bar:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ── Baseline note ── */
+.qrl-note {
+  width: 100%;
+  max-width: 400px;
   text-align: center;
-  max-width: 280px;
+  color: var(--color-text-tertiary);
+  line-height: 1.6;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .qr-landing { animation: none; }
 }

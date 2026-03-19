@@ -1,0 +1,120 @@
+/* ========================================
+   AnalyzingOverlay Component
+   H1 fix: extracts API_PENDING inline styles
+   H2 fix: adds Cancel ghost button
+   ======================================== */
+
+.analyzing-overlay {
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--color-bg-primary);
+}
+
+/* ── Dimmed background image ── */
+.analyzing-bg-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.35) blur(2px);
+  transform: scale(1.04); /* prevent blur edge bleed */
+}
+
+/* ── Dark translucent scrim over image ── */
+.analyzing-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.35) 0%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+}
+
+/* ── Centered content ── */
+.analyzing-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-2xl);
+  text-align: center;
+  animation: analyzing-fade-in 0.35s ease-out both;
+}
+
+@keyframes analyzing-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Bottle animation wrapper (reuses ApiStatus.css classes) ── */
+.analyzing-animation {
+  margin-bottom: var(--space-sm);
+}
+
+/* ── Title text ── */
+.analyzing-title {
+  font-size: var(--font-size-headline);
+  font-weight: var(--font-weight-semibold);
+  color: #ffffff;
+  margin: 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+  letter-spacing: 0.03em;
+}
+
+/* ── Subtitle text ── */
+.analyzing-sub {
+  font-size: var(--font-size-body);
+  color: rgba(255, 255, 255, 0.72);
+  margin: 0;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* ── Cancel button ── */
+.analyzing-cancel-btn {
+  margin-top: var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: rgba(255, 255, 255, 0.75);
+  border-color: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  min-height: 44px; /* WCAG 2.5.5 */
+  padding: var(--space-sm) var(--space-xl);
+}
+
+.analyzing-cancel-btn:hover {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.analyzing-cancel-btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 3px;
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .analyzing-content {
+    animation: none;
+  }
+  .analyzing-bg-image {
+    filter: brightness(0.35);
+    transform: none;
+  }
+}
+
+/* ── Light mode adjustments ── */
+:root.light .analyzing-overlay {
+  background: var(--color-bg-primary);
+}

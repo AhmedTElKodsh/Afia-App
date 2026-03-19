@@ -1,7 +1,7 @@
 import type { Context } from "hono";
 import type { Env } from "./types.ts";
 import { validateFeedback } from "./validation/feedbackValidator.ts";
-import { updateScanWithFeedback } from "./storage/r2Client.ts";
+import { updateScanWithFeedback } from "./storage/supabaseClient.ts";
 
 export async function handleFeedback(c: Context<{ Bindings: Env }>): Promise<Response> {
   const body = await c.req.json<{
@@ -47,7 +47,7 @@ export async function handleFeedback(c: Context<{ Bindings: Env }>): Promise<Res
 
   const feedbackId = crypto.randomUUID();
 
-  // Update R2 metadata with feedback (non-blocking)
+  // Update Supabase metadata with feedback (non-blocking)
   c.executionCtx.waitUntil(
     updateScanWithFeedback(c.env, body.scanId, {
       feedbackId,
@@ -58,7 +58,7 @@ export async function handleFeedback(c: Context<{ Bindings: Env }>): Promise<Res
       validationFlags: validation.validationFlags.length > 0 ? validation.validationFlags : undefined,
       confidenceWeight: validation.confidenceWeight,
       trainingEligible: validation.trainingEligible,
-    }).catch((err) => console.error("R2 feedback update failed:", err))
+    }).catch((err) => console.error("Supabase feedback update failed:", err))
   );
 
   return c.json({

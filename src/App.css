@@ -1,9 +1,14 @@
-/* Photo preview screen — lives in App.tsx */
+/* ========================================
+   APP GLOBAL STYLES
+   ======================================== */
+
+/* Photo preview screen */
 .photo-preview-screen {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: #000;
+  background: var(--color-bg-primary);
+  position: relative;
 }
 
 .preview-image-container {
@@ -20,13 +25,145 @@
   object-fit: contain;
 }
 
+/* Glass action bar at the bottom of photo preview */
 .preview-actions {
   display: flex;
   gap: var(--space-md);
-  padding: var(--space-lg);
-  background: var(--color-surface);
+  padding: var(--space-lg) var(--space-xl);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-top: 1px solid var(--glass-border);
 }
 
 .preview-actions .btn {
   flex: 1;
+}
+
+/* Loading fallback for lazy-loaded components */
+.loading-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Focus visible styles for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Skip to main content link for screen readers */
+.skip-to-main {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  padding: var(--space-sm) var(--space-md);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  z-index: 100;
+}
+
+.skip-to-main:focus {
+  top: var(--space-sm);
+}
+
+/* Admin mode sticky indicator */
+.admin-mode-indicator {
+  position: fixed;
+  top: max(calc(var(--space-md) + env(safe-area-inset-top, 0px)), 80px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-danger);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  z-index: 99; /* Below app controls (z-index: var(--z-sticky)) */
+  box-shadow: 0 4px 12px rgba(255, 60, 60, 0.4);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--transition-base);
+}
+
+/* Box variant (legacy) - centered red pill */
+.admin-mode-indicator--box {
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-danger);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  box-shadow: 0 4px 12px rgba(255, 60, 60, 0.4);
+}
+
+/* Text variant (new) - centered, no background box */
+.admin-mode-indicator--text {
+  left: 50%;
+  transform: translateX(-50%);
+  background: transparent;
+  color: var(--color-text-secondary);
+  padding: 4px 8px;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  pointer-events: auto;
+  cursor: default;
+  gap: 6px;
+  font-weight: var(--font-weight-medium);
+}
+
+.admin-mode-indicator--text:hover {
+  color: var(--color-text-primary);
+}
+
+/* Icon and text spacing */
+.admin-mode-indicator__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.admin-mode-indicator__text {
+  white-space: nowrap;
+  font-size: var(--font-size-small);
+}
+
+/* RTL support - stays centered */
+html[dir="rtl"] .admin-mode-indicator--text {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* RTL support for box variant - stays centered */
+html[dir="rtl"] .admin-mode-indicator--box {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Dark theme - text variant uses slightly brighter color */
+[data-theme="dark"] .admin-mode-indicator--text {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+[data-theme="dark"] .admin-mode-indicator--text:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .admin-mode-indicator {
+    transition: none;
+  }
 }

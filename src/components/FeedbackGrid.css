@@ -1,0 +1,268 @@
+/* ========================================
+   FeedbackGrid Component
+   Direction 1 (Spitfire Minimal) + 
+   Direction 5 (Swiss Precision)
+   ======================================== */
+
+.feedback-grid-container {
+  width: 100%;
+  padding: var(--space-lg);
+}
+
+/* Title */
+.feedback-title {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin: 0 0 var(--space-lg) 0;
+  position: relative;
+}
+
+.feedback-title::before,
+.feedback-title::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 60px;
+  height: 1px;
+  background: var(--glass-border);
+}
+
+.feedback-title::before {
+  left: calc(50% - 80px);
+}
+
+.feedback-title::after {
+  right: calc(50% - 80px);
+}
+
+/* Grid Layout */
+.feedback-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+/* Feedback Button */
+.feedback-button {
+  min-height: 120px;
+  padding: var(--space-md);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.feedback-button:hover:not(:disabled) {
+  background: var(--color-bg-elevated);
+  border-color: var(--glass-border-strong);
+  transform: translateY(-2px);
+}
+
+.feedback-button:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.feedback-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.feedback-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Selected State */
+.feedback-button.selected {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #000000;
+}
+
+.feedback-button.selected:hover {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-light);
+}
+
+/* Icon */
+.feedback-icon {
+  font-size: 32px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  margin-bottom: var(--space-xs);
+}
+
+/* Label */
+.feedback-label {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* Actions */
+.feedback-actions {
+  display: flex;
+  justify-content: center;
+  animation: fadeIn 200ms ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Submit Button */
+.feedback-submit-btn {
+  min-height: 48px;
+  padding: var(--space-sm) var(--space-2xl);
+  background: var(--color-text-primary);
+  color: var(--color-bg-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.feedback-submit-btn:hover:not(:disabled) {
+  background: #e5e5e5;
+  transform: translateY(-2px);
+}
+
+.feedback-submit-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.feedback-submit-btn:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.feedback-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Confirmation State */
+.feedback-confirmation {
+  text-align: center;
+  padding: var(--space-2xl) var(--space-lg);
+  animation: slideUp 300ms ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Checkmark */
+.feedback-checkmark {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--space-lg);
+  background: var(--color-success);
+  color: #000000;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: var(--font-weight-bold);
+  animation: scaleIn 300ms ease-out 100ms both;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Confirmation Title */
+.feedback-confirmation-title {
+  font-size: var(--font-size-headline);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-sm) 0;
+}
+
+/* Confirmation Text */
+.feedback-confirmation-text {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ========================================
+   Responsive Adjustments
+   ======================================== */
+
+@media (min-width: 640px) {
+  .feedback-grid {
+    gap: var(--space-lg);
+  }
+
+  .feedback-button {
+    min-height: 140px;
+  }
+}
+
+/* ========================================
+   Reduced Motion
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .feedback-actions,
+  .feedback-confirmation,
+  .feedback-checkmark {
+    animation: none;
+  }
+}
+
+/* ========================================
+   High Contrast Mode
+   ======================================== */
+
+@media (prefers-contrast: high) {
+  .feedback-button {
+    border-width: 2px;
+  }
+
+  .feedback-button.selected {
+    border-color: #ffffff;
+  }
+}

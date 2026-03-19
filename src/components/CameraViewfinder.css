@@ -1,0 +1,362 @@
+/* ========================================
+   CameraViewfinder Component
+   Direction 1 (Spitfire Minimal) + 
+   Direction 5 (Swiss Precision)
+   ======================================== */
+
+.camera-viewfinder {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  max-height: 100vh;
+  background: var(--color-bg-primary);
+  overflow: hidden;
+}
+
+/* ========================================
+   Video Element
+   ======================================== */
+
+.camera-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Hide video when not active */
+.camera-viewfinder:not(.camera-active) .camera-video {
+  display: none;
+}
+
+/* ========================================
+   Hidden Canvas
+   ======================================== */
+
+.camera-canvas {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ========================================
+   Loading State
+   ======================================== */
+
+.camera-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+}
+
+.camera-loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--glass-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.camera-loading-text {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* ========================================
+   Error State
+   ======================================== */
+
+.camera-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-2xl);
+  text-align: center;
+}
+
+.camera-error-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fff3cd, #ffe08a);
+  box-shadow:
+    0 0 0 8px rgba(255, 193, 7, 0.12),
+    0 6px 20px rgba(220, 150, 0, 0.28);
+  animation: camera-error-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+  margin-bottom: var(--space-xs);
+}
+
+@keyframes camera-error-pop {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+.camera-error-badge-icon {
+  color: #d97706; /* amber-600 */
+}
+
+.camera-error-title {
+  font-size: var(--font-size-headline);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-xs) 0;
+}
+
+.camera-error-text {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: 0 0 var(--space-lg) 0;
+  max-width: 400px;
+}
+
+/* M1 FIX: removed bespoke .camera-retry-btn CSS — use .btn.btn-primary instead */
+/* (The button in CameraViewfinder.tsx should have className="btn btn-primary") */
+
+/* ========================================
+   Framing Guide Overlay
+   ======================================== */
+
+.camera-framing-guide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.framing-guide-border {
+  position: absolute;
+  width: 65%;
+  height: 55%;
+  border: 2px dashed var(--color-primary);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    0 0 0 9999px rgba(0, 0, 0, 0.55),
+    0 0 20px var(--color-primary-glow),
+    inset 0 0 20px rgba(0, 136, 68, 0.05);
+  animation: framePulse 2s ease-in-out infinite;
+}
+
+@keyframes framePulse {
+  0%, 100% {
+    border-color: var(--color-primary-glow);
+    box-shadow:
+      0 0 0 9999px rgba(0, 0, 0, 0.55),
+      0 0 16px var(--color-primary-glow);
+  }
+  50% {
+    border-color: var(--color-primary);
+    box-shadow:
+      0 0 0 9999px rgba(0, 0, 0, 0.55),
+      0 0 30px var(--color-primary-glow);
+  }
+}
+
+.framing-guide-text {
+  position: absolute;
+  bottom: calc(50% - 28%);
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ffffff;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+  pointer-events: none;
+  letter-spacing: 0.05em;
+}
+
+/* ========================================
+   Torch/Flash Toggle
+   ======================================== */
+
+.camera-torch-btn {
+  position: absolute;
+  top: var(--space-lg);
+  right: var(--space-lg);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 24px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.camera-torch-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: scale(1.05);
+}
+
+.camera-torch-btn:active {
+  transform: scale(0.95);
+}
+
+.camera-torch-btn:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   Capture Button
+   ======================================== */
+
+.camera-capture-btn {
+  position: absolute;
+  bottom: var(--space-2xl);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: transparent;
+  border: 4px solid rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  padding: 0;
+}
+
+.camera-capture-btn:hover {
+  border-color: #ffffff;
+  transform: translateX(-50%) scale(1.05);
+}
+
+.camera-capture-btn:active {
+  transform: translateX(-50%) scale(0.95);
+}
+
+.camera-capture-btn:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+}
+
+.capture-btn-inner {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  transition: all var(--transition-fast);
+}
+
+.camera-capture-btn:hover .capture-btn-inner {
+  background: #ffffff;
+}
+
+.camera-capture-btn:active .capture-btn-inner {
+  transform: scale(0.9);
+}
+
+/* Capture animation */
+@keyframes captureFlash {
+  0% {
+    background: rgba(255, 255, 255, 0.9);
+  }
+  50% {
+    background: rgba(255, 255, 255, 1);
+  }
+  100% {
+    background: rgba(255, 255, 255, 0.9);
+  }
+}
+
+.camera-capture-btn.capturing .capture-btn-inner {
+  animation: captureFlash 200ms ease-out;
+}
+
+/* ========================================
+   Responsive Adjustments
+   ======================================== */
+
+@media (min-width: 768px) {
+  .camera-viewfinder {
+    max-height: 600px;
+    border-radius: var(--radius-lg);
+  }
+  
+  .framing-guide-border {
+    width: 55%;
+    height: 65%;
+  }
+}
+
+/* ========================================
+   Reduced Motion
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .camera-loading-spinner,
+  .camera-loading-text,
+  .framing-guide-border,
+  .capture-btn-inner {
+    animation: none;
+  }
+  
+  .camera-capture-btn:hover,
+  .camera-capture-btn:active,
+  .camera-torch-btn:hover,
+  .camera-torch-btn:active {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* ========================================
+   High Contrast Mode
+   ======================================== */
+
+@media (prefers-contrast: high) {
+  .framing-guide-border {
+    border-width: 4px;
+    border-color: rgba(255, 255, 255, 0.9);
+  }
+  
+  .camera-capture-btn {
+    border-width: 6px;
+  }
+  
+  .capture-btn-inner {
+    background: #ffffff;
+  }
+}

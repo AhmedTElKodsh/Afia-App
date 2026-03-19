@@ -1,0 +1,285 @@
+/* ========================================
+   PrivacyInline Component
+   Direction 1 (Spitfire Minimal) + 
+   Direction 5 (Swiss Precision)
+   ======================================== */
+
+.privacy-inline-container {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: var(--space-lg);
+}
+
+.privacy-inline-card {
+  background: var(--color-bg-tertiary);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  transition: all var(--transition-base);
+}
+
+.privacy-inline-card.error {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 1px var(--color-danger);
+}
+
+/* Shake animation for error state */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-8px); }
+  80% { transform: translateX(8px); }
+}
+
+.shake {
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+/* Checkbox Wrapper */
+.privacy-checkbox-wrapper {
+  margin-bottom: var(--space-md);
+}
+
+/* Custom Checkbox */
+.privacy-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  cursor: pointer;
+  position: relative;
+  min-height: 44px; /* WCAG touch target */
+  padding: var(--space-xs);
+  margin: calc(var(--space-xs) * -1);
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-fast);
+}
+
+.privacy-checkbox:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.privacy-checkbox:focus-within {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Hide default checkbox */
+.privacy-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+}
+
+/* Custom checkbox appearance */
+.privacy-checkbox-custom {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  background: var(--color-bg-primary);
+  border: 2px solid var(--glass-border-strong);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  transition: all var(--transition-fast);
+  margin-top: 2px;
+}
+
+.privacy-checkbox-input:checked + .privacy-checkbox-custom {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #000000;
+}
+
+.privacy-checkbox-input:focus + .privacy-checkbox-custom {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Checkbox label */
+.privacy-checkbox-label {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  line-height: 1.5;
+  flex: 1;
+}
+
+/* Description */
+.privacy-description {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: 0 0 var(--space-lg) 0;
+  padding-left: 28px; /* Align with checkbox label */
+}
+
+.privacy-subtle {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-small);
+}
+
+/* Expandable Details */
+.privacy-details {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+  animation: slideDown 200ms ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Privacy List */
+.privacy-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.privacy-list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-size-small);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.privacy-list-icon {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+/* Actions */
+.privacy-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--glass-border);
+}
+
+/* Learn More Button */
+.privacy-learn-more {
+  background: transparent;
+  border: none;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  padding: var(--space-xs) 0;
+  transition: color var(--transition-fast);
+  text-align: left;
+}
+
+.privacy-learn-more:hover {
+  color: var(--color-text-secondary);
+}
+
+.privacy-learn-more:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Continue Button — H8 FIX: use gold .btn-primary gradient, not white/black */
+.privacy-accept-btn {
+  width: 100%;
+  min-height: 48px;
+  padding: var(--space-sm) var(--space-xl);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: var(--shadow-button);
+  letter-spacing: 0.02em;
+}
+
+.privacy-accept-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px var(--color-primary-glow);
+}
+
+.privacy-accept-btn:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.96);
+}
+
+.privacy-accept-btn:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.privacy-accept-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.privacy-accept-btn:disabled:focus {
+  outline: 2px solid var(--color-text-tertiary);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   Responsive Adjustments
+   ======================================== */
+
+@media (min-width: 640px) {
+  .privacy-actions {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .privacy-learn-more {
+    order: 1;
+  }
+
+  .privacy-accept-btn {
+    order: 2;
+    width: auto;
+    min-width: 160px;
+  }
+}
+
+/* ========================================
+   Reduced Motion
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .shake,
+  .privacy-details {
+    animation: none;
+  }
+}

@@ -6,6 +6,7 @@ export interface TestResult {
   sku: string;
   bottleName: string;
   imageName: string;
+  totalVolumeMl?: number;
   analysisResult: AnalysisResult;
 }
 
@@ -35,7 +36,7 @@ export function exportToCSV(results: TestResult[]): void {
     r.imageName,
     r.analysisResult.fillPercentage.toString(),
     r.analysisResult.remainingMl?.toString() || "0",
-    (r.bottleName ? 500 - (r.analysisResult.remainingMl || 0) : 0).toString(),
+    (r.totalVolumeMl ? r.totalVolumeMl - (r.analysisResult.remainingMl || 0) : 0).toString(),
     r.analysisResult.confidence,
     r.analysisResult.scanId,
   ]);
@@ -73,7 +74,7 @@ export function exportToPDF(results: TestResult[]): void {
       </style>
     </head>
     <body>
-      <h1>🫒 Afia Oil Tracker - Scan Report</h1>
+      <h1>🌻 Afia Oil Tracker - Scan Report</h1>
       <div class="summary">
         <strong>Report Generated:</strong> ${new Date().toLocaleDateString()}<br>
         <strong>Total Scans:</strong> ${results.length}

@@ -1,39 +1,100 @@
-import { useState, useEffect } from "react";
-import { bottleRegistry } from "../data/bottleRegistry";
-import type { BottleEntry } from "../data/bottleRegistry";
-import { useScanHistory } from "../hooks/useScanHistory";
+import { useState, useEffect, useMemo, useRef } from "react";
+import {
+  LayoutDashboard,
+  Database,
+  QrCode,
+  Download,
+  BarChart2,
+  Droplets,
+  TrendingUp,
+  FileJson,
+  FileText,
+  ScanLine,
+  Globe,
+  LogOut,
+  Eye,
+  EyeOff,
+  Menu,
+  X,
+} from "lucide-react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
+import { useScanHistory, type StoredScan } from "../hooks/useScanHistory";
 import { exportToCSV, exportToJSON } from "../utils/exportResults";
 import { BottleManager } from "./BottleManager";
+import { QrMockGenerator } from "./QrMockGenerator";
+import type { AdminTabItem } from "./AdminTabNav";
+import { MetricCard } from "./MetricCard";
+import { EmptyState } from "./EmptyState";
 import "./AdminDashboard.css";
 
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "admin123";
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "";
 const SESSION_KEY = "afia_admin_session";
 
+type AdminTab = "overview" | "bottles" | "qrmock" | "export";
+
 export function AdminDashboard() {
+  const { t, i18n } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState<"overview" | "bottles" | "export">("overview");
-  
+  const [activeTab, setActiveTab] = useState<AdminTab>("overview");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (isMobileNavOpen && navRef.current && !navRef.current.contains(event.target as Node)) {
+        setIsMobileNavOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isMobileNavOpen]);
+
   const { scans, getStats } = useScanHistory();
   const stats = getStats();
 
-  // Check for existing session
+  const currentLang = i18n.language || 'en';
+  const isRTL = currentLang === 'ar';
+
+  const TABS: AdminTabItem<AdminTab>[] = [
+    { id: "overview", label: t('admin.tabs.overview'), icon: <LayoutDashboard size={18} /> },
+    { id: "bottles", label: t('admin.tabs.bottles'), icon: <Database size={18} /> },
+    { id: "qrmock", label: t('admin.tabs.qrmock'), icon: <QrCode size={18} /> },
+    { id: "export", label: t('admin.tabs.export'), icon: <Download size={18} /> },
+  ];
+
   useEffect(() => {
+    let mounted = true;
     const session = sessionStorage.getItem(SESSION_KEY);
-    if (session === "authenticated") {
-      setIsAuthenticated(true);
+    if (session === "authenticated" && mounted) {
+      setTimeout(() => setIsAuthenticated(true), 0);
     }
+    // Brief loading gate so the overview renders data instead of zeros
+    const timer = setTimeout(() => { if (mounted) setIsLoading(false); }, 200);
+    return () => {
+      mounted = false;
+      clearTimeout(timer);
+    };
   }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!ADMIN_PASSWORD) {
+      setError(t('admin.login.errorNotConfigured'));
+      return;
+    }
     if (password === ADMIN_PASSWORD) {
       sessionStorage.setItem(SESSION_KEY, "authenticated");
       setIsAuthenticated(true);
       setError("");
     } else {
-      setError("Invalid password");
+      setError(t('admin.login.errorInvalid'));
     }
   };
 
@@ -42,28 +103,47 @@ export function AdminDashboard() {
     setIsAuthenticated(false);
   };
 
+  const toggleLanguage = () => {
+    const newLang = currentLang === 'en' ? 'ar' : 'en';
+    i18n.changeLanguage(newLang);
+  };
+
   if (!isAuthenticated) {
     return (
-      <div className="admin-login">
+      <div className="admin-login" dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="login-card">
-          <h1>🔐 Admin Access</h1>
-          <p className="text-secondary">Enter admin password to continue</p>
+          <h1>🔐 {t('admin.login.title')}</h1>
+          <p className="text-secondary">{t('admin.login.subtitle')}</p>
           <form onSubmit={handleLogin}>
-            <input
-              type="password"
-              className="password-input"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoFocus
-            />
-            {error && <p className="error-message">{error}</p>}
+            <label htmlFor="admin-pw-input" className="sr-only">
+              {t('admin.login.passwordPlaceholder')}
+            </label>
+            <div className="password-input-wrap">
+              <input
+                id="admin-pw-input"
+                type={showPassword ? 'text' : 'password'}
+                className="password-input"
+                placeholder={t('admin.login.passwordPlaceholder')}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoFocus
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(v => !v)}
+                aria-label={showPassword ? t('admin.login.hidePassword', 'Hide password') : t('admin.login.showPassword', 'Show password')}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {error && <p className="error-message" role="alert">{error}</p>}
             <button type="submit" className="btn btn-primary btn-full">
-              Login
+              {t('admin.login.loginButton')}
             </button>
           </form>
           <button className="btn btn-link" onClick={() => window.history.back()}>
-            ← Back to App
+            ← {t('admin.login.backToApp')}
           </button>
         </div>
       </div>
@@ -71,141 +151,333 @@ export function AdminDashboard() {
   }
 
   return (
-    <div className="admin-dashboard">
-      <header className="admin-header">
-        <div className="header-content">
-          <h1>⚙️ Admin Dashboard</h1>
-          <button className="btn btn-outline" onClick={handleLogout}>
-            Logout
-          </button>
+    <div className="admin-dashboard layout" dir={isRTL ? 'rtl' : 'ltr'}>
+      <a href="#admin-main" className="skip-to-main">
+        {t('admin.login.skipToContent')}
+      </a>
+
+      <header ref={navRef} className="top-navbar">
+        <div className="brand">
+          <div className="brand-logo">A</div>
+          <div className="brand-text">
+            <div className="brand-name">Afia Tracker</div>
+            <div className="brand-sub">Admin Console</div>
+          </div>
         </div>
+
+        <button 
+          className="mobile-menu-toggle" 
+          onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+          aria-label={t('admin.menu.toggle', 'Toggle Menu')}
+        >
+          {isMobileNavOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+
+        <nav className={`nav-items-container ${isMobileNavOpen ? 'open' : ''}`}>
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              className={`nav-item ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => { setActiveTab(tab.id as AdminTab); setIsMobileNavOpen(false); }}
+            >
+              <span className="nav-icon">{tab.icon}</span> 
+              <span className="nav-label">{tab.label}</span>
+            </button>
+          ))}
+          
+          <div className="nav-divider"></div>
+          
+          <button
+            className="nav-item"
+            onClick={() => { toggleLanguage(); setIsMobileNavOpen(false); }}
+            aria-label={isRTL ? 'Switch to English' : 'التبديل للعربية'}
+            title={isRTL ? 'Switch to English' : 'التبديل للعربية'}
+          >
+            <span className="nav-icon"><Globe size={18} /></span> 
+            <span className="nav-label">{isRTL ? 'EN' : 'عربي'}</span>
+          </button>
+          
+          <button 
+            className="nav-item text-danger" 
+            onClick={handleLogout}
+          >
+            <span className="nav-icon"><LogOut size={18} /></span>
+            <span className="nav-label">{t('admin.login.logoutButton')}</span>
+          </button>
+        </nav>
       </header>
 
-      <nav className="admin-tabs">
-        <button
-          className={activeTab === "overview" ? "active" : ""}
-          onClick={() => setActiveTab("overview")}
+      <main id="admin-main" className="main">
+        <header className="page-header">
+           <h1 className="page-title">{TABS.find(t => t.id === activeTab)?.label}</h1>
+        </header>
+        <div 
+          className="tab-panel-content" 
+          key={activeTab}
+          role="tabpanel"
+          aria-labelledby={`tab-${activeTab}`}
         >
-          Overview
-        </button>
-        <button
-          className={activeTab === "bottles" ? "active" : ""}
-          onClick={() => setActiveTab("bottles")}
-        >
-          Bottle Registry
-        </button>
-        <button
-          className={activeTab === "export" ? "active" : ""}
-          onClick={() => setActiveTab("export")}
-        >
-          Export Data
-        </button>
-      </nav>
-
-      <main className="admin-content">
         {activeTab === "overview" && (
-          <OverviewTab stats={stats} scans={scans} />
-        )}
-        {activeTab === "bottles" && (
-          <BottleManager />
-        )}
-        {activeTab === "export" && (
-          <ExportTab scans={scans} />
-        )}
+            <OverviewTab stats={stats} scans={scans} onGoToTestLab={() => window.history.back()} t={t} isRTL={isRTL} isLoading={isLoading} />
+          )}
+          {activeTab === "bottles" && <BottleManager />}
+          {activeTab === "qrmock" && <QrMockGenerator />}
+          {activeTab === "export" && <ExportTab scans={scans} t={t} />}
+        </div>
       </main>
     </div>
   );
 }
 
-// Overview Tab Component
+// ── Sparkline Card ────────────────────────────────────────────────────────────
+function SparklineCard({ scans, t }: { scans: StoredScan[], t: TFunction }) {
+  const days = useMemo(() => {
+    const result = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dayStr = d.toISOString().split("T")[0];
+      const count = scans.filter((s) => s.timestamp?.startsWith(dayStr)).length;
+      result.push({
+        label: d.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2),
+        count,
+        isToday: i === 0,
+      });
+    }
+    return result;
+  }, [scans]);
+
+  const maxCount = Math.max(...days.map((d) => d.count), 1);
+
+  return (
+    <div className="sparkline-card">
+      <div className="sparkline-header">
+        <span className="sparkline-title">{t('admin.overview.sparkline.title', 'Scan Activity')}</span>
+        <span className="sparkline-period">{t('admin.overview.sparkline.period', 'Last 7 Days')}</span>
+      </div>
+      <div className="sparkline-bars">
+        {days.map((day, i) => (
+          <div key={i} className="sparkline-bar-col">
+            <div className="sparkline-bar-track">
+              <div
+                className={`sparkline-bar${day.count > 0 ? " sparkline-bar--active" : ""}${day.isToday ? " sparkline-bar--today" : ""}`}
+                style={{ height: `${Math.max((day.count / maxCount) * 100, 4)}%` }}
+                title={`${day.label}: ${day.count} scan${day.count !== 1 ? "s" : ""}`}
+              />
+            </div>
+            <span className="sparkline-day">{day.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Overview Tab ─────────────────────────────────────────────────────────────
 interface OverviewTabProps {
   stats: ReturnType<ReturnType<typeof useScanHistory>["getStats"]>;
   scans: ReturnType<typeof useScanHistory>["scans"];
+  onGoToTestLab?: () => void;
+  t: TFunction;
+  isRTL: boolean;
+  isLoading?: boolean;
 }
 
-function OverviewTab({ stats, scans }: OverviewTabProps) {
-  const recentScans = scans.slice(0, 10);
+function OverviewTab({ stats, scans, onGoToTestLab, t, isRTL, isLoading }: OverviewTabProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const maxRecentScans = 50;
+
+  // All hooks must be called before any early returns
+  const feedbackSummary = useMemo(() => {
+    const counts = { accurate: 0, too_high: 0, too_low: 0, way_off: 0 };
+    scans.forEach(s => {
+      if (s.feedbackRating && s.feedbackRating in counts) {
+        counts[s.feedbackRating as keyof typeof counts]++;
+      }
+    });
+    return counts;
+  }, [scans]);
+
+  const totalFeedback = feedbackSummary.accurate + feedbackSummary.too_high + feedbackSummary.too_low + feedbackSummary.way_off;
+  const relevantScans = scans.slice(0, maxRecentScans);
+  const totalPages = Math.ceil(relevantScans.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedScans = relevantScans.slice(startIndex, startIndex + itemsPerPage);
+
+  // Skeleton — shown until localStorage is read (≤200ms)
+  if (isLoading) {
+    return (
+      <div className="overview-tab">
+        <div className="skeleton skeleton-sparkline" aria-hidden="true" />
+        <div className="metrics-grid">
+          {[0,1,2,3].map(i => <div key={i} className="skeleton skeleton-metric-card" aria-hidden="true" />)}
+        </div>
+        <div className="skeleton skeleton-section-block" aria-hidden="true" />
+      </div>
+    );
+  }
 
   return (
     <div className="overview-tab">
+      <SparklineCard scans={scans} t={t} />
+      
       <div className="metrics-grid">
-        <div className="metric-card">
-          <div className="metric-icon">📊</div>
-          <div className="metric-content">
-            <span className="metric-value">{stats.totalScans}</span>
-            <span className="metric-label">Total Scans</span>
-          </div>
-        </div>
+        <MetricCard
+          icon={<BarChart2 size={20} />}
+          value={stats.totalScans}
+          label={t('admin.overview.metrics.totalScans')}
+        />
+        <MetricCard
+          icon={<Globe size={20} />}
+          value={stats.activeUsers}
+          label={t('admin.overview.metrics.activeUsers', 'Active Users')}
+        />
+        <MetricCard
+          icon={<TrendingUp size={20} />}
+          value={totalFeedback}
+          label={t('admin.overview.metrics.feedbackCount', 'Feedback Count')}
+        />
+        <MetricCard
+          icon={<Droplets size={20} />}
+          value={`${stats.totalConsumedMl}${t('common.ml')}`}
+          label={t('admin.overview.metrics.totalConsumed')}
+        />
+      </div>
 
-        <div className="metric-card">
-          <div className="metric-icon">💧</div>
-          <div className="metric-content">
-            <span className="metric-value">{stats.totalConsumedMl}</span>
-            <span className="metric-label">Total ml Consumed</span>
-          </div>
+      <div className="feedback-summary-section">
+        <div className="section-header">
+          <h2>{t('admin.overview.feedbackSummary.title', 'Feedback Summary')}</h2>
         </div>
-
-        <div className="metric-card">
-          <div className="metric-icon">📈</div>
-          <div className="metric-content">
-            <span className="metric-value">{stats.scansLast7Days}</span>
-            <span className="metric-label">Scans (7 Days)</span>
+        <div className="feedback-stats-grid">
+          <div className="feedback-stat-item">
+            <span className="feedback-label">{t('admin.overview.feedback.accurate', 'Accurate')}</span>
+            <div className="feedback-bar-wrap">
+              <div className="feedback-bar feedback-bar--accurate" style={{ width: `${totalFeedback ? (feedbackSummary.accurate / totalFeedback) * 100 : 0}%` }} />
+            </div>
+            <span className="feedback-value">{feedbackSummary.accurate}</span>
           </div>
-        </div>
-
-        <div className="metric-card">
-          <div className="metric-icon">📅</div>
-          <div className="metric-content">
-            <span className="metric-value">{stats.scansLast30Days}</span>
-            <span className="metric-label">Scans (30 Days)</span>
+          <div className="feedback-stat-item">
+            <span className="feedback-label">{t('admin.overview.feedback.tooHigh', 'Too High')}</span>
+            <div className="feedback-bar-wrap">
+              <div className="feedback-bar feedback-bar--warning" style={{ width: `${totalFeedback ? (feedbackSummary.too_high / totalFeedback) * 100 : 0}%` }} />
+            </div>
+            <span className="feedback-value">{feedbackSummary.too_high}</span>
+          </div>
+          <div className="feedback-stat-item">
+            <span className="feedback-label">{t('admin.overview.feedback.tooLow', 'Too Low')}</span>
+            <div className="feedback-bar-wrap">
+              <div className="feedback-bar feedback-bar--warning" style={{ width: `${totalFeedback ? (feedbackSummary.too_low / totalFeedback) * 100 : 0}%` }} />
+            </div>
+            <span className="feedback-value">{feedbackSummary.too_low}</span>
+          </div>
+          <div className="feedback-stat-item">
+            <span className="feedback-label">{t('admin.overview.feedback.wayOff', 'Way Off')}</span>
+            <div className="feedback-bar-wrap">
+              <div className="feedback-bar feedback-bar--danger" style={{ width: `${totalFeedback ? (feedbackSummary.way_off / totalFeedback) * 100 : 0}%` }} />
+            </div>
+            <span className="feedback-value">{feedbackSummary.way_off}</span>
           </div>
         </div>
       </div>
 
       <div className="recent-scans">
-        <h3>Recent Scans</h3>
-        {recentScans.length === 0 ? (
-          <p className="no-data">No scans yet</p>
+        <div className="recent-scans-header">
+          <h2>{t('admin.overview.recentScans.title')}</h2>
+          <span className="recent-scans-badge">{t('admin.overview.recentScans.badge')}</span>
+        </div>
+
+        {paginatedScans.length === 0 ? (
+          <EmptyState
+            icon={<ScanLine size={32} />}
+            title={t('admin.overview.recentScans.emptyTitle')}
+            description={t('admin.overview.recentScans.emptyDescription')}
+            cta={onGoToTestLab ? { label: t('admin.overview.recentScans.ctaLabel'), onClick: onGoToTestLab } : undefined}
+          />
         ) : (
-          <table className="scans-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Bottle</th>
-                <th>Fill %</th>
-                <th>Consumed</th>
-                <th>Confidence</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentScans.map((scan) => (
-                <tr key={scan.id}>
-                  <td>{new Date(scan.timestamp).toLocaleDateString()}</td>
-                  <td>{scan.bottleName}</td>
-                  <td>{scan.fillPercentage}%</td>
-                  <td>{scan.consumedMl}ml</td>
-                  <td>
-                    <span className={`confidence-badge-${scan.confidence}`}>
-                      {scan.confidence}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <>
+            <div className="table-scroll-wrap" tabIndex={0} role="region" aria-label={t('admin.overview.table.caption') || 'Recent Scans'}>
+              <table className="scans-table">
+                <caption className="sr-only">{t('admin.overview.table.caption')}</caption>
+                <thead>
+                  <tr>
+                    <th>{t('admin.overview.table.date')}</th>
+                    <th>{t('admin.overview.table.bottle')}</th>
+                    <th>{t('admin.overview.table.fillPercent')}</th>
+                    <th>{t('admin.overview.table.consumed')}</th>
+                    <th>{t('admin.overview.table.confidence')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedScans.map((scan, idx) => (
+                    <tr key={scan.id ?? `row-${idx}`}>
+                      <td>{new Date(scan.timestamp.replace(' ', 'T')).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')}</td>
+                      <td>{scan.bottleName}</td>
+                      <td>
+                        <div className="fill-mini-bar-wrap" aria-label={`${scan.fillPercentage}% full`} title={`${scan.fillPercentage}% full`}>
+                          <div className="fill-mini-bar" aria-hidden="true">
+                            <div className="fill-mini-bar-inner" style={{ width: `${scan.fillPercentage}%` }} />
+                          </div>
+                          <span aria-hidden="true">{scan.fillPercentage}%</span>
+                        </div>
+                      </td>
+                      <td>{scan.consumedMl ?? 0}{t('common.ml')}</td>
+                      <td>
+                        <span className={`confidence-badge-${scan.confidence}`}>
+                          {scan.confidence === 'high' ? t('results.confidenceHigh') : 
+                           scan.confidence === 'medium' ? t('results.confidenceMedium') : 
+                           t('results.confidenceLow')}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            {totalPages > 1 && (
+              <div className="pagination-controls">
+                <button 
+                  className="pagination-btn" 
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => prev - 1)}
+                >
+                  {isRTL ? 'التالي' : 'Previous'}
+                </button>
+                <span className="pagination-info">
+                  {t('admin.overview.pagination.info', { current: currentPage, total: totalPages, defaultValue: `Page ${currentPage} of ${totalPages}` })}
+                </span>
+                <button 
+                  className="pagination-btn" 
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                >
+                  {isRTL ? 'السابق' : 'Next'}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
   );
 }
 
-// Export Tab Component
+// ── Export Tab ────────────────────────────────────────────────────────────────
 interface ExportTabProps {
   scans: ReturnType<typeof useScanHistory>["scans"];
+  t: TFunction;
 }
 
-function ExportTab({ scans }: ExportTabProps) {
+const DATE_RANGE_OPTIONS = [
+  { value: "all" as const, labelKey: "admin.export.dateRange.allTime" },
+  { value: 7 as const, labelKey: "admin.export.dateRange.last7Days" },
+  { value: 30 as const, labelKey: "admin.export.dateRange.last30Days" },
+];
+
+function ExportTab({ scans, t }: ExportTabProps) {
   const [dateRange, setDateRange] = useState<"all" | 7 | 30>("all");
+  const [exportError, setExportError] = useState("");
 
   const filteredScans = scans.filter((scan) => {
     if (dateRange === "all") return true;
@@ -216,89 +488,119 @@ function ExportTab({ scans }: ExportTabProps) {
 
   const handleExportJSON = () => {
     if (filteredScans.length === 0) {
-      alert("No scans to export");
+      setExportError(t('admin.export.noScansError'));
       return;
     }
-    exportToJSON(filteredScans.map(s => ({
-      ...s,
-      analysisResult: {
-        scanId: s.id,
-        fillPercentage: s.fillPercentage,
-        confidence: s.confidence,
-        aiProvider: "gemini" as const,
-        latencyMs: 0,
-      }
-    })));
+    setExportError("");
+    exportToJSON(
+      filteredScans.map((s) => ({
+        ...s,
+        imageName: "scan-image",
+        analysisResult: {
+          scanId: s.id,
+          fillPercentage: s.fillPercentage,
+          remainingMl: s.remainingMl,
+          confidence: s.confidence,
+          aiProvider: "gemini" as const,
+          latencyMs: 0,
+        },
+      }))
+    );
   };
 
   const handleExportCSV = () => {
     if (filteredScans.length === 0) {
-      alert("No scans to export");
+      setExportError(t('admin.export.noScansError'));
       return;
     }
-    exportToCSV(filteredScans.map(s => ({
-      ...s,
-      analysisResult: {
-        scanId: s.id,
-        fillPercentage: s.fillPercentage,
-        confidence: s.confidence,
-        aiProvider: "gemini" as const,
-        latencyMs: 0,
-      }
-    })));
+    setExportError("");
+    exportToCSV(
+      filteredScans.map((s) => ({
+        ...s,
+        imageName: "scan-image",
+        analysisResult: {
+          scanId: s.id,
+          fillPercentage: s.fillPercentage,
+          remainingMl: s.remainingMl,
+          confidence: s.confidence,
+          aiProvider: "gemini" as const,
+          latencyMs: 0,
+        },
+      }))
+    );
   };
+
+  const dateRangeLabel = DATE_RANGE_OPTIONS.find((o) => o.value === dateRange)
+    ? t(DATE_RANGE_OPTIONS.find((o) => o.value === dateRange)!.labelKey)
+    : "";
 
   return (
     <div className="export-tab">
-      <h3>Export Scan Data</h3>
-      <p className="text-secondary">
-        Download your scan history in CSV or JSON format
-      </p>
+      <h3>{t('admin.export.title')}</h3>
+      <p className="text-secondary">{t('admin.export.description')}</p>
 
-      <div className="export-controls">
-        <div className="date-range">
-          <label>Date Range:</label>
-          <select
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value as any)}
-          >
-            <option value="all">All Time</option>
-            <option value="7">Last 7 Days</option>
-            <option value="30">Last 30 Days</option>
-          </select>
-        </div>
-
-        <div className="export-stats">
-          <span>{filteredScans.length} scans will be exported</span>
+      {/* Date Range Pills */}
+      <div className="export-date-section">
+        <span className="export-date-label">{t('admin.export.dateRange.label')}</span>
+        <div className="export-date-pills" role="group" aria-label={t('admin.export.dateRange.label')}>
+          {DATE_RANGE_OPTIONS.map(({ value, labelKey }) => (
+            <button
+              key={String(value)}
+              className={`export-date-pill${dateRange === value ? " active" : ""}`}
+              onClick={() => { setExportError(""); setDateRange(value); }}
+              aria-pressed={dateRange === value}
+            >
+              {t(labelKey)}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="export-buttons">
+      {/* Summary Box */}
+      <div className="export-summary-box" aria-live="polite">
+        <div>
+          <div className="export-summary-count">{filteredScans.length}</div>
+          <div className="export-summary-label">{t('admin.export.stats', { count: filteredScans.length, defaultValue: `${filteredScans.length} scans` })}</div>
+        </div>
+        <span className="export-summary-range">{dateRangeLabel}</span>
+      </div>
+
+      {exportError && (
+        <p className="error-message" role="alert">{exportError}</p>
+      )}
+
+      {/* Stacked Export Buttons */}
+      <div className="export-buttons-stack">
         <button
-          className="btn btn-primary"
+          className="export-btn-card export-btn-card--primary"
           onClick={handleExportJSON}
           disabled={filteredScans.length === 0}
         >
-          📄 Export JSON
+          <div className="export-btn-card-icon"><FileJson size={22} /></div>
+          <div className="export-btn-card-body">
+            <span className="export-btn-card-title">{t('admin.export.buttons.exportJson')}</span>
+            <span className="export-btn-card-sub">{t('admin.export.buttons.subJson', 'Structured data, great for developers')}</span>
+          </div>
         </button>
         <button
-          className="btn btn-primary"
+          className="export-btn-card"
           onClick={handleExportCSV}
           disabled={filteredScans.length === 0}
         >
-          📊 Export CSV
+          <div className="export-btn-card-icon"><FileText size={22} /></div>
+          <div className="export-btn-card-body">
+            <span className="export-btn-card-title">{t('admin.export.buttons.exportCsv')}</span>
+            <span className="export-btn-card-sub">{t('admin.export.buttons.subCsv', 'Opens in Excel or Google Sheets')}</span>
+          </div>
         </button>
       </div>
 
       <div className="export-info">
-        <h4>What's Included:</h4>
+        <h4>{t('admin.export.info.title')}</h4>
         <ul>
-          <li>Scan date and time</li>
-          <li>Bottle SKU and name</li>
-          <li>Fill percentage</li>
-          <li>Remaining and consumed volumes</li>
-          <li>Confidence level</li>
-          <li>Feedback rating (if provided)</li>
+          {(t('admin.export.info.items', { returnObjects: true }) as unknown as string[]).map((item: string, index: number) => (
+            <li key={index}>{item}</li>
+          ))}
         </ul>
       </div>
     </div>

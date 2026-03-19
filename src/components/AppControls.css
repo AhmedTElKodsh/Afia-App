@@ -1,0 +1,149 @@
+/* =========================================
+   APP CONTROLS — Floating top settings bar
+   Language & Theme toggles
+   ========================================= */
+
+.app-controls-wrapper {
+  position: fixed;
+  top: max(var(--space-md), env(safe-area-inset-top, var(--space-md)));
+  /*
+    Align to the same 1200px content column as #root.
+    left:50% + translateX(-50%) centres the 1200px wrapper on the viewport.
+    padding-inline keeps the pill away from the screen edge on narrow screens.
+  */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 1200px;
+  pointer-events: none;
+  z-index: var(--z-sticky);
+  display: flex;
+  justify-content: flex-end; /* pill sits at visual-right in LTR */
+  padding-inline: var(--space-md);
+}
+
+.app-controls {
+  pointer-events: auto;
+  width: max-content;
+  max-width: calc(100% - var(--space-2xl));
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border: 1px solid var(--glass-border-strong);
+  border-radius: var(--radius-full);
+  padding: var(--space-xs) var(--space-md);
+  z-index: var(--z-sticky);
+  box-shadow: var(--shadow-md), var(--glass-inset);
+
+  /* Smooth slide-in on mount */
+  animation: ctrl-slide-down var(--transition-bounce) both;
+}
+
+@keyframes ctrl-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Individual toggle button */
+.app-ctrl-btn,
+.app-ctrl-admin {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  font-family: var(--font-family);
+  border-radius: var(--radius-full);
+  padding: 6px var(--space-sm);
+  min-height: 44px; /* H5 FIX: was 36px — WCAG 2.5.5 requires 44px minimum */
+  transition: background var(--transition-fast), color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.app-ctrl-admin {
+  cursor: default;
+  color: #dfb239;
+  font-weight: 600;
+}
+
+.app-ctrl-btn:hover {
+  background: var(--glass-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.app-ctrl-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.app-ctrl-label {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.04em;
+}
+
+/* Divider between buttons */
+.app-ctrl-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--glass-border-strong);
+  flex-shrink: 0;
+}
+
+/* Animated Sun / Moon icon swap */
+.app-ctrl-icon-wrap {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-sun,
+.icon-moon {
+  position: absolute;
+  transition: opacity var(--transition-base), transform var(--transition-base);
+}
+
+/* Dark mode: show moon, hide sun */
+.show-moon .icon-sun  { opacity: 0; transform: rotate(-90deg) scale(0.5); }
+.show-moon .icon-moon { opacity: 1; transform: rotate(0deg)   scale(1);   }
+
+/* Light mode: show sun, hide moon */
+.show-sun .icon-moon  { opacity: 0; transform: rotate(90deg)  scale(0.5); }
+.show-sun .icon-sun   { opacity: 1; transform: rotate(0deg)   scale(1);   }
+
+/* Push main content down to clear the controls bar */
+.app-with-nav {
+  padding-top: 64px;
+}
+
+/* RTL: reverse justify so controls hug the visual-left (leading edge in RTL) */
+[dir="rtl"] .app-controls-wrapper {
+  justify-content: flex-start;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .app-controls,
+  .icon-sun,
+  .icon-moon {
+    animation: none;
+    transition: none;
+  }
+}

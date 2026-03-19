@@ -1,25 +1,35 @@
+/* ========================================
+   API STATUS - Glassmorphic
+   ======================================== */
 .api-status {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--space-lg);
+  padding: var(--space-2xl) var(--space-xl);
   text-align: center;
-  gap: var(--space-md);
+  gap: var(--space-xl);
 }
 
+/* ── Loading state ── */
 .analyzing-animation {
-  margin-bottom: var(--space-md);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .bottle-outline {
-  width: 80px;
+  width: 72px;
   height: 120px;
-  border: 3px solid var(--color-primary);
-  border-radius: var(--radius-md);
+  border: 2px solid var(--glass-border-strong);
+  border-radius: 20px;
   position: relative;
   overflow: hidden;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
 }
 
 .fill-wave {
@@ -27,33 +37,90 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 40%;
-  background: var(--color-primary-light);
-  opacity: 0.6;
+  height: 45%;
+  background: linear-gradient(
+    to top,
+    var(--color-primary) 0%,
+    var(--color-accent) 100%
+  );
   animation: wave 2s ease-in-out infinite;
 }
 
 @keyframes wave {
-  0%,
-  100% {
+  0%, 100% {
     height: 30%;
+    border-radius: 50% 50% 0 0 / 20px 20px 0 0;
   }
   50% {
-    height: 70%;
+    height: 60%;
+    border-radius: 40% 40% 0 0 / 10px 10px 0 0;
   }
+}
+
+/* Pulse glow ring around bottle */
+.analyzing-animation::after {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border-radius: 30px;
+  border: 1px solid var(--color-primary-glow);
+  animation: pulse-glow 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50%       { opacity: 0.8; transform: scale(1.04); }
 }
 
 .analyzing-text {
-  font-size: var(--font-size-h2);
-  font-weight: 600;
+  font-size: var(--font-size-subhead);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
 }
 
+.analyzing-subtext {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* ── Error state ── */
 .error-icon {
-  font-size: 3rem;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
 }
 
 .error-actions {
   display: flex;
   gap: var(--space-md);
-  margin-top: var(--space-sm);
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: var(--space-md);
+}
+
+.error-actions .btn {
+  min-width: 140px;
+}
+
+/* Success / generic status icon */
+.success-icon {
+  font-size: 3rem;
+  color: var(--color-success);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .fill-wave,
+  .analyzing-animation::after {
+    animation: none;
+  }
 }

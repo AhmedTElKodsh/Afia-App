@@ -1,0 +1,81 @@
+/* ========================================
+   LiquidGauge Component
+   Conic-gradient donut ring with animated counter
+   ======================================== */
+
+.liquid-gauge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: var(--gauge-dim, 120px);
+  height: var(--gauge-dim, 120px);
+  flex-shrink: 0;
+}
+
+/* ── Ring ── 
+   Isolated element — its mask doesn't affect siblings/children */
+.liquid-gauge__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+
+  /* Progress arc */
+  background: conic-gradient(
+    var(--gauge-glow, var(--color-primary)) var(--gauge-pct, 0%),
+    var(--glass-bg-light) var(--gauge-pct, 0%)
+  );
+
+  /* Donut cut-out — 66% transparent = ring is 34% width of radius */
+  mask: radial-gradient(transparent 64%, black 66%);
+  -webkit-mask: radial-gradient(transparent 64%, black 66%);
+
+  /* Soft glow */
+  filter: drop-shadow(0 0 8px var(--gauge-glow, var(--color-primary)));
+  transition: filter var(--transition-slow);
+}
+
+/* ── Center text — sits above ring, unmasked ── */
+.liquid-gauge__center {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  /* width matches the donut hole (≈64% of container) */
+  width: 64%;
+  height: 64%;
+  text-align: center;
+}
+
+.liquid-gauge__pct {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.liquid-gauge__sub {
+  font-family: var(--font-family);
+  color: var(--color-text-secondary);
+  line-height: 1.2;
+  text-align: center;
+  padding: 0 2px;
+}
+
+/* ── Size variants ── */
+.liquid-gauge--sm .liquid-gauge__pct  { font-size: 0.6rem; }
+
+.liquid-gauge--md .liquid-gauge__pct  { font-size: 1.5rem; }
+.liquid-gauge--md .liquid-gauge__sub  { font-size: 0.6rem; }
+
+.liquid-gauge--lg .liquid-gauge__pct  { font-size: clamp(1.8rem, 5vw, 2.6rem); }
+.liquid-gauge--lg .liquid-gauge__sub  { font-size: 0.75rem; }
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .liquid-gauge__ring { filter: none; }
+}

@@ -1,0 +1,111 @@
+/* ========================================
+   ConfidenceBadge Component
+   Direction 1 (Spitfire Minimal) + 
+   Direction 5 (Swiss Precision)
+   ======================================== */
+
+.confidence-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--badge-padding);
+  background: var(--badge-bg);
+  border: 1px solid var(--badge-border);
+  border-radius: var(--radius-full);
+  color: var(--badge-text);
+  font-size: var(--badge-font-size);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.4;
+  transition: all var(--transition-base);
+}
+
+/* Icon */
+.confidence-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Message */
+.confidence-message {
+  white-space: nowrap;
+}
+
+/* Reason (for low confidence) */
+.confidence-reason {
+  white-space: normal;
+  opacity: 0.8;
+  font-weight: var(--font-weight-regular);
+}
+
+/* ========================================
+   Confidence Level Variants
+   ======================================== */
+
+/* High Confidence - Green */
+.confidence-badge--high {
+  --badge-bg: rgba(16, 185, 129, 0.15);
+  --badge-border: #10b981;
+  --badge-text: #10b981;
+}
+
+/* Medium Confidence - Amber (Warm Accent) */
+.confidence-badge--medium {
+  --badge-bg: rgba(245, 158, 11, 0.15);
+  --badge-border: #f59e0b;
+  --badge-text: #f59e0b;
+}
+
+/* Low Confidence - Red */
+.confidence-badge--low {
+  --badge-bg: rgba(239, 68, 68, 0.15);
+  --badge-border: #ef4444;
+  --badge-text: #ef4444;
+}
+
+/* ========================================
+   Size Variants
+   ======================================== */
+
+.confidence-badge--sm {
+  --badge-padding: var(--space-xs) var(--space-sm);
+  --badge-font-size: var(--font-size-small);
+}
+
+.confidence-badge--md {
+  --badge-padding: var(--space-sm) var(--space-md);
+  --badge-font-size: var(--font-size-body);
+}
+
+/* ========================================
+   Reduced Motion
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .confidence-badge {
+    transition: none;
+  }
+}
+
+/* ========================================
+   High Contrast Mode
+   ======================================== */
+
+@media (prefers-contrast: high) {
+  .confidence-badge {
+    border-width: 2px;
+  }
+
+  .confidence-badge--high {
+    --badge-text: #4ade80;
+  }
+
+  .confidence-badge--medium {
+    --badge-text: #fbbf24;
+  }
+
+  .confidence-badge--low {
+    --badge-text: #f87171;
+  }
+}

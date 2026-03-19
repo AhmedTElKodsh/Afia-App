@@ -53,3 +53,23 @@ export async function submitFeedback(
     validationStatus: string;
   }>;
 }
+
+export async function reportScanError(
+  sku: string,
+  error: string,
+  deviceInfo?: string
+): Promise<void> {
+  // Fire and forget error logging to Worker
+  fetch(`${PROXY_URL}/error`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sku,
+      error,
+      timestamp: new Date().toISOString(),
+      deviceInfo,
+    }),
+  }).catch(() => {
+    // Silently fail as this is background telemetry
+  });
+}

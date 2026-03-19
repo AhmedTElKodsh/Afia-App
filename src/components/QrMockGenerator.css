@@ -1,0 +1,457 @@
+/* ========================================
+   QR Mock Generator Component
+   Dynamic QR codes for mobile testing
+   ======================================== */
+
+.qr-mock-generator {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-xl);
+}
+
+/* ========================================
+   Header Section
+   ======================================== */
+
+.qrmg-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+  padding: var(--space-lg);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-primary);
+}
+
+.qrmg-title-section {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  color: var(--color-primary);
+}
+
+.qrmg-title-section h2 {
+  margin: 0;
+  font-size: var(--font-size-headline);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.qrmg-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  min-height: 44px; /* ✅ Touch target minimum */
+  background: var(--glass-bg-light);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  transition: all var(--transition-base);
+}
+
+.qrmg-status:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.qrmg-status-ok {
+  border-color: var(--color-success);
+  color: var(--color-success);
+  background: var(--color-success-bg);
+}
+
+.qrmg-status-warning {
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+  background: var(--color-warning-bg);
+}
+
+/* ========================================
+   Environment Info
+   ======================================== */
+
+.qrmg-env-info {
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md);
+}
+
+.qrmg-env-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-xs) 0;
+  gap: var(--space-md);
+}
+
+.qrmg-env-row code {
+  background: var(--color-bg-secondary);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-family: 'Courier New', monospace;
+  font-size: var(--font-size-caption);
+  word-break: break-all;
+}
+
+.qrmg-warning {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-sm);
+}
+
+.qrmg-warning code {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+/* ========================================
+   vConsole Toggle
+   ======================================== */
+
+.qrmg-vconsole-toggle {
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md);
+}
+
+.qrmg-toggle-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.toggle-switch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+  cursor: pointer;
+}
+
+.toggle-switch input {
+  display: none;
+}
+
+.toggle-slider {
+  width: 48px;
+  height: 24px;
+  background: var(--color-bg-secondary);
+  border-radius: 12px;
+  position: relative;
+  transition: background var(--transition-base);
+}
+
+.toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: transform var(--transition-base);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--color-primary);
+}
+
+.toggle-switch input:checked + .toggle-slider::after {
+  transform: translateX(24px);
+}
+
+.toggle-label {
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+/* ========================================
+   QR Code Grid
+   ======================================== */
+
+.qrmg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.qrmg-card {
+  padding: var(--space-lg);
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.qrmg-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.qrmg-card-header {
+  text-align: center;
+  margin-bottom: var(--space-md);
+}
+
+.qrmg-bottle-icon {
+  font-size: 32px;
+  display: block;
+  margin-bottom: var(--space-xs);
+}
+
+.qrmg-bottle-name {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: var(--space-xs) 0;
+}
+
+.qrmg-sku {
+  display: block;
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+  font-family: monospace;
+  background: var(--color-bg-secondary);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-xs);
+}
+
+/* ========================================
+   QR Code Container
+   ======================================== */
+
+.qrmg-qr-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-md);
+  background: white;
+  border-radius: var(--radius-md);
+  margin: var(--space-md) 0;
+  border: 2px solid var(--glass-border);
+}
+
+.qrmg-qr-container svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ========================================
+   URL Section
+   ======================================== */
+
+.qrmg-url-section {
+  margin: var(--space-md) 0;
+}
+
+.qrmg-url-display {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.qrmg-url-display code {
+  font-family: monospace;
+  font-size: var(--font-size-caption);
+  color: var(--color-text-primary);
+  word-break: break-all;
+  flex: 1;
+}
+
+.qrmg-copy-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.qrmg-copy-btn:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+.qrmg-copy-btn:active {
+  transform: translateY(0);
+}
+
+.qrmg-copy-btn.success {
+  background: #10b981;
+}
+
+/* ========================================
+   Instructions
+   ======================================== */
+
+.qrmg-instructions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--glass-border);
+}
+
+.qrmg-step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+}
+
+.qrmg-step svg {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+/* ========================================
+   Quick Start Guide
+   ======================================== */
+
+.qrmg-quickstart {
+  margin-bottom: var(--space-lg);
+  padding: var(--space-lg);
+}
+
+.qrmg-quickstart h3 {
+  margin: 0 0 var(--space-md) 0;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+}
+
+.qrmg-steps {
+  margin: 0;
+  padding-left: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.qrmg-steps li {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.qrmg-steps code {
+  display: block;
+  background: var(--color-bg-secondary);
+  padding: var(--space-xs);
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-xs);
+  font-family: monospace;
+  font-size: var(--font-size-caption);
+}
+
+/* ========================================
+   Troubleshooting
+   ======================================== */
+
+.qrmg-troubleshooting {
+  padding: var(--space-lg);
+}
+
+.qrmg-troubleshooting h3 {
+  margin: 0 0 var(--space-md) 0;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+}
+
+.qrmg-issue {
+  margin-bottom: var(--space-md);
+  padding: var(--space-sm);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.qrmg-issue:last-child {
+  margin-bottom: 0;
+}
+
+.qrmg-issue strong {
+  display: block;
+  font-size: var(--font-size-caption);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-xs);
+}
+
+.qrmg-issue ul {
+  margin: 0;
+  padding-left: var(--space-md);
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+}
+
+.qrmg-issue li {
+  margin-bottom: var(--space-xs);
+  line-height: 1.5;
+}
+
+/* ========================================
+   Responsive Adjustments
+   ======================================== */
+
+@media (max-width: 768px) {
+  .qrmg-header {
+    flex-direction: column;
+    gap: var(--space-md);
+    text-align: center;
+  }
+
+  .qrmg-title-section {
+    flex-direction: column;
+  }
+
+  /* 2-column QR grid on mobile for better visual density */
+  .qrmg-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+  }
+
+  .qrmg-card {
+    padding: var(--space-md);
+  }
+
+  .qrmg-qr-container svg {
+    max-width: 120px;
+  }
+
+  .qrmg-bottle-name {
+    font-size: var(--font-size-caption);
+  }
+}
+
+/* ========================================
+   Dark Mode Support
+   ======================================== */
+
+@media (prefers-color-scheme: dark) {
+  .qrmg-qr-container {
+    background: #ffffff;
+  }
+}

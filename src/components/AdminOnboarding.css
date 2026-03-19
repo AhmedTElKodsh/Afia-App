@@ -1,0 +1,297 @@
+/* ========================================
+   ADMIN ONBOARDING - First-Time Tutorial
+   ======================================== */
+
+.admin-onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  animation: overlay-fade-in var(--transition-base) both;
+}
+
+@keyframes overlay-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.admin-onboarding-container {
+  position: relative;
+  width: 90%;
+  max-width: 500px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  box-shadow: var(--shadow-2xl);
+  animation: modal-slide-up var(--transition-smooth) both;
+}
+
+@keyframes modal-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Close Button */
+.admin-onboarding-close {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-base);
+}
+
+.admin-onboarding-close:hover {
+  background: var(--card-hover);
+  color: var(--color-text-primary);
+}
+
+/* Progress Bar */
+.admin-onboarding-progress {
+  width: 100%;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-md);
+  overflow: hidden;
+}
+
+.admin-onboarding-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-dark));
+  border-radius: var(--radius-full);
+  transition: width var(--transition-smooth);
+}
+
+/* Step Indicator */
+.admin-onboarding-step-indicator {
+  text-align: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-lg);
+}
+
+/* Content */
+.admin-onboarding-content {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+}
+
+.admin-onboarding-icon {
+  font-size: var(--font-size-5xl);
+  margin-bottom: var(--space-md);
+  animation: icon-bounce var(--transition-bounce) both;
+}
+
+@keyframes icon-bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.admin-onboarding-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-md) 0;
+  letter-spacing: -0.025em;
+}
+
+.admin-onboarding-description {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+  margin: 0;
+}
+
+/* Navigation */
+.admin-onboarding-navigation {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+  margin-bottom: var(--space-lg);
+}
+
+.admin-onboarding-button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-md) var(--space-lg);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+}
+
+.admin-onboarding-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-onboarding-button.hidden {
+  visibility: hidden;
+}
+
+/* Secondary Button */
+.admin-onboarding-button-secondary {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.admin-onboarding-button-secondary:hover:not(:disabled) {
+  background: var(--card-hover);
+  border-color: var(--color-text-secondary);
+}
+
+/* Primary Button */
+.admin-onboarding-button-primary {
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
+}
+
+.admin-onboarding-button-primary:hover {
+  background: var(--button-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Success Button */
+.admin-onboarding-button-success {
+  background: var(--color-success);
+  color: white;
+}
+
+.admin-onboarding-button-success:hover {
+  background: var(--color-success-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.admin-onboarding-button-success.completing {
+  animation: button-success var(--transition-bounce) both;
+}
+
+@keyframes button-success {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.admin-onboarding-button-icon {
+  font-size: var(--font-size-lg);
+}
+
+/* Skip Button */
+.admin-onboarding-button-skip {
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.admin-onboarding-button-skip:hover {
+  color: var(--color-text-primary);
+}
+
+/* Step Dots */
+.admin-onboarding-dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.admin-onboarding-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-border);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  padding: 0;
+}
+
+.admin-onboarding-dot:hover {
+  background: var(--color-primary-light);
+  transform: scale(1.2);
+}
+
+.admin-onboarding-dot.active {
+  width: 24px;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+  .admin-onboarding-container {
+    width: 95%;
+    padding: var(--space-lg);
+  }
+
+  .admin-onboarding-title {
+    font-size: var(--font-size-xl);
+  }
+
+  .admin-onboarding-description {
+    font-size: var(--font-size-sm);
+  }
+
+  .admin-onboarding-navigation {
+    flex-direction: column;
+  }
+
+  .admin-onboarding-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .admin-onboarding-icon {
+    font-size: var(--font-size-4xl);
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .admin-onboarding-overlay,
+  .admin-onboarding-container,
+  .admin-onboarding-icon,
+  .admin-onboarding-progress-bar,
+  .admin-onboarding-button-success.completing {
+    animation: none;
+  }
+}

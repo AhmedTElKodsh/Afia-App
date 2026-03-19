@@ -1,0 +1,98 @@
+/* ========================================
+   BottleFillGauge Component
+   Direction 1 (Spitfire Minimal) + 
+   Direction 5 (Swiss Precision)
+   ======================================== */
+
+.bottle-fill-gauge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  position: relative;
+}
+
+/* SVG Bottle */
+.bottle-svg {
+  color: var(--color-text-secondary);
+  transition: color var(--transition-base);
+}
+
+/* Bottle Outline */
+.bottle-outline {
+  opacity: 0.5;
+}
+
+/* Fill Animation */
+.bottle-fill {
+  transition: fill var(--transition-base);
+}
+
+/* Meniscus Line (liquid surface) */
+.meniscus-line {
+  opacity: 0;
+  animation: fadeIn 300ms ease-out 300ms forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Percentage Label */
+.fill-percentage {
+  font-size: var(--percentage-font-size);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+/* ========================================
+   Size Variants
+   ======================================== */
+
+.bottle-fill-gauge--sm {
+  gap: var(--space-md);
+}
+
+.bottle-fill-gauge--md {
+  gap: var(--space-lg);
+}
+
+.bottle-fill-gauge--lg {
+  gap: var(--space-xl);
+}
+
+/* ========================================
+   Reduced Motion
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .bottle-fill,
+  .meniscus-line {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* ========================================
+   High Contrast Mode
+   ======================================== */
+
+@media (prefers-contrast: high) {
+  .bottle-outline {
+    opacity: 1;
+    stroke-width: 3;
+  }
+
+  .fill-percentage {
+    font-weight: var(--font-weight-bold);
+  }
+}

@@ -1,5 +1,6 @@
-import type { BottleEntry } from "../bottleRegistry.ts";
 import type { LLMResponse } from "../types.ts";
+import type { BottleEntry } from "../bottleRegistry.ts";
+import { parseLLMResponse } from "./parseLLMResponse.ts";
 
 const GEMINI_API_BASE =
   "https://generativelanguage.googleapis.com/v1beta/models";
@@ -32,7 +33,7 @@ Return your analysis as JSON with this exact structure:
 export async function callGemini(
   imageBase64: string,
   bottle: BottleEntry,
-  apiKey: string
+  apiKeys: string[]
 ): Promise<LLMResponse> {
   const userMessage = `Analyze this oil bottle image and estimate the fill level.
 
@@ -71,53 +72,48 @@ Provide your analysis as JSON.`;
     },
   };
 
-  const url = `${GEMINI_API_BASE}/${MODEL}:generateContent?key=${apiKey}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestBody),
-  });
+  // Try each API key sequentially until one succeeds
+  const errors: Error[] = [];
+  for (let i = 0; i < apiKeys.length; i++) {
+    const apiKey = apiKeys[i];
+    const url = `${GEMINI_API_BASE}/${MODEL}:generateContent?key=${apiKey}`;
+    
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Gemini API error ${res.status}: ${text}`);
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Gemini API error ${res.status}: ${text}`);
+      }
+
+      const data = await res.json() as {
+        candidates?: Array<{
+          content?: { parts?: Array<{ text?: string }> };
+        }>;
+      };
+
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) {
+        throw new Error("Gemini returned empty response");
+      }
+
+      return parseLLMResponse(text);
+    } catch (error) {
+      errors.push(error as Error);
+      console.warn(`Gemini key ${i + 1} failed, trying next key...`, error);
+      
+      // If this was the last key, throw with all errors
+      if (i === apiKeys.length - 1) {
+        console.error(`All ${apiKeys.length} Gemini keys failed:`, errors);
+        throw new Error(`All Gemini API keys failed. Last error: ${errors[errors.length - 1].message}`);
+      }
+    }
   }
 
-  const data = await res.json() as {
-    candidates?: Array<{
-      content?: { parts?: Array<{ text?: string }> };
-    }>;
-  };
-
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) {
-    throw new Error("Gemini returned empty response");
-  }
-
-  return parseLLMResponse(text);
+  throw new Error("All Gemini API keys failed");
 }
 
-function parseLLMResponse(raw: string): LLMResponse {
-  const parsed = JSON.parse(raw) as Record<string, unknown>;
-
-  if (
-    typeof parsed.fillPercentage !== "number" ||
-    parsed.fillPercentage < 0 ||
-    parsed.fillPercentage > 100
-  ) {
-    throw new Error("Invalid fillPercentage in LLM response");
-  }
-
-  if (!["high", "medium", "low"].includes(parsed.confidence as string)) {
-    throw new Error("Invalid confidence in LLM response");
-  }
-
-  return {
-    fillPercentage: Math.round(parsed.fillPercentage as number),
-    confidence: parsed.confidence as "high" | "medium" | "low",
-    imageQualityIssues: Array.isArray(parsed.imageQualityIssues)
-      ? (parsed.imageQualityIssues as string[])
-      : [],
-    reasoning: typeof parsed.reasoning === "string" ? parsed.reasoning : undefined,
-  };
-}

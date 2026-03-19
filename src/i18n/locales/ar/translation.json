@@ -1,0 +1,350 @@
+{
+  "app": {
+    "name": "متتبع زيت عافية",
+    "tagline": "اعرف استهلاكك من الزيت"
+  },
+  "common": {
+    "loading": "جاري التحميل...",
+    "error": "خطأ",
+    "retry": "إعادة المحاولة",
+    "submit": "إرسال",
+    "cancel": "إلغاء",
+    "close": "إغلاق",
+    "next": "التالي",
+    "back": "رجوع",
+    "save": "حفظ",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "create": "إنشاء",
+    "search": "بحث",
+    "filter": "تصفية",
+    "export": "تصدير",
+    "import": "استيراد",
+    "yes": "نعم",
+    "no": "لا",
+    "ok": "موافق",
+    "confirm": "تأكيد",
+    "ml": "مل",
+    "tablespoons": "ملاعق كبيرة",
+    "cups": "أكواب",
+    "percent": "%",
+    "language": "اللغة",
+    "english": "English",
+    "arabic": "عربي",
+    "adminMode": "وضع الإدارة"
+  },
+  "landing": {
+    "title": "متتبع زيت عافية",
+    "bottle": "الزجاجة",
+    "capacity": "السعة",
+    "oilType": "نوع الزيت",
+    "startScan": "بدء المسح",
+    "unknownBottle": "زجاجة غير معروفة",
+    "unknownBottleMessage": "هذه الزجاجة غير مسجلة في نظامنا بعد."
+  },
+  "camera": {
+    "activate": "تفعيل الكاميرا",
+    "positionBottle": "ضع زجاجتك في الإطار",
+    "alignmentGuide": "دليل المحاذاة",
+    "capture": "التقاط",
+    "retake": "إعادة الالتقاط",
+    "preview": "معاينة",
+    "permissionDenied": "تم رفض إذن الكاميرا",
+    "permissionMessage": "يرجى منح إذن الكاميرا في إعدادات جهازك لاستخدام هذه الميزة.",
+    "openSettings": "فتح الإعدادات",
+    "iosWarning": "لأفضل تجربة للكاميرا، افتح في Safari",
+    "iosWarningMessage": "بعض متصفحات iOS بها قيود على الكاميرا. جرب فتح هذا الرابط في Safari."
+  },
+  "analysis": {
+    "analyzing": "جاري تحليل زجاجتك...",
+    "processing": "جاري معالجة الصورة",
+    "pleaseWait": "يرجى الانتظار بينما نحلل صورتك",
+    "failed": "فشل التحليل",
+    "failedMessage": "لم نتمكن من تحليل صورتك. يرجى المحاولة مرة أخرى.",
+    "networkError": "خطأ في الشبكة",
+    "networkErrorMessage": "يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.",
+    "serviceUnavailable": "الخدمة غير متاحة",
+    "serviceUnavailableMessage": "خدمة الذكاء الاصطناعي غير متاحة مؤقتًا. يرجى المحاولة لاحقًا."
+  },
+  "results": {
+    "title": "النتائج",
+    "fillLevel": "مستوى الامتلاء",
+    "remaining": "المتبقي",
+    "consumed": "المستهلك",
+    "nutrition": "حقائق غذائية",
+    "nutritionConsumed": "القيمة الغذائية (المستهلكة)",
+    "calories": "سعرات حرارية",
+    "totalFat": "إجمالي الدهون",
+    "saturatedFat": "الدهون المشبعة",
+    "showOverlay": "إظهار تراكب الزجاجة",
+    "hideOverlay": "إخفاء تراكب الزجاجة",
+    "confidenceHigh": "ثقة عالية",
+    "confidenceMedium": "ثقة متوسطة",
+    "confidenceLow": "ثقة منخفضة",
+    "lowConfidenceMessage": "فكر في إعادة التقاط الصورة للحصول على دقة أفضل",
+    "retakePhoto": "إعادة التقاط الصورة",
+    "disclaimer": "النتائج تقديرية (±15%). ليست تحليلاً غذائياً معتمداً.",
+    "imageQualityIssues": "تم اكتشاف مشاكل في جودة الصورة:",
+    "blur": "الصورة ضبابية جداً - حاول الإمساك بالهاتف بثبات",
+    "poorLighting": "الإضاءة ضعيفة - جرب بالقرب من نافذة أو ضوء",
+    "obstruction": "الزجاجة محجوبة جزئياً - تأكد من رؤية الزجاجة كاملة",
+    "reflection": "تم اكتشاف انعكاس قوي - جرب زاوية مختلفة"
+  },
+  "feedback": {
+    "title": "هل كان هذا التقدير دقيقاً؟",
+    "aboutRight": "صحيح تقريباً",
+    "tooHigh": "أعلى من اللازم",
+    "tooLow": "أقل من اللازم",
+    "wayOff": "خاطئ تماماً",
+    "yourEstimate": "ما الذي تقدره؟",
+    "submitFeedback": "إرسال الملاحظات",
+    "submitting": "جاري الإرسال...",
+    "thankYou": "شكراً لملاحظاتك!",
+    "improvementMessage": "مساهمتك تساعد في تحسين التقديرات المستقبلية.",
+    "error": "فشل إرسال الملاحظات. يرجى المحاولة مرة أخرى.",
+    "employeeOnly": "يتم جمع الملاحظات فقط من المختبرين والموظفين الداخليين",
+    "employeeMode": "وضع الموظف/الاختبار"
+  },
+  "privacy": {
+    "notice": "إشعار الخصوصية",
+    "message": "قبل البدء، يرجى الملاحظة: يتم تخزين صور المسح بشكل مجهول لتحسين نموذج الذكاء الاصطناعي الخاص بنا. لا يتم جمع أي معلومات شخصية.",
+    "agree": "أفهم",
+    "learnMore": "اعرف المزيد عن كيفية استخدامنا لبياناتك"
+  },
+  "offline": {
+    "title": "لا يوجد اتصال بالإنترنت",
+    "message": "الشبكة مطلوبة للمسح. يرجى التحقق من اتصالك والمحاولة مرة أخرى.",
+    "offline": "بدون اتصال"
+  },
+  "admin": {
+    "title": "لوحة التحكم",
+    "login": {
+      "title": "الوصول للإدارة",
+      "subtitle": "أدخل كلمة المرور للمتابعة",
+      "passwordPlaceholder": "كلمة المرور",
+      "loginButton": "تسجيل الدخول",
+      "logoutButton": "تسجيل الخروج",
+      "backToApp": "العودة للتطبيق",
+      "errorNotConfigured": "الوصول للإدارة غير مُهيأ. قم بتعيين متغير VITE_ADMIN_PASSWORD.",
+      "errorInvalid": "كلمة المرور غير صحيحة",
+      "skipToContent": "تخطي إلى المحتوى الرئيسي"
+    },
+    "header": {
+      "title": "لوحة التحكم"
+    },
+    "tabs": {
+      "overview": "نظرة عامة",
+      "bottles": "السجل",
+      "qrmock": "رموز QR",
+      "export": "التصدير"
+    },
+    "overview": {
+      "metrics": {
+        "totalScans": "إجمالي المسحات",
+        "totalConsumed": "إجمالي المستهلك",
+        "scans7Days": "المسحات (7 أيام)",
+        "scans30Days": "المسحات (30 يوم)",
+        "period7D": "٧ أيام",
+        "period30D": "٣٠ يوم"
+      },
+      "recentScans": {
+        "title": "المسحات الأخيرة",
+        "badge": "آخر ١٠",
+        "emptyTitle": "لا توجد مسحات بعد",
+        "emptyDescription": "ستظهر الزجاجات الممسوحة هنا بمجرد أن يبدأ المستخدمون بالمسح.",
+        "ctaLabel": "الذهاب إلى مختبر الاختبار →"
+      },
+      "table": {
+        "caption": "سجل المسح الأخير",
+        "date": "التاريخ",
+        "bottle": "الزجاجة",
+        "fillPercent": "% الامتلاء",
+        "consumed": "المستهلك",
+        "confidence": "الثقة"
+      }
+    },
+    "export": {
+      "title": "تصدير بيانات المسح",
+      "description": "حمّل سجل المسح بصيغة CSV أو JSON",
+      "dateRange": {
+        "label": "نطاق التاريخ:",
+        "allTime": "كل الوقت",
+        "last7Days": "آخر 7 أيام",
+        "last30Days": "آخر 30 يوم"
+      },
+      "stats": "{count} مسحات",
+      "noScansError": "لا توجد مسحات للتصدير في نطاق التاريخ المحدد.",
+      "buttons": {
+        "exportJson": "تصدير JSON",
+        "exportCsv": "تصدير CSV"
+      },
+      "info": {
+        "title": "ما المُضمّن:",
+        "items": [
+          "تاريخ ووقت المسح",
+          "SKU واسم الزجاجة",
+          "نسبة الامتلاء",
+          "الكميات المتبقية والمستهلكة",
+          "مستوى الثقة",
+          "تقييم الملاحظات (إن وجد)"
+        ]
+      }
+    },
+    "bottleManager": {
+      "title": "مدير الزجاجات",
+      "addNew": "إضافة زجاجة جديدة",
+      "edit": "تعديل الزجاجة",
+      "delete": "حذف الزجاجة",
+      "searchPlaceholder": "البحث في الزجاجات...",
+      "noBottles": "لا توجد زجاجات مسجلة",
+      "noResults": "لم يتم العثور على زجاجات",
+      "noResultsDesc": "حاول تعديل معايير البحث.",
+      "filter": {
+        "all": "الكل ({{count}})",
+        "builtin": "مدمجة ({{count}})",
+        "custom": "مخصصة ({{count}})"
+      },
+      "details": {
+        "builtin": "مدمج",
+        "sku": "رمز SKU:",
+        "oilType": "نوع الزيت:",
+        "capacity": "السعة:",
+        "shape": "الشكل:",
+        "dimensions": "الأبعاد:",
+        "heightShort": "ارتفاع:",
+        "diameterShort": "قطر:",
+        "heightFull": "الارتفاع:",
+        "topDiameter": "القطر العلوي:",
+        "bottomDiameter": "القطر السفلي:",
+        "deleteConfirm": "هل أنت متأكد أنك تريد حذف هذه الزجاجة؟"
+      },
+      "columns": {
+        "name": "الاسم",
+        "sku": "SKU",
+        "capacity": "السعة",
+        "caloriesPer100ml": "السعرات/١٠٠مل",
+        "actions": "الإجراءات"
+      },
+      "form": {
+        "nameLabel": "اسم الزجاجة",
+        "skuLabel": "رمز SKU",
+        "capacityLabel": "السعة (مل)",
+        "caloriesLabel": "السعرات الحرارية لكل ١٠٠ مل",
+        "totalFatLabel": "إجمالي الدهون لكل ١٠٠ مل (جم)",
+        "saturatedFatLabel": "الدهون المشبعة لكل ١٠٠ مل (جم)",
+        "qrCode": "رمز QR",
+        "generateQr": "إنشاء رمز QR"
+      }
+    },
+    "qrGenerator": {
+      "title": "مولد رموز QR",
+      "description": "أنشئ رموز QR للزجاجات المسجلة",
+      "selectBottle": "اختر الزجاجة",
+      "generate": "إنشاء رمز QR",
+      "download": "تحميل رمز QR",
+      "print": "طباعة رموز QR",
+      "bulkGenerate": "إنشاء جميع الرموز",
+      "preview": "معاينة رمز QR"
+    },
+    "onboarding": {
+      "step1": {
+        "title": "أهلاً بك في مختبر الاختبار!",
+        "content": "هذا يحاكي تجربة المسح الحقيقية للمستخدم مع أدوات تصحيح اختيارية للتحقق.",
+        "icon": "👋"
+      },
+      "step2": {
+        "title": "اختر نقطة الدخول",
+        "content": "امسح رموز QR الاختبارية أو اختر الزجاجات من القائمة - كلاهما يؤدي إلى نفس مسار المستخدم.",
+        "icon": "📥"
+      },
+      "step3": {
+        "title": "تجربة المستخدم الحقيقية",
+        "content": "هذا مطابق تماماً لتجربة كاميرا المستخدم - نفس الإطار، نفس الإرشادات، نفس النتائج.",
+        "icon": "📸"
+      },
+      "step4": {
+        "title": "أدوات تصحيح الإدارة",
+        "content": "وسّع هذه اللوحة لرؤية استجابات API، والتحقق من النتائج، وإضافة ملاحظات الاختبار.",
+        "icon": "🔧"
+      },
+      "progress": "الخطوة {current} من {total}",
+      "next": "التالي",
+      "back": "رجوع",
+      "skip": "تخطي الشرح",
+      "finish": "إنهاء"
+    },
+    "tools": {
+      "title": "أدوات الإدارة",
+      "toggle": {
+        "expand": "توسيع",
+        "collapse": "طي"
+      },
+      "apiResponse": {
+        "title": "استجابة API",
+        "copy": "نسخ JSON",
+        "copied": "تم النسخ!"
+      },
+      "metrics": {
+        "title": "مقاييس الأداء",
+        "responseTime": {
+          "label": "وقت الاستجابة",
+          "value": "{value}ms",
+          "statusFast": "✅ الهدف <٥ ث",
+          "statusSlow": "⚠️ بطيء"
+        },
+        "aiProvider": {
+          "label": "مزود الذكاء الاصطناعي",
+          "value": "{provider}"
+        },
+        "confidence": {
+          "label": "الثقة",
+          "high": "✅ جيد",
+          "medium": "⚠️ متوسط",
+          "low": "❌ منخفض"
+        },
+        "qualityIssues": {
+          "label": "مشاكل الجودة",
+          "issues": "⚠️ مشاكل",
+          "good": "✅ جيد"
+        }
+      },
+      "validation": {
+        "title": "التحقق",
+        "question": "هل كان هذا النتيجة دقيقة؟",
+        "accurate": "دقيقة",
+        "tooHigh": "أعلى من اللازم",
+        "tooLow": "أقل من اللازم",
+        "notesLabel": "ملاحظات (اختياري):",
+        "notesPlaceholder": "كانت الإضاءة ضعيفة، الزجاجة بها بخار...",
+        "correctedLabel": "نسبة التصحيح % (اختياري):",
+        "correctedPlaceholder": "٨٢",
+        "saveButton": "حفظ نتيجة الاختبار",
+        "saving": "جاري الحفظ..."
+      }
+    }
+  },
+  "history": {
+    "title": "سجل المسح",
+    "empty": "لا توجد مسحات بعد",
+    "emptyMessage": "ابدأ بمسح الزجاجات لرؤية سجلك هنا",
+    "date": "التاريخ",
+    "bottle": "الزجاجة",
+    "fillLevel": "مستوى الامتلاء",
+    "accuracy": "الدقة"
+  },
+  "trends": {
+    "title": "اتجاهات الاستهلاك",
+    "empty": "لا توجد بيانات بعد",
+    "emptyMessage": "امسح المزيد من الزجاجات لرؤية اتجاهات استهلاكك",
+    "dailyAverage": "المتوسط اليومي",
+    "weeklyAverage": "المتوسط الأسبوعي",
+    "totalConsumed": "إجمالي المستهلك"
+  },
+  "errors": {
+    "generic": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+    "camera": "خطأ في الكاميرا. يرجى التحديث والمحاولة مرة أخرى.",
+    "analysis": "فشل التحليل. يرجى إعادة التقاط الصورة.",
+    "network": "خطأ في الشبكة. يرجى التحقق من اتصالك.",
+    "notFound": "الصفحة غير موجودة"
+  }
+}

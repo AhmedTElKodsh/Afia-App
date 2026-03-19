@@ -1,5 +1,6 @@
-import type { BottleEntry } from "../bottleRegistry.ts";
 import type { LLMResponse } from "../types.ts";
+import type { BottleEntry } from "../bottleRegistry.ts";
+import { parseLLMResponse } from "./parseLLMResponse.ts";
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
@@ -91,27 +92,3 @@ Estimate fill level as JSON.`;
   return parseLLMResponse(content);
 }
 
-function parseLLMResponse(raw: string): LLMResponse {
-  const parsed = JSON.parse(raw) as Record<string, unknown>;
-
-  if (
-    typeof parsed.fillPercentage !== "number" ||
-    parsed.fillPercentage < 0 ||
-    parsed.fillPercentage > 100
-  ) {
-    throw new Error("Invalid fillPercentage in LLM response");
-  }
-
-  if (!["high", "medium", "low"].includes(parsed.confidence as string)) {
-    throw new Error("Invalid confidence in LLM response");
-  }
-
-  return {
-    fillPercentage: Math.round(parsed.fillPercentage as number),
-    confidence: parsed.confidence as "high" | "medium" | "low",
-    imageQualityIssues: Array.isArray(parsed.imageQualityIssues)
-      ? (parsed.imageQualityIssues as string[])
-      : [],
-    reasoning: typeof parsed.reasoning === "string" ? parsed.reasoning : undefined,
-  };
-}

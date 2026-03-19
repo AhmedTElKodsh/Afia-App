@@ -1,0 +1,164 @@
+/* ========================================
+   LoadingShell — Skeleton Placeholder
+   H10 / L4 fix: replaces "Loading..." text
+   ======================================== */
+
+/* ── Base shimmer animation ── */
+@keyframes skeleton-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--glass-bg-light, rgba(255,255,255,0.06)) 25%,
+    var(--glass-bg-hover, rgba(255,255,255,0.12)) 50%,
+    var(--glass-bg-light, rgba(255,255,255,0.06)) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
+
+/* ── Skeleton shape presets ── */
+.skeleton-bar {
+  height: 16px;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-pill {
+  height: 36px;
+  border-radius: var(--radius-full);
+  width: 120px;
+}
+
+.skeleton-card {
+  border-radius: var(--radius-lg);
+  width: 100%;
+}
+
+/* ── Shell wrappers ── */
+.loading-shell {
+  padding: var(--space-lg);
+  max-width: 800px;
+  margin: 0 auto;
+  padding-bottom: calc(80px + var(--space-lg));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* ────────────────────────────────────────
+   History variant
+   ──────────────────────────────────────── */
+.loading-shell--history .sh-header {
+  width: 140px;
+  height: 24px;
+  margin-bottom: var(--space-xs);
+}
+
+.sh-stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+}
+
+.sh-stats-row .skeleton-card {
+  height: 72px;
+}
+
+.sh-trend {
+  height: 96px;
+}
+
+.sh-pills {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.sh-item {
+  height: 64px;
+}
+
+/* ────────────────────────────────────────
+   Admin variant
+   ──────────────────────────────────────── */
+.loading-shell--admin {
+  padding: var(--space-xl);
+}
+
+.sh-admin-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+.sh-admin-card {
+  height: 100px;
+}
+
+.sh-admin-chart {
+  height: 260px;
+  margin-top: var(--space-sm);
+}
+
+.sh-admin-row {
+  height: 40px;
+}
+
+/* ────────────────────────────────────────
+   Scan/Landing variant
+   ──────────────────────────────────────── */
+.loading-shell--scan {
+  align-items: center;
+  padding-top: var(--space-2xl);
+}
+
+.sh-pill-center {
+  width: 200px;
+  height: 36px;
+}
+
+.sh-gauge-circle {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sh-card {
+  height: 64px;
+}
+
+.sh-btn {
+  height: 48px;
+  border-radius: var(--radius-md);
+  width: 100%;
+  max-width: 400px;
+}
+
+.sh-sparkline {
+  height: 88px;
+  max-width: 400px;
+}
+
+/* ── Light mode adjustments ── */
+:root.light .skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.06) 25%,
+    rgba(0, 0, 0, 0.11) 50%,
+    rgba(0, 0, 0, 0.06) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    opacity: 0.5;
+  }
+}

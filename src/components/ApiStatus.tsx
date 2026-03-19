@@ -1,3 +1,4 @@
+import { AlertTriangle } from "lucide-react";
 import "./ApiStatus.css";
 
 interface ApiStatusProps {
@@ -32,7 +33,7 @@ export function ApiStatus({
   return (
     <div className="api-status" role="alert">
       <div className="error-icon" aria-hidden="true">
-        ⚠️
+        <AlertTriangle size={32} strokeWidth={1.5} />
       </div>
       <h2>Unable to analyze image</h2>
       <p className="text-secondary">{errorMessage || "Please try again"}</p>

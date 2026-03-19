@@ -1,0 +1,67 @@
+/* ========================================
+   BOTTLE OVERLAY - Volume Markings
+   Post-analysis visualization
+   ======================================== */
+
+.bottle-overlay-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: transparent;
+  width: 100%;
+}
+
+.overlay-subtitle {
+  display: none;
+}
+
+.bottle-overlay-canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.overlay-legend {
+  display: flex;
+  visibility: hidden;
+  height: 0;
+  margin: 0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.legend-line {
+  width: 30px;
+  height: 3px;
+  border-radius: var(--radius-full);
+}
+
+.legend-label {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .overlay-title {
+    font-size: var(--font-size-body);
+  }
+
+  .overlay-subtitle {
+    font-size: var(--font-size-caption);
+  }
+
+  .bottle-overlay-canvas {
+    max-width: 100%;
+  }
+
+  .overlay-legend {
+    flex-direction: column;
+    gap: var(--space-xs);
+    align-items: center;
+  }
+}

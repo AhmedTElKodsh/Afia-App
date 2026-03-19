@@ -1,0 +1,30 @@
+.language-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  min-height: 40px;
+}
+
+.language-selector:hover {
+  background: var(--glass-bg-light);
+  border-color: var(--color-primary);
+}
+
+.language-label {
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* RTL support */
+html[dir="rtl"] .language-selector {
+  flex-direction: row-reverse;
+}

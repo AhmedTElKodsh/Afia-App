@@ -1,0 +1,60 @@
+import { XCircle } from "lucide-react";
+import "./ApiStatus.css"; /* reuse .analyzing-animation / .bottle-outline / .fill-wave */
+import "./AnalyzingOverlay.css";
+
+interface AnalyzingOverlayProps {
+  /** Base-64 captured image to show dimmed behind the animation */
+  capturedImage: string | null;
+  /** Called when the user taps Cancel — should reset to CAMERA_ACTIVE */
+  onCancel: () => void;
+}
+
+/**
+ * AnalyzingOverlay
+ *
+ * Shown while the API is processing the captured image (API_PENDING state).
+ * H1 fix: Removes ~8 hardcoded inline styles from App.tsx.
+ * H2 fix: Provides an accessible Cancel ghost button.
+ */
+export function AnalyzingOverlay({ capturedImage, onCancel }: AnalyzingOverlayProps) {
+  return (
+    <div className="analyzing-overlay" role="status" aria-live="polite" aria-label="Analyzing bottle">
+      {/* Dimmed captured image as background */}
+      {capturedImage && (
+        <img
+          src={`data:image/jpeg;base64,${capturedImage}`}
+          alt=""
+          className="analyzing-bg-image"
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Scrim */}
+      <div className="analyzing-scrim" aria-hidden="true" />
+
+      {/* Content */}
+      <div className="analyzing-content">
+        {/* Animated bottle — reuses ApiStatus.css classes */}
+        <div className="analyzing-animation" aria-hidden="true">
+          <div className="bottle-outline">
+            <div className="fill-wave" />
+          </div>
+        </div>
+
+        <p className="analyzing-title">Analyzing Bottle…</p>
+        <p className="analyzing-sub">This usually takes 3–8 seconds</p>
+
+        {/* H2 fix: Cancel button */}
+        <button
+          type="button"
+          className="btn btn-ghost analyzing-cancel-btn"
+          onClick={onCancel}
+          aria-label="Cancel analysis and return to camera"
+        >
+          <XCircle size={16} strokeWidth={2} aria-hidden="true" />
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}

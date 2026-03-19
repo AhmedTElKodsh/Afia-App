@@ -1,46 +1,60 @@
+/* ========================================
+   BOTTLE SELECTOR - PREMIUM DESIGN
+   Clean, accessible, easy interaction
+   ======================================== */
 .bottle-selector {
   position: relative;
   width: 100%;
-  max-width: 400px;
-  margin: 0 auto var(--space-lg);
+  max-width: 420px;
+  margin: 0 auto var(--space-xl);
 }
 
+/* Trigger button */
 .bottle-selector-trigger {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-md) var(--space-lg);
-  background: var(--color-surface);
-  border: 2px solid var(--color-border);
+  padding: var(--space-md) var(--space-xl);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: border-color 0.2s;
-  font-size: var(--font-size-base);
-  color: var(--color-text);
+  transition: all var(--transition-base);
+  font-family: var(--font-family);
+  min-height: 56px;
 }
 
 .bottle-selector-trigger:hover {
-  border-color: var(--color-primary);
+  border-color: var(--glass-border-strong);
+  background: var(--glass-bg-light);
+}
+
+.bottle-selector-trigger:active {
+  transform: scale(0.98);
 }
 
 .bottle-selector-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   text-align: left;
 }
 
 .bottle-selector-label {
-  font-size: var(--font-size-caption);
-  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+  color: var(--color-text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  font-weight: var(--font-weight-semibold);
 }
 
 .bottle-selector-name {
-  font-weight: 600;
-  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-body);
 }
 
 .bottle-selector-capacity {
@@ -49,62 +63,90 @@
 }
 
 .bottle-selector-arrow {
-  font-size: var(--font-size-sm);
+  font-size: 1.25rem;
   color: var(--color-text-secondary);
-  transition: transform 0.2s;
-  margin-left: var(--space-sm);
+  transition: transform var(--transition-base);
 }
 
 .bottle-selector-arrow.open {
   transform: rotate(180deg);
 }
 
+/* Dropdown */
 .bottle-selector-dropdown {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + var(--space-sm));
   left: 0;
   right: 0;
-  background: var(--color-surface);
-  border: 2px solid var(--color-primary);
-  border-radius: var(--radius-md);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 100;
-  max-height: 300px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  z-index: var(--z-dropdown);
+  max-height: 320px;
   overflow-y: auto;
-  padding: var(--space-xs);
+  padding: var(--space-sm);
+  animation: slideDown var(--transition-base) ease-out;
 }
 
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Bottle options */
 .bottle-option {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all var(--transition-base);
   text-align: left;
+  font-family: var(--font-family);
+  color: var(--color-text-primary);
+  position: relative;
+  min-height: 52px;
 }
 
 .bottle-option:hover {
-  background: var(--color-background);
+  background: var(--glass-bg-light);
 }
 
 .bottle-option.selected {
-  background: var(--color-primary-light);
+  background: var(--color-primary);
+  color: #0a0a0a;
+}
+
+.bottle-option.selected .bottle-option-name,
+.bottle-option.selected .bottle-option-meta {
+  color: #0a0a0a;
+}
+
+.bottle-option.selected .bottle-option-check {
+  color: #0a0a0a;
+  opacity: 1;
 }
 
 .bottle-option-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .bottle-option-name {
-  font-weight: 500;
-  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
 }
 
 .bottle-option-meta {
@@ -113,56 +155,64 @@
 }
 
 .bottle-option-check {
-  font-size: var(--font-size-lg);
-  color: var(--color-primary);
-  font-weight: bold;
+  font-size: 1.25rem;
+  opacity: 0;
+  transition: opacity var(--transition-base);
 }
 
+.bottle-option.selected .bottle-option-check {
+  opacity: 1;
+}
+
+/* Backdrop */
 .bottle-selector-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 99;
+  z-index: calc(var(--z-dropdown) - 1);
 }
 
-/* Compact dropdown version */
+/* Compact dropdown */
 .bottle-selector-compact {
   width: 100%;
-  max-width: 400px;
-  margin: 0 auto var(--space-lg);
+  max-width: 420px;
+  margin: 0 auto var(--space-xl);
 }
 
 .bottle-dropdown {
   width: 100%;
-  padding: var(--space-md) var(--space-lg);
-  background: var(--color-surface);
-  border: 2px solid var(--color-border);
+  padding: var(--space-md) var(--space-xl);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  font-size: var(--font-size-base);
-  color: var(--color-text);
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
   cursor: pointer;
-  transition: border-color 0.2s;
+  transition: all var(--transition-base);
+  min-height: 56px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23a3a3a3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-md) center;
 }
 
 .bottle-dropdown:hover {
-  border-color: var(--color-primary);
+  border-color: var(--glass-border-strong);
 }
 
 .bottle-dropdown:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-light);
+  box-shadow: 0 0 0 2px var(--color-primary-glow);
 }
 
-/* Mobile optimizations */
+/* Mobile */
 @media (max-width: 480px) {
   .bottle-selector-dropdown {
-    max-height: 40vh;
-  }
-
-  .bottle-option {
-    padding: var(--space-sm) var(--space-md);
+    max-height: 50vh;
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "safi-worker",
+  "name": "afia-worker",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -8,7 +8,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "hono": "^4.7.0"
+    "hono": "^4.7.0",
+    "@supabase/supabase-js": "^2.48.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250224.0",

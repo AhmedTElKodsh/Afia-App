@@ -1,28 +1,126 @@
+/* ========================================
+   UNKNOWN BOTTLE — Enhanced State
+   ======================================== */
 .unknown-bottle {
   min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-lg);
+  /* Clear the fixed AppControls bar at top and nav at bottom */
+  padding: calc(72px + env(safe-area-inset-top, 0px)) var(--space-lg) calc(88px + env(safe-area-inset-bottom, 0px));
 }
 
 .unknown-bottle-content {
   text-align: center;
   max-width: 320px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  animation: ub-fade-up var(--transition-slow) ease-out both;
 }
 
+@keyframes ub-fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Brand logo at top */
+.ub-logo {
+  margin-bottom: var(--space-sm);
+  opacity: 0.8;
+}
+
+/* Info icon */
 .unknown-icon {
-  font-size: 3rem;
-  margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--color-text-secondary);
+  margin: var(--space-sm) 0;
 }
 
+/* Title */
 .unknown-bottle-content h1 {
   font-size: var(--font-size-h2);
-  margin-bottom: var(--space-sm);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0;
 }
 
+/* Description text */
+.ub-desc {
+  line-height: 1.6;
+  margin: 0;
+  font-size: var(--font-size-body);
+}
+
+/* SKU display */
 .sku-display {
   font-family: monospace;
   font-size: var(--font-size-caption);
-  margin-bottom: var(--space-md);
+  margin: 0;
+  opacity: 0.7;
+}
+
+/* Getting started guide card */
+.ub-guide {
+  width: 100%;
+  text-align: left;
+  margin-top: var(--space-sm);
+}
+
+.ub-guide-title {
+  margin: 0 0 var(--space-sm) 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: var(--font-weight-semibold);
+}
+
+.ub-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  counter-reset: step-counter;
+}
+
+.ub-steps li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-size-body);
+  color: var(--color-text-primary);
+  counter-increment: step-counter;
+}
+
+.ub-steps li::before {
+  content: counter(step-counter);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  background: var(--color-primary);
+  color: var(--color-text-inverse, #000);
+  border-radius: 50%;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .unknown-bottle-content { animation: none; }
 }

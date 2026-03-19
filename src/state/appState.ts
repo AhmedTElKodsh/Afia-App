@@ -6,6 +6,7 @@ export type AppState =
   | "API_SUCCESS"
   | "API_LOW_CONFIDENCE"
   | "API_ERROR"
+  | "QR_MISMATCH"
   | "UNKNOWN_BOTTLE";
 
 export interface AnalysisResult {
