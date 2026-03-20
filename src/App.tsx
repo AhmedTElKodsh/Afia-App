@@ -323,7 +323,7 @@ interface NavigationProps {
 
 function Navigation({ currentView, onViewChange, isAdminMode }: NavigationProps) {
   return (
-    <nav className="main-navigation">
+    <nav className={`main-navigation${isAdminMode ? " main-navigation--admin" : ""}`}>
       {isAdminMode ? (
         // Admin Mode Navigation: Test Lab | History | Dashboard
         <>
@@ -332,7 +332,7 @@ function Navigation({ currentView, onViewChange, isAdminMode }: NavigationProps)
             onClick={() => onViewChange("scan")}
             aria-label="Test Lab"
           >
-            <span className="nav-icon"><FlaskConical size={20} strokeWidth={2} /></span>
+            <span className="nav-icon"><FlaskConical size={22} strokeWidth={2} /></span>
             <span className="nav-label">Test Lab</span>
           </button>
           <button
@@ -340,7 +340,7 @@ function Navigation({ currentView, onViewChange, isAdminMode }: NavigationProps)
             onClick={() => onViewChange("history")}
             aria-label="History"
           >
-            <span className="nav-icon"><History size={20} strokeWidth={2} /></span>
+            <span className="nav-icon"><History size={22} strokeWidth={2} /></span>
             <span className="nav-label">History</span>
           </button>
           <button
@@ -348,7 +348,7 @@ function Navigation({ currentView, onViewChange, isAdminMode }: NavigationProps)
             onClick={() => onViewChange("admin")}
             aria-label="Dashboard"
           >
-            <span className="nav-icon"><LayoutDashboard size={20} strokeWidth={2} /></span>
+            <span className="nav-icon"><LayoutDashboard size={22} strokeWidth={2} /></span>
             <span className="nav-label">Dashboard</span>
           </button>
         </>
