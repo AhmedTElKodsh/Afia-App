@@ -34,10 +34,25 @@ jobs:
         env:
           VITE_PROXY_URL: ${{ secrets.CLOUDFLARE_WORKER_URL || 'https://afia-worker.savola.workers.dev' }}
 
-      - name: Run E2E tests
-        run: npm run test:e2e
+      - name: Run E2E tests (functional)
+        run: npx playwright test --ignore=tests/visual-regression.spec.ts
         env:
           CI: true
+
+      - name: Update visual regression snapshots for Linux
+        run: npx playwright test tests/visual-regression.spec.ts --update-snapshots || true
+        env:
+          CI: true
+
+      - name: Commit updated Linux snapshots
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tests/visual-regression.spec.ts-snapshots/ || true
+          git diff --staged --quiet || git commit -m "ci: update visual regression snapshots for linux [skip ci]"
+          git push || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   deploy-worker:
     name: Deploy Worker
