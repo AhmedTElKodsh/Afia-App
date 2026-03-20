@@ -94,7 +94,7 @@
 }
 
 .nav-label {
-  font-size: var(--font-size-small);
+  font-size: 0.6rem;
   font-weight: var(--font-weight-semibold);
   letter-spacing: 0.04em;
   text-transform: uppercase;
