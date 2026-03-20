@@ -412,6 +412,24 @@ html[dir="rtl"] .icon-flip {
   width: 100%;
 }
 
+/* Link: looks like a text link, not a button */
+.btn-link {
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  min-height: unset;
+  padding: var(--space-xs) var(--space-sm);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.btn-link:hover {
+  color: var(--color-text-primary);
+  background: transparent;
+}
+
 .btn-sm {
   min-height: 44px;
   padding: var(--space-xs) var(--space-md);

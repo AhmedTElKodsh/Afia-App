@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, lazy, Suspense } from "react";
-import { Camera, History, Settings } from "lucide-react";
+import { Camera, History, LayoutDashboard, FlaskConical } from "lucide-react";
 
 import "./App.css";
 import "./components/Navigation.css";
@@ -332,7 +332,7 @@ function Navigation({ currentView, onViewChange, isAdminMode }: NavigationProps)
             onClick={() => onViewChange("scan")}
             aria-label="Test Lab"
           >
-            <span className="nav-icon">🧪</span>
+            <span className="nav-icon"><FlaskConical size={20} strokeWidth={2} /></span>
             <span className="nav-label">Test Lab</span>
           </button>
           <button
@@ -348,7 +348,7 @@ function Navigation({ currentView, onViewChange, isAdminMode }: NavigationProps)
             onClick={() => onViewChange("admin")}
             aria-label="Dashboard"
           >
-            <span className="nav-icon"><Settings size={20} strokeWidth={2} /></span>
+            <span className="nav-icon"><LayoutDashboard size={20} strokeWidth={2} /></span>
             <span className="nav-label">Dashboard</span>
           </button>
         </>
