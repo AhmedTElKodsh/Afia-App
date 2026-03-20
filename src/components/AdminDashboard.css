@@ -65,8 +65,11 @@
 }
 
 .login-card > .btn-link {
-  margin-top: var(--space-sm);
+  margin-top: var(--space-md);
   align-self: center;
+  border-top: 1px solid var(--glass-border);
+  width: 100%;
+  padding-top: var(--space-md);
 }
 
 .password-input {
