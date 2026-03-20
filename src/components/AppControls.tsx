@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Sun, Moon, Globe } from 'lucide-react';
+import { Sun, Moon, Globe, ShieldCheck } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import './AppControls.css';
 
@@ -30,7 +30,7 @@ export function AppControls({ hidden = false, isAdminMode = false }: AppControls
       {isAdminMode && (
         <>
           <div className="app-ctrl-admin" aria-label="Admin Mode Active">
-            <span className="app-ctrl-admin-icon">🛡️</span>
+            <ShieldCheck size={16} strokeWidth={2} />
             <span className="app-ctrl-admin-label">{t('common.adminMode')}</span>
           </div>
           <div className="app-ctrl-divider" aria-hidden="true" />

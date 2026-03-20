@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { AlertTriangle } from "lucide-react";
 import { useCamera } from "../hooks/useCamera.ts";
 import "./CameraCapture.css";
 
@@ -44,7 +45,7 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
     return (
       <div className="camera-error">
         <div className="camera-error-icon" aria-hidden="true">
-          ⚠️
+          <AlertTriangle size={44} strokeWidth={1.5} />
         </div>
         <h2>Camera unavailable</h2>
         <p className="text-secondary">

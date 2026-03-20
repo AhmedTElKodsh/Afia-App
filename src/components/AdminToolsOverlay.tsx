@@ -15,7 +15,7 @@
 
 import { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, ChevronUp, Copy, Check, ThumbsUp, ThumbsDown, Clock, Cpu, CheckCircle, Camera } from "lucide-react";
+import { ChevronDown, ChevronUp, Copy, Check, ThumbsUp, ThumbsDown, Clock, Cpu, CheckCircle, Camera, Wrench, BarChart2 } from "lucide-react";
 import type { AnalysisResult } from "../state/appState.ts";
 import "./AdminToolsOverlay.css";
 
@@ -141,7 +141,7 @@ export function AdminToolsOverlay({
         aria-controls="admin-tools-panel"
       >
         <div className="admin-tools-toggle-header">
-          <span className="admin-tools-toggle-icon">🔧</span>
+          <Wrench size={16} strokeWidth={2} />
           <span className="admin-tools-toggle-title">{t('admin.tools.title')}</span>
         </div>
         <div className="admin-tools-toggle-action">
@@ -171,7 +171,8 @@ export function AdminToolsOverlay({
           <div className="admin-tools-section">
             <div className="admin-tools-section-header">
               <h3 className="admin-tools-section-title">
-                <span>📊</span> {t('admin.tools.apiResponse.title')}
+                <BarChart2 size={14} strokeWidth={2} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
+                {t('admin.tools.apiResponse.title')}
               </h3>
               <button
                 className="admin-tools-copy-button"

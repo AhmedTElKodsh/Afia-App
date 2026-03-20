@@ -14,7 +14,7 @@
 
 import { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, CheckCircle } from "lucide-react";
 import "./AdminOnboarding.css";
 
 export interface AdminOnboardingProps {
@@ -161,7 +161,7 @@ export function AdminOnboarding({ onComplete, onSkip }: AdminOnboardingProps) {
               type="button"
             >
               <span>{t('admin.onboarding.finish')}</span>
-              <span className="admin-onboarding-button-icon">🎉</span>
+              <CheckCircle size={16} strokeWidth={2} className="admin-onboarding-button-icon" />
             </button>
           )}
 
