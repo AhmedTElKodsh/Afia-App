@@ -7,7 +7,7 @@ HTMLCanvasElement.prototype.getContext = function(...args) {
   // Return null only for specific test cases that need it
   // Otherwise, use the original implementation
   try {
-    return originalGetContext.apply(this, args as any);
+    return (originalGetContext as (...args: unknown[]) => RenderingContext | null).apply(this, args);
   } catch {
     return null;
   }
@@ -24,21 +24,31 @@ Object.defineProperty(globalThis.navigator, "mediaDevices", {
 });
 
 // Mock requestAnimationFrame for tests
-// Use setTimeout to prevent infinite recursion in tests
+// Track pending timeouts so cancelAnimationFrame can actually cancel them
+const pendingFrames = new Map<number, ReturnType<typeof setTimeout>>();
 let frameId = 0;
 Object.defineProperty(globalThis, "requestAnimationFrame", {
   value: vi.fn((callback) => {
     const id = ++frameId;
-    setTimeout(() => callback(performance.now()), 0);
+    const timeoutId = setTimeout(() => {
+      pendingFrames.delete(id);
+      callback(performance.now());
+    }, 0);
+    pendingFrames.set(id, timeoutId);
     return id;
   }),
   writable: true,
 });
 
-// Mock cancelAnimationFrame
+// Mock cancelAnimationFrame — must actually cancel the timeout to prevent
+// post-teardown "window is not defined" errors when components unmount mid-animation
 Object.defineProperty(globalThis, "cancelAnimationFrame", {
-  value: vi.fn((id) => {
-    // No-op in test environment
+  value: vi.fn((id: number) => {
+    const timeoutId = pendingFrames.get(id);
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+      pendingFrames.delete(id);
+    }
   }),
   writable: true,
 });
