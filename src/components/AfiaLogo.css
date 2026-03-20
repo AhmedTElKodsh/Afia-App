@@ -1,0 +1,10 @@
+/* Light mode: multiply blend removes the white PNG background */
+html.theme-light .afia-logo-img {
+  mix-blend-mode: multiply;
+}
+
+/* Dark mode: screen blend on dark bg keeps colours, drops near-white background */
+html:not(.theme-light) .afia-logo-img {
+  mix-blend-mode: screen;
+  filter: brightness(0.9);
+}
