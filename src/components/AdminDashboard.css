@@ -65,11 +65,8 @@
 }
 
 .login-card > .btn-link {
-  margin-top: var(--space-md);
+  margin-top: var(--space-sm);
   align-self: center;
-  border-top: 1px solid var(--glass-border);
-  width: 100%;
-  padding-top: var(--space-md);
 }
 
 .password-input {
@@ -329,8 +326,8 @@
   background: var(--glass-bg-hover);
 }
 
-/* Active: clearly differentiated pill shape matching MD / HIG guidelines */
-.nav-item.active {
+/* Active: pill only inside the top header nav — scoped to avoid bleeding into bottom nav */
+.top-navbar .nav-item.active {
   color: var(--color-primary);
   background: var(--glass-bg-hover);
   border: 1px solid var(--glass-border);
@@ -338,12 +335,11 @@
   font-weight: 600;
 }
 
-.nav-item.active .nav-icon {
+.top-navbar .nav-item.active .nav-icon {
   filter: drop-shadow(0 0 5px color-mix(in srgb, var(--color-primary) 40%, transparent));
 }
 
-/* Hide underline as we are using a pill */
-.nav-item.active::after {
+.top-navbar .nav-item.active::after {
   display: none;
 }
 

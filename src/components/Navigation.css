@@ -14,10 +14,10 @@
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-full);
   display: flex;
-  justify-content: space-around;
-  align-items: stretch;
-  padding: var(--space-xs) var(--space-sm);
-  gap: var(--space-xs);
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-xs) var(--space-md);
+  gap: var(--space-lg);
   z-index: var(--z-sticky);
   box-shadow: var(--shadow-xl), var(--glass-inset);
   animation: nav-slide-up var(--transition-bounce) both;
@@ -40,7 +40,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 5px;
   padding: var(--space-sm) var(--space-md);
   background: transparent;
   border: none;
@@ -48,8 +48,8 @@
   border-radius: var(--radius-lg);
   transition: color var(--transition-fast), background var(--transition-fast);
   color: var(--color-text-secondary);
-  min-width: 64px;
-  flex: 1;
+  min-width: 72px;
+  flex: 0 0 auto;
   position: relative;
 }
 
@@ -70,14 +70,14 @@
   filter: drop-shadow(0 0 6px color-mix(in srgb, var(--color-primary) 50%, transparent));
 }
 
-/* Slim gold line sits just below the icon, above the label */
+/* Slim gold line in the gap between icon and label */
 .nav-item.active .nav-icon::after {
   content: '';
   position: absolute;
-  bottom: -5px;
+  bottom: -4px;
   left: 50%;
   transform: translateX(-50%);
-  width: 20px;
+  width: 16px;
   height: 2px;
   border-radius: 999px;
   background: var(--color-primary);
