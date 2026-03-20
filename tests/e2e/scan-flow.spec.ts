@@ -48,8 +48,8 @@ test.describe('Oil Bottle Scan Flow', () => {
     // Note: In real browser, camera may not work without actual device
     await page.waitForTimeout(2000); // Wait for camera activation
 
-    // Check for viewfinder or camera error/instructions
-    const hasViewfinder = await page.locator('.viewfinder, video').count();
+    // Check for viewfinder, camera error, or camera-related text
+    const hasViewfinder = await page.locator('.camera-viewfinder, .camera-error, video').count();
     const hasCameraText = await page.locator('text=/camera|permission|allow/i').count();
 
     expect(hasViewfinder + hasCameraText).toBeGreaterThan(0);
