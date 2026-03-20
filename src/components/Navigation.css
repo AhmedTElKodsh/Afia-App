@@ -16,7 +16,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-md) var(--space-md);
   gap: var(--space-lg);
   z-index: var(--z-sticky);
   box-shadow: var(--shadow-xl), var(--glass-inset);
@@ -41,7 +41,7 @@
   align-items: center;
   justify-content: center;
   gap: 5px;
-  padding: 8px 16px 10px;
+  padding: 10px 16px 12px;
   background: transparent;
   border: none;
   cursor: pointer;
