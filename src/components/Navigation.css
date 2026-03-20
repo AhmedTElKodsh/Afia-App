@@ -3,21 +3,20 @@
    ======================================== */
 .main-navigation {
   position: fixed;
-  bottom: max(var(--space-lg), env(safe-area-inset-bottom, var(--space-lg)));
+  bottom: max(20px, env(safe-area-inset-bottom, 20px));
   left: 50%;
   transform: translateX(-50%);
-  width: calc(100% - var(--space-2xl));
-  max-width: 420px;
+  width: auto;
   background: var(--glass-bg);
   backdrop-filter: blur(24px) saturate(1.4);
   -webkit-backdrop-filter: blur(24px) saturate(1.4);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-full);
+  border-radius: 999px;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: var(--space-md) var(--space-md);
-  gap: var(--space-lg);
+  padding: 10px 20px;
+  gap: 4px;
   z-index: var(--z-sticky);
   box-shadow: var(--shadow-xl), var(--glass-inset);
   animation: nav-slide-up var(--transition-bounce) both;
@@ -34,23 +33,24 @@
   }
 }
 
-/* Nav item button — no individual box */
+/* Nav item */
 .nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 10px 16px 12px;
+  gap: 4px;
+  padding: 8px 20px 10px;
   background: transparent;
   border: none;
   cursor: pointer;
-  border-radius: var(--radius-lg);
+  border-radius: 999px;
   transition: color var(--transition-fast), background var(--transition-fast);
   color: var(--color-text-secondary);
-  min-width: 72px;
   flex: 0 0 auto;
   position: relative;
+  min-width: 0;
+  touch-action: manipulation;
 }
 
 .nav-item:hover {
@@ -58,7 +58,7 @@
   color: var(--color-text-primary);
 }
 
-/* Active: gold icon + label color only — zero background fill */
+/* Active: gold color, no background box */
 .nav-item.active {
   background: transparent;
   color: var(--color-primary);
@@ -66,18 +66,18 @@
 }
 
 .nav-item.active .nav-icon {
-  transform: scale(1.05);
-  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--color-primary) 50%, transparent));
+  transform: scale(1.08);
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--color-primary) 50%, transparent));
 }
 
-/* Slim gold line in the gap between icon and label */
+/* Slim gold dot below the icon, sitting in the gap */
 .nav-item.active .nav-icon::after {
   content: '';
   position: absolute;
   bottom: -4px;
   left: 50%;
   transform: translateX(-50%);
-  width: 16px;
+  width: 14px;
   height: 2px;
   border-radius: 999px;
   background: var(--color-primary);
@@ -90,39 +90,40 @@
   justify-content: center;
   line-height: 1;
   position: relative;
+  width: 20px;
+  height: 20px;
   transition: transform var(--transition-base), filter var(--transition-base);
 }
 
 .nav-label {
-  font-size: 0.6rem;
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: 0.04em;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   white-space: nowrap;
+  line-height: 1;
 }
 
 /* App wrapper - leave room for nav */
 .app-with-nav {
   min-height: 100dvh;
-  padding-bottom: 124px;
+  padding-bottom: 110px;
 }
 
 /* Mobile */
 @media (max-width: 480px) {
   .main-navigation {
-    bottom: var(--space-md);
-    width: calc(100% - var(--space-xl));
-    padding: var(--space-xs) var(--space-xs);
+    bottom: 16px;
+    padding: 8px 12px;
     gap: 2px;
   }
 
   .nav-item {
-    padding: var(--space-xs) var(--space-sm);
-    min-width: 52px;
+    padding: 8px 14px 10px;
   }
 }
 
-/* ── Light mode ── */
+/* Light mode */
 html.theme-light .main-navigation {
   background: var(--glass-bg);
   border-color: var(--glass-border);
@@ -132,7 +133,7 @@ html.theme-light .nav-item:hover {
   color: var(--color-text-primary);
 }
 
-/* ── Dark mode ── */
+/* Dark mode */
 html:not(.theme-light) .main-navigation {
   border-color: rgba(255, 255, 255, 0.08);
 }
@@ -147,5 +148,3 @@ html:not(.theme-light) .main-navigation {
     filter: none;
   }
 }
-
-
