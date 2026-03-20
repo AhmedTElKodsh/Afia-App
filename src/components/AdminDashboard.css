@@ -37,13 +37,24 @@
   to   { opacity: 1; transform: scale(1); }
 }
 
+.login-icon-wrap {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-md);
+  color: #fff;
+  box-shadow: 0 8px 24px var(--color-primary-glow);
+}
+
 .login-card h1 {
   margin-bottom: var(--space-sm);
   font-size: var(--font-size-h2);
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-bold);
 }
 
 .login-card form {
@@ -109,8 +120,8 @@
   justify-content: center;
   border-radius: var(--radius-sm);
   transition: color 0.2s ease;
-  min-width: 32px;
-  min-height: 32px;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 [dir="rtl"] .password-toggle {
@@ -225,10 +236,11 @@
 }
 
 .brand-logo {
-  width: 30px; 
-  height: 30px;
+  width: 34px; 
+  height: 34px;
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
-  border-radius: 8px;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px var(--color-primary-glow);
   display: flex; 
   align-items: center; 
   justify-content: center;
@@ -309,9 +321,12 @@
   background: var(--glass-bg-hover);
 }
 
-/* Active: gold text + slim left-edge indicator — no background box */
+/* Active: clearly differentiated pill shape matching MD / HIG guidelines */
 .nav-item.active {
   color: var(--color-primary);
+  background: var(--glass-bg-hover);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-sm);
   font-weight: 600;
 }
 
@@ -319,18 +334,9 @@
   filter: drop-shadow(0 0 5px color-mix(in srgb, var(--color-primary) 40%, transparent));
 }
 
-/* Gold underline dot below the active item — mirrors bottom-nav pill */
+/* Hide underline as we are using a pill */
 .nav-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: 2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 20px;
-  height: 3px;
-  border-radius: 999px;
-  background: var(--color-primary);
-  box-shadow: 0 0 8px var(--color-primary-glow);
+  display: none;
 }
 
 .nav-item .nav-icon { 
@@ -474,6 +480,27 @@
   margin-bottom: var(--space-lg);
 }
 
+@media (min-width: 640px) {
+  .metrics-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ── Section heading treatment ───────────────────────────────────────────── */
+.feedback-summary-section h2,
+.recent-scans-header h2,
+.export-tab h3 {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
+  padding-left: var(--space-sm);
+  border-left: 2px solid var(--color-primary);
+  line-height: 1.4;
+  margin: 0;
+}
+
 /* ── Feedback Summary ─────────────────────────────────────────────────────── */
 .feedback-summary-section {
   background: var(--glass-bg);
@@ -496,7 +523,17 @@
 .feedback-stat-item {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  background: var(--glass-bg-subtle);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+  transition: transform var(--transition-fast), background var(--transition-base);
+}
+.feedback-stat-item:hover {
+  background: var(--glass-bg-hover);
+  transform: translateY(-2px);
+}
 }
 
 .feedback-label {
@@ -508,10 +545,11 @@
 }
 
 .feedback-bar-wrap {
-  height: 6px;
+  height: 8px;
   background: var(--glass-bg-light);
-  border-radius: 3px;
+  border-radius: 4px;
   overflow: hidden;
+  flex: 1;
 }
 
 .feedback-bar {
@@ -618,7 +656,7 @@
 
 .scans-table th,
 .scans-table td {
-  padding: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
   text-align: left;
   border-bottom: 1px solid var(--color-border);
 }
@@ -628,14 +666,23 @@
   color: var(--color-text-secondary);
   text-transform: uppercase;
   font-size: var(--font-size-xs);
+  letter-spacing: 0.06em;
+}
+
+.scans-table tbody tr {
+  transition: background var(--transition-base);
+}
+
+.scans-table tbody tr:hover {
+  background: var(--glass-bg-hover);
 }
 
 .confidence-badge-high,
 .confidence-badge-medium,
 .confidence-badge-low {
   display: inline-block;
-  padding: 2px var(--space-xs);
-  border-radius: var(--radius-xs);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
   font-size: var(--font-size-xs);
   font-weight: 600;
   text-transform: capitalize;
@@ -719,14 +766,14 @@
 }
 
 .sparkline-bar--active {
-  background: var(--color-primary);
-  opacity: 0.65;
+  background: linear-gradient(to top, var(--color-primary-dark), var(--color-primary));
+  opacity: 0.75;
 }
 
 .sparkline-bar--today {
-  background: var(--color-primary);
+  background: linear-gradient(to top, var(--color-primary), var(--color-accent));
   opacity: 1;
-  box-shadow: 0 0 8px var(--color-primary-glow);
+  box-shadow: 0 0 10px var(--color-primary-glow);
 }
 
 .sparkline-day {

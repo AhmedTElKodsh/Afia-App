@@ -16,6 +16,8 @@ import {
   EyeOff,
   Menu,
   X,
+  ShieldCheck,
+  Shield,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
@@ -112,7 +114,10 @@ export function AdminDashboard() {
     return (
       <div className="admin-login" dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="login-card">
-          <h1>🔐 {t('admin.login.title')}</h1>
+          <div className="login-icon-wrap" aria-hidden="true">
+            <ShieldCheck size={32} strokeWidth={1.5} />
+          </div>
+          <h1>{t('admin.login.title')}</h1>
           <p className="text-secondary">{t('admin.login.subtitle')}</p>
           <form onSubmit={handleLogin}>
             <label htmlFor="admin-pw-input" className="sr-only">
@@ -158,7 +163,7 @@ export function AdminDashboard() {
 
       <header ref={navRef} className="top-navbar">
         <div className="brand">
-          <div className="brand-logo">A</div>
+          <div className="brand-logo"><Shield size={18} strokeWidth={2.5} /></div>
           <div className="brand-text">
             <div className="brand-name">Afia Tracker</div>
             <div className="brand-sub">Admin Console</div>
