@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Wifi, WifiOff, Camera, Droplets } from "lucide-react";
 import type { BottleContext } from "../state/appState.ts";
 import { useOnlineStatus } from "../hooks/useOnlineStatus.ts";
@@ -60,6 +61,7 @@ function useRecentScans(sku: string, limit = 6): StoredScan[] {
 }
 
 export function QrLanding({ bottle, onStartScan }: QrLandingProps) {
+  const { t } = useTranslation();
   const isOnline = useOnlineStatus();
   const recentScans = useRecentScans(bottle.sku);
   const [privacyAccepted, setPrivacyAccepted] = useState(
@@ -95,8 +97,8 @@ export function QrLanding({ bottle, onStartScan }: QrLandingProps) {
         <div className="qrl-offline-banner card card-compact" role="alert">
           <WifiOff size={16} />
           <div>
-            <p className="qrl-offline-title">No connection</p>
-            <p className="text-caption text-secondary">Connect to scan your bottle.</p>
+            <p className="qrl-offline-title">{t('landing.noConnection')}</p>
+            <p className="text-caption text-secondary">{t('landing.connectToScan')}</p>
           </div>
         </div>
       )}
@@ -123,7 +125,7 @@ export function QrLanding({ bottle, onStartScan }: QrLandingProps) {
       <div className="card card-compact qrl-camera-guide">
         <p className="text-caption text-secondary" style={{ margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>
           <Camera size={14} style={{ flexShrink: 0, color: "var(--color-primary)" }} aria-hidden="true" />
-          <span><strong>Tip:</strong> Hold your phone steadily, ensure the full bottle is visible, and photograph it in a well-lit spot.</span>
+          <span>{t('landing.cameraTip')}</span>
         </p>
       </div>
 
@@ -136,11 +138,11 @@ export function QrLanding({ bottle, onStartScan }: QrLandingProps) {
             disabled={!isOnline}
             aria-disabled={!isOnline}
           >
-            START SMART SCAN
+            {t('landing.startSmartScan')}
           </button>
         ) : (
           <PrivacyInline
-            ctaText="START SMART SCAN"
+            ctaText={t('landing.startSmartScan')}
             onAccepted={() => {
               setPrivacyAccepted(true);
               onStartScan();
@@ -153,8 +155,8 @@ export function QrLanding({ bottle, onStartScan }: QrLandingProps) {
       {recentScans.length > 0 && (
         <div className="card card-compact qrl-sparkline-card">
           <div className="qrl-sparkline-header">
-            <span className="qrl-sparkline-label">RECENT SCANS</span>
-            <span className="qrl-sparkline-count">{recentScans.length} scans</span>
+            <span className="qrl-sparkline-label">{t('landing.recentScans')}</span>
+            <span className="qrl-sparkline-count">{t('landing.scansCount', { count: recentScans.length })}</span>
           </div>
           <div className="qrl-sparkline" role="group" aria-label="Recent scan history">
             {recentScans.map((scan, i) => {
@@ -177,7 +179,7 @@ export function QrLanding({ bottle, onStartScan }: QrLandingProps) {
 
       {/* ── Baseline note ── */}
       <p className="qrl-note text-caption text-secondary">
-        For accurate tracking, scan when the bottle is brand new.
+        {t('landing.accuracyNote')}
       </p>
     </div>
   );

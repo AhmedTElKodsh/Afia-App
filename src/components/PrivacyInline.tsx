@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { Camera, Database, Star, Lock, Search, Check } from "lucide-react";
 import "./PrivacyInline.css";
 import { PRIVACY_CONFIG, PRIVACY_DETAILS } from "../config/privacy";
@@ -31,8 +32,9 @@ export function PrivacyInline({
   onAccepted,
   onLearnMore,
   showError = false,
-  ctaText = "Continue",
+  ctaText,
 }: PrivacyInlineProps) {
+  const { t } = useTranslation();
   const [checked, setChecked] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [shakeError, setShakeError] = useState(false);
@@ -77,16 +79,16 @@ export function PrivacyInline({
               )}
             </span>
             <span className="privacy-checkbox-label">
-              I agree to privacy terms
+              {t('privacy.checkboxLabel')}
             </span>
           </label>
         </div>
 
         {/* Description */}
         <p id="privacy-description" className="privacy-description">
-          Scan images are stored to improve AI accuracy.
+          {t('privacy.storedMessage')}
           <br />
-          <span className="privacy-subtle">No personal information is collected.</span>
+          <span className="privacy-subtle">{t('privacy.noPersonalData')}</span>
         </p>
 
         {/* Expandable Details */}
@@ -117,17 +119,17 @@ export function PrivacyInline({
             onClick={() => setExpanded((e) => !e)}
             aria-expanded={expanded}
           >
-            {expanded ? 'Show less' : 'Learn more'}
+            {expanded ? t('privacy.showLess') : t('privacy.showMore')}
           </button>
-          
+
           <button
             type="submit"
             className="privacy-accept-btn"
             disabled={!checked}
             aria-disabled={!checked}
-            title={!checked ? "Please accept privacy terms to continue" : undefined}
+            title={!checked ? t('privacy.mustAccept') : undefined}
           >
-            {ctaText}
+            {ctaText ?? t('common.ok')}
           </button>
         </div>
       </div>

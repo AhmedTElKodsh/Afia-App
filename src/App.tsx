@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, lazy, Suspense } from "react";
+import { useTranslation } from "react-i18next";
 import { Camera, History, LayoutDashboard, FlaskConical } from "lucide-react";
 
 import "./App.css";
@@ -322,6 +323,7 @@ interface NavigationProps {
 }
 
 function Navigation({ currentView, onViewChange, isAdminMode }: NavigationProps) {
+  const { t } = useTranslation();
   return (
     <nav className={`main-navigation${isAdminMode ? " main-navigation--admin" : ""}`}>
       {isAdminMode ? (
@@ -330,26 +332,26 @@ function Navigation({ currentView, onViewChange, isAdminMode }: NavigationProps)
           <button
             className={`nav-item ${currentView === "scan" ? "active" : ""}`}
             onClick={() => onViewChange("scan")}
-            aria-label="Test Lab"
+            aria-label={t('nav.testLab')}
           >
             <span className="nav-icon"><FlaskConical size={20} strokeWidth={2} /></span>
-            <span className="nav-label">Test Lab</span>
+            <span className="nav-label">{t('nav.testLab')}</span>
           </button>
           <button
             className={`nav-item ${currentView === "history" ? "active" : ""}`}
             onClick={() => onViewChange("history")}
-            aria-label="History"
+            aria-label={t('nav.history')}
           >
             <span className="nav-icon"><History size={20} strokeWidth={2} /></span>
-            <span className="nav-label">History</span>
+            <span className="nav-label">{t('nav.history')}</span>
           </button>
           <button
             className={`nav-item ${currentView === "admin" ? "active" : ""}`}
             onClick={() => onViewChange("admin")}
-            aria-label="Dashboard"
+            aria-label={t('nav.dashboard')}
           >
             <span className="nav-icon"><LayoutDashboard size={20} strokeWidth={2} /></span>
-            <span className="nav-label">Dashboard</span>
+            <span className="nav-label">{t('nav.dashboard')}</span>
           </button>
         </>
       ) : (
@@ -358,18 +360,18 @@ function Navigation({ currentView, onViewChange, isAdminMode }: NavigationProps)
           <button
             className={`nav-item ${currentView === "scan" ? "active" : ""}`}
             onClick={() => onViewChange("scan")}
-            aria-label="Scan"
+            aria-label={t('nav.scan')}
           >
             <span className="nav-icon"><Camera size={20} strokeWidth={2} /></span>
-            <span className="nav-label">Scan</span>
+            <span className="nav-label">{t('nav.scan')}</span>
           </button>
           <button
             className={`nav-item ${currentView === "history" ? "active" : ""}`}
             onClick={() => onViewChange("history")}
-            aria-label="History"
+            aria-label={t('nav.history')}
           >
             <span className="nav-icon"><History size={20} strokeWidth={2} /></span>
-            <span className="nav-label">History</span>
+            <span className="nav-label">{t('nav.history')}</span>
           </button>
         </>
       )}

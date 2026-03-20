@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import { Info } from "lucide-react";
 import { submitFeedback } from "../api/apiClient.ts";
 import "./FeedbackPrompt.css";
 
@@ -34,15 +36,12 @@ export function FeedbackPrompt({
   resultTimestamp,
   onSubmitted,
 }: FeedbackPromptProps) {
-  const [isEmployee, setIsEmployee] = useState(false);
+  const { t } = useTranslation();
+  const [isEmployee] = useState(() => isEmployeeMode());
   const [rating, setRating] = useState<AccuracyRating | null>(null);
   const [sliderValue, setSliderValue] = useState(fillPercentage);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setIsEmployee(isEmployeeMode());
-  }, []);
 
   const showSlider = rating && rating !== "about_right";
 
@@ -56,7 +55,7 @@ export function FeedbackPrompt({
     }
   };
 
-  const doSubmit = async (
+  const doSubmit = useCallback(async (
     ratingToSubmit: AccuracyRating,
     corrected?: number
   ) => {
@@ -74,10 +73,10 @@ export function FeedbackPrompt({
       );
       onSubmitted();
     } catch {
-      setError("Failed to submit feedback. Please try again.");
+      setError(t('feedback.error'));
       setSubmitting(false);
     }
-  };
+  }, [scanId, fillPercentage, resultTimestamp, onSubmitted, t]);
 
   const handleSubmitWithSlider = () => {
     if (rating) {
@@ -86,10 +85,10 @@ export function FeedbackPrompt({
   };
 
   const ratings: { value: AccuracyRating; label: string }[] = [
-    { value: "about_right", label: "About right" },
-    { value: "too_high", label: "Too high" },
-    { value: "too_low", label: "Too low" },
-    { value: "way_off", label: "Way off" },
+    { value: "about_right", label: t('feedback.aboutRight') },
+    { value: "too_high", label: t('feedback.tooHigh') },
+    { value: "too_low", label: t('feedback.tooLow') },
+    { value: "way_off", label: t('feedback.wayOff') },
   ];
 
   // Employee-only: Don't show feedback prompt to public users
@@ -100,8 +99,8 @@ export function FeedbackPrompt({
   return (
     <div className="feedback-prompt card">
       <div className="feedback-header">
-        <h3 className="feedback-question">Was this estimate accurate?</h3>
-        <span className="employee-badge">Employee/Test Mode</span>
+        <h3 className="feedback-question">{t('feedback.title')}</h3>
+        <span className="employee-badge">{t('feedback.employeeMode')}</span>
       </div>
 
       <div className="rating-grid">
@@ -111,7 +110,7 @@ export function FeedbackPrompt({
             className={`btn btn-outline rating-btn ${rating === r.value ? "rating-active" : ""}`}
             onClick={() => handleRating(r.value)}
             disabled={submitting}
-            aria-label={`Rate estimate as ${r.label.toLowerCase()}`}
+            aria-label={r.label}
           >
             {r.label}
           </button>
@@ -120,7 +119,7 @@ export function FeedbackPrompt({
 
       {showSlider && (
         <div className="slider-section">
-          <p className="slider-label">What would you estimate?</p>
+          <p className="slider-label">{t('feedback.yourEstimate')}</p>
           <div className="slider-row">
             <input
               type="range"
@@ -129,7 +128,7 @@ export function FeedbackPrompt({
               value={sliderValue}
               onChange={(e) => setSliderValue(Number(e.target.value))}
               className="estimate-slider"
-              aria-label="Your fill percentage estimate"
+              aria-label={t('feedback.yourEstimate')}
             />
             <span className="slider-value">{sliderValue}%</span>
           </div>
@@ -138,7 +137,7 @@ export function FeedbackPrompt({
             onClick={handleSubmitWithSlider}
             disabled={submitting}
           >
-            {submitting ? "Submitting..." : "Submit Feedback"}
+            {submitting ? t('feedback.submitting') : t('feedback.submitFeedback')}
           </button>
         </div>
       )}
@@ -146,7 +145,8 @@ export function FeedbackPrompt({
       {error && <p className="feedback-error">{error}</p>}
 
       <p className="feedback-note">
-        ℹ️ Feedback is only collected from internal testers and employees
+        <Info size={14} strokeWidth={2} aria-hidden="true" style={{ display: 'inline', verticalAlign: 'middle', marginInlineEnd: '4px' }} />
+        {t('feedback.employeeOnly')}
       </p>
     </div>
   );

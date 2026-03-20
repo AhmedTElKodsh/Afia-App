@@ -1,4 +1,5 @@
 import { Info } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { AfiaLogo } from "./AfiaLogo.tsx";
 import "./UnknownBottle.css";
 
@@ -7,6 +8,7 @@ interface UnknownBottleProps {
 }
 
 export function UnknownBottle({ sku }: UnknownBottleProps) {
+  const { t } = useTranslation();
   return (
     <div className="unknown-bottle">
       <div className="unknown-bottle-content">
@@ -18,27 +20,27 @@ export function UnknownBottle({ sku }: UnknownBottleProps) {
         </div>
 
         <h1>
-          {sku ? "Bottle not yet supported" : "No bottle linked"}
+          {sku ? t('landing.bottleNotSupported') : t('landing.noBottleLinked')}
         </h1>
 
         {sku && (
-          <p className="sku-display text-secondary">SKU: {sku}</p>
+          <p className="sku-display text-secondary">{t('landing.skuLabel', { sku })}</p>
         )}
 
         <p className="text-secondary ub-desc">
           {sku
-            ? "We may support this bottle in a future update."
-            : "Scan a QR code on a supported Afia oil bottle to get started."}
+            ? t('landing.futureSupportMessage')
+            : t('landing.noBottleMessage')}
         </p>
 
         {/* Step-by-step orientation guide */}
         {!sku && (
-          <div className="card card-compact ub-guide" role="list" aria-label="Getting started steps">
-            <p className="ub-guide-title text-caption text-secondary">How to get started:</p>
+          <div className="card card-compact ub-guide" role="list" aria-label={t('landing.howToStart')}>
+            <p className="ub-guide-title text-caption text-secondary">{t('landing.howToStart')}</p>
             <ol className="ub-steps">
-              <li role="listitem">Find a supported Afia oil bottle</li>
-              <li role="listitem">Scan the QR code on the label</li>
-              <li role="listitem">Track your oil consumption effortlessly</li>
+              <li role="listitem">{t('landing.step1')}</li>
+              <li role="listitem">{t('landing.step2')}</li>
+              <li role="listitem">{t('landing.step3')}</li>
             </ol>
           </div>
         )}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import type { AnalysisResult } from "../state/appState.ts";
 import type { BottleEntry } from "../data/bottleRegistry.ts";
@@ -18,6 +19,7 @@ interface ResultDisplayProps {
 }
 
 export function ResultDisplay({ result, bottle, capturedImage, onRetake }: ResultDisplayProps) {
+  const { t } = useTranslation();
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
   // Trigger success haptics on result display
@@ -38,10 +40,10 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
   const nutrition = calculateNutrition(volumes.consumed.ml, bottle.oilType);
 
   const qualityMessages: Record<string, string> = {
-    blur: "Image too blurry — hold the phone steady",
-    poor_lighting: "Poor lighting — try near a window",
-    obstruction: "Bottle partially obscured — show full bottle",
-    reflection: "Strong reflection — try a different angle",
+    blur: t('results.blur'),
+    poor_lighting: t('results.poorLighting'),
+    obstruction: t('results.obstruction'),
+    reflection: t('results.reflection'),
   };
 
   const hasQualityIssues = result.imageQualityIssues && result.imageQualityIssues.length > 0;
@@ -63,7 +65,7 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
             <ConfidenceBadge level="low" reason="Consider retaking" />
           </div>
           <button className="btn btn-outline btn-sm" onClick={onRetake}>
-            Retake
+            {t('results.retake')}
           </button>
         </div>
       )}
@@ -71,7 +73,7 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
       {hasQualityIssues && (
         <div className="result-alert result-alert--warning card card-compact" role="alert">
           <div className="result-alert__body">
-            <p className="result-alert__title">Image quality issues:</p>
+            <p className="result-alert__title">{t('results.qualityIssuesTitle')}</p>
             <ul className="result-alert__list">
               {result.imageQualityIssues!.map((issue) => (
                 <li key={issue}>{qualityMessages[issue] ?? issue}</li>
@@ -79,7 +81,7 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
             </ul>
           </div>
           <button className="btn btn-outline btn-sm" onClick={onRetake}>
-            Retake
+            {t('results.retake')}
           </button>
         </div>
       )}
@@ -107,7 +109,7 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
           <div className="result-hero__info" style={{ padding: 'var(--space-xl)' }}>
             <h2 className="result-hero__ml">
               {volumes.remaining.ml}
-              <span className="result-hero__ml-unit"> ml left</span>
+              <span className="result-hero__ml-unit"> {t('results.mlLeft')}</span>
             </h2>
             <div className="result-hero__confidence"
             style={{ color: confidenceColor }}
@@ -118,11 +120,11 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
               aria-describedby="confidence-explanation"
             />
             <span id="confidence-explanation" className="sr-only">
-              {result.confidence === "high" 
-                ? "Very accurate reading" 
+              {result.confidence === "high"
+                ? t('results.confidenceHighSr')
                 : result.confidence === "medium"
-                ? "Moderately accurate reading"
-                : "Low accuracy - consider retaking for better results"}
+                ? t('results.confidenceMediumSr')
+                : t('results.confidenceLowSr')}
             </span>
           </div>
           </div>
@@ -132,48 +134,48 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
       {/* ── 2-column metrics grid ── */}
       <div className="result-metrics">
         <div className="card card-compact result-metric">
-          <p className="result-metric__label">Consumed</p>
-          <p className="result-metric__value">{volumes.consumed.ml} ml</p>
+          <p className="result-metric__label">{t('results.consumed')}</p>
+          <p className="result-metric__value">{volumes.consumed.ml} {t('common.ml')}</p>
           <p className="result-metric__sub">
-            {volumes.consumed.tablespoons} tbsp &middot; {volumes.consumed.cups} cups
+            {volumes.consumed.tablespoons} {t('common.tablespoons')} &middot; {volumes.consumed.cups} {t('common.cups')}
           </p>
         </div>
         {nutrition && (
           <div className="card card-compact result-metric">
-            <p className="result-metric__label">Calories</p>
+            <p className="result-metric__label">{t('results.calories')}</p>
             <p className="result-metric__value">{nutrition.calories}</p>
-            <p className="result-metric__sub">kcal consumed</p>
+            <p className="result-metric__sub">{t('results.kcalConsumed')}</p>
           </div>
         )}
       </div>
 
       {/* ── Remaining breakdown ── */}
       <div className="card card-compact result-breakdown">
-        <p className="result-breakdown__heading">Remaining</p>
+        <p className="result-breakdown__heading">{t('results.remaining')}</p>
         <div className="result-breakdown__row">
-          <span>Volume</span>
-          <span className="result-breakdown__val">{volumes.remaining.ml} ml</span>
+          <span>{t('results.volume')}</span>
+          <span className="result-breakdown__val">{volumes.remaining.ml} {t('common.ml')}</span>
         </div>
         <div className="result-breakdown__row">
-          <span>Tablespoons</span>
-          <span className="result-breakdown__val">{volumes.remaining.tablespoons} tbsp</span>
+          <span>{t('results.tablespoons')}</span>
+          <span className="result-breakdown__val">{volumes.remaining.tablespoons} {t('common.tablespoons')}</span>
         </div>
         <div className="result-breakdown__row">
-          <span>Cups</span>
-          <span className="result-breakdown__val">{volumes.remaining.cups} cups</span>
+          <span>{t('results.cups')}</span>
+          <span className="result-breakdown__val">{volumes.remaining.cups} {t('common.cups')}</span>
         </div>
       </div>
 
       {/* ── Nutrition ── */}
       {nutrition && (
         <div className="card card-compact result-nutrition">
-          <p className="result-breakdown__heading">Nutrition (consumed)</p>
+          <p className="result-breakdown__heading">{t('results.nutritionConsumed')}</p>
           <div className="result-breakdown__row">
-            <span>Total Fat</span>
+            <span>{t('results.totalFat')}</span>
             <span className="result-breakdown__val">{nutrition.totalFatG} g</span>
           </div>
           <div className="result-breakdown__row">
-            <span>Saturated Fat</span>
+            <span>{t('results.saturatedFat')}</span>
             <span className="result-breakdown__val">{nutrition.saturatedFatG} g</span>
           </div>
         </div>
@@ -183,7 +185,7 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
 
       {/* ── Disclaimer ── */}
       <p className="result-disclaimer text-caption text-secondary">
-        Results are estimates (±15%). Not certified nutritional analysis.
+        {t('results.disclaimer')}
       </p>
 
       {/* ── Feedback ── */}
@@ -194,14 +196,14 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
         />
       ) : (
         <div className="card card-compact result-feedback-thanks">
-          <p className="result-feedback-thanks__title">Thank you! 🙏</p>
-          <p className="text-caption text-secondary">Your feedback improves future estimates.</p>
+          <p className="result-feedback-thanks__title">{t('results.thankYouTitle')}</p>
+          <p className="text-caption text-secondary">{t('results.feedbackThanksMessage')}</p>
         </div>
       )}
 
       {/* ── Scan again ── */}
       <button className="btn btn-outline btn-full result-scan-again" onClick={onRetake}>
-        Scan Another Bottle
+        {t('results.scanAnother')}
       </button>
     </div>
   );

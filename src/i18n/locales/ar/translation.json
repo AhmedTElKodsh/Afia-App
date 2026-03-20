@@ -40,7 +40,23 @@
     "oilType": "نوع الزيت",
     "startScan": "بدء المسح",
     "unknownBottle": "زجاجة غير معروفة",
-    "unknownBottleMessage": "هذه الزجاجة غير مسجلة في نظامنا بعد."
+    "unknownBottleMessage": "هذه الزجاجة غير مسجلة في نظامنا بعد.",
+    "bottleNotSupported": "الزجاجة غير مدعومة بعد",
+    "noBottleLinked": "لا توجد زجاجة مرتبطة",
+    "futureSupportMessage": "قد ندعم هذه الزجاجة في تحديث مستقبلي.",
+    "noBottleMessage": "امسح رمز QR على زجاجة زيت عافية مدعومة للبدء.",
+    "howToStart": "كيفية البدء:",
+    "step1": "اعثر على زجاجة زيت عافية مدعومة",
+    "step2": "امسح رمز QR على الملصق",
+    "step3": "تتبع استهلاكك من الزيت بسهولة",
+    "noConnection": "لا يوجد اتصال",
+    "connectToScan": "اتصل بالإنترنت لمسح زجاجتك.",
+    "cameraTip": "أمسك هاتفك بثبات، وتأكد من ظهور الزجاجة كاملة، والتقط الصورة في مكان جيد الإضاءة.",
+    "recentScans": "المسحات الأخيرة",
+    "scansCount": "{{count}} مسحة",
+    "accuracyNote": "للدقة في التتبع، امسح الزجاجة عندما تكون جديدة.",
+    "startSmartScan": "ابدأ المسح الذكي",
+    "skuLabel": "الرمز: {{sku}}"
   },
   "camera": {
     "activate": "تفعيل الكاميرا",
@@ -53,7 +69,20 @@
     "permissionMessage": "يرجى منح إذن الكاميرا في إعدادات جهازك لاستخدام هذه الميزة.",
     "openSettings": "فتح الإعدادات",
     "iosWarning": "لأفضل تجربة للكاميرا، افتح في Safari",
-    "iosWarningMessage": "بعض متصفحات iOS بها قيود على الكاميرا. جرب فتح هذا الرابط في Safari."
+    "iosWarningMessage": "بعض متصفحات iOS بها قيود على الكاميرا. جرب فتح هذا الرابط في Safari.",
+    "starting": "جاري تشغيل الكاميرا…",
+    "accessRequired": "مطلوب الوصول للكاميرا",
+    "tryAgain": "حاول مجدداً",
+    "unavailable": "الكاميرا غير متاحة",
+    "ready": "جاهز",
+    "alignBottle": "اضبط وضع الزجاجة",
+    "flashlightOn": "تشغيل الضوء",
+    "flashlightOff": "إيقاف الضوء",
+    "captureError": "تعذّر معالجة الصورة.",
+    "captureFailed": "فشل التقاط الصورة.",
+    "liveFeedAriaLabel": "تغذية الكاميرا الحية لمسح الزجاجة",
+    "capturePhotoAriaLabel": "التقاط صورة",
+    "analyzingAriaLabel": "جاري تحليل الزجاجة"
   },
   "analysis": {
     "analyzing": "جاري تحليل زجاجتك...",
@@ -64,7 +93,9 @@
     "networkError": "خطأ في الشبكة",
     "networkErrorMessage": "يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.",
     "serviceUnavailable": "الخدمة غير متاحة",
-    "serviceUnavailableMessage": "خدمة الذكاء الاصطناعي غير متاحة مؤقتًا. يرجى المحاولة لاحقًا."
+    "serviceUnavailableMessage": "خدمة الذكاء الاصطناعي غير متاحة مؤقتًا. يرجى المحاولة لاحقًا.",
+    "timeEstimate": "عادةً ما يستغرق 3–8 ثوانٍ",
+    "cancelAriaLabel": "إلغاء التحليل والعودة للكاميرا"
   },
   "results": {
     "title": "النتائج",
@@ -88,7 +119,20 @@
     "blur": "الصورة ضبابية جداً - حاول الإمساك بالهاتف بثبات",
     "poorLighting": "الإضاءة ضعيفة - جرب بالقرب من نافذة أو ضوء",
     "obstruction": "الزجاجة محجوبة جزئياً - تأكد من رؤية الزجاجة كاملة",
-    "reflection": "تم اكتشاف انعكاس قوي - جرب زاوية مختلفة"
+    "reflection": "تم اكتشاف انعكاس قوي - جرب زاوية مختلفة",
+    "retake": "إعادة التقاط",
+    "mlLeft": "مل متبقٍ",
+    "kcalConsumed": "سعرة حرارية مستهلكة",
+    "volume": "الحجم",
+    "tablespoons": "ملاعق كبيرة",
+    "cups": "أكواب",
+    "scanAnother": "مسح زجاجة أخرى",
+    "thankYouTitle": "شكراً!",
+    "feedbackThanksMessage": "ملاحظاتك تساعد في تحسين التقديرات المستقبلية.",
+    "qualityIssuesTitle": "مشاكل في جودة الصورة:",
+    "confidenceHighSr": "قراءة دقيقة جداً",
+    "confidenceMediumSr": "قراءة متوسطة الدقة",
+    "confidenceLowSr": "دقة منخفضة - فكر في إعادة الالتقاط للحصول على نتائج أفضل"
   },
   "feedback": {
     "title": "هل كان هذا التقدير دقيقاً؟",
@@ -109,7 +153,13 @@
     "notice": "إشعار الخصوصية",
     "message": "قبل البدء، يرجى الملاحظة: يتم تخزين صور المسح بشكل مجهول لتحسين نموذج الذكاء الاصطناعي الخاص بنا. لا يتم جمع أي معلومات شخصية.",
     "agree": "أفهم",
-    "learnMore": "اعرف المزيد عن كيفية استخدامنا لبياناتك"
+    "learnMore": "اعرف المزيد عن كيفية استخدامنا لبياناتك",
+    "checkboxLabel": "أوافق على شروط الخصوصية",
+    "storedMessage": "يتم تخزين صور المسح لتحسين دقة الذكاء الاصطناعي.",
+    "noPersonalData": "لا يتم جمع أي معلومات شخصية.",
+    "showMore": "المزيد",
+    "showLess": "أقل",
+    "mustAccept": "يرجى قبول شروط الخصوصية للمتابعة"
   },
   "offline": {
     "title": "لا يوجد اتصال بالإنترنت",
@@ -172,7 +222,7 @@
         "last7Days": "آخر 7 أيام",
         "last30Days": "آخر 30 يوم"
       },
-      "stats": "{count} مسحات",
+      "stats": "{{count}} مسحات",
       "noScansError": "لا توجد مسحات للتصدير في نطاق التاريخ المحدد.",
       "buttons": {
         "exportJson": "تصدير JSON",
@@ -267,7 +317,7 @@
         "content": "وسّع هذه اللوحة لرؤية استجابات API، والتحقق من النتائج، وإضافة ملاحظات الاختبار.",
         "icon": "🔧"
       },
-      "progress": "الخطوة {current} من {total}",
+      "progress": "الخطوة {{current}} من {{total}}",
       "next": "التالي",
       "back": "رجوع",
       "skip": "تخطي الشرح",
@@ -288,13 +338,13 @@
         "title": "مقاييس الأداء",
         "responseTime": {
           "label": "وقت الاستجابة",
-          "value": "{value}ms",
+          "value": "{{value}}ms",
           "statusFast": "✅ الهدف <٥ ث",
           "statusSlow": "⚠️ بطيء"
         },
         "aiProvider": {
           "label": "مزود الذكاء الاصطناعي",
-          "value": "{provider}"
+          "value": "{{provider}}"
         },
         "confidence": {
           "label": "الثقة",
@@ -323,6 +373,12 @@
       }
     }
   },
+  "nav": {
+    "scan": "مسح",
+    "history": "السجل",
+    "testLab": "مختبر الاختبار",
+    "dashboard": "لوحة التحكم"
+  },
   "history": {
     "title": "سجل المسح",
     "empty": "لا توجد مسحات بعد",
@@ -330,7 +386,35 @@
     "date": "التاريخ",
     "bottle": "الزجاجة",
     "fillLevel": "مستوى الامتلاء",
-    "accuracy": "الدقة"
+    "accuracy": "الدقة",
+    "emptyDescription": "ستظهر زجاجاتك الممسوحة هنا بمجرد إكمال أول مسح.",
+    "scanCta": "مسح زجاجة →",
+    "scansCount": "{{count}} مسحة",
+    "totalScans": "إجمالي المسحات",
+    "totalConsumed": "إجمالي المستهلك",
+    "consumptionTrend": "اتجاه الاستهلاك",
+    "last7Days": "آخر 7 أيام",
+    "filterAll": "الكل",
+    "filter7Days": "7 أيام",
+    "filter30Days": "30 يوم",
+    "searchPlaceholder": "البحث في الزجاجات…",
+    "searchAriaLabel": "البحث في الزجاجات",
+    "clearSearch": "مسح البحث",
+    "noResults": "لا نتائج",
+    "noResultsDesc": "لا توجد مسحات تطابق الفلاتر الحالية.",
+    "listAriaLabel": "قائمة سجل المسح",
+    "clearHistory": "مسح السجل",
+    "clearHistoryAriaLabel": "مسح كل السجل",
+    "clearConfirm": "مسح كل سجل المسح بشكل دائم؟",
+    "clearConfirmYes": "نعم، امسح الكل",
+    "scanDetails": "تفاصيل المسح",
+    "closeScanDetails": "إغلاق تفاصيل المسح",
+    "skuLabel": "الرمز: {{sku}}",
+    "dateTime": "التاريخ والوقت",
+    "remaining": "المتبقي",
+    "confidence": "الثقة",
+    "confidenceUnknown": "غير معروف",
+    "yourFeedback": "ملاحظاتك"
   },
   "trends": {
     "title": "اتجاهات الاستهلاك",

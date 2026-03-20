@@ -1,4 +1,5 @@
 import { XCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import "./ApiStatus.css"; /* reuse .analyzing-animation / .bottle-outline / .fill-wave */
 import "./AnalyzingOverlay.css";
 
@@ -17,8 +18,9 @@ interface AnalyzingOverlayProps {
  * H2 fix: Provides an accessible Cancel ghost button.
  */
 export function AnalyzingOverlay({ capturedImage, onCancel }: AnalyzingOverlayProps) {
+  const { t } = useTranslation();
   return (
-    <div className="analyzing-overlay" role="status" aria-live="polite" aria-label="Analyzing bottle">
+    <div className="analyzing-overlay" role="status" aria-live="polite" aria-label={t('camera.analyzingAriaLabel')}>
       {/* Dimmed captured image as background */}
       {capturedImage && (
         <img
@@ -41,18 +43,18 @@ export function AnalyzingOverlay({ capturedImage, onCancel }: AnalyzingOverlayPr
           </div>
         </div>
 
-        <p className="analyzing-title">Analyzing Bottle…</p>
-        <p className="analyzing-sub">This usually takes 3–8 seconds</p>
+        <p className="analyzing-title">{t('analysis.analyzing')}</p>
+        <p className="analyzing-sub">{t('analysis.timeEstimate')}</p>
 
         {/* H2 fix: Cancel button */}
         <button
           type="button"
           className="btn btn-ghost analyzing-cancel-btn"
           onClick={onCancel}
-          aria-label="Cancel analysis and return to camera"
+          aria-label={t('analysis.cancelAriaLabel')}
         >
           <XCircle size={16} strokeWidth={2} aria-hidden="true" />
-          Cancel
+          {t('common.cancel')}
         </button>
       </div>
     </div>

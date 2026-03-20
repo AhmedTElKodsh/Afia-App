@@ -40,7 +40,23 @@
     "oilType": "Oil Type",
     "startScan": "Start Scan",
     "unknownBottle": "Unknown Bottle",
-    "unknownBottleMessage": "This bottle is not registered in our system yet."
+    "unknownBottleMessage": "This bottle is not registered in our system yet.",
+    "bottleNotSupported": "Bottle not yet supported",
+    "noBottleLinked": "No bottle linked",
+    "futureSupportMessage": "We may support this bottle in a future update.",
+    "noBottleMessage": "Scan a QR code on a supported Afia oil bottle to get started.",
+    "howToStart": "How to get started:",
+    "step1": "Find a supported Afia oil bottle",
+    "step2": "Scan the QR code on the label",
+    "step3": "Track your oil consumption effortlessly",
+    "noConnection": "No connection",
+    "connectToScan": "Connect to scan your bottle.",
+    "cameraTip": "Hold your phone steadily, ensure the full bottle is visible, and photograph it in a well-lit spot.",
+    "recentScans": "RECENT SCANS",
+    "scansCount": "{{count}} scans",
+    "accuracyNote": "For accurate tracking, scan when the bottle is brand new.",
+    "startSmartScan": "START SMART SCAN",
+    "skuLabel": "SKU: {{sku}}"
   },
   "camera": {
     "activate": "Activate Camera",
@@ -53,7 +69,20 @@
     "permissionMessage": "Please grant camera permission in your device settings to use this feature.",
     "openSettings": "Open Settings",
     "iosWarning": "For best camera experience, open in Safari",
-    "iosWarningMessage": "Some iOS browsers have camera limitations. Try opening this link in Safari."
+    "iosWarningMessage": "Some iOS browsers have camera limitations. Try opening this link in Safari.",
+    "starting": "Starting camera…",
+    "accessRequired": "Camera Access Required",
+    "tryAgain": "Try Again",
+    "unavailable": "Camera Unavailable",
+    "ready": "Ready",
+    "alignBottle": "Align Bottle",
+    "flashlightOn": "Turn flashlight on",
+    "flashlightOff": "Turn flashlight off",
+    "captureError": "Unable to process image.",
+    "captureFailed": "Failed to capture image.",
+    "liveFeedAriaLabel": "Live camera feed for bottle scanning",
+    "capturePhotoAriaLabel": "Capture photo",
+    "analyzingAriaLabel": "Analyzing bottle"
   },
   "analysis": {
     "analyzing": "Analyzing your bottle...",
@@ -64,7 +93,9 @@
     "networkError": "Network Error",
     "networkErrorMessage": "Please check your internet connection and try again.",
     "serviceUnavailable": "Service Unavailable",
-    "serviceUnavailableMessage": "Our AI service is temporarily unavailable. Please try again later."
+    "serviceUnavailableMessage": "Our AI service is temporarily unavailable. Please try again later.",
+    "timeEstimate": "This usually takes 3–8 seconds",
+    "cancelAriaLabel": "Cancel analysis and return to camera"
   },
   "results": {
     "title": "Results",
@@ -88,7 +119,20 @@
     "blur": "Image is too blurry — try holding the phone steady",
     "poorLighting": "Lighting is poor — try near a window or light",
     "obstruction": "Bottle is partially obscured — ensure full bottle is visible",
-    "reflection": "Strong reflection detected — try a different angle"
+    "reflection": "Strong reflection detected — try a different angle",
+    "retake": "Retake",
+    "mlLeft": "ml left",
+    "kcalConsumed": "kcal consumed",
+    "volume": "Volume",
+    "tablespoons": "Tablespoons",
+    "cups": "Cups",
+    "scanAnother": "Scan Another Bottle",
+    "thankYouTitle": "Thank you!",
+    "feedbackThanksMessage": "Your feedback improves future estimates.",
+    "qualityIssuesTitle": "Image quality issues:",
+    "confidenceHighSr": "Very accurate reading",
+    "confidenceMediumSr": "Moderately accurate reading",
+    "confidenceLowSr": "Low accuracy - consider retaking for better results"
   },
   "feedback": {
     "title": "Was this estimate accurate?",
@@ -109,7 +153,13 @@
     "notice": "Privacy Notice",
     "message": "Before you begin, please note: Scan images are stored anonymously to improve our AI model. No personal information is collected.",
     "agree": "I Understand",
-    "learnMore": "Learn more about how we use your data"
+    "learnMore": "Learn more about how we use your data",
+    "checkboxLabel": "I agree to privacy terms",
+    "storedMessage": "Scan images are stored to improve AI accuracy.",
+    "noPersonalData": "No personal information is collected.",
+    "showMore": "Learn more",
+    "showLess": "Show less",
+    "mustAccept": "Please accept privacy terms to continue"
   },
   "offline": {
     "title": "No Internet Connection",
@@ -323,6 +373,12 @@
       }
     }
   },
+  "nav": {
+    "scan": "Scan",
+    "history": "History",
+    "testLab": "Test Lab",
+    "dashboard": "Dashboard"
+  },
   "history": {
     "title": "Scan History",
     "empty": "No scans yet",
@@ -330,7 +386,35 @@
     "date": "Date",
     "bottle": "Bottle",
     "fillLevel": "Fill Level",
-    "accuracy": "Accuracy"
+    "accuracy": "Accuracy",
+    "emptyDescription": "Your scanned bottles will appear here once you complete your first scan.",
+    "scanCta": "Scan a bottle →",
+    "scansCount": "{{count}} scans",
+    "totalScans": "Total Scans",
+    "totalConsumed": "Total Consumed",
+    "consumptionTrend": "Consumption Trend",
+    "last7Days": "Last 7 days",
+    "filterAll": "All",
+    "filter7Days": "7 Days",
+    "filter30Days": "30 Days",
+    "searchPlaceholder": "Search bottles…",
+    "searchAriaLabel": "Search bottles",
+    "clearSearch": "Clear search",
+    "noResults": "No results",
+    "noResultsDesc": "No scans match your current filters.",
+    "listAriaLabel": "Scan history list",
+    "clearHistory": "Clear History",
+    "clearHistoryAriaLabel": "Clear all history",
+    "clearConfirm": "Clear all scan history permanently?",
+    "clearConfirmYes": "Yes, clear all",
+    "scanDetails": "Scan Details",
+    "closeScanDetails": "Close scan details",
+    "skuLabel": "SKU: {{sku}}",
+    "dateTime": "Date & Time",
+    "remaining": "Remaining",
+    "confidence": "Confidence",
+    "confidenceUnknown": "Unknown",
+    "yourFeedback": "Your Feedback"
   },
   "trends": {
     "title": "Consumption Trends",

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useScanHistory, type StoredScan } from "../hooks/useScanHistory";
 import { TimelineGroup } from "./TimelineGroup";
 import { EmptyState } from "./EmptyState";
@@ -92,6 +93,7 @@ interface MiniTrendCardProps {
 }
 
 function MiniTrendCard({ scans }: MiniTrendCardProps) {
+  const { t } = useTranslation();
   const days = useMemo(() => {
     const result: { label: string; consumed: number }[] = [];
     for (let i = 6; i >= 0; i--) {
@@ -123,9 +125,9 @@ function MiniTrendCard({ scans }: MiniTrendCardProps) {
       <div className="mini-trend-header">
         <div className="mini-trend-title">
           <TrendingUp size={14} />
-          <span>Consumption Trend</span>
+          <span>{t('history.consumptionTrend')}</span>
         </div>
-        <span className="mini-trend-sub">Last 7 days</span>
+        <span className="mini-trend-sub">{t('history.last7Days')}</span>
       </div>
       <div className="mini-trend-bars">
         {days.map((day, i) => (
@@ -153,6 +155,7 @@ interface ScanHistoryProps {
 }
 
 export function ScanHistory({ onNavigateToScan }: ScanHistoryProps = {}) {
+  const { t } = useTranslation();
   const { scans, searchScans, getScansByDateRange, deleteScan, clearHistory, getStats } =
     useScanHistory();
   const [dateRange, setDateRange] = useState<DateRange>("all");
@@ -176,9 +179,9 @@ export function ScanHistory({ onNavigateToScan }: ScanHistoryProps = {}) {
       <div className="scan-history scan-history-empty">
         <EmptyState
           icon={<ScanLine size={36} />}
-          title="No scan history yet"
-          description="Your scanned bottles will appear here once you complete your first scan."
-          cta={onNavigateToScan ? { label: "Scan a bottle →", onClick: onNavigateToScan } : undefined}
+          title={t('history.empty')}
+          description={t('history.emptyDescription')}
+          cta={onNavigateToScan ? { label: t('history.scanCta'), onClick: onNavigateToScan } : undefined}
         />
       </div>
     );
@@ -188,8 +191,8 @@ export function ScanHistory({ onNavigateToScan }: ScanHistoryProps = {}) {
     <div className="scan-history">
       {/* ── Header ── */}
       <header className="history-header">
-        <h2>Scan History</h2>
-        <span className="history-count-badge">{scans.length} scans</span>
+        <h2>{t('history.title')}</h2>
+        <span className="history-count-badge">{t('history.scansCount', { count: scans.length })}</span>
       </header>
 
       {/* ── Stats row ── */}
@@ -197,12 +200,12 @@ export function ScanHistory({ onNavigateToScan }: ScanHistoryProps = {}) {
         <MetricCard
           icon={<BarChart2 size={18} />}
           value={stats.totalScans}
-          label="Total Scans"
+          label={t('history.totalScans')}
         />
         <MetricCard
           icon={<Droplets size={18} />}
-          value={`${stats.totalConsumedMl}ml`}
-          label="Total Consumed"
+          value={`${stats.totalConsumedMl}${t('common.ml')}`}
+          label={t('history.totalConsumed')}
         />
       </div>
 
@@ -215,9 +218,9 @@ export function ScanHistory({ onNavigateToScan }: ScanHistoryProps = {}) {
         <div className="date-range-filter" role="group" aria-label="Date range">
           {(
             [
-              { value: "all", label: "All" },
-              { value: 7, label: "7 Days" },
-              { value: 30, label: "30 Days" },
+              { value: "all", label: t('history.filterAll') },
+              { value: 7, label: t('history.filter7Days') },
+              { value: 30, label: t('history.filter30Days') },
             ] as const
           ).map(({ value, label }) => (
             <button
@@ -237,16 +240,16 @@ export function ScanHistory({ onNavigateToScan }: ScanHistoryProps = {}) {
           <input
             type="text"
             className="search-input"
-            placeholder="Search bottles…"
+            placeholder={t('history.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Search bottles"
+            aria-label={t('history.searchAriaLabel')}
           />
           {searchQuery && (
             <button
               className="search-clear"
               onClick={() => setSearchQuery("")}
-              aria-label="Clear search"
+              aria-label={t('history.clearSearch')}
             >
               <X size={14} />
             </button>
@@ -259,8 +262,8 @@ export function ScanHistory({ onNavigateToScan }: ScanHistoryProps = {}) {
         {filteredScans.length === 0 ? (
           <EmptyState
             icon={<History size={28} />}
-            title="No results"
-            description="No scans match your current filters."
+            title={t('history.noResults')}
+            description={t('history.noResultsDesc')}
           />
         ) : filteredScans.length > 100 ? (
           /* Virtualized list for large datasets (100+ scans) */
@@ -269,7 +272,7 @@ export function ScanHistory({ onNavigateToScan }: ScanHistoryProps = {}) {
             onScanClick={setSelectedScan}
             className="virtualized-list"
             role="list"
-            aria-label="Scan history list"
+            aria-label={t('history.listAriaLabel')}
           />
         ) : (
           <TimelineGroup
@@ -284,8 +287,8 @@ export function ScanHistory({ onNavigateToScan }: ScanHistoryProps = {}) {
         <div className="history-actions">
           {confirmClear ? (
             <InlineConfirm
-              message="Clear all scan history permanently?"
-              confirmLabel="Yes, clear all"
+              message={t('history.clearConfirm')}
+              confirmLabel={t('history.clearConfirmYes')}
               onConfirm={() => {
                 clearHistory();
                 setConfirmClear(false);
@@ -296,9 +299,9 @@ export function ScanHistory({ onNavigateToScan }: ScanHistoryProps = {}) {
             <button
               className="btn btn-danger"
               onClick={() => setConfirmClear(true)}
-              aria-label="Clear all history"
+              aria-label={t('history.clearHistoryAriaLabel')}
             >
-              Clear History
+              {t('history.clearHistory')}
             </button>
           )}
         </div>
@@ -327,6 +330,7 @@ interface ScanDetailModalProps {
 }
 
 function ScanDetailModal({ scan, onClose, onDelete }: ScanDetailModalProps) {
+  const { t } = useTranslation();
   return (
     <div className="modal-overlay" onClick={onClose}>
         <div
@@ -337,59 +341,59 @@ function ScanDetailModal({ scan, onClose, onDelete }: ScanDetailModalProps) {
           aria-labelledby="scan-detail-title"
         >
         <header className="modal-header">
-          <h3 id="scan-detail-title">Scan Details</h3>
-          <button className="modal-close" onClick={onClose} aria-label="Close scan details">
+          <h3 id="scan-detail-title">{t('history.scanDetails')}</h3>
+          <button className="modal-close" onClick={onClose} aria-label={t('history.closeScanDetails')}>
             <X size={16} strokeWidth={2} />
           </button>
         </header>
 
         <div className="modal-body">
           <div className="detail-section">
-            <h4>Bottle</h4>
+            <h4>{t('history.bottle')}</h4>
             <p className="detail-value">{scan.bottleName}</p>
-            <p className="detail-meta">SKU: {scan.sku}</p>
+            <p className="detail-meta">{t('history.skuLabel', { sku: scan.sku })}</p>
           </div>
 
           <div className="detail-section">
-            <h4>Date &amp; Time</h4>
+            <h4>{t('history.dateTime')}</h4>
             <p className="detail-value">{formatDate(scan.timestamp)}</p>
             <p className="detail-meta">{formatTime(scan.timestamp)}</p>
           </div>
 
           <div className="detail-section">
-            <h4>Fill Level</h4>
+            <h4>{t('history.fillLevel')}</h4>
             <div className="fill-detail">
               <span className="fill-percent">{scan.fillPercentage}%</span>
-              <span className="fill-label">remaining</span>
+              <span className="fill-label">{t('history.remaining')}</span>
             </div>
           </div>
 
           <div className="detail-section">
-            <h4>Volume</h4>
+            <h4>{t('results.volume')}</h4>
             <div className="volume-detail">
               <div>
-                <span className="volume-label">Remaining</span>
-                <span className="volume-value">{scan.remainingMl}ml</span>
+                <span className="volume-label">{t('results.remaining')}</span>
+                <span className="volume-value">{scan.remainingMl}{t('common.ml')}</span>
               </div>
               <div>
-                <span className="volume-label">Consumed</span>
-                <span className="volume-value">{scan.consumedMl}ml</span>
+                <span className="volume-label">{t('results.consumed')}</span>
+                <span className="volume-value">{scan.consumedMl}{t('common.ml')}</span>
               </div>
             </div>
           </div>
 
           <div className="detail-section">
-            <h4>Confidence</h4>
+            <h4>{t('history.confidence')}</h4>
             <div className={`confidence-detail-${scan.confidence ?? "unknown"}`}>
               {scan.confidence
                 ? scan.confidence.charAt(0).toUpperCase() + scan.confidence.slice(1)
-                : "Unknown"}
+                : t('history.confidenceUnknown')}
             </div>
           </div>
 
           {scan.feedbackRating && (
             <div className="detail-section">
-              <h4>Your Feedback</h4>
+              <h4>{t('history.yourFeedback')}</h4>
               <p className="detail-value">{scan.feedbackRating.replace("_", " ")}</p>
             </div>
           )}
@@ -397,10 +401,10 @@ function ScanDetailModal({ scan, onClose, onDelete }: ScanDetailModalProps) {
 
         <footer className="modal-footer">
           <button className="btn btn-danger" onClick={onDelete}>
-            Delete
+            {t('common.delete')}
           </button>
           <button className="btn btn-primary" onClick={onClose}>
-            Close
+            {t('common.close')}
           </button>
         </footer>
       </div>
