@@ -39,7 +39,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 8px;
   padding: 8px 20px 10px;
   background: transparent;
   border: none;
@@ -74,7 +74,7 @@
 .nav-item.active .nav-icon::after {
   content: '';
   position: absolute;
-  bottom: -4px;
+  bottom: -5px;
   left: 50%;
   transform: translateX(-50%);
   width: 14px;
