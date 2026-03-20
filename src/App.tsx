@@ -160,15 +160,12 @@ export default function App() {
 
   // E2E test hook: allows tests to programmatically trigger analysis without camera capture
   useEffect(() => {
-    // @ts-expect-error - test-only global
     if (window.__AFIA_TEST_MODE__) {
       // Minimal 1×1 blank JPEG for test
       const blankJpeg = '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAAFCAABAAEEAQD/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwABgB/9k=';
-      // @ts-expect-error - test-only global
       window.__AFIA_TRIGGER_ANALYZE__ = () => handleAnalyze(blankJpeg);
     }
     return () => {
-      // @ts-expect-error - test-only global
       delete window.__AFIA_TRIGGER_ANALYZE__;
     };
   }, [handleAnalyze]);

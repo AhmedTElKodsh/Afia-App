@@ -12,7 +12,7 @@
  * - Audio cues (optional)
  */
 
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { assessImageQuality, createDebouncedAssessment, type QualityAssessment } from '../utils/cameraQualityAssessment';
 
 /**
@@ -108,7 +108,7 @@ function playAudioCue(type: 'success' | 'warning' | 'error') {
     const now = ctx.currentTime;
     
     switch (type) {
-      case 'success':
+      case 'success': {
         // Pleasant ascending chime
         const osc1 = ctx.createOscillator();
         const gain1 = ctx.createGain();
@@ -122,8 +122,9 @@ function playAudioCue(type: 'success' | 'warning' | 'error') {
         osc1.start(now);
         osc1.stop(now + 0.15);
         break;
+      }
         
-      case 'warning':
+      case 'warning': {
         // Gentle warning tone
         const osc2 = ctx.createOscillator();
         const gain2 = ctx.createGain();
@@ -136,8 +137,9 @@ function playAudioCue(type: 'success' | 'warning' | 'error') {
         osc2.start(now);
         osc2.stop(now + 0.2);
         break;
+      }
         
-      case 'error':
+      case 'error': {
         // Descending warning
         const osc3 = ctx.createOscillator();
         const gain3 = ctx.createGain();
@@ -151,6 +153,7 @@ function playAudioCue(type: 'success' | 'warning' | 'error') {
         osc3.start(now);
         osc3.stop(now + 0.2);
         break;
+      }
     }
   } catch (error) {
     console.warn('Audio cue failed:', error);
@@ -220,8 +223,11 @@ function provideFeedback(
 export function useCameraGuidance(
   config: Partial<CameraGuidanceConfig> = {}
 ): UseCameraGuidanceReturn {
-  // Merge with defaults
-  const mergedConfig = { ...DEFAULT_CONFIG, ...config };
+  // Merge with defaults - memoized to prevent recreation on every render
+  const mergedConfig = useMemo(() => ({
+    ...DEFAULT_CONFIG,
+    ...config
+  }), [config]);
   
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -236,7 +242,8 @@ export function useCameraGuidance(
   });
   
   const prevAssessmentRef = useRef<QualityAssessment | null>(null);
-  
+  const analyzeFrameRef = useRef<() => void>(() => {});
+
   /**
    * Analysis loop
    */
@@ -244,7 +251,7 @@ export function useCameraGuidance(
     const video = videoRef.current;
     if (!video || video.readyState < 2) {
       // Video not ready
-      animationFrameRef.current = requestAnimationFrame(analyzeFrame);
+      animationFrameRef.current = requestAnimationFrame(analyzeFrameRef.current);
       return;
     }
     
@@ -255,7 +262,6 @@ export function useCameraGuidance(
     });
     
     // Check for test mode bypass
-    // @ts-ignore - Dynamic property for testing
     const isTestMode = window.__AFIA_TEST_MODE__ === true;
     
     // Update state
@@ -296,30 +302,13 @@ export function useCameraGuidance(
     prevAssessmentRef.current = assessment;
     
     // Continue loop
-    animationFrameRef.current = requestAnimationFrame(analyzeFrame);
+    animationFrameRef.current = requestAnimationFrame(analyzeFrameRef.current);
   }, [mergedConfig]);
-  
-  /**
-   * Start guidance analysis
-   */
-  const startGuidance = useCallback((videoElement: HTMLVideoElement) => {
-    // Stop any existing analysis
-    stopGuidance();
-    
-    videoRef.current = videoElement;
-    
-    // Create debounced assessment for callback-based updates
-    debouncedAssessmentRef.current = createDebouncedAssessment(
-      (assessment) => {
-        // This is for additional callbacks if needed
-        console.log('Quality assessment:', assessment);
-      },
-      mergedConfig.analysisInterval
-    );
-    
-    // Start analysis loop
-    animationFrameRef.current = requestAnimationFrame(analyzeFrame);
-  }, [analyzeFrame, mergedConfig.analysisInterval]);
+
+  // Keep ref up to date
+  useEffect(() => {
+    analyzeFrameRef.current = analyzeFrame;
+  }, [analyzeFrame]);
   
   /**
    * Stop guidance analysis
@@ -342,6 +331,28 @@ export function useCameraGuidance(
       isActive: false,
     }));
   }, []);
+
+  /**
+   * Start guidance analysis
+   */
+  const startGuidance = useCallback((videoElement: HTMLVideoElement) => {
+    // Stop any existing analysis
+    stopGuidance();
+    
+    videoRef.current = videoElement;
+    
+    // Create debounced assessment for callback-based updates
+    debouncedAssessmentRef.current = createDebouncedAssessment(
+      (assessment) => {
+        // This is for additional callbacks if needed
+        console.log('Quality assessment:', assessment);
+      },
+      mergedConfig.analysisInterval
+    );
+    
+    // Start analysis loop
+    animationFrameRef.current = requestAnimationFrame(analyzeFrameRef.current);
+  }, [stopGuidance, mergedConfig.analysisInterval]);
   
   /**
    * Manually assess current frame
@@ -374,12 +385,10 @@ export function useCameraGuidance(
 
   // Expose a way to force ready for E2E tests
   useEffect(() => {
-    // @ts-ignore
     window.__AFIA_FORCE_READY__ = () => {
       setState(prev => ({ ...prev, isReady: true, goodFramesCount: 10 }));
     };
     return () => {
-      // @ts-ignore
       delete window.__AFIA_FORCE_READY__;
     };
   }, []);

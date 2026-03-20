@@ -42,44 +42,39 @@ export function TestLab({ isAdmin }: TestLabProps) {
 
   // Test configuration
   const [testMode, setTestMode] = useState<TestModeType>("user");
-  const [_entryPoint, setEntryPoint] = useState<EntryPointType | null>(null);
   const [selectedSku, setSelectedSku] = useState<string>("");
   const [testCount, setTestCount] = useState(0);
-  
+
   // Scan flow state
   const [scanState, setScanState] = useState<TestLabState>("idle");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [result, setResult] = useState<any | null>(null);
+  const [result, setResult] = useState<import("../state/appState").AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [_entryPoint, setEntryPoint] = useState<EntryPointType | null>(null);
+  const [_scanStartTime, setScanStartTime] = useState<number | null>(null);
   
   // UI state
   const [showAdminTools, setShowAdminTools] = useState(false);
   const [showBottleDropdown, setShowBottleDropdown] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    const hasSeenOnboarding = localStorage.getItem('afia_admin_onboarding_seen');
+    return !hasSeenOnboarding && isAdmin;
+  });
   const [searchQuery, setSearchQuery] = useState("");
   
   // Test session tracking
-  const [_sessionId, setSessionId] = useState<string | null>(null);
-  const [_testStartTime, setTestStartTime] = useState<number | null>(null);
-  const [_scanStartTime, setScanStartTime] = useState<number | null>(null);
+  const [sessionId] = useState<string>(() => `test_session_${crypto.randomUUID()}`);
 
   // Initialize session on mount
   useEffect(() => {
-    const newSessionId = `test_session_${crypto.randomUUID()}`;
-    setSessionId(newSessionId);
-    const startTime = Date.now();
-    setTestStartTime(startTime);
-    
     // Track session start
     analytics.testSessionStart('test-lab', testMode);
     
-    // Check if first-time admin
-    const hasSeenOnboarding = localStorage.getItem('afia_admin_onboarding_seen');
-    if (!hasSeenOnboarding && isAdmin) {
-      setShowOnboarding(true);
-      analytics.adminOnboardingStarted(newSessionId);
+    // Track onboarding if shown
+    if (showOnboarding) {
+      analytics.adminOnboardingStarted(sessionId);
     }
-  }, [testMode]);
+  }, [testMode, showOnboarding, sessionId]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -176,15 +171,16 @@ export function TestLab({ isAdmin }: TestLabProps) {
   }, [success]);
 
   // Handle validation save
-  const handleValidationSave = useCallback((validation: any) => {
+  const handleValidationSave = useCallback((validation: unknown) => {
+    const val = validation as { accuracyRating: string; notes?: string };
     console.log("Validation saved:", validation);
     success('Validation saved!');
 
     // Track analytics
     analytics.testValidationSaved(
       'test_result_' + Date.now(),
-      validation.accuracyRating,
-      !!validation.notes
+      val.accuracyRating,
+      !!val.notes
     );
 
     // TODO: Send to API

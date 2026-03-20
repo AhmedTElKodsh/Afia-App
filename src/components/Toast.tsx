@@ -20,17 +20,14 @@ import "./Toast.css";
 
 export type ToastType = "success" | "error" | "warning" | "info";
 
-/**
- * @deprecated Use Toast interface instead
- */
 export interface ToastData {
   id: string;
-  message: string;
   type: ToastType;
+  message: string;
   duration?: number;
 }
 
-export interface Toast {
+interface Toast {
   id: string;
   type: ToastType;
   title: string;
