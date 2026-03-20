@@ -65,13 +65,13 @@
   box-shadow: none;
 }
 
-.nav-item.active .nav-icon {
+.main-navigation .nav-item.active .nav-icon {
   transform: scale(1.08);
   filter: drop-shadow(0 0 5px color-mix(in srgb, var(--color-primary) 50%, transparent));
 }
 
 /* Slim gold dot below the icon, sitting in the gap */
-.nav-item.active .nav-icon::after {
+.main-navigation .nav-item.active .nav-icon::after {
   content: '';
   position: absolute;
   bottom: -5px;
@@ -84,7 +84,7 @@
   box-shadow: 0 0 6px var(--color-primary-glow);
 }
 
-.nav-icon {
+.main-navigation .nav-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -92,10 +92,11 @@
   position: relative;
   width: 20px;
   height: 20px;
+  font-size: 20px;
   transition: transform var(--transition-base), filter var(--transition-base);
 }
 
-.nav-label {
+.main-navigation .nav-label {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -144,7 +145,7 @@ html:not(.theme-light) .main-navigation {
     animation: none;
   }
 
-  .nav-item.active .nav-icon {
+  .main-navigation .nav-item.active .nav-icon {
     filter: none;
   }
 }
