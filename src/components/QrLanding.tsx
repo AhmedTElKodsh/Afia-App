@@ -81,7 +81,7 @@ export function QrLanding({ bottle, onStartScan }: QrLandingProps) {
     <div className="qr-landing">
       {/* ── Header ── */}
       <header className="qrl-header">
-        <AfiaLogo height={28} />
+        <AfiaLogo height={44} />
         <div className="qrl-header-right">
           {isOnline
             ? <Wifi size={18} className="qrl-status-icon qrl-status-online" />
