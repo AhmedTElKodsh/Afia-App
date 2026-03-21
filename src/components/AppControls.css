@@ -5,21 +5,17 @@
 
 .app-controls-wrapper {
   position: fixed;
-  top: max(var(--space-md), env(safe-area-inset-top, var(--space-md)));
-  /*
-    Align to the same 1200px content column as #root.
-    left:50% + translateX(-50%) centres the 1200px wrapper on the viewport.
-    padding-inline keeps the pill away from the screen edge on narrow screens.
-  */
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 1200px;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding-top: env(safe-area-inset-top, 0px);
   pointer-events: none;
   z-index: var(--z-sticky);
   display: flex;
-  justify-content: flex-end; /* pill sits at visual-right in LTR */
+  align-items: center;
+  justify-content: space-between; /* logo left, controls right */
   padding-inline: var(--space-md);
+  min-height: calc(56px + env(safe-area-inset-top, 0px));
 }
 
 .app-controls {
@@ -56,20 +52,28 @@
   }
 }
 
+/* Logo — persistent brand anchor top-left */
+.app-header-logo {
+  pointer-events: auto;
+  flex-shrink: 0;
+  /* subtle drop shadow so logo pops over any page background */
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.15));
+}
+
 /* Individual toggle button */
 .app-ctrl-btn,
 .app-ctrl-admin {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   background: transparent;
   border: none;
   cursor: pointer;
   color: var(--color-text-secondary);
   font-family: var(--font-family);
   border-radius: var(--radius-full);
-  padding: 6px var(--space-sm);
-  min-height: 44px; /* H5 FIX: was 36px — WCAG 2.5.5 requires 44px minimum */
+  padding: 5px var(--space-sm);
+  min-height: 36px;
   transition: background var(--transition-fast), color var(--transition-fast);
   white-space: nowrap;
 }
@@ -91,9 +95,14 @@
 }
 
 .app-ctrl-label {
-  font-size: var(--font-size-small);
+  font-size: 0.68rem;
   font-weight: var(--font-weight-semibold);
   letter-spacing: 0.04em;
+}
+
+.app-ctrl-admin-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.03em;
 }
 
 /* Divider between buttons */
@@ -128,14 +137,14 @@
 .show-sun .icon-moon  { opacity: 0; transform: rotate(90deg)  scale(0.5); }
 .show-sun .icon-sun   { opacity: 1; transform: rotate(0deg)   scale(1);   }
 
-/* Push main content down to clear the controls bar */
+/* Push main content down to clear the header bar */
 .app-with-nav {
-  padding-top: 64px;
+  padding-top: calc(56px + env(safe-area-inset-top, 0px));
 }
 
-/* RTL: reverse justify so controls hug the visual-left (leading edge in RTL) */
+/* RTL: logo flips to right, controls to left — space-between handles it automatically */
 [dir="rtl"] .app-controls-wrapper {
-  justify-content: flex-start;
+  /* space-between is direction-aware; no override needed */
 }
 
 /* Reduced motion */

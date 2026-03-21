@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Wifi, WifiOff, Camera, Droplets } from "lucide-react";
+import { WifiOff, Camera, Droplets } from "lucide-react";
 import type { BottleContext } from "../state/appState.ts";
 import { useOnlineStatus } from "../hooks/useOnlineStatus.ts";
 import { LiquidGauge } from "./LiquidGauge.tsx";
 import { PrivacyInline } from "./PrivacyInline.tsx";
 import { PRIVACY_CONFIG } from "../config/privacy.ts";
-import { AfiaLogo } from "./AfiaLogo.tsx";
 import "./QrLanding.css";
 
 interface QrLandingProps {
@@ -81,17 +80,6 @@ export function QrLanding({ bottle, onStartScan }: QrLandingProps) {
 
   return (
     <div className="qr-landing">
-      {/* ── Header ── */}
-      <header className="qrl-header">
-        <AfiaLogo height={44} />
-        <div className="qrl-header-right">
-          {isOnline
-            ? <Wifi size={18} className="qrl-status-icon qrl-status-online" />
-            : <WifiOff size={18} className="qrl-status-icon qrl-status-offline" />
-          }
-        </div>
-      </header>
-
       {/* ── Offline banner ── */}
       {!isOnline && (
         <div className="qrl-offline-banner card card-compact" role="alert">

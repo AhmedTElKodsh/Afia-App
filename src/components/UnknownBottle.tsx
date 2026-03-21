@@ -1,6 +1,5 @@
 import { Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { AfiaLogo } from "./AfiaLogo.tsx";
 import "./UnknownBottle.css";
 
 interface UnknownBottleProps {
@@ -12,9 +11,6 @@ export function UnknownBottle({ sku }: UnknownBottleProps) {
   return (
     <div className="unknown-bottle">
       <div className="unknown-bottle-content">
-        {/* Brand anchor — keeps the experience on-brand */}
-        <AfiaLogo height={64} className="ub-logo" />
-
         <div className="unknown-icon" aria-hidden="true">
           <Info size={44} strokeWidth={1.5} />
         </div>
