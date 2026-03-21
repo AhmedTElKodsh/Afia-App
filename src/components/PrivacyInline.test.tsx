@@ -54,7 +54,7 @@ describe('PrivacyInline', () => {
     it('should render continue button disabled initially', () => {
       render(<PrivacyInline onAccepted={vi.fn()} />);
       
-      const continueButton = screen.getByRole('button', { name: /continue/i });
+      const continueButton = screen.getByRole('button', { name: /ok/i });
       expect(continueButton).toBeDisabled();
     });
 
@@ -70,7 +70,7 @@ describe('PrivacyInline', () => {
       render(<PrivacyInline onAccepted={vi.fn()} />);
       
       const checkbox = screen.getByRole('checkbox');
-      const continueButton = screen.getByRole('button', { name: /continue/i });
+      const continueButton = screen.getByRole('button', { name: /ok/i });
       
       fireEvent.click(checkbox);
       
@@ -104,7 +104,7 @@ describe('PrivacyInline', () => {
       render(<PrivacyInline onAccepted={onAccepted} />);
       
       const checkbox = screen.getByRole('checkbox');
-      const continueButton = screen.getByRole('button', { name: /continue/i });
+      const continueButton = screen.getByRole('button', { name: /ok/i });
       
       fireEvent.click(checkbox);
       fireEvent.click(continueButton);
@@ -116,7 +116,7 @@ describe('PrivacyInline', () => {
       render(<PrivacyInline onAccepted={vi.fn()} />);
       
       const checkbox = screen.getByRole('checkbox');
-      const continueButton = screen.getByRole('button', { name: /continue/i });
+      const continueButton = screen.getByRole('button', { name: /ok/i });
       
       fireEvent.click(checkbox);
       fireEvent.click(continueButton);
@@ -127,7 +127,7 @@ describe('PrivacyInline', () => {
     it('should show error styling when trying to submit without checking', () => {
       const { container } = render(<PrivacyInline onAccepted={vi.fn()} showError />);
       
-      const continueButton = screen.getByRole('button', { name: /continue/i });
+      const continueButton = screen.getByRole('button', { name: /ok/i });
       fireEvent.click(continueButton);
       
       // When showError is true and user tries to submit without checking,
@@ -160,7 +160,7 @@ describe('PrivacyInline', () => {
       
       const checkbox = screen.getByRole('checkbox');
       const learnMoreButton = screen.getByRole('button', { name: /learn more/i });
-      const continueButton = screen.getByRole('button', { name: /continue/i });
+      const continueButton = screen.getByRole('button', { name: /ok/i });
       
       // Tab through elements
       checkbox.focus();

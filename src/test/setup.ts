@@ -1,6 +1,31 @@
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
 
+// Global react-i18next mock — t(key) returns actual EN translation strings
+// so tests can query rendered output by human-readable English text.
+// vi.mock is NOT hoisted in setupFiles, so we can use an async factory safely.
+vi.mock('react-i18next', async () => {
+  const { default: en } = await import('../i18n/locales/en/translation.json');
+  type Obj = { [k: string]: string | Obj };
+
+  function t(key: string, vars?: Record<string, unknown>): string {
+    const val = key.split('.').reduce<string | Obj | undefined>(
+      (acc, k) => (acc && typeof acc === 'object' ? (acc as Obj)[k] : undefined),
+      en as unknown as Obj
+    );
+    if (typeof val !== 'string') return key;
+    if (!vars) return val;
+    return val.replace(/\{\{(\w+)\}\}/g, (_, k) => String(vars[k] ?? k));
+  }
+
+  return {
+    useTranslation: () => ({ t, i18n: { language: 'en', changeLanguage: vi.fn() } }),
+    Trans: ({ children }: { children: React.ReactNode }) => children,
+    initReactI18next: { type: '3rdParty', init: vi.fn() },
+    I18nextProvider: ({ children }: { children: React.ReactNode }) => children,
+  };
+});
+
 // Mock canvas for imageCompressor tests (only for specific use cases)
 const originalGetContext = HTMLCanvasElement.prototype.getContext;
 HTMLCanvasElement.prototype.getContext = function(...args) {

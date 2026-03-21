@@ -82,7 +82,7 @@ describe('CameraViewfinder', () => {
         onPermissionDenied={mockOnPermissionDenied}
       />);
       
-      expect(screen.getByText('Starting camera...')).toBeInTheDocument();
+      expect(screen.getByText('Starting camera…')).toBeInTheDocument();
       expect(screen.getByRole('status')).toBeInTheDocument();
     });
   });
