@@ -1,4 +1,5 @@
 import { memo } from "react";
+import afiaLogoUrl from "../../logo/afia-logo.png";
 import "./AfiaLogo.css";
 
 interface AfiaLogoProps {
@@ -8,7 +9,7 @@ interface AfiaLogoProps {
 
 export const AfiaLogo = memo(({ className, height = 40 }: AfiaLogoProps) => (
   <img
-    src="/afia-logo.png"
+    src={afiaLogoUrl}
     alt="Afia"
     height={height}
     className={`afia-logo-img${className ? ` ${className}` : ""}`}
