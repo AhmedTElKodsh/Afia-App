@@ -182,7 +182,7 @@ export function AdminOnboarding({ onComplete, onSkip }: AdminOnboardingProps) {
               className={`admin-onboarding-dot ${index === currentStep ? "active" : ""}`}
               onClick={() => setCurrentStep(index)}
               type="button"
-              aria-label={t('common.next') + " " + (index + 1)}
+              aria-label={t('admin.onboarding.goToStep', 'Go to step {{step}}', { step: index + 1 })}
             />
           ))}
         </div>

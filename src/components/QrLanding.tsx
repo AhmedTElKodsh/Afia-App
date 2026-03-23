@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { WifiOff, Camera, Droplets } from "lucide-react";
 import type { BottleContext } from "../state/appState.ts";
+import type { StoredScan } from "../hooks/useScanHistory.ts";
 import { useOnlineStatus } from "../hooks/useOnlineStatus.ts";
 import { LiquidGauge } from "./LiquidGauge.tsx";
 import { PrivacyInline } from "./PrivacyInline.tsx";
@@ -11,13 +12,6 @@ import "./QrLanding.css";
 interface QrLandingProps {
   bottle: BottleContext;
   onStartScan: () => void;
-}
-
-interface StoredScan {
-  sku: string;
-  fillPercentage: number;
-  remainingMl: number;
-  scannedAt: string;
 }
 
 const STORAGE_KEY_HISTORY = "afia_scan_history";
@@ -38,24 +32,27 @@ function readScans(sku: string, limit: number): StoredScan[] {
 }
 
 /**
- * L1 fix: Reactive hook — increments a revision counter inside the
- * storage event handler (which is a callback — not synchronous in the
- * effect body), then derives the scan list from the revision.
+ * Reactive hook — listens to both the cross-tab `storage` event and the
+ * same-tab `afia:scan-added` custom event dispatched by useScanHistory.
  */
 function useRecentScans(sku: string, limit = 6): StoredScan[] {
   const bumpRevision = useState(0)[1];
 
   useEffect(() => {
-    const handler = (e: StorageEvent) => {
-      if (!e.key || e.key === STORAGE_KEY_HISTORY) {
-        bumpRevision((r: number) => r + 1);
-      }
+    const bump = () => bumpRevision((r: number) => r + 1);
+
+    const storageHandler = (e: StorageEvent) => {
+      if (!e.key || e.key === STORAGE_KEY_HISTORY) bump();
     };
-    window.addEventListener("storage", handler);
-    return () => window.removeEventListener("storage", handler);
+
+    window.addEventListener("storage", storageHandler);
+    window.addEventListener("afia:scan-added", bump);
+    return () => {
+      window.removeEventListener("storage", storageHandler);
+      window.removeEventListener("afia:scan-added", bump);
+    };
   }, [bumpRevision]);
 
-  // readScans runs on each render; _revision dependency ensures re-reads on storage changes
   return readScans(sku, limit);
 }
 
@@ -104,7 +101,7 @@ export function QrLanding({ bottle, onStartScan }: QrLandingProps) {
         <LiquidGauge
           percentage={lastScan ? lastFill : 0}
           size="lg"
-          sublabel={lastScan ? `${consumedMl}ml used` : "No scan yet"}
+          sublabel={lastScan ? t('landing.consumedMl', { ml: consumedMl }) : t('landing.noScanYet')}
           animate
         />
       </div>
@@ -152,7 +149,7 @@ export function QrLanding({ bottle, onStartScan }: QrLandingProps) {
               const isLast = i === recentScans.length - 1;
               return (
                 <div
-                  key={i}
+                  key={scan.timestamp}
                   className={`qrl-bar${isLast ? " qrl-bar--active" : ""}`}
                   style={{ height: `${Math.max(h, 8)}%` }}
                   tabIndex={0}

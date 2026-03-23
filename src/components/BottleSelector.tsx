@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import { ChevronDown, Check } from "lucide-react";
 import { bottleRegistry, getBottleBySku } from "../data/bottleRegistry";
 import "./BottleSelector.css";
 
@@ -10,7 +12,12 @@ interface BottleSelectorProps {
 }
 
 export function BottleSelector({ onBottleChange, compact = false }: BottleSelectorProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+
+  // Keep callback in a ref to avoid re-running the persist effect when parent re-renders
+  const onBottleChangeRef = useRef(onBottleChange);
+  useEffect(() => { onBottleChangeRef.current = onBottleChange; });
 
   // Initialize from localStorage or default to first bottle
   const [selectedSku, setSelectedSku] = useState(() => {
@@ -23,15 +30,38 @@ export function BottleSelector({ onBottleChange, compact = false }: BottleSelect
 
   const selectedBottle = getBottleBySku(selectedSku);
 
-  // Persist selection and notify parent
+  // Persist selection and notify parent — only re-runs when selectedSku changes
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, selectedSku);
-    onBottleChange?.(selectedSku);
-  }, [selectedSku, onBottleChange]);
+    onBottleChangeRef.current?.(selectedSku);
+  }, [selectedSku]);
+
+  // Close dropdown on Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isOpen]);
 
   const handleSelect = (sku: string) => {
     setSelectedSku(sku);
     setIsOpen(false);
+  };
+
+  const getLocalizedBottleName = (sku: string, defaultName: string) => {
+    const key = `bottles.${sku}`;
+    const localized = t(key);
+    return localized === key ? defaultName : localized;
+  };
+
+  const getOilTypeLabel = (oilType: string) => {
+    const key = `bottleSelector.oilTypes.${oilType.toLowerCase().replace(/_/g, '')}`;
+    const label = t(key);
+    // Fallback to formatted string if translation key is missing
+    return label === key ? oilType.replace(/_/g, " ") : label;
   };
 
   if (compact) {
@@ -41,11 +71,11 @@ export function BottleSelector({ onBottleChange, compact = false }: BottleSelect
           value={selectedSku}
           onChange={(e) => handleSelect(e.target.value)}
           className="bottle-dropdown"
-          aria-label="Select bottle"
+          aria-label={t('admin.qrGenerator.selectBottle')}
         >
           {bottleRegistry.map((bottle) => (
             <option key={bottle.sku} value={bottle.sku}>
-              {bottle.name} ({bottle.totalVolumeMl}ml)
+              {getLocalizedBottleName(bottle.sku, bottle.name)} ({bottle.totalVolumeMl}{t('common.ml')})
             </option>
           ))}
         </select>
@@ -62,13 +92,15 @@ export function BottleSelector({ onBottleChange, compact = false }: BottleSelect
         aria-haspopup="listbox"
       >
         <div className="bottle-selector-info">
-          <span className="bottle-selector-label">Current Bottle:</span>
-          <span className="bottle-selector-name">{selectedBottle?.name}</span>
+          <span className="bottle-selector-label">{t('bottleSelector.currentBottle')}</span>
+          <span className="bottle-selector-name">
+            {selectedBottle ? getLocalizedBottleName(selectedBottle.sku, selectedBottle.name) : ""}
+          </span>
           <span className="bottle-selector-capacity">
-            {selectedBottle?.totalVolumeMl}ml {selectedBottle?.oilType.replace(/_/g, " ")}
+            {selectedBottle?.totalVolumeMl}{t('common.ml')} {selectedBottle && getOilTypeLabel(selectedBottle.oilType)}
           </span>
         </div>
-        <span className={`bottle-selector-arrow ${isOpen ? "open" : ""}`}>▼</span>
+        <ChevronDown size={14} className={`bottle-selector-arrow ${isOpen ? "open" : ""}`} aria-hidden="true" />
       </button>
 
       {isOpen && (
@@ -82,13 +114,13 @@ export function BottleSelector({ onBottleChange, compact = false }: BottleSelect
               aria-selected={selectedSku === bottle.sku}
             >
               <div className="bottle-option-info">
-                <span className="bottle-option-name">{bottle.name}</span>
+                <span className="bottle-option-name">{getLocalizedBottleName(bottle.sku, bottle.name)}</span>
                 <span className="bottle-option-meta">
-                  {bottle.totalVolumeMl}ml &middot; {bottle.oilType.replace(/_/g, " ")}
+                  {bottle.totalVolumeMl}{t('common.ml')} &middot; {getOilTypeLabel(bottle.oilType)}
                 </span>
               </div>
               {selectedSku === bottle.sku && (
-                <span className="bottle-option-check">✓</span>
+                <span className="bottle-option-check" aria-hidden="true"><Check size={14} strokeWidth={2.5} /></span>
               )}
             </button>
           ))}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import type { AnalysisResult } from "../state/appState.ts";
@@ -9,6 +9,9 @@ import { ConfidenceBadge } from "./ConfidenceBadge.tsx";
 import { FeedbackGrid } from "./FeedbackGrid.tsx";
 import { BottleOverlay } from "./BottleOverlay.tsx";
 import { hapticFeedback } from "../utils/haptics.ts";
+import { useScanHistory, type StoredScan } from "../hooks/useScanHistory.ts";
+import { submitFeedback } from "../api/apiClient.ts";
+import type { FeedbackType } from "../config/feedback.ts";
 import "./ResultDisplay.css";
 
 interface ResultDisplayProps {
@@ -18,9 +21,26 @@ interface ResultDisplayProps {
   onRetake: () => void;
 }
 
+const FEEDBACK_RATING_MAP: Record<FeedbackType, StoredScan["feedbackRating"]> = {
+  'accurate': 'about_right',
+  'too-high': 'too_high',
+  'too-low':  'too_low',
+  'way-off':  'way_off',
+};
+
 export function ResultDisplay({ result, bottle, capturedImage, onRetake }: ResultDisplayProps) {
   const { t } = useTranslation();
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const { updateFeedback } = useScanHistory();
+
+  const handleFeedbackSubmit = useCallback((feedback: FeedbackType) => {
+    const rating = FEEDBACK_RATING_MAP[feedback];
+    if (result.scanId && rating) {
+      updateFeedback(result.scanId, rating);
+      submitFeedback(result.scanId, rating, result.fillPercentage).catch(() => {});
+    }
+    setFeedbackSubmitted(true);
+  }, [result.scanId, result.fillPercentage, updateFeedback]);
 
   // Trigger success haptics on result display
   useEffect(() => {
@@ -191,7 +211,7 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
       {/* ── Feedback ── */}
       {!feedbackSubmitted ? (
         <FeedbackGrid
-          onSubmit={() => setFeedbackSubmitted(true)}
+          onSubmit={handleFeedbackSubmit}
           hasSubmitted={feedbackSubmitted}
         />
       ) : (

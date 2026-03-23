@@ -103,8 +103,8 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6);
   --shadow-xl: 0 20px 40px -5px rgba(0, 0, 0, 0.7);
-  --shadow-button: 0 8px 28px 0 rgba(245, 197, 24, 0.52);
-  --shadow-glow: 0 0 44px rgba(245, 197, 24, 0.56);
+  --shadow-button: 0 8px 28px 0 rgba(0, 136, 68, 0.50);  /* green glow — matches btn-primary family */
+  --shadow-glow: 0 0 44px rgba(0, 136, 68, 0.55);  /* green glow — consistent with btn-primary family */
 
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -176,8 +176,8 @@ html.theme-light {
   --glass-shadow:        0 8px 32px rgba(80, 50, 0, 0.12);
   --glass-inset:         inset 0 0 0 1px rgba(184, 134, 10, 0.18);
 
-  --shadow-button: 0 8px 28px 0 rgba(184, 134, 10, 0.40);
-  --shadow-glow:   0 0 40px rgba(184, 134, 10, 0.40);
+  --shadow-button: 0 8px 28px 0 rgba(0, 136, 68, 0.38);
+  --shadow-glow:   0 0 40px rgba(0, 136, 68, 0.38);
 
   /* Shadow scale — warm amber-tinted for light's glassy depth */
   --shadow-sm: 0 1px 3px 0  rgba(100, 65, 0, 0.14),
@@ -265,7 +265,7 @@ html[dir="rtl"] {
 
 html[dir="rtl"] body {
   direction: rtl;
-  text-align: right;
+  text-align: start;
 }
 
 html[dir="rtl"] .btn {
@@ -276,15 +276,17 @@ html[dir="rtl"] .volume-grid {
   direction: rtl;
 }
 
-html[dir="rtl"] .icon-flip {
+/* Mirror icons in RTL */
+html[dir="rtl"] .icon-mirror,
+html[dir="rtl"] .rtl-mirror {
   transform: scaleX(-1);
 }
 
 #root {
   max-width: 1200px;
   width: 100%;
-  margin: 0 auto;
-  padding: 0 var(--space-md);
+  margin-inline: auto;
+  padding-inline: var(--space-md);
   min-height: 100dvh;
   position: relative;
   overflow-x: hidden;
@@ -327,7 +329,8 @@ html[dir="rtl"] .icon-flip {
   align-items: center;
   justify-content: center;
   min-height: 48px;
-  padding: var(--space-sm) var(--space-xl);
+  padding-block: var(--space-sm);
+  padding-inline: var(--space-xl);
   border-radius: var(--radius-full);
   font-family: var(--font-family);
   font-size: var(--font-size-body);
@@ -420,7 +423,8 @@ html[dir="rtl"] .icon-flip {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   min-height: unset;
-  padding: var(--space-xs) var(--space-sm);
+  padding-block: var(--space-xs);
+  padding-inline: var(--space-sm);
   text-decoration: none;
   transition: color var(--transition-fast);
 }
@@ -432,13 +436,15 @@ html[dir="rtl"] .icon-flip {
 
 .btn-sm {
   min-height: 44px;
-  padding: var(--space-xs) var(--space-md);
+  padding-block: var(--space-xs);
+  padding-inline: var(--space-md);
   font-size: var(--font-size-small);
 }
 
 .btn-lg {
   min-height: 56px;
-  padding: var(--space-md) var(--space-2xl);
+  padding-block: var(--space-md);
+  padding-inline: var(--space-2xl);
   font-size: var(--font-size-subhead);
 }
 
@@ -471,6 +477,12 @@ html[dir="rtl"] .icon-flip {
   font-size: var(--font-size-section);
   font-weight: var(--font-weight-bold);
   letter-spacing: -0.02em;
+}
+
+.text-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
 }
 
 .text-hero {

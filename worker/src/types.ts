@@ -9,11 +9,13 @@ export interface Env {
   GEMINI_API_KEY2?: string; // Optional second key for rotation
   GEMINI_API_KEY3?: string; // Optional third key for rotation
   GROQ_API_KEY: string;
+  ADMIN_PASSWORD?: string; // Admin dashboard password (server-side only)
   // Monitoring
   BETTERSTACK_TOKEN?: string; // Optional monitoring token
   SLACK_WEBHOOK_URL?: string; // Optional Slack notifications
   // Vars
   ALLOWED_ORIGINS: string;
+  DEBUG_REASONING?: string; // Set to "true" to include reasoning field in LLM output
 }
 
 export interface LLMResponse {

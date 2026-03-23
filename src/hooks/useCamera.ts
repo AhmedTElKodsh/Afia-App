@@ -27,6 +27,12 @@ export function useCamera(): UseCameraReturn {
   const startCamera = useCallback(async () => {
     setError(null);
 
+    // Stop any existing stream before starting a new one (prevents track leaks)
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -65,6 +71,9 @@ export function useCamera(): UseCameraReturn {
   const capturePhoto = useCallback(async (): Promise<string | null> => {
     const video = videoRef.current;
     if (!video || !isActive) return null;
+
+    // Guard: video element may not have decoded any frames yet
+    if (video.videoWidth === 0 || video.videoHeight === 0) return null;
 
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;

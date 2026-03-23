@@ -300,7 +300,6 @@ export function analyzeComposition(
     
     // Simple center of mass analysis
     let totalX = 0;
-    let totalY = 0;
     let totalWeight = 0;
     
     for (let y = 0; y < size; y++) {
@@ -311,14 +310,11 @@ export function analyzeComposition(
         // Weight by difference from average (edges have higher weight)
         const weight = Math.abs(luminance - 128);
         totalX += x * weight;
-        totalY += y * weight;
         totalWeight += weight;
       }
     }
     
     const centerX = totalWeight > 0 ? totalX / totalWeight : size / 2;
-    // centerY calculated but not used in current implementation
-    // const centerY = totalWeight > 0 ? totalY / totalWeight : size / 2;
     
     // Check if centered (within 20% of center)
     const isCentered = Math.abs(centerX - size / 2) < size * 0.2;

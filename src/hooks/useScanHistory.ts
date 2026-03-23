@@ -10,7 +10,9 @@ export interface StoredScan {
   remainingMl: number;
   consumedMl: number;
   confidence: "high" | "medium" | "low";
-  feedbackRating?: string;
+  aiProvider?: "gemini" | "groq";
+  latencyMs?: number;
+  feedbackRating?: "about_right" | "too_high" | "too_low" | "way_off";
 }
 
 const STORAGE_KEY = "afia_scan_history";
@@ -25,8 +27,19 @@ export function useScanHistory() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        const parsed = JSON.parse(stored) as StoredScan[];
-        setScans(parsed);
+        const parsed = JSON.parse(stored);
+        // Runtime validation: ensure it's an array of objects with required fields
+        if (Array.isArray(parsed)) {
+          const valid = parsed.filter(
+            (s): s is StoredScan =>
+              typeof s === "object" &&
+              s !== null &&
+              typeof s.id === "string" &&
+              typeof s.timestamp === "string" &&
+              typeof s.fillPercentage === "number"
+          );
+          setScans(valid);
+        }
       }
     } catch (error) {
       console.error("Failed to load scan history:", error);
@@ -39,16 +52,23 @@ export function useScanHistory() {
   const addScan = useCallback((scan: StoredScan) => {
     setScans((prev) => {
       const updated = [scan, ...prev];
-      
+
       // Auto-prune if over limit
-      if (updated.length > MAX_SCANS) {
-        const pruned = updated.slice(0, MAX_SCANS);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(pruned));
-        return pruned;
+      const toStore = updated.length > MAX_SCANS ? updated.slice(0, MAX_SCANS) : updated;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
+      } catch (e) {
+        if (e instanceof DOMException && e.name === "QuotaExceededError") {
+          // Storage full — prune oldest half and retry
+          const pruned = toStore.slice(0, Math.floor(toStore.length / 2));
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(pruned)); } catch { /* silent */ }
+          window.dispatchEvent(new CustomEvent("afia:scan-added"));
+          return pruned;
+        }
       }
-      
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      return updated;
+      // Notify same-tab listeners (storage event doesn't fire for same window)
+      window.dispatchEvent(new CustomEvent("afia:scan-added"));
+      return toStore;
     });
   }, []);
 
@@ -56,7 +76,7 @@ export function useScanHistory() {
   const deleteScan = useCallback((scanId: string) => {
     setScans((prev) => {
       const updated = prev.filter((s) => s.id !== scanId);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch { /* silent */ }
       return updated;
     });
   }, []);
@@ -87,6 +107,17 @@ export function useScanHistory() {
       scan.bottleName.toLowerCase().includes(lowercaseQuery)
     );
   }, [scans]);
+
+  // Update feedbackRating on an existing scan
+  const updateFeedback = useCallback((scanId: string, feedbackRating: StoredScan["feedbackRating"]) => {
+    setScans((prev) => {
+      const updated = prev.map((s) =>
+        s.id === scanId ? { ...s, feedbackRating } : s
+      );
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch { /* silent */ }
+      return updated;
+    });
+  }, []);
 
   // Get statistics
   const getStats = useCallback(() => {
@@ -139,6 +170,7 @@ export function useScanHistory() {
     addScan,
     deleteScan,
     clearHistory,
+    updateFeedback,
     getScansByDateRange,
     searchScans,
     getStats,
@@ -163,5 +195,7 @@ export function createStoredScan(
     remainingMl,
     consumedMl: totalVolumeMl - remainingMl,
     confidence: result.confidence,
+    aiProvider: result.aiProvider,
+    latencyMs: result.latencyMs,
   };
 }

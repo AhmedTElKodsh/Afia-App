@@ -26,6 +26,8 @@ export interface AdminToolsOverlayProps {
   isOpen: boolean;
   /** Close callback */
   onClose: () => void;
+  /** Open callback */
+  onOpen: () => void;
   /** Save validation callback */
   onSaveValidation: (validation: TestValidation) => void;
   /** Loading state for API operations */
@@ -42,6 +44,7 @@ export function AdminToolsOverlay({
   result,
   isOpen,
   onClose,
+  onOpen,
   onSaveValidation,
   isLoading = false,
 }: AdminToolsOverlayProps) {
@@ -135,7 +138,7 @@ export function AdminToolsOverlay({
       {/* Toggle Header */}
       <button
         className="admin-tools-toggle"
-        onClick={isOpen ? onClose : () => {}}
+        onClick={isOpen ? onClose : onOpen}
         type="button"
         aria-expanded={isOpen}
         aria-controls="admin-tools-panel"

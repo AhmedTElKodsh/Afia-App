@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import type { Env } from "./types.ts";
 import { handleAnalyze } from "./analyze.ts";
 import { handleFeedback } from "./feedback.ts";
+import { handleAdminAuth } from "./adminAuth.ts";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -81,6 +82,7 @@ app.use("*", async (c, next) => {
 // Routes
 app.post("/analyze", handleAnalyze);
 app.post("/feedback", handleFeedback);
+app.post("/admin/auth", handleAdminAuth);
 
 // Health check
 app.get("/health", (c) => c.json({ status: "ok" }));

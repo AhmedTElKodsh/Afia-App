@@ -55,7 +55,6 @@ export function PrivacyInline({
   const handleAccept = () => {
     localStorage.setItem(PRIVACY_CONFIG.storageKey, "true");
     onAccepted();
-    onLearnMore?.();
   };
 
   return (
@@ -104,7 +103,7 @@ export function PrivacyInline({
                     {detail.icon === 'Lock' && <Lock size={14} strokeWidth={2.5} />}
                     {detail.icon === 'Search' && <Search size={14} strokeWidth={2.5} />}
                   </span>
-                  <span>{detail.text}</span>
+                  <span>{t(detail.key)}</span>
                 </li>
               ))}
             </ul>

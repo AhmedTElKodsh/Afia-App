@@ -75,7 +75,7 @@
 /* Getting started guide card */
 .ub-guide {
   width: 100%;
-  text-align: left;
+  text-align: start;
   margin-top: var(--space-sm);
 }
 

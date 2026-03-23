@@ -66,7 +66,7 @@ export function AppControls({ hidden = false, isAdminMode = false }: AppControls
             <Sun size={14} strokeWidth={2} className="icon-sun" />
             <Moon size={14} strokeWidth={2} className="icon-moon" />
           </span>
-          <span className="app-ctrl-label">{theme === 'dark' ? 'Dark' : 'Light'}</span>
+          <span className="app-ctrl-label">{theme === 'dark' ? t('common.dark') : t('common.light')}</span>
         </button>
       </div>
     </div>

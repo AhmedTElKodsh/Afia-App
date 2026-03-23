@@ -54,7 +54,7 @@ export function exportToPDF(results: TestResult[]): void {
   // Simple PDF generation using browser's print dialog
   const printWindow = window.open("", "_blank");
   if (!printWindow) {
-    alert("Please allow popups to export PDF");
+    console.warn("[exportToPDF] Popup blocked — allow popups to export PDF");
     return;
   }
 

@@ -17,6 +17,7 @@
  */
 
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Beaker, QrCode, ChevronDown, Search, Smartphone, Wrench, Target, RefreshCcw, AlertTriangle, TestTube } from "lucide-react";
 import { bottleRegistry, getBottleBySku } from "../data/bottleRegistry.ts";
 import { CameraViewfinder } from "./CameraViewfinder.tsx";
@@ -25,7 +26,10 @@ import { AdminToolsOverlay } from "./AdminToolsOverlay.tsx";
 import { AdminOnboarding } from "./AdminOnboarding.tsx";
 import { useToast } from "./Toast.tsx";
 import { analytics } from "../utils/analytics.ts";
+import { useScanHistory } from "../hooks/useScanHistory.ts";
 import "./TestLab.css";
+
+const WORKER_URL = import.meta.env.VITE_WORKER_URL || "";
 
 export type TestModeType = "user" | "debug";
 export type EntryPointType = "mock-qr" | "bottle-select" | "manual-sku";
@@ -37,8 +41,11 @@ export interface TestLabProps {
 }
 
 export function TestLab({ isAdmin }: TestLabProps) {
-  // Toast notifications
+  const { t, i18n } = useTranslation();
   const { success, error: showError, info } = useToast();
+  const { updateFeedback } = useScanHistory();
+
+  const isRTL = i18n.language === 'ar';
 
   // Test configuration
   const [testMode, setTestMode] = useState<TestModeType>("user");
@@ -50,8 +57,6 @@ export function TestLab({ isAdmin }: TestLabProps) {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [result, setResult] = useState<import("../state/appState").AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [_entryPoint, setEntryPoint] = useState<EntryPointType | null>(null);
-  const [_scanStartTime, setScanStartTime] = useState<number | null>(null);
   
   // UI state
   const [showAdminTools, setShowAdminTools] = useState(false);
@@ -61,20 +66,34 @@ export function TestLab({ isAdmin }: TestLabProps) {
     return !hasSeenOnboarding && isAdmin;
   });
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // Test session tracking
   const [sessionId] = useState<string>(() => `test_session_${crypto.randomUUID()}`);
+
+  // Reset admin tools when switching modes
+  const handleModeChange = useCallback((mode: TestModeType) => {
+    analytics.testModeChanged(testMode, mode);
+    setTestMode(mode);
+    setShowAdminTools(false);
+  }, [testMode]);
 
   // Initialize session on mount
   useEffect(() => {
     // Track session start
     analytics.testSessionStart('test-lab', testMode);
-    
+
     // Track onboarding if shown
     if (showOnboarding) {
       analytics.adminOnboardingStarted(sessionId);
     }
   }, [testMode, showOnboarding, sessionId]);
+
+  // In DEBUG MODE, auto-open admin tools when scan completes
+  useEffect(() => {
+    if (scanState === "complete" && testMode === "debug") {
+      setShowAdminTools(true);
+    }
+  }, [scanState, testMode]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -100,36 +119,38 @@ export function TestLab({ isAdmin }: TestLabProps) {
     selectedSku ? getBottleBySku(selectedSku) : null
   , [selectedSku]);
 
+  const getLocalizedBottleName = (sku: string, defaultName: string) => {
+    const key = `bottles.${sku}`;
+    const localized = t(key);
+    return localized === key ? defaultName : localized;
+  };
+
   // Handle bottle selection from dropdown (only selects, doesn't start scan)
   const handleBottleSelect = useCallback((sku: string) => {
     const bottle = getBottleBySku(sku);
     setSelectedSku(sku);
-    setEntryPoint("bottle-select");
     setShowBottleDropdown(false);
     // Do NOT auto-start scan — user must click Scan Mock QR
 
     // Track analytics
     analytics.bottleSelected(sku, 'bottle-select');
-    info(`Selected: ${bottle?.name}`);
-  }, [info]);
+    info(`${t('admin.testLab.readyNewScan')}: ${bottle ? getLocalizedBottleName(sku, bottle.name) : ""}`);
+  }, [info, t]);
 
   // Handle mock QR scan
   const handleMockQrScan = useCallback((sku: string) => {
     const bottle = getBottleBySku(sku);
     setSelectedSku(sku);
-    setEntryPoint("mock-qr");
     setScanState("scanning");
-    setScanStartTime(Date.now());
 
     // Track analytics
     analytics.testEntryPointSelected('mock-qr', sku);
-    info(`Mock QR: ${bottle?.name}`);
-  }, [info]);
+    info(`${t('admin.testLab.scanMockQr')}: ${bottle ? getLocalizedBottleName(sku, bottle.name) : ""}`);
+  }, [info, t]);
 
   // Handle capture complete
   const handleCapture = useCallback((imageBase64: string) => {
     setCapturedImage(imageBase64);
-    setScanStartTime(Date.now());
     // Analysis happens automatically in parent flow
   }, []);
 
@@ -144,9 +165,8 @@ export function TestLab({ isAdmin }: TestLabProps) {
   const handleRetry = useCallback(() => {
     setScanState("scanning");
     setError(null);
-    setScanStartTime(Date.now());
-    info('Retrying scan...');
-  }, [info]);
+    info(t('admin.testLab.retrying'));
+  }, [info, t]);
 
   // Handle retake
   const handleRetake = useCallback(() => {
@@ -154,9 +174,8 @@ export function TestLab({ isAdmin }: TestLabProps) {
     setResult(null);
     setScanState("scanning");
     setShowAdminTools(false);
-    setScanStartTime(Date.now());
-    info('Ready for new scan');
-  }, [info]);
+    info(t('admin.testLab.readyNewScan'));
+  }, [info, t]);
 
   // Handle new test
   const handleNewTest = useCallback(() => {
@@ -165,26 +184,50 @@ export function TestLab({ isAdmin }: TestLabProps) {
     setResult(null);
     setError(null);
     setShowAdminTools(false);
-    setEntryPoint(null);
     setTestCount(prev => prev + 1);
-    success('Ready for new test');
-  }, [success]);
+    success(t('admin.testLab.readyNewTest'));
+  }, [success, t]);
 
-  // Handle validation save
-  const handleValidationSave = useCallback((validation: unknown) => {
-    const val = validation as { accuracyRating: string; notes?: string };
-    console.log("Validation saved:", validation);
-    success('Validation saved!');
+  // Handle validation save — persists to local history and posts to worker
+  const handleValidationSave = useCallback(async (validation: unknown) => {
+    const val = validation as { accuracyRating: "accurate" | "too_high" | "too_low"; notes?: string; correctedFillPercentage?: number };
 
-    // Track analytics
+    // Map admin overlay rating to worker's expected enum
+    const ratingMap: Record<string, "about_right" | "too_high" | "too_low"> = {
+      accurate: "about_right",
+      too_high: "too_high",
+      too_low: "too_low",
+    };
+    const workerRating = ratingMap[val.accuracyRating] ?? "about_right";
+
+    // 1. Persist to local scan history
+    if (result?.scanId) {
+      updateFeedback(result.scanId, workerRating);
+    }
+
+    // 2. Post to worker feedback endpoint (non-blocking)
+    if (result?.scanId && WORKER_URL) {
+      fetch(`${WORKER_URL}/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scanId: result.scanId,
+          accuracyRating: workerRating,
+          responseTimeMs: result.latencyMs ?? 0,
+          llmFillPercentage: result.fillPercentage,
+          correctedFillPercentage: val.correctedFillPercentage,
+        }),
+      }).catch((err) => console.error("Feedback POST failed:", err));
+    }
+
+    success(t('admin.testLab.validationSaved'));
+
     analytics.testValidationSaved(
-      'test_result_' + Date.now(),
+      result?.scanId ?? 'unknown',
       val.accuracyRating,
       !!val.notes
     );
-
-    // TODO: Send to API
-  }, [success]);
+  }, [result, updateFeedback, success, t]);
 
   // Render onboarding
   if (showOnboarding) {
@@ -204,55 +247,55 @@ export function TestLab({ isAdmin }: TestLabProps) {
 
   // Render based on scan state
   return (
-    <div className="test-lab">
+    <div className="test-lab" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
       <div className="test-lab-header">
         <div className="test-lab-title-section">
           <Beaker size={28} strokeWidth={2} className="test-lab-icon" />
           <div>
             <div className="test-lab-header-row">
-              <h1 className="test-lab-title">TEST LAB</h1>
+              <h1 className="test-lab-title">{t('admin.testLab.title')}</h1>
               {testCount > 0 && (
                 <div className="test-count-badge">
                   <TestTube size={14} strokeWidth={2} className="test-count-icon" />
-                  {testCount} Test{testCount !== 1 ? 's' : ''} This Session
+                  {t('admin.testLab.sessionTests', { count: testCount })}
                 </div>
               )}
             </div>
             <p className="test-lab-subtitle">
-              Test the exact user scanning experience + optional debug tools
+              {t('admin.testLab.subtitle')}
             </p>
           </div>
         </div>
       </div>
 
       {/* Test Mode Selector */}
-      <div className="test-lab-section">
-        <h2 className="test-lab-section-title">SELECT TEST MODE</h2>
+      <div className="test-lab-section test-lab-section--mode">
+        <h2 className="test-lab-section-title">{t('admin.testLab.selectMode')}</h2>
         <div className="test-mode-selector">
           <button
             className={`test-mode-card ${testMode === "user" ? "active" : ""}`}
-            onClick={() => setTestMode("user")}
+            onClick={() => handleModeChange("user")}
             type="button"
           >
             <div className="test-mode-icon"><Smartphone size={24} strokeWidth={2} /></div>
-            <h3 className="test-mode-title">USER FLOW</h3>
-            <p className="test-mode-description">Exact user simulation</p>
+            <h3 className="test-mode-title">{t('admin.testLab.userFlow')}</h3>
+            <p className="test-mode-description">{t('admin.testLab.userFlowDesc')}</p>
             <div className="test-mode-indicator">
-              {testMode === "user" ? "●" : "○"} Selected
+              {testMode === "user" ? `● ${t('admin.testLab.selected')}` : "○"}
             </div>
           </button>
           
           <button
             className={`test-mode-card ${testMode === "debug" ? "active" : ""}`}
-            onClick={() => setTestMode("debug")}
+            onClick={() => handleModeChange("debug")}
             type="button"
           >
             <div className="test-mode-icon"><Wrench size={24} strokeWidth={2} /></div>
-            <h3 className="test-mode-title">DEBUG MODE</h3>
-            <p className="test-mode-description">API inspector, validation</p>
+            <h3 className="test-mode-title">{t('admin.testLab.debugMode')}</h3>
+            <p className="test-mode-description">{t('admin.testLab.debugModeDesc')}</p>
             <div className="test-mode-indicator">
-              {testMode === "debug" ? "●" : "○"}
+              {testMode === "debug" ? `● ${t('admin.testLab.selected')}` : "○"}
             </div>
           </button>
         </div>
@@ -260,8 +303,14 @@ export function TestLab({ isAdmin }: TestLabProps) {
 
       {/* Entry Point Selector */}
       {scanState === "idle" && (
-        <div className="test-lab-section" style={{ textAlign: 'center' }}>
-          <h2 className="test-lab-section-title">SELECT BOTTLE / SCAN QR</h2>
+        <div className="test-lab-section test-lab-section--bottle" style={{ textAlign: 'center' }}>
+          <h2 className="test-lab-section-title">{t('admin.testLab.selectBottleScanQr')}</h2>
+          {testMode === "debug" && (
+            <p className="test-lab-debug-hint">
+              <Wrench size={13} strokeWidth={2} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
+              {t('admin.testLab.debugHint')}
+            </p>
+          )}
           
           {/* Bottle Selector Dropdown */}
           <div className="bottle-selector-container">
@@ -272,7 +321,7 @@ export function TestLab({ isAdmin }: TestLabProps) {
             >
               <span className="bottle-selector-icon"><Target size={20} strokeWidth={2} /></span>
               <span className="bottle-selector-text">
-                {selectedBottle ? selectedBottle.name : "Select Bottle..."}
+                {selectedBottle ? getLocalizedBottleName(selectedSku, selectedBottle.name) : t('admin.testLab.selectBottlePlaceholder')}
               </span>
               <ChevronDown 
                 size={20} 
@@ -287,7 +336,7 @@ export function TestLab({ isAdmin }: TestLabProps) {
                   <input
                     type="text"
                     className="bottle-selector-search-input"
-                    placeholder="Search bottles..."
+                    placeholder={t('admin.testLab.searchPlaceholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     autoFocus
@@ -299,7 +348,8 @@ export function TestLab({ isAdmin }: TestLabProps) {
                       searchQuery === '' ||
                       bottle.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                       bottle.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      bottle.oilType.toLowerCase().includes(searchQuery.toLowerCase())
+                      bottle.oilType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      getLocalizedBottleName(bottle.sku, bottle.name).toLowerCase().includes(searchQuery.toLowerCase())
                     )
                     .map((bottle) => (
                       <button
@@ -308,17 +358,18 @@ export function TestLab({ isAdmin }: TestLabProps) {
                         onClick={() => handleBottleSelect(bottle.sku)}
                         type="button"
                       >
-                        <span className="bottle-item-icon">🌻</span> {bottle.name}
+                        <span className="bottle-item-icon">🌻</span> {getLocalizedBottleName(bottle.sku, bottle.name)}
                         {selectedSku === bottle.sku && (
                           <span className="bottle-selector-check">✓</span>
                         )}
                       </button>
                     ))}
                   {searchQuery && bottleRegistry.filter(b =>
-                    b.name.toLowerCase().includes(searchQuery.toLowerCase())
+                    b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    getLocalizedBottleName(b.sku, b.name).toLowerCase().includes(searchQuery.toLowerCase())
                   ).length === 0 && (
                     <div className="bottle-selector-no-results">
-                      No bottles found matching "{searchQuery}"
+                      {t('admin.testLab.noResults', { query: searchQuery })}
                     </div>
                   )}
                 </div>
@@ -329,16 +380,15 @@ export function TestLab({ isAdmin }: TestLabProps) {
           {/* Selected Bottle Display */}
           {selectedBottle && scanState === "idle" && (
             <div className="selected-bottle-display">
-              <span>🌻 {selectedBottle.name}</span>
+              <span>🌻 {getLocalizedBottleName(selectedSku, selectedBottle.name)}</span>
               <button
                 className="clear-bottle-button"
                 onClick={() => {
                   setSelectedSku("");
-                  setEntryPoint(null);
-                }}
+                              }}
                 type="button"
               >
-                ✕ Clear
+                ✕ {t('admin.testLab.clear')}
               </button>
             </div>
           )}
@@ -354,14 +404,14 @@ export function TestLab({ isAdmin }: TestLabProps) {
               disabled={!selectedSku}
               type="button"
               style={{ width: '100%', maxWidth: '320px' }}
-              title={selectedSku ? 'Start scan with selected bottle' : 'Please select a bottle first'}
+              title={selectedSku ? t('admin.testLab.startWithSelected') : t('admin.testLab.pleaseSelectFirst')}
             >
               <QrCode size={22} strokeWidth={2} />
-              <span>Scan Mock QR</span>
+              <span>{t('admin.testLab.scanMockQr')}</span>
             </button>
             {!selectedSku && (
               <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: '4px 0 0 0' }}>
-                ↑ Select a bottle to activate
+                {t('admin.testLab.selectToActivate')}
               </p>
             )}
           </div>
@@ -371,11 +421,11 @@ export function TestLab({ isAdmin }: TestLabProps) {
       {/* Scan Flow */}
       {scanState === "scanning" && selectedBottle && (
         <div className="test-lab-section">
-          <h2 className="test-lab-section-title">CAPTURE PHOTO</h2>
+          <h2 className="test-lab-section-title">{t('admin.testLab.capturePhoto')}</h2>
           <CameraViewfinder
             onCapture={handleCapture}
             onError={handleError}
-            onPermissionDenied={() => handleError("Camera permission denied")}
+            onPermissionDenied={() => handleError(t('camera.permissionDenied'))}
           />
         </div>
       )}
@@ -385,7 +435,7 @@ export function TestLab({ isAdmin }: TestLabProps) {
         <div className="test-lab-section">
           <div className="analyzing-state">
             <div className="analyzing-spinner" />
-            <p className="analyzing-text">Analyzing with AI...</p>
+            <p className="analyzing-text">{t('admin.testLab.analyzing')}</p>
           </div>
         </div>
       )}
@@ -405,6 +455,7 @@ export function TestLab({ isAdmin }: TestLabProps) {
             <AdminToolsOverlay
               result={result}
               isOpen={showAdminTools}
+              onOpen={() => setShowAdminTools(true)}
               onClose={() => setShowAdminTools(false)}
               onSaveValidation={handleValidationSave}
             />
@@ -418,7 +469,7 @@ export function TestLab({ isAdmin }: TestLabProps) {
               type="button"
             >
               <RefreshCcw size={20} strokeWidth={2} />
-              <span>Back to Test Lab</span>
+              <span>{t('admin.testLab.backToTestLab')}</span>
             </button>
           </div>
         </div>
@@ -435,7 +486,7 @@ export function TestLab({ isAdmin }: TestLabProps) {
 
           {/* Message */}
           <div className="test-lab-error-body">
-            <h4 className="test-lab-error-title">Something went wrong</h4>
+            <h4 className="test-lab-error-title">{t('admin.testLab.errorTitle')}</h4>
             <p className="test-lab-error-msg">{error}</p>
           </div>
 
@@ -446,14 +497,14 @@ export function TestLab({ isAdmin }: TestLabProps) {
               type="button"
             >
               <RefreshCcw size={16} strokeWidth={2} />
-              <span>Retry</span>
+              <span>{t('common.retry')}</span>
             </button>
             <button
               className="test-lab-back-button"
               onClick={handleNewTest}
               type="button"
             >
-              <span>← Back to Test Lab</span>
+              <span>{t('admin.testLab.backToTestLab')}</span>
             </button>
           </div>
         </div>

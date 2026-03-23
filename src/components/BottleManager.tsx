@@ -12,8 +12,14 @@ const STORAGE_KEY = "afia_custom_bottles";
 export function BottleManager() {
   const { t } = useTranslation();
   const [customBottles, setCustomBottles] = useState<BottleEntry[]>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (!stored) return [];
+      const parsed = JSON.parse(stored);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
   });
   const [isAdding, setIsAdding] = useState(false);
   const [editingBottle, setEditingBottle] = useState<BottleEntry | null>(null);
@@ -137,6 +143,9 @@ export function BottleManager() {
       {(isAdding || editingBottle) && (
         <BottleForm
           bottle={editingBottle}
+          existingSkus={allBottles
+            .map((b) => b.sku)
+            .filter((sku) => sku !== editingBottle?.sku)}
           onSave={handleSave}
           onCancel={() => {
             setIsAdding(false);
@@ -243,11 +252,12 @@ function BottleCard({
 // ── Bottle Form ───────────────────────────────────────────────────────────────
 interface BottleFormProps {
   bottle: BottleEntry | null;
+  existingSkus: string[];
   onSave: (bottle: BottleEntry) => void;
   onCancel: () => void;
 }
 
-function BottleForm({ bottle, onSave, onCancel }: BottleFormProps) {
+function BottleForm({ bottle, existingSkus, onSave, onCancel }: BottleFormProps) {
   const { t } = useTranslation();
   const [formData, setFormData] = useState<Partial<BottleEntry>>({
     sku: bottle?.sku || "",
@@ -276,6 +286,24 @@ function BottleForm({ bottle, onSave, onCancel }: BottleFormProps) {
     if (!formData.sku || !formData.name || !formData.totalVolumeMl) {
       setFormError(t('admin.bottleManager.form.errorRequired', 'Please fill in all required fields (SKU, Name, Capacity).'));
       return;
+    }
+    if ((formData.totalVolumeMl || 0) < 1) {
+      setFormError(t('admin.bottleManager.form.errorCapacity', 'Capacity must be at least 1 ml.'));
+      return;
+    }
+    if (existingSkus.includes(formData.sku)) {
+      setFormError(t('admin.bottleManager.form.errorDuplicateSku', 'A bottle with this SKU already exists.'));
+      return;
+    }
+    const geom = formData.geometry;
+    if (geom) {
+      const isValidDims = geom.shape === 'cylinder'
+        ? (geom.heightMm ?? 0) > 0 && (geom.diameterMm ?? 0) > 0
+        : (geom.heightMm ?? 0) > 0 && (geom.topDiameterMm ?? 0) > 0 && (geom.bottomDiameterMm ?? 0) > 0;
+      if (!isValidDims) {
+        setFormError(t('admin.bottleManager.form.errorDimensions', 'All dimensions must be greater than 0 mm.'));
+        return;
+      }
     }
     setFormError("");
     onSave(formData as BottleEntry);
@@ -400,6 +428,7 @@ function BottleForm({ bottle, onSave, onCancel }: BottleFormProps) {
                 <input
                   id="height"
                   type="number"
+                  min="1"
                   value={formData.geometry?.heightMm || 220}
                   onChange={(e) =>
                     setFormData({
@@ -417,6 +446,7 @@ function BottleForm({ bottle, onSave, onCancel }: BottleFormProps) {
                 <input
                   id="diameter"
                   type="number"
+                  min="1"
                   value={formData.geometry?.diameterMm || 65}
                   onChange={(e) =>
                     setFormData({
@@ -437,6 +467,7 @@ function BottleForm({ bottle, onSave, onCancel }: BottleFormProps) {
                 <input
                   id="height"
                   type="number"
+                  min="1"
                   value={formData.geometry?.heightMm || 280}
                   onChange={(e) =>
                     setFormData({
@@ -454,6 +485,7 @@ function BottleForm({ bottle, onSave, onCancel }: BottleFormProps) {
                 <input
                   id="topDiameter"
                   type="number"
+                  min="1"
                   value={formData.geometry?.topDiameterMm || 70}
                   onChange={(e) =>
                     setFormData({
@@ -471,6 +503,7 @@ function BottleForm({ bottle, onSave, onCancel }: BottleFormProps) {
                 <input
                   id="bottomDiameter"
                   type="number"
+                  min="1"
                   value={formData.geometry?.bottomDiameterMm || 85}
                   onChange={(e) =>
                     setFormData({

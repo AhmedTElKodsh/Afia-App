@@ -21,7 +21,7 @@ export type AnalyticsEventType =
 
 export interface AnalyticsEvent {
   eventName: AnalyticsEventType;
-  properties: Record<string, any>;
+  properties: Record<string, unknown>;
   timestamp: string;
   sessionId: string;
 }
@@ -39,7 +39,7 @@ const getSessionId = (): string => {
 // Track event
 export const trackEvent = (
   eventName: AnalyticsEventType,
-  properties: Record<string, any> = {}
+  properties: Record<string, unknown> = {}
 ): void => {
   const event: AnalyticsEvent = {
     eventName,
@@ -87,14 +87,15 @@ export const analytics = {
     sessionId: string,
     scanId: string,
     duration: number,
-    result: any
+    result: unknown
   ) => {
+    const res = result as { confidence?: string; aiProvider?: string } | null;
     trackEvent('test_scan_complete', {
       sessionId,
       scanId,
       duration,
-      confidence: result?.confidence,
-      aiProvider: result?.aiProvider,
+      confidence: res?.confidence,
+      aiProvider: res?.aiProvider,
     });
   },
 

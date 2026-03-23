@@ -6,13 +6,35 @@ import { callGroq } from "./providers/groq.ts";
 import { storeScan } from "./storage/supabaseClient.ts";
 import { MonitoringLogger } from "./monitoring/logger.ts";
 import { QuotaMonitor } from "./monitoring/quotaMonitor.ts";
+import type { LLMResponse } from "./types.ts";
 
 const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024; // 4MB base64
+const CACHE_TTL_SECONDS = 1800; // 30 minutes
+
+/** SHA-256 hex of imageBase64+sku — used as KV cache key */
+async function buildCacheKey(imageBase64: string, sku: string): Promise<string> {
+  const data = new TextEncoder().encode(imageBase64 + sku);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hex = Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return `scan:${hex}`;
+}
+
+/** Rough token estimate for monitoring — not billed, just informational */
+function estimateTokens(imageBase64: string): number {
+  // Image: base64 chars → approx JPEG pixel count → Gemini tile tokens
+  // Empirically: ~1 token per 270 base64 chars (captures tile-based pricing), capped at 2048
+  const imageTokens = Math.min(Math.ceil(imageBase64.length / 270), 2048);
+  const promptTokens = 110; // ~90 system + ~20 user (compressed prompts)
+  return imageTokens + promptTokens;
+}
 
 export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Response> {
   const logger = new MonitoringLogger(c.env.BETTERSTACK_TOKEN);
   const quotaMonitor = new QuotaMonitor(logger, c.env.RATE_LIMIT_KV);
   const startTime = Date.now();
+  const debugReasoning = c.env.DEBUG_REASONING === "true";
 
   try {
     const body = await c.req.json<{ sku?: unknown; imageBase64?: unknown }>();
@@ -33,6 +55,39 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
       return c.json({ error: `Unknown SKU: ${body.sku}`, code: "UNKNOWN_SKU" }, 400);
     }
 
+    const tokensEstimated = estimateTokens(body.imageBase64);
+
+    // --- KV response cache (30 min TTL) ---
+    const cacheKey = await buildCacheKey(body.imageBase64, body.sku);
+    const cached = await c.env.RATE_LIMIT_KV.get(cacheKey);
+    if (cached) {
+      const { llmResult, aiProvider } = JSON.parse(cached) as {
+        llmResult: LLMResponse;
+        aiProvider: "gemini" | "groq";
+      };
+      const remainingMl = Math.round(bottle.totalVolumeMl * (llmResult.fillPercentage / 100));
+      const latencyMs = Date.now() - startTime;
+      await logger.info("Cache hit — returning cached result", {
+        sku: body.sku,
+        cacheKey,
+        latencyMs,
+      });
+      return c.json({
+        scanId: crypto.randomUUID(),
+        fillPercentage: llmResult.fillPercentage,
+        remainingMl,
+        confidence: llmResult.confidence,
+        aiProvider,
+        latencyMs,
+        cacheHit: true,
+        tokensEstimated,
+        imageQualityIssues:
+          llmResult.imageQualityIssues && llmResult.imageQualityIssues.length > 0
+            ? llmResult.imageQualityIssues
+            : undefined,
+      });
+    }
+
     const scanId = crypto.randomUUID();
     let aiProvider: "gemini" | "groq" = "gemini";
     let keyUsed = "gemini_key_1";
@@ -45,20 +100,20 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
     ].filter((k): k is string => typeof k === "string" && k.length > 0);
 
     // Try Gemini first with all keys (sequential fallback), fall back to Groq
-    let llmResult;
+    let llmResult: LLMResponse;
     try {
-      llmResult = await callGemini(body.imageBase64, bottle, geminiKeys);
+      llmResult = await callGemini(body.imageBase64, bottle, geminiKeys, debugReasoning);
       await quotaMonitor.trackRequest(keyUsed);
     } catch (geminiError) {
       await logger.warn("All Gemini keys failed, falling back to Groq", {
         error: String(geminiError),
         sku: body.sku,
       });
-      
+
       try {
         aiProvider = "groq";
         keyUsed = "groq";
-        llmResult = await callGroq(body.imageBase64, bottle, c.env.GROQ_API_KEY);
+        llmResult = await callGroq(body.imageBase64, bottle, c.env.GROQ_API_KEY, debugReasoning);
         await quotaMonitor.trackRequest(keyUsed);
       } catch (groqError) {
         const latencyMs = Date.now() - startTime;
@@ -77,6 +132,15 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
 
     const latencyMs = Date.now() - startTime;
 
+    // Store result in KV cache (non-blocking)
+    c.executionCtx.waitUntil(
+      c.env.RATE_LIMIT_KV.put(
+        cacheKey,
+        JSON.stringify({ llmResult, aiProvider }),
+        { expirationTtl: CACHE_TTL_SECONDS }
+      ).catch((err) => console.error("Cache store failed:", err))
+    );
+
     // Log successful analysis
     await logger.info("Analysis completed", {
       scanId,
@@ -85,6 +149,7 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
       confidence: llmResult.confidence,
       aiProvider: keyUsed,
       latencyMs,
+      tokensEstimated,
       hasQualityIssues: llmResult.imageQualityIssues && llmResult.imageQualityIssues.length > 0,
     });
 
@@ -114,6 +179,8 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
       confidence: llmResult.confidence,
       aiProvider,
       latencyMs,
+      cacheHit: false,
+      tokensEstimated,
       imageQualityIssues:
         llmResult.imageQualityIssues && llmResult.imageQualityIssues.length > 0
           ? llmResult.imageQualityIssues

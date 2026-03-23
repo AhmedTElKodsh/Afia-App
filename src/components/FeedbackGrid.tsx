@@ -1,18 +1,19 @@
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, useRef, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { Check, ArrowUp, ArrowDown, X } from "lucide-react";
 import "./FeedbackGrid.css";
-import { 
-  FEEDBACK_CONFIG, 
+import {
+  FEEDBACK_CONFIG,
   FEEDBACK_OPTIONS,
-  type FeedbackType 
+  type FeedbackType
 } from "../config/feedback";
 
 /**
  * FeedbackGrid Component
- * 
+ *
  * 4-button feedback collection UI for AI accuracy rating.
  * Following Direction 1 (Spitfire Minimal) + Direction 5 (Swiss Precision) design system.
- * 
+ *
  * Features:
  * - 4-button grid layout (2x2)
  * - 1-tap submission for "About right"
@@ -29,31 +30,43 @@ interface FeedbackGridProps {
   hasSubmitted?: boolean;
 }
 
-export function FeedbackGrid({ 
+// i18n label keys indexed by feedback option type
+const OPTION_LABEL_KEYS: Record<string, string> = {
+  [FEEDBACK_CONFIG.types.ACCURATE]: 'feedback.aboutRight',
+  [FEEDBACK_CONFIG.types.TOO_HIGH]: 'feedback.tooHigh',
+  [FEEDBACK_CONFIG.types.TOO_LOW]:  'feedback.tooLow',
+  [FEEDBACK_CONFIG.types.WAY_OFF]:  'feedback.wayOff',
+};
+
+export function FeedbackGrid({
   onSubmit,
   isSubmitting = false,
   hasSubmitted = false
 }: FeedbackGridProps) {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<FeedbackType | null>(null);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    
-    if (!selected || isSubmitting) {
-      // Prevent accidental rapid submits
-      return;
-    }
-    
+    if (!selected || isSubmitting) return;
     onSubmit(selected);
   };
 
   const handleSelect = (type: FeedbackType) => {
     if (isSubmitting || hasSubmitted) return;
     setSelected(type);
-    
+
     // Auto-submit for "accurate" feedback (1-tap)
     if (type === FEEDBACK_CONFIG.types.ACCURATE) {
-      setTimeout(() => onSubmit(type), FEEDBACK_CONFIG.autoSubmitDelay);
+      setTimeout(() => {
+        if (isMountedRef.current) onSubmit(type);
+      }, FEEDBACK_CONFIG.autoSubmitDelay);
     }
   };
 
@@ -64,9 +77,9 @@ export function FeedbackGrid({
           <div className="feedback-checkmark" aria-hidden="true">
             <Check size={32} strokeWidth={3} />
           </div>
-          <h3 className="feedback-confirmation-title">Thank you!</h3>
+          <h3 className="feedback-confirmation-title">{t('feedback.thankYou')}</h3>
           <p className="feedback-confirmation-text">
-            Your feedback helps improve accuracy.
+            {t('feedback.improvementMessage')}
           </p>
         </div>
       </div>
@@ -74,16 +87,16 @@ export function FeedbackGrid({
   }
 
   return (
-    <form 
+    <form
       className="feedback-grid-container"
       onSubmit={handleSubmit}
       aria-labelledby="feedback-title"
     >
       <h3 id="feedback-title" className="feedback-title">
-        Was this accurate?
+        {t('feedback.title')}
       </h3>
 
-      <div 
+      <div
         className="feedback-grid"
         role="group"
         aria-describedby="feedback-title"
@@ -105,7 +118,7 @@ export function FeedbackGrid({
               {option.icon === 'X' && <X size={32} strokeWidth={2.5} />}
             </span>
             <span className="feedback-label">
-              {option.label}
+              {t(OPTION_LABEL_KEYS[option.type] ?? option.type)}
             </span>
           </button>
         ))}
@@ -118,7 +131,7 @@ export function FeedbackGrid({
             className="feedback-submit-btn"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+            {isSubmitting ? t('feedback.submitting') : t('feedback.submitFeedback')}
           </button>
         </div>
       )}

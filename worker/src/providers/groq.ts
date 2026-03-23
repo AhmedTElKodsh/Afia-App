@@ -5,49 +5,35 @@ import { parseLLMResponse } from "./parseLLMResponse.ts";
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
 
-const SYSTEM_PROMPT = `You are a computer vision expert analyzing cooking oil bottles to estimate fill levels.
+function buildSystemPrompt(debugReasoning: boolean): string {
+  const schema = debugReasoning
+    ? `{"fillPercentage":<0-100>,"confidence":"<high|medium|low>","imageQualityIssues":[<strings>],"reasoning":"<brief>"}`
+    : `{"fillPercentage":<0-100>,"confidence":"<high|medium|low>","imageQualityIssues":[<strings>]}`;
+  return `You are a CV system estimating cooking oil fill levels from bottle images.
 
-Task: Estimate the remaining oil as a percentage (0-100%) where 0% is empty and 100% is full.
+Task: Estimate remaining oil as % where 0=empty, 100=full.
 
-Consider:
-- Visible liquid level relative to total bottle height
-- Meniscus curve at oil surface
-- Ignore cap, label, external features
-
-Assess confidence:
-- "high": Clear view, good lighting
-- "medium": Acceptable quality
-- "low": Poor quality, recommend retake
-
-Identify image quality issues: blur, poor_lighting, obstruction, reflection
+Rules:
+- fillPercentage: visible liquid height / total bottle height × 100. Account for meniscus. Exclude cap and label.
+- confidence: "high"=clear+well-lit, "medium"=acceptable, "low"=poor quality
+- imageQualityIssues: list any of: blur, poor_lighting, obstruction, reflection
 
 Return JSON:
-{
-  "fillPercentage": <0-100>,
-  "confidence": "<high|medium|low>",
-  "imageQualityIssues": [<optional strings>],
-  "reasoning": "<brief explanation>"
-}`;
+${schema}`;
+}
 
 export async function callGroq(
   imageBase64: string,
   bottle: BottleEntry,
-  apiKey: string
+  apiKey: string,
+  debugReasoning = false
 ): Promise<LLMResponse> {
-  const userText = `Analyze this oil bottle image.
-
-Context:
-- SKU: ${bottle.sku}
-- Bottle: ${bottle.name}
-- Capacity: ${bottle.totalVolumeMl}ml
-- Shape: ${bottle.geometry.shape}
-
-Estimate fill level as JSON.`;
+  const userText = `Bottle: ${bottle.name} (${bottle.sku}), ${bottle.totalVolumeMl}ml, shape=${bottle.geometry.shape}. Return JSON fill estimate.`;
 
   const requestBody = {
     model: MODEL,
     messages: [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: buildSystemPrompt(debugReasoning) },
       {
         role: "user",
         content: [
@@ -60,7 +46,7 @@ Estimate fill level as JSON.`;
       },
     ],
     temperature: 0.1,
-    max_tokens: 500,
+    max_tokens: 200,
     response_format: { type: "json_object" },
   };
 
@@ -91,4 +77,3 @@ Estimate fill level as JSON.`;
 
   return parseLLMResponse(content);
 }
-

@@ -53,6 +53,7 @@ interface VirtualizedScanRowProps {
 }
 
 function VirtualizedScanRow({ index, style, scans, onScanClick }: VirtualizedScanRowProps) {
+  const { t } = useTranslation();
   const scan = scans[index];
   return (
     <div
@@ -67,7 +68,7 @@ function VirtualizedScanRow({ index, style, scans, onScanClick }: VirtualizedSca
         }
       }}
       tabIndex={0}
-      aria-label={`${scan.bottleName}, ${formatDate(scan.timestamp)}, ${scan.fillPercentage}% fill remaining`}
+      aria-label={`${scan.bottleName}, ${formatDate(scan.timestamp)}, ${t('history.fillRemainingSr', { percent: scan.fillPercentage })}`}
     >
       <div className="scan-history-item">
         <div className="scan-history-item__icon">
@@ -76,11 +77,11 @@ function VirtualizedScanRow({ index, style, scans, onScanClick }: VirtualizedSca
         <div className="scan-history-item__content">
           <p className="scan-history-item__title">{scan.bottleName}</p>
           <p className="scan-history-item__meta">
-            {formatDate(scan.timestamp)} &middot; {scan.fillPercentage}% fill
+            {t('history.fillLevelMeta', { date: formatDate(scan.timestamp), percent: scan.fillPercentage })}
           </p>
         </div>
         <div className="scan-history-item__value">
-          {scan.remainingMl}ml
+          {scan.remainingMl}{t('common.ml')}
         </div>
       </div>
     </div>
@@ -93,9 +94,10 @@ interface MiniTrendCardProps {
 }
 
 function MiniTrendCard({ scans }: MiniTrendCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const days = useMemo(() => {
     const result: { label: string; consumed: number }[] = [];
+    const lang = i18n.language === 'ar' ? 'ar-SA' : 'en-US';
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
@@ -111,12 +113,12 @@ function MiniTrendCard({ scans }: MiniTrendCardProps) {
         })
         .reduce((sum, s) => sum + s.consumedMl, 0);
       result.push({
-        label: d.toLocaleDateString("en-US", { weekday: "short" }),
+        label: d.toLocaleDateString(lang, { weekday: "short" }),
         consumed,
       });
     }
     return result;
-  }, [scans]);
+  }, [scans, i18n.language]);
 
   const maxConsumed = Math.max(...days.map((d) => d.consumed), 1);
 
@@ -138,7 +140,7 @@ function MiniTrendCard({ scans }: MiniTrendCardProps) {
                 style={{
                   height: `${Math.max((day.consumed / maxConsumed) * 100, 4)}%`,
                 }}
-                title={`${day.label}: ${day.consumed}ml`}
+                title={`${day.label}: ${day.consumed}${t('common.ml')}`}
               />
             </div>
             <span className="mini-trend-day">{day.label.slice(0, 2)}</span>
@@ -164,13 +166,15 @@ export function ScanHistory({ onNavigateToScan }: ScanHistoryProps = {}) {
   const [confirmClear, setConfirmClear] = useState(false);
 
   const filteredScans = useMemo(() => {
-    let filtered =
+    // Apply date range first, then search within those results (filters are combined, not exclusive)
+    const dateFiltered =
       dateRange === "all" ? scans : getScansByDateRange(dateRange as number);
-    if (searchQuery.trim()) {
-      filtered = searchScans(searchQuery);
-    }
-    return filtered;
-  }, [scans, dateRange, searchQuery, getScansByDateRange, searchScans]);
+    if (!searchQuery.trim()) return dateFiltered;
+    const q = searchQuery.toLowerCase();
+    return dateFiltered.filter((s) =>
+      s.bottleName.toLowerCase().includes(q) || s.sku.toLowerCase().includes(q)
+    );
+  }, [scans, dateRange, searchQuery, getScansByDateRange]);
 
   const stats = useMemo(() => getStats(), [getStats]);
 
@@ -215,7 +219,7 @@ export function ScanHistory({ onNavigateToScan }: ScanHistoryProps = {}) {
       {/* ── Filters ── */}
       <div className="history-filters">
         {/* Date range pills */}
-        <div className="date-range-filter" role="group" aria-label="Date range">
+        <div className="date-range-filter" role="group" aria-label={t('admin.export.dateRange.label')}>
           {(
             [
               { value: "all", label: t('history.filterAll') },
@@ -331,6 +335,21 @@ interface ScanDetailModalProps {
 
 function ScanDetailModal({ scan, onClose, onDelete }: ScanDetailModalProps) {
   const { t } = useTranslation();
+
+  const getConfidenceLabel = (confidence: string | undefined) => {
+    if (!confidence) return t('history.confidenceUnknown');
+    const key = `history.confidenceLevels.${confidence.toLowerCase()}`;
+    const label = t(key);
+    return label === key ? confidence.charAt(0).toUpperCase() + confidence.slice(1) : label;
+  };
+
+  const getFeedbackLabel = (feedback: string | undefined) => {
+    if (!feedback) return null;
+    const key = `history.feedbackRatings.${feedback.toLowerCase()}`;
+    const label = t(key);
+    return label === key ? feedback.replace("_", " ") : label;
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
         <div
@@ -385,16 +404,14 @@ function ScanDetailModal({ scan, onClose, onDelete }: ScanDetailModalProps) {
           <div className="detail-section">
             <h4>{t('history.confidence')}</h4>
             <div className={`confidence-detail-${scan.confidence ?? "unknown"}`}>
-              {scan.confidence
-                ? scan.confidence.charAt(0).toUpperCase() + scan.confidence.slice(1)
-                : t('history.confidenceUnknown')}
+              {getConfidenceLabel(scan.confidence)}
             </div>
           </div>
 
           {scan.feedbackRating && (
             <div className="detail-section">
               <h4>{t('history.yourFeedback')}</h4>
-              <p className="detail-value">{scan.feedbackRating.replace("_", " ")}</p>
+              <p className="detail-value">{getFeedbackLabel(scan.feedbackRating)}</p>
             </div>
           )}
         </div>

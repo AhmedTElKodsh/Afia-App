@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { AlertTriangle } from "lucide-react";
 import { useCamera } from "../hooks/useCamera.ts";
 import "./CameraCapture.css";
@@ -8,6 +9,7 @@ interface CameraCaptureProps {
 }
 
 export function CameraCapture({ onCapture }: CameraCaptureProps) {
+  const { t } = useTranslation();
   const { videoRef, isActive, error, startCamera, capturePhoto } = useCamera();
 
   useEffect(() => {
@@ -26,16 +28,16 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
     return (
       <div className="camera-error">
         <div className="camera-error-icon" aria-hidden="true">
-          📷
+          <AlertTriangle size={44} strokeWidth={1.5} />
         </div>
-        <h2>Camera access required</h2>
+        <h2>{t('camera.accessRequired')}</h2>
         <p className="text-secondary">
           {isIOS
-            ? "Go to Settings → Safari → Camera → Allow"
-            : "Go to Settings → Apps → Browser → Permissions → Camera → Allow"}
+            ? t('camera.iosSettingsInstructions')
+            : t('camera.androidSettingsInstructions')}
         </p>
         <button className="btn btn-primary" onClick={startCamera}>
-          Try Again
+          {t('camera.tryAgain')}
         </button>
       </div>
     );
@@ -47,12 +49,12 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
         <div className="camera-error-icon" aria-hidden="true">
           <AlertTriangle size={44} strokeWidth={1.5} />
         </div>
-        <h2>Camera unavailable</h2>
+        <h2>{t('camera.unavailable')}</h2>
         <p className="text-secondary">
-          Could not access camera. Please check your device settings.
+          {t('camera.deviceSettings')}
         </p>
         <button className="btn btn-primary" onClick={startCamera}>
-          Try Again
+          {t('camera.tryAgain')}
         </button>
       </div>
     );
@@ -71,7 +73,7 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
         {isActive && (
           <>
             <div className="camera-guide" aria-hidden="true" />
-            <p className="guide-text">Align bottle in frame</p>
+            <p className="guide-text">{t('camera.guideText')}</p>
           </>
         )}
       </div>
@@ -80,7 +82,7 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
           className="capture-button"
           onClick={handleCapture}
           disabled={!isActive}
-          aria-label="Capture photo"
+          aria-label={t('camera.capturePhotoAriaLabel')}
         >
           <span className="capture-inner" />
         </button>

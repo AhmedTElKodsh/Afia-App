@@ -31,7 +31,9 @@
     "language": "اللغة",
     "english": "English",
     "arabic": "عربي",
-    "adminMode": "وضع الإدارة"
+    "adminMode": "وضع الإدارة",
+    "dark": "داكن",
+    "light": "فاتح"
   },
   "landing": {
     "title": "متتبع زيت عافية",
@@ -42,9 +44,9 @@
     "unknownBottle": "زجاجة غير معروفة",
     "unknownBottleMessage": "هذه الزجاجة غير مسجلة في نظامنا بعد.",
     "bottleNotSupported": "الزجاجة غير مدعومة بعد",
-    "noBottleLinked": "لا توجد زجاجة مرتبطة",
+    "noBottleLinked": "لم يتم ربط زجاجة بعد",
     "futureSupportMessage": "قد ندعم هذه الزجاجة في تحديث مستقبلي.",
-    "noBottleMessage": "امسح رمز QR على زجاجة زيت عافية مدعومة للبدء.",
+    "noBottleMessage": "يرجى مسح رمز الـ QR الموجود على ملصق زجاجة عافية للبدء في تتبع استهلاكك.",
     "howToStart": "كيفية البدء:",
     "step1": "اعثر على زجاجة زيت عافية مدعومة",
     "step2": "امسح رمز QR على الملصق",
@@ -56,7 +58,9 @@
     "scansCount": "{{count}} مسحة",
     "accuracyNote": "للدقة في التتبع، امسح الزجاجة عندما تكون جديدة.",
     "startSmartScan": "ابدأ المسح الذكي",
-    "skuLabel": "الرمز: {{sku}}"
+    "skuLabel": "الرمز: {{sku}}",
+    "consumedMl": "{{ml}}مل مستهلك",
+    "noScanYet": "لا يوجد مسح بعد"
   },
   "camera": {
     "activate": "تفعيل الكاميرا",
@@ -82,7 +86,11 @@
     "captureFailed": "فشل التقاط الصورة.",
     "liveFeedAriaLabel": "تغذية الكاميرا الحية لمسح الزجاجة",
     "capturePhotoAriaLabel": "التقاط صورة",
-    "analyzingAriaLabel": "جاري تحليل الزجاجة"
+    "analyzingAriaLabel": "جاري تحليل الزجاجة",
+    "guideText": "ضع الزجاجة في الإطار",
+    "deviceSettings": "تعذّر الوصول إلى الكاميرا. يرجى التحقق من إعدادات جهازك.",
+    "iosSettingsInstructions": "اذهب إلى الإعدادات ← Safari ← الكاميرا ← السماح",
+    "androidSettingsInstructions": "اذهب إلى الإعدادات ← التطبيقات ← المتصفح ← الصلاحيات ← الكاميرا ← السماح"
   },
   "analysis": {
     "analyzing": "جاري تحليل زجاجتك...",
@@ -159,7 +167,14 @@
     "noPersonalData": "لا يتم جمع أي معلومات شخصية.",
     "showMore": "المزيد",
     "showLess": "أقل",
-    "mustAccept": "يرجى قبول شروط الخصوصية للمتابعة"
+    "mustAccept": "يرجى قبول شروط الخصوصية للمتابعة",
+    "details": {
+      "camera": "تُرسل الصور إلى خادم تحليل الذكاء الاصطناعي",
+      "database": "تُخزن مع تقدير الذكاء الاصطناعي للتدريب",
+      "star": "يتم تخزين تقييم الملاحظات الاختياري",
+      "lock": "غير مرتبطة بهويتك الشخصية",
+      "search": "تتم مراجعتها لتحسين الدقة"
+    }
   },
   "offline": {
     "title": "لا يوجد اتصال بالإنترنت",
@@ -175,12 +190,13 @@
       "loginButton": "تسجيل الدخول",
       "logoutButton": "تسجيل الخروج",
       "backToApp": "العودة للتطبيق",
-      "errorNotConfigured": "الوصول للإدارة غير مُهيأ. قم بتعيين متغير VITE_ADMIN_PASSWORD.",
+      "errorNotConfigured": "الوصول للإدارة غير مُهيأ. تواصل مع المسؤول.",
       "errorInvalid": "كلمة المرور غير صحيحة",
       "skipToContent": "تخطي إلى المحتوى الرئيسي"
     },
     "header": {
-      "title": "لوحة التحكم"
+      "title": "لوحة التحكم",
+      "brandSub": "لوحة تحكم الإدارة"
     },
     "tabs": {
       "overview": "نظرة عامة",
@@ -195,7 +211,14 @@
         "scans7Days": "المسحات (7 أيام)",
         "scans30Days": "المسحات (30 يوم)",
         "period7D": "٧ أيام",
-        "period30D": "٣٠ يوم"
+        "period30D": "٣٠ يوم",
+        "activeUsers": "أيام المسح",
+        "feedbackCount": "عدد التقييمات"
+      },
+      "pagination": {
+        "previous": "السابق",
+        "next": "التالي",
+        "info": "الصفحة {{current}} من {{total}}"
       },
       "recentScans": {
         "title": "المسحات الأخيرة",
@@ -321,7 +344,38 @@
       "next": "التالي",
       "back": "رجوع",
       "skip": "تخطي الشرح",
-      "finish": "إنهاء"
+      "finish": "إنهاء",
+      "goToStep": "الانتقال إلى الخطوة {{step}}"
+    },
+    "testLab": {
+      "title": "مركز التجارب التقنية",
+      "sessionTests": "{{count}} اختبار في هذه الجلسة",
+      "sessionTests_plural": "{{count}} اختبارات في هذه الجلسة",
+      "subtitle": "محاكاة شاملة لتجربة المستخدم مع أدوات فحص متقدمة",
+      "selectMode": "تحديد نوع الاختبار",
+      "userFlow": "محاكاة المستخدم",
+      "userFlowDesc": "اختبر التطبيق كما يراه المستخدم تماماً",
+      "debugMode": "الوضع التقني (فحص البيانات)",
+      "debugModeDesc": "مراقبة استجابات الـ API وبيانات التحقق المتقدمة",
+      "debugHint": "سيتم عرض أدوات الفحص التقني تلقائياً فور اكتمال المسح",
+      "selected": "تم الاختيار",
+      "selectBottleScanQr": "تحديد المنتج المطلوب اختباره",
+      "selectBottlePlaceholder": "اختر نوع الزجاجة...",
+      "searchPlaceholder": "البحث في الزجاجات...",
+      "noResults": "لم يتم العثور على منتجات تطابق \"{{query}}\"",
+      "clear": "إلغاء التحديد",
+      "scanMockQr": "بدء المسح التجريبي",
+      "selectToActivate": "↑ يرجى اختيار منتج لتفعيل الكاميرا",
+      "startWithSelected": "بدء المسح بالمنتج المختار",
+      "pleaseSelectFirst": "يرجى اختيار زجاجة أولاً",
+      "capturePhoto": "التقاط صورة الاختبار",
+      "analyzing": "جاري التحليل التقني بالذكاء الاصطناعي...",
+      "backToTestLab": "العودة لمركز التجارب",
+      "errorTitle": "خطأ في عملية الاختبار",
+      "retrying": "إعادة محاولة المسح التجريبي...",
+      "readyNewScan": "جاهز لمسح تجريبي جديد",
+      "readyNewTest": "جاهز لاختبار جديد",
+      "validationSaved": "تم حفظ بيانات التحقق بنجاح!"
     },
     "tools": {
       "title": "أدوات الإدارة",
@@ -376,19 +430,28 @@
   "nav": {
     "scan": "مسح",
     "history": "السجل",
-    "testLab": "مختبر الاختبار",
+    "testLab": "منصة الاختبار",
     "dashboard": "لوحة التحكم"
+  },
+  "bottleSelector": {
+    "currentBottle": "الزجاجة الحالية:",
+    "oilTypes": {
+      "corn": "زيت ذرة",
+      "sunflower": "زيت دوار الشمس",
+      "vegetable": "زيت نباتي",
+      "palm": "زيت نخيل"
+    }
   },
   "history": {
     "title": "سجل المسح",
-    "empty": "لا توجد مسحات بعد",
-    "emptyMessage": "ابدأ بمسح الزجاجات لرؤية سجلك هنا",
+    "empty": "سجل المسح فارغ حالياً",
+    "emptyMessage": "ابدأ بمسح أول زجاجة زيت عافية لتتبع استهلاكك ورؤية النتائج هنا.",
     "date": "التاريخ",
     "bottle": "الزجاجة",
     "fillLevel": "مستوى الامتلاء",
     "accuracy": "الدقة",
-    "emptyDescription": "ستظهر زجاجاتك الممسوحة هنا بمجرد إكمال أول مسح.",
-    "scanCta": "مسح زجاجة →",
+    "emptyDescription": "ابدأ بمسح أول زجاجة زيت عافية لتتبع استهلاكك ورؤية النتائج هنا.",
+    "scanCta": "ابدأ المسح الآن ←",
     "scansCount": "{{count}} مسحة",
     "totalScans": "إجمالي المسحات",
     "totalConsumed": "إجمالي المستهلك",
@@ -414,7 +477,21 @@
     "remaining": "المتبقي",
     "confidence": "الثقة",
     "confidenceUnknown": "غير معروف",
-    "yourFeedback": "ملاحظاتك"
+    "yourFeedback": "ملاحظاتك",
+    "fillRemainingSr": "{{percent}}% متبقٍ من الامتلاء",
+    "fillLevelMeta": "{{date}} · {{percent}}% امتلاء",
+    "confidenceLevels": {
+      "high": "عالية",
+      "medium": "متوسطة",
+      "low": "منخفضة",
+      "unknown": "غير معروف"
+    },
+    "feedbackRatings": {
+      "about_right": "صحيح تقريباً",
+      "too_high": "أعلى من اللازم",
+      "too_low": "أقل من اللازم",
+      "way_off": "خاطئ تماماً"
+    }
   },
   "trends": {
     "title": "اتجاهات الاستهلاك",
@@ -430,5 +507,14 @@
     "analysis": "فشل التحليل. يرجى إعادة التقاط الصورة.",
     "network": "خطأ في الشبكة. يرجى التحقق من اتصالك.",
     "notFound": "الصفحة غير موجودة"
+  },
+  "bottles": {
+    "afia-sunflower-250ml": "زيت دوار الشمس الصافي من عافية ٢٥٠ مل",
+    "afia-sunflower-500ml": "زيت دوار الشمس الصافي من عافية ٥٠٠ مل",
+    "afia-sunflower-700ml": "زيت دوار الشمس الصافي من عافية ٧٠٠ مل",
+    "afia-sunflower-1l": "زيت دوار الشمس الصافي من عافية ١ لتر",
+    "afia-sunflower-2.25l": "زيت دوار الشمس الصافي من عافية ٢.٢٥ لتر",
+    "afia-sunflower-3l": "زيت دوار الشمس الصافي من عافية ٣ لتر",
+    "afia-sunflower-3.5l": "زيت دوار الشمس الصافي من عافية ٣.٥ لتر"
   }
 }

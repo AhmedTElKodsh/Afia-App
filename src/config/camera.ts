@@ -75,7 +75,7 @@ export async function checkTorchSupport(
     const track = stream.getVideoTracks()[0];
     if (!track) return false;
 
-    const capabilities = track.getCapabilities() as any;
+    const capabilities = track.getCapabilities() as MediaTrackCapabilities & { torch?: boolean };
     return !!capabilities.torch;
   } catch {
     return false;

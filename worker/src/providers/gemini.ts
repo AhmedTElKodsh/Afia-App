@@ -6,48 +6,32 @@ const GEMINI_API_BASE =
   "https://generativelanguage.googleapis.com/v1beta/models";
 const MODEL = "gemini-2.5-flash-latest";
 
-const SYSTEM_PROMPT = `You are an expert computer vision system specialized in analyzing cooking oil bottles to estimate fill levels.
+function buildSystemPrompt(debugReasoning: boolean): string {
+  const schema = debugReasoning
+    ? `{"fillPercentage":<0-100>,"confidence":"<high|medium|low>","imageQualityIssues":[<strings>],"reasoning":"<brief>"}`
+    : `{"fillPercentage":<0-100>,"confidence":"<high|medium|low>","imageQualityIssues":[<strings>]}`;
+  return `You are a CV system estimating cooking oil fill levels from bottle images.
 
-Your task: Analyze the provided image of a clear glass oil bottle and estimate the remaining fill level as a percentage (0-100%).
+Analyze the image and return this JSON:
+${schema}
 
-Guidelines:
-- 0% = completely empty bottle
-- 100% = completely full bottle
-- Estimate based on visible oil level relative to total bottle height
-- Account for meniscus (curved surface) at the top of the oil
-- Ignore bottle cap, label, or external features
-- Focus only on the liquid level inside the bottle
-
-Also assess:
-- Confidence level: "high" (clear view, good lighting), "medium" (acceptable but not ideal), "low" (poor quality, recommend retake)
-- Image quality issues: blur, poor lighting, obstruction, reflection, or other problems
-
-Return your analysis as JSON with this exact structure:
-{
-  "fillPercentage": <number 0-100>,
-  "confidence": "<high|medium|low>",
-  "imageQualityIssues": [<optional array of strings>],
-  "reasoning": "<brief explanation of your estimate>"
-}`;
+Rules:
+- fillPercentage: visible liquid height / total bottle height × 100. Account for meniscus. Exclude cap and label.
+- confidence: "high"=clear+well-lit, "medium"=acceptable, "low"=poor quality
+- imageQualityIssues: list any of: blur, poor_lighting, obstruction, reflection`;
+}
 
 export async function callGemini(
   imageBase64: string,
   bottle: BottleEntry,
-  apiKeys: string[]
+  apiKeys: string[],
+  debugReasoning = false
 ): Promise<LLMResponse> {
-  const userMessage = `Analyze this oil bottle image and estimate the fill level.
-
-Bottle context:
-- SKU: ${bottle.sku}
-- Bottle type: ${bottle.name}
-- Total capacity: ${bottle.totalVolumeMl}ml
-- Shape: ${bottle.geometry.shape}
-
-Provide your analysis as JSON.`;
+  const userMessage = `Bottle: ${bottle.name} (${bottle.sku}), ${bottle.totalVolumeMl}ml, shape=${bottle.geometry.shape}. Return JSON fill estimate.`;
 
   const requestBody = {
     system_instruction: {
-      parts: [{ text: SYSTEM_PROMPT }],
+      parts: [{ text: buildSystemPrompt(debugReasoning) }],
     },
     contents: [
       {
@@ -77,7 +61,7 @@ Provide your analysis as JSON.`;
   for (let i = 0; i < apiKeys.length; i++) {
     const apiKey = apiKeys[i];
     const url = `${GEMINI_API_BASE}/${MODEL}:generateContent?key=${apiKey}`;
-    
+
     try {
       const res = await fetch(url, {
         method: "POST",
@@ -105,7 +89,7 @@ Provide your analysis as JSON.`;
     } catch (error) {
       errors.push(error as Error);
       console.warn(`Gemini key ${i + 1} failed, trying next key...`, error);
-      
+
       // If this was the last key, throw with all errors
       if (i === apiKeys.length - 1) {
         console.error(`All ${apiKeys.length} Gemini keys failed:`, errors);
@@ -116,4 +100,3 @@ Provide your analysis as JSON.`;
 
   throw new Error("All Gemini API keys failed");
 }
-

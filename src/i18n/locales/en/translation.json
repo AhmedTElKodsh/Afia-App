@@ -31,7 +31,9 @@
     "language": "Language",
     "english": "English",
     "arabic": "العربية",
-    "adminMode": "Admin Mode"
+    "adminMode": "Admin Mode",
+    "dark": "Dark",
+    "light": "Light"
   },
   "landing": {
     "title": "Afia Oil Tracker",
@@ -56,7 +58,9 @@
     "scansCount": "{{count}} scans",
     "accuracyNote": "For accurate tracking, scan when the bottle is brand new.",
     "startSmartScan": "START SMART SCAN",
-    "skuLabel": "SKU: {{sku}}"
+    "skuLabel": "SKU: {{sku}}",
+    "consumedMl": "{{ml}}ml used",
+    "noScanYet": "No scan yet"
   },
   "camera": {
     "activate": "Activate Camera",
@@ -82,7 +86,11 @@
     "captureFailed": "Failed to capture image.",
     "liveFeedAriaLabel": "Live camera feed for bottle scanning",
     "capturePhotoAriaLabel": "Capture photo",
-    "analyzingAriaLabel": "Analyzing bottle"
+    "analyzingAriaLabel": "Analyzing bottle",
+    "guideText": "Align bottle in frame",
+    "deviceSettings": "Could not access camera. Please check your device settings.",
+    "iosSettingsInstructions": "Go to Settings → Safari → Camera → Allow",
+    "androidSettingsInstructions": "Go to Settings → Apps → Browser → Permissions → Camera → Allow"
   },
   "analysis": {
     "analyzing": "Analyzing your bottle...",
@@ -159,7 +167,14 @@
     "noPersonalData": "No personal information is collected.",
     "showMore": "Learn more",
     "showLess": "Show less",
-    "mustAccept": "Please accept privacy terms to continue"
+    "mustAccept": "Please accept privacy terms to continue",
+    "details": {
+      "camera": "Images sent to AI analysis server",
+      "database": "Stored with AI estimate for training",
+      "star": "Optional feedback rating stored",
+      "lock": "Not linked to personal identity",
+      "search": "Reviewed to improve accuracy"
+    }
   },
   "offline": {
     "title": "No Internet Connection",
@@ -175,12 +190,13 @@
       "loginButton": "Login",
       "logoutButton": "Logout",
       "backToApp": "Back to App",
-      "errorNotConfigured": "Admin access not configured. Set VITE_ADMIN_PASSWORD env variable.",
+      "errorNotConfigured": "Admin access not configured. Contact your administrator.",
       "errorInvalid": "Invalid password",
       "skipToContent": "Skip to main content"
     },
     "header": {
-      "title": "Admin Dashboard"
+      "title": "Admin Dashboard",
+      "brandSub": "Admin Console"
     },
     "tabs": {
       "overview": "Overview",
@@ -195,7 +211,14 @@
         "scans7Days": "Scans (7 Days)",
         "scans30Days": "Scans (30 Days)",
         "period7D": "7D",
-        "period30D": "30D"
+        "period30D": "30D",
+        "activeUsers": "Scan Days",
+        "feedbackCount": "Feedback Count"
+      },
+      "pagination": {
+        "previous": "Previous",
+        "next": "Next",
+        "info": "Page {{current}} of {{total}}"
       },
       "recentScans": {
         "title": "Recent Scans",
@@ -321,7 +344,38 @@
       "next": "Next",
       "back": "Back",
       "skip": "Skip Tutorial",
-      "finish": "Finish"
+      "finish": "Finish",
+      "goToStep": "Go to step {{step}}"
+    },
+    "testLab": {
+      "title": "TEST LAB",
+      "sessionTests": "Test{{count}} This Session",
+      "sessionTests_plural": "Tests{{count}} This Session",
+      "subtitle": "Test the exact user scanning experience + optional debug tools",
+      "selectMode": "SELECT TEST MODE",
+      "userFlow": "USER FLOW",
+      "userFlowDesc": "Exact user simulation",
+      "debugMode": "DEBUG MODE",
+      "debugModeDesc": "API inspector, validation",
+      "debugHint": "Debug tools (API inspector + validation) will auto-open after scan",
+      "selected": "Selected",
+      "selectBottleScanQr": "SELECT BOTTLE / SCAN QR",
+      "selectBottlePlaceholder": "Select Bottle...",
+      "searchPlaceholder": "Search bottles...",
+      "noResults": "No bottles found matching \"{{query}}\"",
+      "clear": "Clear",
+      "scanMockQr": "Scan Mock QR",
+      "selectToActivate": "↑ Select a bottle to activate",
+      "startWithSelected": "Start scan with selected bottle",
+      "pleaseSelectFirst": "Please select a bottle first",
+      "capturePhoto": "CAPTURE PHOTO",
+      "analyzing": "Analyzing with AI...",
+      "backToTestLab": "Back to Test Lab",
+      "errorTitle": "Something went wrong",
+      "retrying": "Retrying scan...",
+      "readyNewScan": "Ready for new scan",
+      "readyNewTest": "Ready for new test",
+      "validationSaved": "Validation saved!"
     },
     "tools": {
       "title": "Admin Tools",
@@ -379,6 +433,15 @@
     "testLab": "Test Lab",
     "dashboard": "Dashboard"
   },
+  "bottleSelector": {
+    "currentBottle": "Current Bottle:",
+    "oilTypes": {
+      "corn": "Corn Oil",
+      "sunflower": "Sunflower Oil",
+      "vegetable": "Vegetable Oil",
+      "palm": "Palm Oil"
+    }
+  },
   "history": {
     "title": "Scan History",
     "empty": "No scans yet",
@@ -414,7 +477,21 @@
     "remaining": "Remaining",
     "confidence": "Confidence",
     "confidenceUnknown": "Unknown",
-    "yourFeedback": "Your Feedback"
+    "yourFeedback": "Your Feedback",
+    "fillRemainingSr": "{{percent}}% fill remaining",
+    "fillLevelMeta": "{{date}} · {{percent}}% fill",
+    "confidenceLevels": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "unknown": "Unknown"
+    },
+    "feedbackRatings": {
+      "about_right": "About right",
+      "too_high": "Too high",
+      "too_low": "Too low",
+      "way_off": "Way off"
+    }
   },
   "trends": {
     "title": "Consumption Trends",
@@ -430,5 +507,14 @@
     "analysis": "Analysis failed. Please retake the photo.",
     "network": "Network error. Please check your connection.",
     "notFound": "Page not found"
+  },
+  "bottles": {
+    "afia-sunflower-250ml": "Afia Pure Sunflower Oil 250ml",
+    "afia-sunflower-500ml": "Afia Pure Sunflower Oil 500ml",
+    "afia-sunflower-700ml": "Afia Pure Sunflower Oil 700ml",
+    "afia-sunflower-1l": "Afia Pure Sunflower Oil 1L",
+    "afia-sunflower-2.25l": "Afia Pure Sunflower Oil 2.25L",
+    "afia-sunflower-3l": "Afia Pure Sunflower Oil 3L",
+    "afia-sunflower-3.5l": "Afia Pure Sunflower Oil 3.5L"
   }
 }

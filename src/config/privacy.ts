@@ -11,27 +11,27 @@ export const PRIVACY_CONFIG = {
 } as const;
 
 /**
- * Privacy list items with Lucide icon names
+ * Privacy list items with Lucide icon names and translation keys
  */
 export const PRIVACY_DETAILS = [
   {
     icon: 'Camera',
-    text: 'Images sent to AI analysis server',
+    key: 'privacy.details.camera',
   },
   {
     icon: 'Database',
-    text: 'Stored with AI estimate for training',
+    key: 'privacy.details.database',
   },
   {
     icon: 'Star',
-    text: 'Optional feedback rating stored',
+    key: 'privacy.details.star',
   },
   {
     icon: 'Lock',
-    text: 'Not linked to personal identity',
+    key: 'privacy.details.lock',
   },
   {
     icon: 'Search',
-    text: 'Reviewed to improve accuracy',
+    key: 'privacy.details.search',
   },
 ] as const;

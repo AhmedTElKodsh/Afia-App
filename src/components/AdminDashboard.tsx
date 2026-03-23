@@ -30,12 +30,18 @@ import { MetricCard } from "./MetricCard";
 import { EmptyState } from "./EmptyState";
 import "./AdminDashboard.css";
 
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "";
+const WORKER_URL = import.meta.env.VITE_WORKER_URL || "";
 const SESSION_KEY = "afia_admin_session";
+const SESSION_EXPIRES_KEY = "afia_admin_session_expires";
 
 type AdminTab = "overview" | "bottles" | "qrmock" | "export";
 
-export function AdminDashboard() {
+interface AdminDashboardProps {
+  onAuthSuccess?: () => void;
+  onLogout?: () => void;
+}
+
+export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps = {}) {
   const { t, i18n } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
@@ -73,36 +79,71 @@ export function AdminDashboard() {
 
   useEffect(() => {
     let mounted = true;
-    const session = sessionStorage.getItem(SESSION_KEY);
-    if (session === "authenticated" && mounted) {
-      setTimeout(() => setIsAuthenticated(true), 0);
-    }
+
+    const checkSession = () => {
+      const token = sessionStorage.getItem(SESSION_KEY);
+      const expiresAt = Number(sessionStorage.getItem(SESSION_EXPIRES_KEY) || "0");
+      if (token && expiresAt > Date.now()) {
+        if (mounted) setIsAuthenticated(true);
+      } else {
+        sessionStorage.removeItem(SESSION_KEY);
+        sessionStorage.removeItem(SESSION_EXPIRES_KEY);
+        if (mounted) setIsAuthenticated(false);
+      }
+    };
+
+    checkSession();
+
+    // Auto-logout check every minute
+    const interval = setInterval(checkSession, 60_000);
+
     // Brief loading gate so the overview renders data instead of zeros
     const timer = setTimeout(() => { if (mounted) setIsLoading(false); }, 200);
+
     return () => {
       mounted = false;
+      clearInterval(interval);
       clearTimeout(timer);
     };
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!ADMIN_PASSWORD) {
+    setError("");
+    if (!WORKER_URL) {
       setError(t('admin.login.errorNotConfigured'));
       return;
     }
-    if (password === ADMIN_PASSWORD) {
-      sessionStorage.setItem(SESSION_KEY, "authenticated");
-      setIsAuthenticated(true);
-      setError("");
-    } else {
-      setError(t('admin.login.errorInvalid'));
+    try {
+      const res = await fetch(`${WORKER_URL}/admin/auth`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (res.ok) {
+        const data = await res.json() as { token: string; expiresAt: number };
+        const { token, expiresAt } = data;
+        sessionStorage.setItem(SESSION_KEY, token);
+        sessionStorage.setItem(SESSION_EXPIRES_KEY, String(expiresAt));
+        setIsAuthenticated(true);
+        onAuthSuccess?.();
+      } else if (res.status === 401) {
+        setError(t('admin.login.errorInvalid'));
+      } else if (res.status === 503) {
+        setError(t('admin.login.errorNotConfigured'));
+      } else {
+        setError(t('errors.generic'));
+      }
+    } catch {
+      setError(t('errors.network'));
     }
   };
 
   const handleLogout = () => {
     sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_EXPIRES_KEY);
     setIsAuthenticated(false);
+    onLogout?.();
   };
 
   const toggleLanguage = () => {
@@ -166,7 +207,7 @@ export function AdminDashboard() {
           <div className="brand-logo"><Shield size={18} strokeWidth={2.5} /></div>
           <div className="brand-text">
             <div className="brand-name">Afia Tracker</div>
-            <div className="brand-sub">Admin Console</div>
+            <div className="brand-sub">{t('admin.header.brandSub', 'Admin Console')}</div>
           </div>
         </div>
 
@@ -235,7 +276,7 @@ export function AdminDashboard() {
 }
 
 // ── Sparkline Card ────────────────────────────────────────────────────────────
-function SparklineCard({ scans, t }: { scans: StoredScan[], t: TFunction }) {
+function SparklineCard({ scans, t, locale }: { scans: StoredScan[], t: TFunction, locale: string }) {
   const days = useMemo(() => {
     const result = [];
     for (let i = 6; i >= 0; i--) {
@@ -244,13 +285,13 @@ function SparklineCard({ scans, t }: { scans: StoredScan[], t: TFunction }) {
       const dayStr = d.toISOString().split("T")[0];
       const count = scans.filter((s) => s.timestamp?.startsWith(dayStr)).length;
       result.push({
-        label: d.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2),
+        label: d.toLocaleDateString(locale, { weekday: "short" }).slice(0, 2),
         count,
         isToday: i === 0,
       });
     }
     return result;
-  }, [scans]);
+  }, [scans, locale]);
 
   const maxCount = Math.max(...days.map((d) => d.count), 1);
 
@@ -325,7 +366,7 @@ function OverviewTab({ stats, scans, onGoToTestLab, t, isRTL, isLoading }: Overv
 
   return (
     <div className="overview-tab">
-      <SparklineCard scans={scans} t={t} />
+      <SparklineCard scans={scans} t={t} locale={isRTL ? 'ar-SA' : 'en-US'} />
       
       <div className="metrics-grid">
         <MetricCard
@@ -442,22 +483,22 @@ function OverviewTab({ stats, scans, onGoToTestLab, t, isRTL, isLoading }: Overv
             
             {totalPages > 1 && (
               <div className="pagination-controls">
-                <button 
-                  className="pagination-btn" 
+                <button
+                  className="pagination-btn"
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(prev => prev - 1)}
                 >
-                  {isRTL ? 'التالي' : 'Previous'}
+                  {t('admin.overview.pagination.previous', 'Previous')}
                 </button>
                 <span className="pagination-info">
                   {t('admin.overview.pagination.info', { current: currentPage, total: totalPages, defaultValue: `Page ${currentPage} of ${totalPages}` })}
                 </span>
-                <button 
-                  className="pagination-btn" 
+                <button
+                  className="pagination-btn"
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage(prev => prev + 1)}
                 >
-                  {isRTL ? 'السابق' : 'Next'}
+                  {t('admin.overview.pagination.next', 'Next')}
                 </button>
               </div>
             )}
@@ -491,26 +532,27 @@ function ExportTab({ scans, t }: ExportTabProps) {
     return new Date(scan.timestamp) >= cutoff;
   });
 
+  const buildExportRecords = () =>
+    filteredScans.map((s) => ({
+      ...s,
+      imageName: "scan-image",
+      analysisResult: {
+        scanId: s.id,
+        fillPercentage: s.fillPercentage,
+        remainingMl: s.remainingMl,
+        confidence: s.confidence,
+        aiProvider: (s.aiProvider ?? "unknown") as "gemini" | "groq",
+        latencyMs: s.latencyMs ?? 0,
+      },
+    }));
+
   const handleExportJSON = () => {
     if (filteredScans.length === 0) {
       setExportError(t('admin.export.noScansError'));
       return;
     }
     setExportError("");
-    exportToJSON(
-      filteredScans.map((s) => ({
-        ...s,
-        imageName: "scan-image",
-        analysisResult: {
-          scanId: s.id,
-          fillPercentage: s.fillPercentage,
-          remainingMl: s.remainingMl,
-          confidence: s.confidence,
-          aiProvider: "gemini" as const,
-          latencyMs: 0,
-        },
-      }))
-    );
+    exportToJSON(buildExportRecords());
   };
 
   const handleExportCSV = () => {
@@ -519,20 +561,7 @@ function ExportTab({ scans, t }: ExportTabProps) {
       return;
     }
     setExportError("");
-    exportToCSV(
-      filteredScans.map((s) => ({
-        ...s,
-        imageName: "scan-image",
-        analysisResult: {
-          scanId: s.id,
-          fillPercentage: s.fillPercentage,
-          remainingMl: s.remainingMl,
-          confidence: s.confidence,
-          aiProvider: "gemini" as const,
-          latencyMs: 0,
-        },
-      }))
-    );
+    exportToCSV(buildExportRecords());
   };
 
   const dateRangeLabel = DATE_RANGE_OPTIONS.find((o) => o.value === dateRange)

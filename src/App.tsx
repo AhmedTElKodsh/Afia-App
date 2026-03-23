@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, lazy, Suspense } from "react";
+import { useState, useCallback, useEffect, lazy, Suspense, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Camera, History, LayoutDashboard, FlaskConical } from "lucide-react";
 
@@ -31,11 +31,22 @@ const BottleSelector = lazy(() => import("./components/BottleSelector.tsx").then
 const AdminDashboard = lazy(() => import("./components/AdminDashboard.tsx").then(m => ({ default: m.AdminDashboard })));
 const TestLab = lazy(() => import("./components/TestLab.tsx").then(m => ({ default: m.TestLab })));
 
+const ADMIN_SESSION_KEY = "afia_admin_session";
+const ADMIN_SESSION_EXPIRES_KEY = "afia_admin_session_expires";
+
+function hasValidAdminSession(): boolean {
+  const token = sessionStorage.getItem(ADMIN_SESSION_KEY);
+  const expiresAt = Number(sessionStorage.getItem(ADMIN_SESSION_EXPIRES_KEY) || "0");
+  return !!(token && expiresAt > Date.now());
+}
+
 type CurrentView = "scan" | "history" | "admin";
 
 export default function App() {
+  const isAdminUrlParam = useRef(window.location.search.includes("mode=admin")).current;
+
   const [currentView, setCurrentView] = useState<CurrentView>(() => {
-    return window.location.search.includes("mode=admin") ? "admin" : "scan";
+    return isAdminUrlParam ? "admin" : "scan";
   });
   const [appState, setAppState] = useState<AppState>("IDLE");
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -45,9 +56,10 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     return params.get("sku") || "";
   });
-  
-  // Admin mode detection
-  const isAdminMode = window.location.search.includes("mode=admin");
+
+  // Admin mode: URL param AND valid session token required
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(hasValidAdminSession);
+  const isAdminMode = isAdminUrlParam && isAdminAuthenticated;
 
   const isIosInApp = useIosInAppBrowser();
 
@@ -178,6 +190,17 @@ export default function App() {
     return <IosWarning />;
   }
 
+  // Admin URL param present but not yet authenticated → show login gate only
+  if (isAdminUrlParam && !isAdminAuthenticated) {
+    return (
+      <Suspense fallback={<SkeletonAdmin />}>
+        <AdminDashboard
+          onAuthSuccess={() => setIsAdminAuthenticated(true)}
+        />
+      </Suspense>
+    );
+  }
+
   const bottleContext: BottleContext | null = bottle
     ? {
         sku: bottle.sku,
@@ -206,7 +229,9 @@ export default function App() {
         <AppControls isAdminMode={isAdminMode} />
         <Navigation currentView={currentView} onViewChange={setCurrentView} isAdminMode={isAdminMode} />
         <Suspense fallback={<SkeletonAdmin />}>
-          <AdminDashboard />
+          <AdminDashboard
+            onLogout={() => setIsAdminAuthenticated(false)}
+          />
         </Suspense>
       </div>
     );
