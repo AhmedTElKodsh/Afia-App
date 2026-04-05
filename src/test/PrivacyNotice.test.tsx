@@ -74,7 +74,7 @@ describe("PrivacyNotice", () => {
     fireEvent.click(acceptButton);
 
     expect(onAccepted).toHaveBeenCalledTimes(1);
-    expect(localStorage.getItem("safi_privacy_accepted")).toBe("true");
+    expect(localStorage.getItem("afia_privacy_accepted")).toBe("true");
   });
 
   it("should have proper ARIA attributes", () => {
@@ -103,15 +103,15 @@ describe("hasAcceptedPrivacy", () => {
   });
 
   it("should return true when privacy accepted", () => {
-    localStorage.setItem("safi_privacy_accepted", "true");
+    localStorage.setItem("afia_privacy_accepted", "true");
     expect(hasAcceptedPrivacy()).toBe(true);
   });
 
   it("should return false for any value other than 'true'", () => {
-    localStorage.setItem("safi_privacy_accepted", "false");
+    localStorage.setItem("afia_privacy_accepted", "false");
     expect(hasAcceptedPrivacy()).toBe(false);
 
-    localStorage.setItem("safi_privacy_accepted", "yes");
+    localStorage.setItem("afia_privacy_accepted", "yes");
     expect(hasAcceptedPrivacy()).toBe(false);
   });
 });

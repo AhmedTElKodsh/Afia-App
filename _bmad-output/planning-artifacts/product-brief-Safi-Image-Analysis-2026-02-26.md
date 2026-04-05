@@ -6,7 +6,7 @@ date: 2026-02-26
 author: Ahmed
 ---
 
-# Product Brief: Safi Oil Tracker
+# Product Brief: Afia Oil Tracker
 
 ## Problem
 

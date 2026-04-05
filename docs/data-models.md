@@ -203,7 +203,7 @@ interface ScanMetadata {
 |-----|------|----------|--------|-------|------------|
 | `filippo-berio-500ml` | Filippo Berio Extra Virgin Olive Oil | extra_virgin_olive | 500ml | cylinder | h=220mm, d=65mm |
 | `bertolli-750ml` | Bertolli Classico Olive Oil | pure_olive | 750ml | frustum | h=280mm, top=70mm, bottom=85mm |
-| `safi-sunflower-1l` | Safi Sunflower Oil | sunflower | 1000ml | cylinder | h=275mm, d=80mm |
+| `afia-sunflower-1l` | Afia Sunflower Oil | sunflower | 1000ml | cylinder | h=275mm, d=80mm |
 
 Note: Frontend version includes `imageUrl` field; worker version omits it. Worker returns `null` for unknown SKU; frontend returns `undefined`.
 
@@ -263,6 +263,6 @@ Camera ──► useCamera.capturePhoto() ──► compressImage() ──► ba
 
 | Key | Value | Purpose |
 |-----|-------|---------|
-| `safi_privacy_accepted` | `"true"` | Privacy notice consent flag |
+| `afia_privacy_accepted` | `"true"` | Privacy notice consent flag |
 
 No other client-side persistence. The app is stateless per session — each scan is independent.

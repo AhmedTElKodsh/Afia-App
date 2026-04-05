@@ -45,8 +45,8 @@ export const bottleRegistry: BottleEntry[] = [
     imageUrl: "/bottles/bertolli-750ml.png",
   },
   {
-    sku: "safi-sunflower-1l",
-    name: "Safi Sunflower Oil",
+    sku: "afia-sunflower-1l",
+    name: "Afia Sunflower Oil",
     oilType: "sunflower",
     totalVolumeMl: 1000,
     geometry: {
@@ -54,7 +54,7 @@ export const bottleRegistry: BottleEntry[] = [
       heightMm: 275,
       diameterMm: 80,
     },
-    imageUrl: "/bottles/safi-sunflower-1l.png",
+    imageUrl: "/bottles/afia-sunflower-1l.png",
   },
 ];
 

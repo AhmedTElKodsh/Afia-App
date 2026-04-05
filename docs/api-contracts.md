@@ -5,7 +5,7 @@
 | Environment | URL |
 |-------------|-----|
 | Local dev | `http://localhost:8787` |
-| Production | `https://safi-worker.<subdomain>.workers.dev` |
+| Production | `https://afia-worker.<subdomain>.workers.dev` |
 
 Configured via `VITE_PROXY_URL` environment variable on the frontend.
 
@@ -157,7 +157,7 @@ Health check endpoint.
 
 - **Allowed origins**: Configured via `ALLOWED_ORIGINS` env var
 - **Default (dev)**: `http://localhost:5173`, `http://localhost:4173`
-- **Production**: `https://safi-oil-tracker.pages.dev`
+- **Production**: `https://afia-oil-tracker.pages.dev`
 - **Allowed methods**: `POST`, `OPTIONS`
 - **Allowed headers**: `Content-Type`
 - **Preflight cache**: 86400 seconds (24 hours)
@@ -197,7 +197,7 @@ interface ScanMetadata {
 ### R2 Storage Layout
 
 ```
-safi-training-data/
+afia-training-data/
 ├── images/{scanId}.jpg           # Raw JPEG from user (binary)
 └── metadata/{scanId}.json        # ScanMetadata JSON
 ```
@@ -210,4 +210,4 @@ safi-training-data/
 |-----|--------|----------|--------|----------|
 | `filippo-berio-500ml` | Filippo Berio Extra Virgin Olive Oil | extra_virgin_olive | 500ml | cylinder (220mm × 65mm) |
 | `bertolli-750ml` | Bertolli Classico Olive Oil | pure_olive | 750ml | frustum (280mm, 70mm→85mm) |
-| `safi-sunflower-1l` | Safi Sunflower Oil | sunflower | 1000ml | cylinder (275mm × 80mm) |
+| `afia-sunflower-1l` | Afia Sunflower Oil | sunflower | 1000ml | cylinder (275mm × 80mm) |

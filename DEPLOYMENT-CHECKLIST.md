@@ -1,4 +1,4 @@
-# ✅ Deployment Checklist - Safi Oil Tracker POC
+# ✅ Deployment Checklist - Afia Oil Tracker POC
 
 ## Pre-Deployment ✅
 
@@ -90,7 +90,7 @@
 
 - [ ] Test with `filippo-berio-500ml` SKU
 - [ ] Test with `bertolli-750ml` SKU
-- [ ] Test with `safi-sunflower-1l` SKU
+- [ ] Test with `afia-sunflower-1l` SKU
 - [ ] Test with invalid SKU (should show error)
 - [ ] Test feedback: "about_right"
 - [ ] Test feedback: "too_high" with correction

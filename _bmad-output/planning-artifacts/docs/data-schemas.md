@@ -1,4 +1,4 @@
-# Data Schemas — Safi Oil Tracker
+# Data Schemas — Afia Oil Tracker
 
 **Version:** POC v1
 

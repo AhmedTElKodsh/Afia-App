@@ -22,16 +22,16 @@ classification:
   complexity: medium-high
   projectContext: greenfield
 inputDocuments:
-  - product-brief-Safi-Image-Analysis-2026-02-26.md
+  - product-brief-Afia-Image-Analysis-2026-02-26.md
   - research/technical-oil-bottle-ai-app-poc-research-2026-02-26.md
   - architecture.md
 workflowType: "prd"
-project_name: "Safi Oil Tracker"
+project_name: "Afia Oil Tracker"
 user_name: "Ahmed"
 date: "2026-02-26"
 ---
 
-# Product Requirements Document — Safi Oil Tracker
+# Product Requirements Document — Afia Oil Tracker
 
 **Author:** Ahmed
 **Date:** 2026-02-26
@@ -55,7 +55,7 @@ date: "2026-02-26"
 
 ## Executive Summary
 
-Safi Oil Tracker is a Progressive Web App (PWA) that enables home cooking oil consumers to measure remaining oil in their bottle using their phone camera and AI vision analysis. Accessed instantly via QR code printed on the bottle — no app store download required — the app photographs the bottle, estimates the fill level using an LLM vision API, and delivers the result in ml, tablespoons, and cups alongside nutritional facts for the estimated consumed amount.
+Afia Oil Tracker is a Progressive Web App (PWA) that enables home cooking oil consumers to measure remaining oil in their bottle using their phone camera and AI vision analysis. Accessed instantly via QR code printed on the bottle — no app store download required — the app photographs the bottle, estimates the fill level using an LLM vision API, and delivers the result in ml, tablespoons, and cups alongside nutritional facts for the estimated consumed amount.
 
 The POC targets a single oil company's bottle lineup (2–3 SKUs, clear glass, known geometry), with the starting level anchored at a full bottle (100%). Volume is calculated client-side using pre-registered bottle geometry (cylinder/frustum math) rather than relying solely on LLM precision — giving ±15% accuracy on clear glass bottles. Every scan captures image + metadata + user feedback for future model fine-tuning. Persistent storage in Cloudflare R2 is deferred to Phase 2 (free tier requires credit card activation) — images are processed but not persisted during POC.
 
@@ -262,7 +262,7 @@ Gemini → Groq fallback chain runs inside a Cloudflare Worker (zero cold starts
 - Smart kitchen hardware (connected scales) — requires hardware purchase
 - Receipt-scanning apps — scan labels, not remaining content
 
-Safi occupies an uncontested niche: **passive dietary tracking via product-embedded QR + AI vision, zero hardware**.
+Afia occupies an uncontested niche: **passive dietary tracking via product-embedded QR + AI vision, zero hardware**.
 
 ### Innovation Validation (POC)
 

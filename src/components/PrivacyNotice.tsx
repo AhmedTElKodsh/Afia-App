@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "./PrivacyNotice.css";
 
-const STORAGE_KEY = "safi_privacy_accepted";
+const STORAGE_KEY = "afia_privacy_accepted";
 
 export function hasAcceptedPrivacy(): boolean {
   return localStorage.getItem(STORAGE_KEY) === "true";

@@ -71,7 +71,7 @@ npm run dev
 | -------------------------- | ----------------------------------------------------- |
 | `?sku=filippo-berio-500ml` | Filippo Berio Extra Virgin Olive Oil 500ml (cylinder) |
 | `?sku=bertolli-750ml`      | Bertolli Classico Olive Oil 750ml (frustum)           |
-| `?sku=safi-sunflower-1l`   | Safi Pure Sunflower Oil 1L (cylinder)                 |
+| `?sku=afia-sunflower-1l`   | Afia Pure Sunflower Oil 1L (cylinder)                 |
 | `?sku=unknown-sku`         | Unknown bottle fallback screen                        |
 | (no sku param)             | "No bottle specified" screen                          |
 
@@ -158,7 +158,7 @@ cd worker && npx wrangler deploy
 
 # Deploy frontend to Cloudflare Pages
 npm run build
-npx wrangler pages deploy dist --project-name=safi-oil-tracker
+npx wrangler pages deploy dist --project-name=afia-oil-tracker
 ```
 
 ### CI/CD (GitHub Actions)
@@ -172,7 +172,7 @@ Required GitHub secrets:
 
 - `CLOUDFLARE_API_TOKEN` — API token with Pages + Workers permissions
 - `CLOUDFLARE_ACCOUNT_ID` — Your Cloudflare account ID
-- `VITE_PROXY_URL` — Production Worker URL (optional, defaults to `https://safi-worker.savola.workers.dev`)
+- `VITE_PROXY_URL` — Production Worker URL (optional, defaults to `https://afia-worker.savola.workers.dev`)
 
 ### First-Time Cloudflare Setup
 
@@ -182,7 +182,7 @@ Required GitHub secrets:
 4. Set secrets: `npx wrangler secret put GEMINI_API_KEY` (and GROQ_API_KEY)
 5. Create Cloudflare Pages project linked to GitHub repo
 6. Set `VITE_PROXY_URL` in Pages environment variables
-7. Optionally create R2 bucket: `npx wrangler r2 bucket create safi-training-data` and uncomment R2 binding in `wrangler.toml`
+7. Optionally create R2 bucket: `npx wrangler r2 bucket create afia-training-data` and uncomment R2 binding in `wrangler.toml`
 
 ## Environment Variables
 

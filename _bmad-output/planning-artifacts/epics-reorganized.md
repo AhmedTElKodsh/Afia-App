@@ -7,7 +7,7 @@ inputDocuments:
   - ux-design-specification.md
 ---
 
-# Safi Oil Tracker — Epics & Stories (User-Value Sequence)
+# Afia Oil Tracker — Epics & Stories (User-Value Sequence)
 
 **Author:** Ahmed
 **Date:** 2026-02-27
@@ -17,7 +17,7 @@ inputDocuments:
 
 ## Overview
 
-This document is the **canonical implementation source of truth** for Safi Oil Tracker. Stories are organized by user-value delivery: Epic 1 delivers a complete working scan flow; subsequent epics add enrichment, feedback, resilience, and operational concerns.
+This document is the **canonical implementation source of truth** for Afia Oil Tracker. Stories are organized by user-value delivery: Epic 1 delivers a complete working scan flow; subsequent epics add enrichment, feedback, resilience, and operational concerns.
 
 ## Requirements Inventory
 

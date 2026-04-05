@@ -2,7 +2,7 @@
 
 ## What is Afia App?
 
-Afia App (formerly Safi Oil Tracker) is a mobile-first Progressive Web App (PWA) that uses AI computer vision to estimate the fill level of cooking oil bottles from a single photograph. Users access the app by scanning a QR code printed on their oil bottle, photograph it through the device camera, and receive an instant breakdown of remaining oil volume, consumed volume, and nutrition facts.
+Afia App (formerly Afia Oil Tracker) is a mobile-first Progressive Web App (PWA) that uses AI computer vision to estimate the fill level of cooking oil bottles from a single photograph. Users access the app by scanning a QR code printed on their oil bottle, photograph it through the device camera, and receive an instant breakdown of remaining oil volume, consumed volume, and nutrition facts.
 
 ## Problem Statement
 

@@ -1,4 +1,4 @@
-**SAFI OIL TRACKER**
+**AFIA OIL TRACKER**
 
 ━━━━━━━━━━━━━━━━━━━━
 
@@ -31,7 +31,7 @@ The Problem
 
 Our Solution
 
-Safi Oil Tracker is a Progressive Web App (PWA) that uses AI vision to
+Afia Oil Tracker is a Progressive Web App (PWA) that uses AI vision to
 estimate cooking oil bottle fill levels from a single phone photo.
 
 +---------------+---+------------+---+--------------+---+-------------+
@@ -99,7 +99,7 @@ Architecture Layers
 Request Flow --- Happy Path
 
 6.  User scans QR → Browser opens:
-    https://safi-oil-tracker.pages.dev/?sku=filippo-berio-500ml
+    https://afia-oil-tracker.pages.dev/?sku=filippo-berio-500ml
 
 7.  PWA loads bottle geometry from local bottleRegistry.js
 
@@ -144,7 +144,7 @@ Supported Bottles (POC)
   **SKU**               **Bottle**                   **Volume**   **Shape**
   filippo-berio-500ml   Filippo Berio Extra Virgin   500ml        Cylinder (65mm × 220mm)
   bertolli-750ml        Bertolli Classico            750ml        Frustum (70/85mm × 280mm)
-  safi-sunflower-1l     Safi Sunflower Oil           1000ml       Cylinder (80mm × 275mm)
+  afia-sunflower-1l     Afia Sunflower Oil           1000ml       Cylinder (80mm × 275mm)
   --------------------- ---------------------------- ------------ ---------------------------
 
 User Experience Design
@@ -173,7 +173,7 @@ States → iOS Warning
 
 PWA vs Native App
 
-Safi Oil Tracker uses a Progressive Web App (PWA) approach for both POC
+Afia Oil Tracker uses a Progressive Web App (PWA) approach for both POC
 and Full Launch. A native mobile app is a Phase 4 option after 1,000+
 scans validate the concept.
 
@@ -222,7 +222,7 @@ Security & Privacy
 
   -------------------- ----------------------------------------------------------------------------------------
   **Layer**            **Protection**
-  Origin Validation    CORS whitelist: only safi-oil-tracker.pages.dev + localhost
+  Origin Validation    CORS whitelist: only afia-oil-tracker.pages.dev + localhost
   Rate Limiting        10 requests/minute per IP (KV-backed sliding window)
   Payload Guard        Reject requests \> 4MB
   API Key Protection   Secrets in Cloudflare Worker only (never in client/git)
@@ -389,7 +389,7 @@ No direct competitor exists for AI oil tracking via QR + camera.
   ------------------ -------------------- -------------------------------------------
 
 +----------------------------------------------------------------------+
-| > Safi Oil Tracker = Zero friction + Zero hardware + Self-improving  |
+| > Afia Oil Tracker = Zero friction + Zero hardware + Self-improving  |
 | > AI. An uncontested niche.                                          |
 +----------------------------------------------------------------------+
 
@@ -461,7 +461,7 @@ Next Steps
   --
   --
 
-**Safi Oil Tracker**
+**Afia Oil Tracker**
 
 **Scan. Snap. Know.**
 

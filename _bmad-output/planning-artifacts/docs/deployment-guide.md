@@ -1,4 +1,4 @@
-# Deployment Guide — Safi Oil Tracker
+# Deployment Guide — Afia Oil Tracker
 
 **Version:** POC v1
 
@@ -21,7 +21,7 @@
 
 ```bash
 git clone <repository-url>
-cd safi-oil-tracker
+cd afia-oil-tracker
 ```
 
 ### 2. Install Dependencies
@@ -90,7 +90,7 @@ wrangler login
 ### 3. Create R2 Bucket
 
 ```bash
-wrangler r2 bucket create safi-oil-tracker-data
+wrangler r2 bucket create afia-oil-tracker-data
 ```
 
 ### 4. Create KV Namespace (for rate limiting)
@@ -104,20 +104,20 @@ Note the namespace ID from output.
 ### 5. Update wrangler.toml
 
 ```toml
-name = "safi-oil-tracker-worker"
+name = "afia-oil-tracker-worker"
 main = "worker/index.ts"
 compatibility_date = "2024-01-01"
 
 [[r2_buckets]]
 binding = "STORAGE"
-bucket_name = "safi-oil-tracker-data"
+bucket_name = "afia-oil-tracker-data"
 
 [[kv_namespaces]]
 binding = "RATE_LIMIT"
 id = "<your-kv-namespace-id>"
 
 [vars]
-ALLOWED_ORIGINS = "https://safi-oil-tracker.pages.dev,http://localhost:5173"
+ALLOWED_ORIGINS = "https://afia-oil-tracker.pages.dev,http://localhost:5173"
 ```
 
 ### 6. Set Worker Secrets
@@ -185,14 +185,14 @@ jobs:
       - name: Build PWA
         run: npm run build
         env:
-          VITE_PROXY_URL: https://safi-oil-tracker-worker.<your-subdomain>.workers.dev
+          VITE_PROXY_URL: https://afia-oil-tracker-worker.<your-subdomain>.workers.dev
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: safi-oil-tracker
+          projectName: afia-oil-tracker
           directory: dist
 
       - name: Deploy Worker
@@ -228,18 +228,18 @@ git push origin main
 
 **PWA:**
 
-- URL: `https://safi-oil-tracker.pages.dev`
-- Test: `https://safi-oil-tracker.pages.dev?sku=filippo-berio-500ml`
+- URL: `https://afia-oil-tracker.pages.dev`
+- Test: `https://afia-oil-tracker.pages.dev?sku=filippo-berio-500ml`
 
 **Worker:**
 
-- URL: `https://safi-oil-tracker-worker.<your-subdomain>.workers.dev`
-- Test: `curl https://safi-oil-tracker-worker.<your-subdomain>.workers.dev/health`
+- URL: `https://afia-oil-tracker-worker.<your-subdomain>.workers.dev`
+- Test: `curl https://afia-oil-tracker-worker.<your-subdomain>.workers.dev/health`
 
 ### 4. Custom Domain (Optional)
 
-1. Cloudflare Dashboard → Pages → safi-oil-tracker → Custom domains
-2. Add your domain (e.g., `safi.yourdomain.com`)
+1. Cloudflare Dashboard → Pages → afia-oil-tracker → Custom domains
+2. Add your domain (e.g., `afia.yourdomain.com`)
 3. Update DNS records as instructed
 4. Update `ALLOWED_ORIGINS` in wrangler.toml
 
@@ -256,14 +256,14 @@ wrangler tail
 ### View R2 Bucket Contents
 
 ```bash
-wrangler r2 object list safi-oil-tracker-data --prefix images/
-wrangler r2 object list safi-oil-tracker-data --prefix metadata/
+wrangler r2 object list afia-oil-tracker-data --prefix images/
+wrangler r2 object list afia-oil-tracker-data --prefix metadata/
 ```
 
 ### Download Scan Metadata
 
 ```bash
-wrangler r2 object get safi-oil-tracker-data/metadata/<scanId>.json
+wrangler r2 object get afia-oil-tracker-data/metadata/<scanId>.json
 ```
 
 ### Check Rate Limit KV
@@ -275,7 +275,7 @@ wrangler kv:key list --namespace-id=<your-kv-namespace-id>
 ### View Cloudflare Analytics
 
 1. Cloudflare Dashboard → Workers & Pages
-2. Select safi-oil-tracker-worker
+2. Select afia-oil-tracker-worker
 3. View Metrics tab for request counts, latency, errors
 
 ---
@@ -326,7 +326,7 @@ const RATE_LIMIT = 20; // Increase from 10 to 20 req/min
 
 ```bash
 # Cloudflare Pages keeps deployment history
-# Go to Dashboard → Pages → safi-oil-tracker → Deployments
+# Go to Dashboard → Pages → afia-oil-tracker → Deployments
 # Click "Rollback" on previous deployment
 ```
 
@@ -379,13 +379,13 @@ git checkout main
 
 ```bash
 # Test QR landing page
-curl https://safi-oil-tracker.pages.dev?sku=filippo-berio-500ml
+curl https://afia-oil-tracker.pages.dev?sku=filippo-berio-500ml
 
 # Test Worker health endpoint
-curl https://safi-oil-tracker-worker.<subdomain>.workers.dev/health
+curl https://afia-oil-tracker-worker.<subdomain>.workers.dev/health
 
 # Test analyze endpoint (requires valid image)
-curl -X POST https://safi-oil-tracker-worker.<subdomain>.workers.dev/analyze \
+curl -X POST https://afia-oil-tracker-worker.<subdomain>.workers.dev/analyze \
   -H "Content-Type: application/json" \
   -d '{"sku":"filippo-berio-500ml","imageBase64":"..."}'
 ```
@@ -397,7 +397,7 @@ curl -X POST https://safi-oil-tracker-worker.<subdomain>.workers.dev/analyze \
 3. Submit feedback
 4. Verify data in R2:
    ```bash
-   wrangler r2 object list safi-oil-tracker-data --prefix metadata/
+   wrangler r2 object list afia-oil-tracker-data --prefix metadata/
    ```
 
 ### 3. Performance Test

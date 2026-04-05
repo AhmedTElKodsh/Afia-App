@@ -3,7 +3,7 @@
 
 ## Project Configuration
 
-- **Project**: Safi-Image-Analysis
+- **Project**: Afia-Image-Analysis
 - **User**: Ahmed
 - **Communication Language**: English
 - **Document Output Language**: English

@@ -135,7 +135,7 @@ Request
 R2 storage is **optional** and disabled in the POC (requires Cloudflare credit card):
 
 ```
-safi-training-data/
+afia-training-data/
 ├── images/{scanId}.jpg          # Raw JPEG from user
 └── metadata/{scanId}.json       # ScanMetadata + optional feedback
 ```
@@ -192,10 +192,10 @@ GitHub (main branch)
   │
   ▼
 Cloudflare
-  ├── Pages: safi-oil-tracker.pages.dev (frontend PWA)
-  └── Workers: safi-worker.savola.workers.dev (API)
+  ├── Pages: afia-oil-tracker.pages.dev (frontend PWA)
+  └── Workers: afia-worker.savola.workers.dev (API)
       ├── KV: RATE_LIMIT_KV
-      ├── R2: safi-training-data (disabled for POC)
+      ├── R2: afia-training-data (disabled for POC)
       └── Secrets: GEMINI_API_KEY(s), GROQ_API_KEY
 ```
 

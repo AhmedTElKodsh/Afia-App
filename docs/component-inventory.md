@@ -56,7 +56,7 @@
 ### PrivacyNotice.tsx — First-Scan Consent
 - **Location**: `src/components/PrivacyNotice.tsx`
 - **Props**: `onAccepted: () => void`
-- **Persistence**: `localStorage` key `safi_privacy_accepted`
+- **Persistence**: `localStorage` key `afia_privacy_accepted`
 - **Export**: `hasAcceptedPrivacy()` function for initial state check
 - **Content**: Expandable details about image storage and AI training
 
@@ -124,7 +124,7 @@
 ### bottleRegistry.ts
 - **Location**: `src/data/bottleRegistry.ts`
 - **Exports**: `bottleRegistry: BottleEntry[]`, `getBottleBySku(sku) → BottleEntry | undefined`
-- **Entries**: 3 bottles (Filippo Berio 500ml, Bertolli 750ml, Safi Sunflower 1L)
+- **Entries**: 3 bottles (Filippo Berio 500ml, Bertolli 750ml, Afia Sunflower 1L)
 - **Interfaces**: `BottleEntry`, `BottleGeometry` (cylinder | frustum)
 
 ### oilNutrition.ts

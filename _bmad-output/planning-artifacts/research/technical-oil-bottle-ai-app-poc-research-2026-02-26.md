@@ -12,7 +12,7 @@ web_research_enabled: true
 source_verification: true
 ---
 
-# Safi Oil Tracker: Comprehensive Technical Research Report
+# Afia Oil Tracker: Comprehensive Technical Research Report
 
 **Date:** 2026-02-26
 **Author:** Ahmed
@@ -316,7 +316,7 @@ https://yourapp.com/bottle/{sku}?src=qr&batch={batchId}
 **Web App Manifest Scope (critical):**
 ```json
 {
-  "name": "Safi Oil Tracker",
+  "name": "Afia Oil Tracker",
   "start_url": "/app",
   "scope": "/",
   "display": "standalone",
@@ -544,7 +544,7 @@ At 10 API calls/day for personal/POC use, free tier is never approached.
 
 **Repository Structure:**
 ```
-safi-oil-tracker/
+afia-oil-tracker/
 ├── pwa/                    # Cloudflare Pages
 │   ├── src/
 │   │   ├── App.jsx
@@ -566,12 +566,12 @@ cd worker && wrangler secret put GEMINI_API_KEY && wrangler deploy
 
 # 2. Build and deploy PWA
 cd pwa && npm run build
-wrangler pages deploy dist --project-name safi-oil-tracker
+wrangler pages deploy dist --project-name afia-oil-tracker
 ```
 
 **End-to-End Architecture Flow:**
 ```
-User scans QR → https://safi-oil-tracker.pages.dev/?sku=filippo-berio-500ml
+User scans QR → https://afia-oil-tracker.pages.dev/?sku=filippo-berio-500ml
     ↓ PWA loads bottle geometry from bundleRegistry.js
     ↓ User opens camera, captures JPEG (800px, ~70KB)
     ↓ POST base64 to Cloudflare Worker proxy
@@ -838,7 +838,7 @@ _Sources: developer.apple.com/forums/thread/769203, kb.strich.io, arxiv.org/abs/
 
 ### Summary of Key Findings
 
-The Safi Oil Tracker POC is technically feasible with a **zero-cost infrastructure stack** (Gemini free tier + Cloudflare free tier + USDA free API). The core technical challenge — estimating liquid volume from a single photograph — is solvable by combining LLM vision (fill percentage estimation) with known bottle geometry (volume calculation). This hybrid approach achieves ~70–80% accuracy on clear glass bottles, which is sufficient for a consumer-facing "approximate usage" tool framed as ±15%.
+The Afia Oil Tracker POC is technically feasible with a **zero-cost infrastructure stack** (Gemini free tier + Cloudflare free tier + USDA free API). The core technical challenge — estimating liquid volume from a single photograph — is solvable by combining LLM vision (fill percentage estimation) with known bottle geometry (volume calculation). This hybrid approach achieves ~70–80% accuracy on clear glass bottles, which is sufficient for a consumer-facing "approximate usage" tool framed as ±15%.
 
 ### Strategic Technical Impact
 
@@ -858,6 +858,6 @@ This POC validates whether LLM vision APIs have matured enough for practical con
 **Technical Confidence Level:** High — all critical findings verified against current (2025–2026) sources
 **Document Scope:** LLM vision API selection, measurement logic, nutritional data sourcing, integration patterns, architecture design, implementation tooling, risk assessment
 
-_This technical research document serves as the authoritative reference for the Safi Oil Tracker POC and provides the foundation for architecture design and implementation planning._
+_This technical research document serves as the authoritative reference for the Afia Oil Tracker POC and provides the foundation for architecture design and implementation planning._
 
 ---

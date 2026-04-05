@@ -3,10 +3,10 @@ stepsCompleted: [1, 2, 3, 4, 5, 6]
 inputDocuments:
   - prd.md
   - architecture.md
-  - product-brief-Safi-Image-Analysis-2026-02-26.md
+  - product-brief-Afia-Image-Analysis-2026-02-26.md
 ---
 
-# UX Design Specification — Safi Oil Tracker
+# UX Design Specification — Afia Oil Tracker
 
 **Author:** Ahmed
 **Date:** 2026-02-27
@@ -18,7 +18,7 @@ inputDocuments:
 
 ### Project Vision
 
-Safi Oil Tracker delivers a single, frictionless interaction: QR scan on a physical oil bottle → phone camera → AI-estimated oil level → volume and nutritional insight in under 8 seconds. The UX is optimized for one user in one context: standing in a kitchen right after cooking, wanting a fast answer without setup friction.
+Afia Oil Tracker delivers a single, frictionless interaction: QR scan on a physical oil bottle → phone camera → AI-estimated oil level → volume and nutritional insight in under 8 seconds. The UX is optimized for one user in one context: standing in a kitchen right after cooking, wanting a fast answer without setup friction.
 
 ### Target Users
 
@@ -120,7 +120,7 @@ All interactive elements: minimum **44 × 44px** tap area (WCAG 2.1 AA). Actual 
 
 ```
 ┌──────────────────────────────┐
-│  [Safi Logo/Brand Mark]      │
+│  [Afia Logo/Brand Mark]      │
 │                              │
 │  ┌────────────────────────┐  │
 │  │  [Bottle Reference     │  │

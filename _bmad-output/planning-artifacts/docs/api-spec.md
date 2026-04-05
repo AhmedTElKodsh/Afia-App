@@ -1,7 +1,7 @@
-# API Specification — Safi Oil Tracker Worker
+# API Specification — Afia Oil Tracker Worker
 
 **Version:** POC v1
-**Base URL:** `https://safi-oil-tracker.pages.dev` (production) or `http://localhost:8787` (local dev)
+**Base URL:** `https://afia-oil-tracker.pages.dev` (production) or `http://localhost:8787` (local dev)
 
 ---
 
@@ -63,7 +63,7 @@ interface ErrorResponse {
 **Example Request:**
 
 ```bash
-curl -X POST https://safi-oil-tracker.pages.dev/analyze \
+curl -X POST https://afia-oil-tracker.pages.dev/analyze \
   -H "Content-Type: application/json" \
   -d '{
     "sku": "filippo-berio-500ml",
@@ -121,7 +121,7 @@ interface FeedbackResponse {
 **Example Request:**
 
 ```bash
-curl -X POST https://safi-oil-tracker.pages.dev/feedback \
+curl -X POST https://afia-oil-tracker.pages.dev/feedback \
   -H "Content-Type: application/json" \
   -d '{
     "scanId": "550e8400-e29b-41d4-a716-446655440000",
@@ -176,7 +176,7 @@ curl -X POST https://safi-oil-tracker.pages.dev/feedback \
 
 **Origin Validation:**
 
-- Production: `https://safi-oil-tracker.pages.dev`
+- Production: `https://afia-oil-tracker.pages.dev`
 - Localhost: `http://localhost:5173`, `http://localhost:8787`
 
 **Payload Validation:**

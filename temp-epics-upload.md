@@ -7,11 +7,11 @@ inputDocuments:
   - ux-design-specification.md
 ---
 
-# Safi Oil Tracker - Epic Breakdown
+# Afia Oil Tracker - Epic Breakdown
 
 ## Overview
 
-This document provides the complete epic and story breakdown for Safi Oil Tracker, decomposing the requirements from the PRD, UX Design, and Architecture requirements into implementable stories.
+This document provides the complete epic and story breakdown for Afia Oil Tracker, decomposing the requirements from the PRD, UX Design, and Architecture requirements into implementable stories.
 
 ## Requirements Inventory
 

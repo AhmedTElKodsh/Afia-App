@@ -1,4 +1,4 @@
-# Safi Oil Tracker — Claude Code Memory
+# Afia Oil Tracker — Claude Code Memory
 
 ## Project Overview
 PWA for cooking oil bottle fill estimation using LLM vision. React+Vite+TypeScript frontend, Cloudflare Worker backend.
@@ -56,7 +56,7 @@ worker/                 — Cloudflare Worker (Hono)
 
 ## New Components Added (Epic 4)
 - `IosWarning.tsx` — shown before anything else on problematic iOS contexts
-- `PrivacyNotice.tsx` — first-scan modal overlay with localStorage persistence (`safi_privacy_accepted`)
+- `PrivacyNotice.tsx` — first-scan modal overlay with localStorage persistence (`afia_privacy_accepted`)
 - Privacy notice shown as overlay on IDLE state in App.tsx
 
 ## All Epics Complete (POC)

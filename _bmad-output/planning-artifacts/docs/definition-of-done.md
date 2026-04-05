@@ -1,4 +1,4 @@
-# Definition of Done — Safi Oil Tracker
+# Definition of Done — Afia Oil Tracker
 
 **Version:** POC v1
 

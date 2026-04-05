@@ -8,8 +8,8 @@ export default defineConfig({
   plugins: [react(), VitePWA({
     registerType: "autoUpdate",
     manifest: {
-      name: "Safi Oil Tracker",
-      short_name: "Safi",
+      name: "Afia Oil Tracker",
+      short_name: "Afia",
       description:
         "Track your cooking oil consumption with AI-powered bottle scanning",
       display: "browser",

@@ -5,7 +5,7 @@ documentsFound:
   architecture: planning-artifacts/architecture.md
   epics: planning-artifacts/epics-reorganized.md
   ux: planning-artifacts/ux-design-specification.md
-  product-brief: planning-artifacts/product-brief-Safi-Image-Analysis-2026-02-26.md
+  product-brief: planning-artifacts/product-brief-Afia-Image-Analysis-2026-02-26.md
   api-spec: planning-artifacts/docs/api-spec.md
   data-schemas: planning-artifacts/docs/data-schemas.md
   llm-prompts: planning-artifacts/docs/llm-prompts.md
@@ -17,7 +17,7 @@ documentsFound:
 # Implementation Readiness Assessment Report
 
 **Date:** 2026-02-27
-**Project:** Safi Oil Tracker
+**Project:** Afia Oil Tracker
 **Assessor:** BMad Master
 **Verdict:** READY FOR IMPLEMENTATION
 

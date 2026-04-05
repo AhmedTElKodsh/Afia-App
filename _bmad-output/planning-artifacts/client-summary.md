@@ -1,4 +1,4 @@
-# Safi Oil Tracker - Client Summary
+# Afia Oil Tracker - Client Summary
 
 **Prepared by:** Ahmed | **Date:** February 27, 2026 | **Status:** Ready for Implementation
 
@@ -17,7 +17,7 @@
 
 ## The Solution
 
-**Safi Oil Tracker** is a Progressive Web App (PWA) that uses **AI vision** to estimate cooking oil bottle fill levels from a single phone photo.
+**Afia Oil Tracker** is a Progressive Web App (PWA) that uses **AI vision** to estimate cooking oil bottle fill levels from a single phone photo.
 
 ```
   QR Code on Bottle  -->  Phone Camera  -->  AI Analysis  -->  Instant Results
@@ -171,7 +171,7 @@
                  |   |          |    |
   Filippo Berio  +---+          +----+
   500ml
-  Cylinder        Bertolli      Safi
+  Cylinder        Bertolli      Afia
   65mm x 220mm    750ml         Sunflower
                   Frustum       1000ml
                   70/85mm       Cylinder
@@ -182,7 +182,7 @@
 |-----|--------|--------|-------|----------|
 | `filippo-berio-500ml` | Filippo Berio Extra Virgin | 500ml | Cylinder | Extra Virgin Olive |
 | `bertolli-750ml` | Bertolli Classico | 750ml | Frustum | Pure Olive |
-| `safi-sunflower-1l` | Safi Sunflower Oil | 1000ml | Cylinder | Sunflower |
+| `afia-sunflower-1l` | Afia Sunflower Oil | 1000ml | Cylinder | Sunflower |
 
 ---
 
@@ -316,7 +316,7 @@
   +------------------------------------------------------------------+
   |                                                                  |
   |  1. ORIGIN VALIDATION                                            |
-  |     Only allow: safi-oil-tracker.pages.dev + localhost            |
+  |     Only allow: afia-oil-tracker.pages.dev + localhost            |
   |                                                                  |
   |  2. RATE LIMITING                                                |
   |     10 requests/minute per IP (KV-backed sliding window)         |
@@ -492,7 +492,7 @@
   HIGH     -------------|------------- LOW
   FRICTION               |              FRICTION
                          |
-           MyFitnessPal  |    SAFI OIL
+           MyFitnessPal  |    AFIA OIL
            (manual log)  |    TRACKER
                          |    (QR + AI)
                          |
@@ -500,13 +500,13 @@
                     (improving with data)
 ```
 
-**Safi occupies an uncontested niche:** passive dietary tracking via product-embedded QR + AI vision, zero hardware, zero friction.
+**Afia occupies an uncontested niche:** passive dietary tracking via product-embedded QR + AI vision, zero hardware, zero friction.
 
 ---
 
 ## Summary
 
-Safi Oil Tracker is a **fully planned and implemented** POC that proves AI-powered cooking oil tracking is viable, useful, and achievable at **zero infrastructure cost**. The system is designed to improve with every scan, creating a compounding data advantage.
+Afia Oil Tracker is a **fully planned and implemented** POC that proves AI-powered cooking oil tracking is viable, useful, and achievable at **zero infrastructure cost**. The system is designed to improve with every scan, creating a compounding data advantage.
 
 **Next step:** Deploy to production and begin collecting real-world scans.
 
