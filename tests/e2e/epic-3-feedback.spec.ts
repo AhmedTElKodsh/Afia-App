@@ -55,8 +55,8 @@ test.describe('Epic 3: Feedback System', () => {
   test('should display feedback grid after scan', async ({ page }) => {
     await setupWithResult(page);
 
-    // Feedback title
-    await expect(page.locator('text=Was this accurate?')).toBeVisible();
+    // Feedback title (i18n key feedback.title = "Was this estimate accurate?")
+    await expect(page.locator('text=Was this estimate accurate?')).toBeVisible();
 
     // All 4 rating buttons
     await expect(page.locator('button:has-text("About right")')).toBeVisible();

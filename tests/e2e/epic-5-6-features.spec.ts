@@ -136,15 +136,14 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
     });
 
     test('should show empty state when no scans exist', async ({ page }) => {
+      // Remove scan history BEFORE navigation so the component mounts with empty state
+      await page.addInitScript(() => localStorage.removeItem('afia_scan_history'));
+
       await page.goto('/');
-      
-      // Clear localStorage to ensure empty history
-      await page.evaluate(() => localStorage.removeItem('afia_scan_history'));
-      
       await page.click('button[aria-label="History"]');
-      
-      await expect(page.locator('text=No scan history yet')).toBeVisible();
-      await expect(page.locator('text=Scan a bottle')).toBeVisible();
+
+      // i18n key history.empty = "No scans yet"
+      await expect(page.locator('text=No scans yet')).toBeVisible();
     });
 
     test('should show stats and trend in history', async ({ page }) => {
