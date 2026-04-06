@@ -14,7 +14,7 @@ describe('FeedbackGrid', () => {
     it('should render feedback title', () => {
       render(<FeedbackGrid onSubmit={mockOnSubmit} />);
       
-      expect(screen.getByText('Was this accurate?')).toBeInTheDocument();
+      expect(screen.getByText('Was this estimate accurate?')).toBeInTheDocument();
     });
 
     it('should render all 4 feedback buttons', () => {
@@ -122,8 +122,8 @@ describe('FeedbackGrid', () => {
     it('should show confirmation message when submitted', () => {
       render(<FeedbackGrid onSubmit={mockOnSubmit} hasSubmitted={true} />);
       
-      expect(screen.getByText('Thank you!')).toBeInTheDocument();
-      expect(screen.getByText('Your feedback helps improve accuracy.')).toBeInTheDocument();
+      expect(screen.getByText('Thank you for your feedback!')).toBeInTheDocument();
+      expect(screen.getByText('Your input helps improve future estimates.')).toBeInTheDocument();
     });
 
     it('should show checkmark icon when submitted', () => {
@@ -180,7 +180,7 @@ describe('FeedbackGrid', () => {
     it('should have role="status" and aria-live on confirmation', () => {
       render(<FeedbackGrid onSubmit={mockOnSubmit} hasSubmitted={true} />);
       
-      const confirmation = screen.getByText('Thank you!').closest('[role="status"]');
+      const confirmation = screen.getByText('Thank you for your feedback!').closest('[role="status"]');
       expect(confirmation).toHaveAttribute('aria-live', 'polite');
     });
 
