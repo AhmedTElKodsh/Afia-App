@@ -19,7 +19,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Beaker, QrCode, ChevronDown, Search, Smartphone, Wrench, Target, RefreshCcw, AlertTriangle, TestTube } from "lucide-react";
-import { bottleRegistry, getBottleBySku } from "../data/bottleRegistry.ts";
+import { activeBottleRegistry, getBottleBySku } from "../data/bottleRegistry.ts";
 import { CameraViewfinder } from "./CameraViewfinder.tsx";
 import { ResultDisplay } from "./ResultDisplay.tsx";
 import { AdminToolsOverlay } from "./AdminToolsOverlay.tsx";
@@ -353,7 +353,7 @@ export function TestLab({ isAdmin }: TestLabProps) {
                   />
                 </div>
                 <div className="bottle-selector-list">
-                  {bottleRegistry
+                  {activeBottleRegistry
                     .filter(bottle =>
                       searchQuery === '' ||
                       bottle.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -374,7 +374,7 @@ export function TestLab({ isAdmin }: TestLabProps) {
                         )}
                       </button>
                     ))}
-                  {searchQuery && bottleRegistry.filter(b =>
+                  {searchQuery && activeBottleRegistry.filter(b =>
                     b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                     getLocalizedBottleName(b.sku, b.name).toLowerCase().includes(searchQuery.toLowerCase())
                   ).length === 0 && (

@@ -15,7 +15,7 @@
 
 import { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { bottleRegistry } from '../../shared/bottleRegistry';
+import { activeBottleRegistry } from '../../shared/bottleRegistry';
 import { Camera, QrCode, Smartphone, Bug, Copy, Check, Droplets } from 'lucide-react';
 import './QrMockGenerator.css';
 
@@ -139,7 +139,7 @@ export function QrMockGenerator() {
 
       {/* QR Code Grid */}
       <div className="qrmg-grid">
-        {bottleRegistry.map((bottle) => {
+        {activeBottleRegistry.map((bottle) => {
           const fullUrl = getFullUrl(bottle.sku);
           const isCopied = copiedSku === bottle.sku;
 

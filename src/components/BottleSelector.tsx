@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronDown, Check } from "lucide-react";
-import { bottleRegistry, getBottleBySku } from "../data/bottleRegistry";
+import { activeBottleRegistry, getBottleBySku } from "../data/bottleRegistry";
 import "./BottleSelector.css";
 
 const STORAGE_KEY = "afia_selected_sku";
@@ -25,7 +25,7 @@ export function BottleSelector({ onBottleChange, compact = false }: BottleSelect
     if (stored && getBottleBySku(stored)) {
       return stored;
     }
-    return bottleRegistry[0]?.sku || "";
+    return activeBottleRegistry[0]?.sku || "";
   });
 
   const selectedBottle = getBottleBySku(selectedSku);
@@ -73,7 +73,7 @@ export function BottleSelector({ onBottleChange, compact = false }: BottleSelect
           className="bottle-dropdown"
           aria-label={t('admin.qrGenerator.selectBottle')}
         >
-          {bottleRegistry.map((bottle) => (
+          {activeBottleRegistry.map((bottle) => (
             <option key={bottle.sku} value={bottle.sku}>
               {getLocalizedBottleName(bottle.sku, bottle.name)} ({bottle.totalVolumeMl}{t('common.ml')})
             </option>
@@ -105,7 +105,7 @@ export function BottleSelector({ onBottleChange, compact = false }: BottleSelect
 
       {isOpen && (
         <div className="bottle-selector-dropdown" role="listbox">
-          {bottleRegistry.map((bottle) => (
+          {activeBottleRegistry.map((bottle) => (
             <button
               key={bottle.sku}
               className={`bottle-option ${selectedSku === bottle.sku ? "selected" : ""}`}

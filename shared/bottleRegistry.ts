@@ -131,3 +131,17 @@ export const bottleRegistry: BottleEntry[] = [
 export function getBottleBySku(sku: string): BottleEntry | undefined {
   return bottleRegistry.find((b) => b.sku === sku);
 }
+
+/**
+ * The SKU currently active for user scanning.
+ * Only this bottle is available in the user-facing flow.
+ */
+export const ACTIVE_SKU = "afia-corn-1.5l";
+
+/**
+ * Subset of bottleRegistry containing only bottles available for user scanning.
+ * Use this in place of bottleRegistry wherever the UI should reflect the restricted set.
+ */
+export const activeBottleRegistry: BottleEntry[] = bottleRegistry.filter(
+  (b) => b.sku === ACTIVE_SKU
+);

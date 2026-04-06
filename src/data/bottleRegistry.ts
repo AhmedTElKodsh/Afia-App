@@ -3,4 +3,4 @@ export type {
   BottleGeometry,
   BottleEntry,
 } from "../../shared/bottleRegistry.ts";
-export { bottleRegistry, getBottleBySku } from "../../shared/bottleRegistry.ts";
+export { bottleRegistry, getBottleBySku, ACTIVE_SKU, activeBottleRegistry } from "../../shared/bottleRegistry.ts";
