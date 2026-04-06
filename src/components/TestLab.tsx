@@ -125,6 +125,16 @@ export function TestLab({ isAdmin }: TestLabProps) {
     return localized === key ? defaultName : localized;
   };
 
+  const getOilEmoji = (oilType: string) => {
+    const map: Record<string, string> = {
+      corn: "🌽",
+      sunflower: "🌻",
+      olive: "🫒",
+      canola: "🌿",
+    };
+    return map[oilType] ?? "🫙";
+  };
+
   // Handle bottle selection from dropdown (only selects, doesn't start scan)
   const handleBottleSelect = useCallback((sku: string) => {
     const bottle = getBottleBySku(sku);
@@ -358,7 +368,7 @@ export function TestLab({ isAdmin }: TestLabProps) {
                         onClick={() => handleBottleSelect(bottle.sku)}
                         type="button"
                       >
-                        <span className="bottle-item-icon">🌻</span> {getLocalizedBottleName(bottle.sku, bottle.name)}
+                        <span className="bottle-item-icon">{getOilEmoji(bottle.oilType)}</span> {getLocalizedBottleName(bottle.sku, bottle.name)}
                         {selectedSku === bottle.sku && (
                           <span className="bottle-selector-check">✓</span>
                         )}
@@ -380,7 +390,7 @@ export function TestLab({ isAdmin }: TestLabProps) {
           {/* Selected Bottle Display */}
           {selectedBottle && scanState === "idle" && (
             <div className="selected-bottle-display">
-              <span>🌻 {getLocalizedBottleName(selectedSku, selectedBottle.name)}</span>
+              <span>{getOilEmoji(selectedBottle.oilType)} {getLocalizedBottleName(selectedSku, selectedBottle.name)}</span>
               <button
                 className="clear-bottle-button"
                 onClick={() => {

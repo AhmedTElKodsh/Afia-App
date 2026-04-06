@@ -10,16 +10,20 @@ import { acceptPrivacyDialog } from './helpers/testHelpers';
 test.describe('Admin Test Lab', () => {
   
   test.beforeEach(async ({ page }) => {
+    // Set up admin session bypass before navigation
+    await page.addInitScript(() => {
+      window.sessionStorage.setItem('afia_admin_session', 'valid-token');
+      window.sessionStorage.setItem('afia_admin_session_expires', String(Date.now() + 3600000));
+      window.localStorage.setItem('afia_privacy_accepted', 'true');
+    });
+
+    // Mock API and Camera before navigation
+    await mockAnalyzeSuccess(page);
+    await mockCamera(page);
+
     // Navigate to the test lab
     await page.goto('/?mode=admin');
     await page.waitForLoadState('networkidle');
-    
-    // Accept privacy dialog if present
-    await acceptPrivacyDialog(page);
-    
-    // Mock API and Camera
-    await mockAnalyzeSuccess(page);
-    await mockCamera(page);
   });
 
   test('should display test lab banner', async ({ page }) => {

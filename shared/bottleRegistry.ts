@@ -25,6 +25,21 @@ export interface BottleEntry {
  */
 export const bottleRegistry: BottleEntry[] = [
   {
+    sku: "afia-corn-1.5l",
+    name: "Afia Pure Corn Oil 1.5L",
+    oilType: "corn",
+    totalVolumeMl: 1500,
+    geometry: {
+      // Cylinder approximation for the 1.5L handled bottle.
+      // Volume calc is linear (fill% × totalVolumeMl) so height/diameter
+      // don't affect ml accuracy — adjust if actual measurements differ.
+      shape: "cylinder",
+      heightMm: 270,
+      diameterMm: 88,
+    },
+    imageUrl: "/bottles/afia-corn-1.5l.png",
+  },
+  {
     sku: "afia-sunflower-250ml",
     name: "Afia Pure Sunflower Oil 250ml",
     oilType: "sunflower",

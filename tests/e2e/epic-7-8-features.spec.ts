@@ -13,7 +13,8 @@ import { clickStartScan, clickCapture } from './helpers/testHelpers';
 // ─── Shared admin init script ───────────────────────────────────────────────
 async function seedHistoryAndLogin(page: any) {
   await page.addInitScript(() => {
-    window.sessionStorage.setItem('afia_admin_session', 'authenticated');
+    window.sessionStorage.setItem('afia_admin_session', 'valid-token');
+    window.sessionStorage.setItem('afia_admin_session_expires', String(Date.now() + 3600000));
     const mockScans = [
       {
         id: 'export-1',
@@ -196,7 +197,8 @@ test.describe('Epic 7: Multi-Bottle Support', () => {
 
     test('should show bottle selector in admin mode with no SKU', async ({ page }) => {
       await page.addInitScript(() => {
-        window.sessionStorage.setItem('afia_admin_session', 'authenticated');
+        window.sessionStorage.setItem('afia_admin_session', 'valid-token');
+        window.sessionStorage.setItem('afia_admin_session_expires', String(Date.now() + 3600000));
         localStorage.setItem('afia_privacy_accepted', 'true');
       });
       await page.goto('/?mode=admin');
@@ -256,7 +258,8 @@ test.describe('Epic 8: Data Export', () => {
 
     test('export buttons are disabled when scan history is empty', async ({ page }) => {
       await page.addInitScript(() => {
-        window.sessionStorage.setItem('afia_admin_session', 'authenticated');
+        window.sessionStorage.setItem('afia_admin_session', 'valid-token');
+        window.sessionStorage.setItem('afia_admin_session_expires', String(Date.now() + 3600000));
         localStorage.removeItem('afia_scan_history');
       });
 

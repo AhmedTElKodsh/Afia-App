@@ -31,6 +31,7 @@ import { EmptyState } from "./EmptyState";
 import "./AdminDashboard.css";
 
 const WORKER_URL = import.meta.env.VITE_WORKER_URL || "";
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "";
 const SESSION_KEY = "afia_admin_session";
 const SESSION_EXPIRES_KEY = "afia_admin_session_expires";
 
@@ -110,10 +111,25 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // Local password check when no worker is configured
     if (!WORKER_URL) {
-      setError(t('admin.login.errorNotConfigured'));
+      if (!ADMIN_PASSWORD) {
+        setError(t('admin.login.errorNotConfigured'));
+        return;
+      }
+      if (password === ADMIN_PASSWORD) {
+        const expiresAt = Date.now() + 3600000;
+        sessionStorage.setItem(SESSION_KEY, btoa(`${expiresAt}:local`));
+        sessionStorage.setItem(SESSION_EXPIRES_KEY, String(expiresAt));
+        setIsAuthenticated(true);
+        onAuthSuccess?.();
+      } else {
+        setError(t('admin.login.errorInvalid'));
+      }
       return;
     }
+
     try {
       const res = await fetch(`${WORKER_URL}/admin/auth`, {
         method: "POST",

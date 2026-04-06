@@ -31,7 +31,8 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
     test('should login with correct password', async ({ page }) => {
       // Use bypass for this test since environment password varies
       await page.addInitScript(() => {
-        window.sessionStorage.setItem('afia_admin_session', 'authenticated');
+        window.sessionStorage.setItem('afia_admin_session', 'valid-token');
+        window.sessionStorage.setItem('afia_admin_session_expires', String(Date.now() + 3600000));
       });
       await page.goto('/?mode=admin');
       
@@ -58,7 +59,8 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
     test.beforeEach(async ({ page }) => {
       // Bypass login and seed history for feature tests
       await page.addInitScript(() => {
-        window.sessionStorage.setItem('afia_admin_session', 'authenticated');
+        window.sessionStorage.setItem('afia_admin_session', 'valid-token');
+        window.sessionStorage.setItem('afia_admin_session_expires', String(Date.now() + 3600000));
         // Seed at least one scan so export buttons are enabled
         const mockScans = [
           {
@@ -103,7 +105,7 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
       
       // Check for specific metric labels
       await expect(page.getByText('Total Scans')).toBeVisible();
-      await expect(page.getByText('Active Users')).toBeVisible();
+      await expect(page.getByText('Scan Days')).toBeVisible();
     });
 
     test('should show export options', async ({ page }) => {
