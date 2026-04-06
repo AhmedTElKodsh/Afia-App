@@ -30,7 +30,6 @@ interface PrivacyInlineProps {
 
 export function PrivacyInline({
   onAccepted,
-  onLearnMore,
   showError = false,
   ctaText,
 }: PrivacyInlineProps) {

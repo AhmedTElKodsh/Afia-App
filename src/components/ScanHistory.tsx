@@ -158,7 +158,7 @@ interface ScanHistoryProps {
 
 export function ScanHistory({ onNavigateToScan }: ScanHistoryProps = {}) {
   const { t } = useTranslation();
-  const { scans, searchScans, getScansByDateRange, deleteScan, clearHistory, getStats } =
+  const { scans, getScansByDateRange, deleteScan, clearHistory, getStats } =
     useScanHistory();
   const [dateRange, setDateRange] = useState<DateRange>("all");
   const [searchQuery, setSearchQuery] = useState("");
