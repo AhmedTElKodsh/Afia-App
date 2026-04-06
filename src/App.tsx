@@ -244,7 +244,11 @@ export default function App() {
       <div className="app-with-nav">
         <AppControls isAdminMode={isAdminMode} />
         <Navigation currentView={currentView} onViewChange={setCurrentView} isAdminMode={isAdminMode} />
-        {isAdminMode && <BottleSelector onBottleChange={setSelectedSku} />}
+        {isAdminMode && (
+          <Suspense fallback={null}>
+            <BottleSelector onBottleChange={setSelectedSku} />
+          </Suspense>
+        )}
         <UnknownBottle sku={null} />
       </div>
     );
@@ -268,9 +272,11 @@ export default function App() {
         <AppControls isAdminMode={isAdminMode} />
           <Navigation currentView={currentView} onViewChange={setCurrentView} isAdminMode={isAdminMode} />
           {isAdminMode ? (
-            <TestLab 
-              isAdmin={true}
-            />
+            <Suspense fallback={<div className="app-loading" />}>
+              <TestLab
+                isAdmin={true}
+              />
+            </Suspense>
           ) : (
             <>
               {isAdminMode && <BottleSelector onBottleChange={setSelectedSku} />}
