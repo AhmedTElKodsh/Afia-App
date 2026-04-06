@@ -93,16 +93,18 @@ test.describe('Epic 7: Multi-Bottle Support', () => {
     });
 
     test('switching SKU via URL updates bottle context', async ({ page }) => {
+      const pill = page.locator('.qrl-selector-pill');
+
       // Start with 500ml
       await page.goto('/?sku=afia-sunflower-500ml');
-      await page.waitForLoadState('networkidle');
-      const pill500 = await page.locator('.qrl-selector-pill').textContent();
+      await expect(pill).toBeVisible({ timeout: 10000 });
+      const pill500 = await pill.textContent();
       expect(pill500).toContain('500');
 
       // Navigate to 1L
       await page.goto('/?sku=afia-sunflower-1l');
-      await page.waitForLoadState('networkidle');
-      const pill1l = await page.locator('.qrl-selector-pill').textContent();
+      await expect(pill).toBeVisible({ timeout: 10000 });
+      const pill1l = await pill.textContent();
       expect(pill1l).toContain('1');
 
       // The two bottle names should be different
