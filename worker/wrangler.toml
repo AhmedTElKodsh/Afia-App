@@ -5,9 +5,9 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 # Non-secret env vars (secrets set via `wrangler secret put`)
-ALLOWED_ORIGINS = "https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173"
+ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173"
 # Supabase configuration for persistent storage
-SUPABASE_URL = "https://mzznqrylgwqaterrqtob.supabase.co"
+SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co"
 # Set to "true" to include reasoning field in LLM output (adds ~30-50 output tokens)
 DEBUG_REASONING = "false"
 
