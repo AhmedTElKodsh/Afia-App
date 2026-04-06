@@ -326,8 +326,8 @@
         "icon": "👋"
       },
       "step2": {
-        "title": "Pick a Bottle to Test",
-        "content": "Select a bottle from the dropdown to simulate what happens when a user scans that bottle's QR code.",
+        "title": "Select the 1.5L Corn Oil",
+        "content": "The Afia Corn Oil 1.5L is the active bottle. Select it from the dropdown to simulate a real user scan.",
         "icon": "📥"
       },
       "step3": {
@@ -351,7 +351,7 @@
       "title": "TEST LAB",
       "sessionTests": "Test{{count}} This Session",
       "sessionTests_plural": "Tests{{count}} This Session",
-      "subtitle": "No QR code needed — pick a bottle and run the full scan flow from right here",
+      "subtitle": "No QR code needed — select the 1.5L Corn Oil and run the full scan right here",
       "selectMode": "SELECT TEST MODE",
       "userFlow": "USER SIMULATION",
       "userFlowDesc": "Identical to what your customers see — no debug panels",
@@ -359,10 +359,10 @@
       "debugModeDesc": "Same scan + API response panel opens automatically after each scan",
       "debugHint": "API inspector & validation panel will open automatically after the scan completes",
       "selected": "Selected",
-      "selectBottleScanQr": "CHOOSE A BOTTLE TO TEST",
-      "selectBottlePlaceholder": "Select Bottle...",
-      "searchPlaceholder": "Search bottles...",
-      "noResults": "No bottles found matching \"{{query}}\"",
+      "selectBottleScanQr": "SELECT THE BOTTLE",
+      "selectBottlePlaceholder": "Afia Corn Oil 1.5L",
+      "searchPlaceholder": "Search...",
+      "noResults": "No bottle found matching \"{{query}}\"",
       "clear": "Clear",
       "scanMockQr": "Start Test Scan",
       "selectToActivate": "↑ Select a bottle to begin the scan",
