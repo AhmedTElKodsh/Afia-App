@@ -200,7 +200,7 @@
     },
     "tabs": {
       "overview": "Overview",
-      "bottles": "Registry",
+      "bottles": "Bottles",
       "qrmock": "QR Codes",
       "export": "Export"
     },
@@ -322,22 +322,22 @@
     "onboarding": {
       "step1": {
         "title": "Welcome to Test Lab!",
-        "content": "This simulates the EXACT user scanning experience with optional debug tools for validation.",
+        "content": "Test the full scan flow without needing a physical QR code — just pick a bottle and go.",
         "icon": "👋"
       },
       "step2": {
-        "title": "Choose Your Entry Point",
-        "content": "Scan Mock QR codes or select bottles from dropdown - both lead to the same user flow.",
+        "title": "Pick a Bottle to Test",
+        "content": "Select a bottle from the dropdown to simulate what happens when a user scans that bottle's QR code.",
         "icon": "📥"
       },
       "step3": {
-        "title": "Exact User Experience",
-        "content": "This is IDENTICAL to the user camera experience - same framing, same guidance, same results.",
+        "title": "Same as the User App",
+        "content": "The camera, framing, guidance, and results are identical to what your customers see. You just skipped the physical QR.",
         "icon": "📸"
       },
       "step4": {
-        "title": "Admin Debug Tools",
-        "content": "Expand this panel to see API responses, validate results, and add test notes.",
+        "title": "API Inspector (Optional)",
+        "content": "Switch to API Inspector mode to automatically see response data and validate AI accuracy after each scan.",
         "icon": "🔧"
       },
       "progress": "Step {{current}} of {{total}}",
@@ -351,22 +351,22 @@
       "title": "TEST LAB",
       "sessionTests": "Test{{count}} This Session",
       "sessionTests_plural": "Tests{{count}} This Session",
-      "subtitle": "Test the exact user scanning experience + optional debug tools",
+      "subtitle": "No QR code needed — pick a bottle and run the full scan flow from right here",
       "selectMode": "SELECT TEST MODE",
       "userFlow": "USER SIMULATION",
-      "userFlowDesc": "Walk through the app as a real customer",
+      "userFlowDesc": "Identical to what your customers see — no debug panels",
       "debugMode": "API INSPECTOR",
-      "debugModeDesc": "Inspect responses & validate scan results",
-      "debugHint": "API inspector & validation panel open automatically after each scan",
+      "debugModeDesc": "Same scan + API response panel opens automatically after each scan",
+      "debugHint": "API inspector & validation panel will open automatically after the scan completes",
       "selected": "Selected",
-      "selectBottleScanQr": "SELECT BOTTLE / SCAN QR",
+      "selectBottleScanQr": "CHOOSE A BOTTLE TO TEST",
       "selectBottlePlaceholder": "Select Bottle...",
       "searchPlaceholder": "Search bottles...",
       "noResults": "No bottles found matching \"{{query}}\"",
       "clear": "Clear",
-      "scanMockQr": "Scan Mock QR",
-      "selectToActivate": "↑ Select a bottle to activate",
-      "startWithSelected": "Start scan with selected bottle",
+      "scanMockQr": "Start Test Scan",
+      "selectToActivate": "↑ Select a bottle to begin the scan",
+      "startWithSelected": "Start test scan with selected bottle",
       "pleaseSelectFirst": "Please select a bottle first",
       "capturePhoto": "CAPTURE PHOTO",
       "analyzing": "Analyzing with AI...",
