@@ -20,8 +20,11 @@ export interface BottleEntry {
 
 /**
  * AFIA BRAND BOTTLE REGISTRY
- * All bottles are Afia brand with different sizes and shapes
- * Geometries are approximate - adjust based on actual bottle measurements
+ *
+ * Single-SKU hard restriction: only the 1.5L Afia Corn Oil bottle is
+ * supported end-to-end. Multi-bottle support (Epic 7) was removed — the
+ * app is now deliberately locked to one SKU to match the physical bottle
+ * the POC is being piloted against.
  */
 export const bottleRegistry: BottleEntry[] = [
   {
@@ -39,93 +42,6 @@ export const bottleRegistry: BottleEntry[] = [
     },
     imageUrl: "/bottles/afia-corn-1.5l.png",
   },
-  {
-    sku: "afia-sunflower-250ml",
-    name: "Afia Pure Sunflower Oil 250ml",
-    oilType: "sunflower",
-    totalVolumeMl: 250,
-    geometry: {
-      shape: "cylinder",
-      heightMm: 165,
-      diameterMm: 55,
-    },
-    imageUrl: "/bottles/afia-sunflower-250ml.png",
-  },
-  {
-    sku: "afia-sunflower-500ml",
-    name: "Afia Pure Sunflower Oil 500ml",
-    oilType: "sunflower",
-    totalVolumeMl: 500,
-    geometry: {
-      shape: "cylinder",
-      heightMm: 210,
-      diameterMm: 65,
-    },
-    imageUrl: "/bottles/afia-sunflower-500ml.png",
-  },
-  {
-    sku: "afia-sunflower-700ml",
-    name: "Afia Pure Sunflower Oil 700ml",
-    oilType: "sunflower",
-    totalVolumeMl: 700,
-    geometry: {
-      shape: "cylinder",
-      heightMm: 245,
-      diameterMm: 70,
-    },
-    imageUrl: "/bottles/afia-sunflower-700ml.png",
-  },
-  {
-    sku: "afia-sunflower-1l",
-    name: "Afia Pure Sunflower Oil 1L",
-    oilType: "sunflower",
-    totalVolumeMl: 1000,
-    geometry: {
-      shape: "cylinder",
-      heightMm: 275,
-      diameterMm: 80,
-    },
-    imageUrl: "/bottles/afia-sunflower-1l.png",
-  },
-  {
-    sku: "afia-sunflower-2.25l",
-    name: "Afia Pure Sunflower Oil 2.25L",
-    oilType: "sunflower",
-    totalVolumeMl: 2250,
-    geometry: {
-      shape: "frustum",
-      heightMm: 340,
-      topDiameterMm: 95,
-      bottomDiameterMm: 120,
-    },
-    imageUrl: "/bottles/afia-sunflower-2.25l.png",
-  },
-  {
-    sku: "afia-sunflower-3l",
-    name: "Afia Pure Sunflower Oil 3L",
-    oilType: "sunflower",
-    totalVolumeMl: 3000,
-    geometry: {
-      shape: "frustum",
-      heightMm: 380,
-      topDiameterMm: 105,
-      bottomDiameterMm: 135,
-    },
-    imageUrl: "/bottles/afia-sunflower-3l.png",
-  },
-  {
-    sku: "afia-sunflower-3.5l",
-    name: "Afia Pure Sunflower Oil 3.5L",
-    oilType: "sunflower",
-    totalVolumeMl: 3500,
-    geometry: {
-      shape: "frustum",
-      heightMm: 410,
-      topDiameterMm: 110,
-      bottomDiameterMm: 140,
-    },
-    imageUrl: "/bottles/afia-sunflower-3.5l.png",
-  },
 ];
 
 export function getBottleBySku(sku: string): BottleEntry | undefined {
@@ -140,8 +56,7 @@ export const ACTIVE_SKU = "afia-corn-1.5l";
 
 /**
  * Subset of bottleRegistry containing only bottles available for user scanning.
- * Use this in place of bottleRegistry wherever the UI should reflect the restricted set.
+ * Retained as a named export for backwards compatibility with call sites that
+ * expected a filtered list — now identical to bottleRegistry.
  */
-export const activeBottleRegistry: BottleEntry[] = bottleRegistry.filter(
-  (b) => b.sku === ACTIVE_SKU
-);
+export const activeBottleRegistry: BottleEntry[] = bottleRegistry;

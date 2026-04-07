@@ -1,5 +1,11 @@
 # Afia App — Known Issues & Technical Debt
 
+## Active SKU Restriction
+
+**The app is hard-locked to a single SKU: `afia-corn-1.5l` (Afia Pure Corn Oil 1.5L).**
+
+All other historical bottles (sunflower 250ml..3.5L) were removed from `shared/bottleRegistry.ts` as part of the POC pilot restriction. Epic 7 (Multi-Bottle Support) is deprecated — its E2E tests have been rewritten to assert the single-SKU behaviour and that legacy QR codes degrade gracefully to the not-supported state. Re-enabling multi-bottle requires adding entries back to the registry and restoring the Epic 7 test suite from git history.
+
 ## Code Duplication
 
 ### Bottle Registry (Manual Sync Required)

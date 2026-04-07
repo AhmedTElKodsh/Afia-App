@@ -509,13 +509,6 @@
     "notFound": "Page not found"
   },
   "bottles": {
-    "afia-corn-1.5l": "Afia Pure Corn Oil 1.5L",
-    "afia-sunflower-250ml": "Afia Pure Sunflower Oil 250ml",
-    "afia-sunflower-500ml": "Afia Pure Sunflower Oil 500ml",
-    "afia-sunflower-700ml": "Afia Pure Sunflower Oil 700ml",
-    "afia-sunflower-1l": "Afia Pure Sunflower Oil 1L",
-    "afia-sunflower-2.25l": "Afia Pure Sunflower Oil 2.25L",
-    "afia-sunflower-3l": "Afia Pure Sunflower Oil 3L",
-    "afia-sunflower-3.5l": "Afia Pure Sunflower Oil 3.5L"
+    "afia-corn-1.5l": "Afia Pure Corn Oil 1.5L"
   }
 }

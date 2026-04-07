@@ -2,6 +2,8 @@
 
 A mobile-first PWA that uses AI vision to estimate the fill level of cooking oil bottles from a single photo. Users scan a QR code on their bottle, photograph it, and instantly see how much oil remains — in ml, tablespoons, and cups — along with nutrition facts for the oil consumed.
 
+> **POC scope — single SKU:** The app is currently hard-locked to one bottle: **Afia Pure Corn Oil 1.5L** (`afia-corn-1.5l`). Legacy multi-bottle support (Epic 7) was retired in favour of a focused POC pilot. Unknown or legacy SKUs gracefully degrade to the "not supported" state.
+
 ## How It Works
 
 1. **QR code → landing page** — Each bottle has a QR code encoding `/?sku=<bottle-id>`
