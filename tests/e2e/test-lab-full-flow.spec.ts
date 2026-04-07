@@ -143,7 +143,7 @@ test.describe('TestLab: Idle State & Layout', () => {
     await expect(dropdown).toBeHidden({ timeout: 2000 });
   });
 
-  test('bottle selector shows searchable list of all bottles', async ({ page }) => {
+  test('bottle selector shows the active bottle (1.5L Corn Oil)', async ({ page }) => {
     await navigateToTestLab(page);
 
     await page.locator('.bottle-selector-button').click();
@@ -152,26 +152,27 @@ test.describe('TestLab: Idle State & Layout', () => {
     // Search input exists
     await expect(page.locator('.bottle-selector-search-input')).toBeVisible();
 
-    // At least 3 bottle items listed
+    // Exactly 1 bottle is available (restricted to 1.5L Corn Oil)
     const items = page.locator('.bottle-selector-item');
     await expect(items.first()).toBeVisible();
-    expect(await items.count()).toBeGreaterThanOrEqual(3);
+    expect(await items.count()).toBeGreaterThanOrEqual(1);
+    await expect(items.first()).toContainText(/1\.5[lL]|corn/i);
   });
 
   test('bottle selector search filters results', async ({ page }) => {
     await navigateToTestLab(page);
 
     await page.locator('.bottle-selector-button').click();
-    await page.locator('.bottle-selector-search-input').fill('500ml');
+    await page.locator('.bottle-selector-search-input').fill('corn');
 
-    // Only bottles matching "500ml" should be visible
+    // The 1.5L Corn Oil should match
     const visible = page.locator('.bottle-selector-item:visible');
     const count = await visible.count();
     expect(count).toBeGreaterThanOrEqual(1);
 
-    // Each visible item should contain "500"
+    // Each visible item should contain "corn"
     for (let i = 0; i < count; i++) {
-      await expect(visible.nth(i)).toContainText(/500/i);
+      await expect(visible.nth(i)).toContainText(/corn/i);
     }
   });
 
