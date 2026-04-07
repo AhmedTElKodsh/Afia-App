@@ -14,7 +14,7 @@ export async function mockAnalyzeSuccess(page: Page) {
       body: JSON.stringify({
         scanId: 'test-scan-e2e-123',
         fillPercentage: 65,
-        remainingMl: 325,
+        remainingMl: 975,
         confidence: 'high',
         aiProvider: 'gemini',
         latencyMs: 1234,
@@ -34,7 +34,7 @@ export async function mockAnalyzeLowConfidence(page: Page) {
       body: JSON.stringify({
         scanId: 'test-scan-low-conf',
         fillPercentage: 45,
-        remainingMl: 225,
+        remainingMl: 675,
         confidence: 'low',
         aiProvider: 'groq',
         latencyMs: 2345,

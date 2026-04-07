@@ -5,11 +5,11 @@ test.describe('Oil Bottle Scan Flow', () => {
 
   test('should display bottle info for valid SKU', async ({ page }) => {
     // Navigate to app with valid SKU
-    await page.goto('/?sku=afia-sunflower-500ml');
+    await page.goto('/?sku=afia-corn-1.5l');
 
     // Verify bottle info is displayed (use first() to avoid strict mode)
-    await expect(page.locator('h1, .qrl-selector-pill')).toContainText(/Afia.*Sunflower/i);
-    await expect(page.locator('text=500ml').first()).toBeVisible();
+    await expect(page.locator('h1, .qrl-selector-pill')).toContainText(/Afia.*Corn|1\.5[lL]/i);
+    await expect(page.locator('text=/1\\.5[lL]/').first()).toBeVisible();
     
     // START SMART SCAN is the CTA text for Afia app
     await expect(page.locator('button:has-text("START SMART SCAN"), button:has-text("Start Scan")').first()).toBeVisible();
@@ -38,7 +38,7 @@ test.describe('Oil Bottle Scan Flow', () => {
     });
 
     // Navigate to app
-    await page.goto('/?sku=afia-sunflower-500ml');
+    await page.goto('/?sku=afia-corn-1.5l');
 
     // Click Start Scan using helper
     const startButton = getStartScanButton(page);
@@ -56,7 +56,7 @@ test.describe('Oil Bottle Scan Flow', () => {
   });
 
   test('should navigate between views', async ({ page }) => {
-    await page.goto('/?sku=afia-sunflower-500ml');
+    await page.goto('/?sku=afia-corn-1.5l');
 
     // Check if navigation exists
     const hasNavigation = await page.locator('nav, .main-navigation').count();

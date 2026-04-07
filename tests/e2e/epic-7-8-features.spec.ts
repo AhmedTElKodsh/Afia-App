@@ -1,14 +1,19 @@
 import { test, expect } from '@playwright/test';
-import { testBottles } from './fixtures/testData';
-import { mockAnalyzeSuccess, mockCamera } from './helpers/mockAPI';
-import { clickStartScan, clickCapture } from './helpers/testHelpers';
 
 /**
- * Epics 7 & 8: Multi-Bottle Support & Data Export
+ * Epics 7 & 8: Single-SKU Restriction & Data Export
  *
- * Epic 7 — Story 7.1: User can track multiple distinct bottles (different SKUs/sizes)
- * Epic 8 — Story 8.1: Admin can export scan data as CSV / JSON
+ * Epic 7 — REWRITTEN: The app was originally designed to support multiple
+ * bottle SKUs (Story 7.1). It has since been hard-locked to a single SKU
+ * (afia-corn-1.5l). The tests below assert that behaviour instead: only
+ * the 1.5L Corn Oil bottle is recognised, and unknown/legacy SKUs gracefully
+ * fall back or are rejected.
+ *
+ * Epic 8 — Story 8.1: Admin can export scan data as CSV / JSON (unchanged).
  */
+
+const ACTIVE_SKU = 'afia-corn-1.5l';
+const ACTIVE_NAME_FRAGMENT = /1\.5[lL]|corn/i;
 
 // ─── Shared admin init script ───────────────────────────────────────────────
 async function seedHistoryAndLogin(page: any) {
@@ -18,22 +23,22 @@ async function seedHistoryAndLogin(page: any) {
     const mockScans = [
       {
         id: 'export-1',
-        sku: 'afia-sunflower-500ml',
-        bottleName: 'Afia Pure Sunflower Oil 500ml',
+        sku: 'afia-corn-1.5l',
+        bottleName: 'Afia Pure Corn Oil 1.5L',
         timestamp: new Date(Date.now() - 86400000).toISOString(),
         fillPercentage: 80,
-        remainingMl: 400,
-        consumedMl: 100,
+        remainingMl: 1200,
+        consumedMl: 300,
         confidence: 'high',
       },
       {
         id: 'export-2',
-        sku: 'afia-sunflower-1l',
-        bottleName: 'Afia Pure Sunflower Oil 1L',
+        sku: 'afia-corn-1.5l',
+        bottleName: 'Afia Pure Corn Oil 1.5L',
         timestamp: new Date().toISOString(),
         fillPercentage: 55,
-        remainingMl: 550,
-        consumedMl: 450,
+        remainingMl: 825,
+        consumedMl: 675,
         confidence: 'medium',
       },
     ];
@@ -42,89 +47,58 @@ async function seedHistoryAndLogin(page: any) {
   });
 }
 
-// ─── Epic 7: Multi-Bottle Support ────────────────────────────────────────────
+// ─── Epic 7: Single-SKU Restriction ──────────────────────────────────────────
 
-test.describe('Epic 7: Multi-Bottle Support', () => {
+test.describe('Epic 7: Single-SKU Restriction (1.5L only)', () => {
 
-  test.describe('Different bottle SKUs via URL', () => {
+  test.describe('Active SKU via URL', () => {
 
-    test('should display 500ml bottle details', async ({ page }) => {
-      await page.goto('/?sku=afia-sunflower-500ml');
+    test('should display the 1.5L Corn Oil bottle details', async ({ page }) => {
+      await page.goto(`/?sku=${ACTIVE_SKU}`);
       await page.waitForLoadState('networkidle');
 
       const pill = page.locator('.qrl-selector-pill');
       await expect(pill).toBeVisible({ timeout: 5000 });
-      await expect(pill).toContainText('500ml');
+      await expect(pill).toContainText(ACTIVE_NAME_FRAGMENT);
     });
 
-    test('should display 1L bottle details', async ({ page }) => {
-      await page.goto('/?sku=afia-sunflower-1l');
-      await page.waitForLoadState('networkidle');
-
-      const pill = page.locator('.qrl-selector-pill');
-      await expect(pill).toBeVisible({ timeout: 5000 });
-      await expect(pill).toContainText('1');
-    });
-
-    test('should display 700ml bottle details', async ({ page }) => {
-      await page.goto(`/?sku=${testBottles.bertolli.sku}`);
-      await page.waitForLoadState('networkidle');
-
-      const pill = page.locator('.qrl-selector-pill');
-      await expect(pill).toBeVisible({ timeout: 5000 });
-      await expect(pill).toContainText('700ml');
-    });
-
-    test('each SKU shows the correct bottle name in header', async ({ page }) => {
-      const skus = [
-        { sku: 'afia-sunflower-250ml', contains: '250' },
-        { sku: 'afia-sunflower-500ml', contains: '500' },
-        { sku: 'afia-sunflower-700ml', contains: '700' },
+    test('legacy sunflower SKUs fall back gracefully (no crash)', async ({ page }) => {
+      // These SKUs were removed from the registry. The app should not crash
+      // when an old QR code is scanned — it should either render a fallback
+      // or the default landing state.
+      const legacySkus = [
+        'afia-sunflower-500ml',
+        'afia-sunflower-1l',
+        'afia-sunflower-700ml',
       ];
 
-      for (const { sku, contains } of skus) {
+      for (const sku of legacySkus) {
         await page.goto(`/?sku=${sku}`);
         await page.waitForLoadState('networkidle');
-        const pill = page.locator('.qrl-selector-pill');
-        await expect(pill).toBeVisible({ timeout: 5000 });
-        const pillText = await pill.textContent();
-        expect(pillText).toContain(contains);
+        // App shell must still render — no white screen of death
+        await expect(page.locator('body')).toBeVisible();
       }
     });
 
-    test('switching SKU via URL updates bottle context', async ({ page }) => {
-      const pill = page.locator('.qrl-selector-pill');
-
-      // Start with 500ml
-      await page.goto('/?sku=afia-sunflower-500ml');
-      await expect(pill).toBeVisible({ timeout: 10000 });
-      const pill500 = await pill.textContent();
-      expect(pill500).toContain('500');
-
-      // Navigate to 1L
-      await page.goto('/?sku=afia-sunflower-1l');
-      await expect(pill).toBeVisible({ timeout: 10000 });
-      const pill1l = await pill.textContent();
-      expect(pill1l).toContain('1');
-
-      // The two bottle names should be different
-      expect(pill500).not.toEqual(pill1l);
+    test('root URL (no SKU) renders the landing page', async ({ page }) => {
+      await page.goto('/');
+      await page.waitForLoadState('networkidle');
+      await expect(page.locator('body')).toBeVisible();
     });
   });
 
-  test.describe('Scan history per bottle (localStorage)', () => {
+  test.describe('Scan history (localStorage)', () => {
 
-    test('should store scan in history for the scanned SKU', async ({ page }) => {
-      // Seed a scan directly — simulates what happens after a successful analysis
+    test('should store scan in history for the active SKU', async ({ page }) => {
       await page.addInitScript(() => {
         const storedScan = {
-          id: 'multi-bottle-scan-1',
-          sku: 'afia-sunflower-500ml',
-          bottleName: 'Afia Pure Sunflower Oil 500ml',
+          id: 'single-sku-scan-1',
+          sku: 'afia-corn-1.5l',
+          bottleName: 'Afia Pure Corn Oil 1.5L',
           timestamp: new Date().toISOString(),
           fillPercentage: 60,
-          remainingMl: 300,
-          consumedMl: 200,
+          remainingMl: 900,
+          consumedMl: 600,
           confidence: 'high',
         };
         localStorage.setItem('afia_scan_history', JSON.stringify([storedScan]));
@@ -134,48 +108,25 @@ test.describe('Epic 7: Multi-Bottle Support', () => {
       await page.goto('/');
       await page.click('button[aria-label="History"]');
 
-      // Verify the scan appears in history with correct SKU data
-      await expect(page.locator('text=Afia Pure Sunflower Oil 500ml')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('text=Afia Pure Corn Oil 1.5L')).toBeVisible({ timeout: 5000 });
 
-      // Verify the history localStorage entry has the correct SKU
       const history = await page.evaluate(() =>
         JSON.parse(localStorage.getItem('afia_scan_history') || '[]')
       );
       expect(history.length).toBeGreaterThan(0);
-      expect(history[0].sku).toBe('afia-sunflower-500ml');
+      expect(history[0].sku).toBe('afia-corn-1.5l');
     });
 
-    test('scan history view shows scans from multiple bottle SKUs', async ({ page }) => {
+    test('QR landing sparkline counts only scans for the active SKU', async ({ page }) => {
       await page.addInitScript(() => {
         const mockScans = [
           {
-            id: 'mb-1', sku: 'afia-sunflower-500ml', bottleName: 'Afia 500ml',
-            timestamp: new Date().toISOString(), fillPercentage: 70, remainingMl: 350, consumedMl: 150, confidence: 'high'
+            id: 's1', sku: 'afia-corn-1.5l', bottleName: 'Afia 1.5L',
+            timestamp: new Date().toISOString(), fillPercentage: 70, remainingMl: 1050, consumedMl: 450, confidence: 'high'
           },
+          // Legacy scan from a removed SKU — should be ignored by the active-SKU sparkline
           {
-            id: 'mb-2', sku: 'afia-sunflower-1l', bottleName: 'Afia 1L',
-            timestamp: new Date().toISOString(), fillPercentage: 40, remainingMl: 400, consumedMl: 600, confidence: 'medium'
-          },
-        ];
-        localStorage.setItem('afia_scan_history', JSON.stringify(mockScans));
-      });
-
-      await page.goto('/');
-      await page.click('button[aria-label="History"]');
-
-      await expect(page.locator('text=Afia 500ml')).toBeVisible({ timeout: 5000 });
-      await expect(page.locator('text=Afia 1L')).toBeVisible({ timeout: 5000 });
-    });
-
-    test('QR landing page sparkline shows history only for the current SKU', async ({ page }) => {
-      await page.addInitScript(() => {
-        const mockScans = [
-          {
-            id: 'sku-a-1', sku: 'afia-sunflower-500ml', bottleName: 'Afia 500ml',
-            timestamp: new Date().toISOString(), fillPercentage: 70, remainingMl: 350, consumedMl: 150, confidence: 'high'
-          },
-          {
-            id: 'sku-b-1', sku: 'afia-sunflower-1l', bottleName: 'Afia 1L',
+            id: 's2', sku: 'afia-sunflower-1l', bottleName: 'Afia 1L',
             timestamp: new Date().toISOString(), fillPercentage: 40, remainingMl: 400, consumedMl: 600, confidence: 'medium'
           },
         ];
@@ -183,21 +134,20 @@ test.describe('Epic 7: Multi-Bottle Support', () => {
         localStorage.setItem('afia_privacy_accepted', 'true');
       });
 
-      // Navigate to 500ml bottle
-      await page.goto('/?sku=afia-sunflower-500ml');
+      await page.goto(`/?sku=${ACTIVE_SKU}`);
       await page.waitForLoadState('networkidle');
 
-      // The sparkline should show "1 scans" for this SKU only
       const sparklineCount = page.locator('.qrl-sparkline-count');
       await expect(sparklineCount).toBeVisible({ timeout: 5000 });
       const countText = await sparklineCount.textContent();
+      // Should only count the 1 scan for the active SKU
       expect(countText).toContain('1');
     });
   });
 
   test.describe('Bottle Selector (Admin mode)', () => {
 
-    test('should show bottle selector in admin mode with no SKU', async ({ page }) => {
+    test('admin TestLab is reachable in admin mode', async ({ page }) => {
       await page.addInitScript(() => {
         window.sessionStorage.setItem('afia_admin_session', 'valid-token');
         window.sessionStorage.setItem('afia_admin_session_expires', String(Date.now() + 3600000));
@@ -206,9 +156,28 @@ test.describe('Epic 7: Multi-Bottle Support', () => {
       await page.goto('/?mode=admin');
       await page.waitForLoadState('networkidle');
 
-      // Admin mode shows TestLab at root, which has the bottle selector
-      // The .nav-label for "Test Lab" should be present
       await expect(page.locator('.nav-label:has-text("Test Lab"), .app-ctrl-admin-label').first()).toBeVisible({ timeout: 5000 });
+    });
+
+    test('bottle selector only offers the 1.5L Corn Oil bottle', async ({ page }) => {
+      await page.addInitScript(() => {
+        window.sessionStorage.setItem('afia_admin_session', 'valid-token');
+        window.sessionStorage.setItem('afia_admin_session_expires', String(Date.now() + 3600000));
+        localStorage.setItem('afia_privacy_accepted', 'true');
+        localStorage.setItem('afia_admin_onboarding_seen', 'true');
+      });
+      await page.goto('/?mode=admin');
+      await page.waitForLoadState('networkidle');
+      await page.locator('button[aria-label="Test Lab"]').click();
+
+      await page.locator('.bottle-selector-button').click();
+      const items = page.locator('.bottle-selector-item');
+      await expect(items.first()).toBeVisible({ timeout: 3000 });
+
+      // Exactly one bottle available — the single-SKU restriction
+      const count = await items.count();
+      expect(count).toBe(1);
+      await expect(items.first()).toContainText(ACTIVE_NAME_FRAGMENT);
     });
   });
 });
@@ -229,11 +198,9 @@ test.describe('Epic 8: Data Export', () => {
       await page.goto('/?mode=admin');
       await page.waitForSelector('.top-navbar, .brand, .brand-name');
 
-      // Navigate to Export tab using the nav-items-container to avoid ambiguity
       await page.locator('.nav-items-container').getByRole('button', { name: 'Export' }).click();
       await expect(page.locator('.export-tab')).toBeVisible({ timeout: 5000 });
 
-      // Promise.all to avoid race condition between setup and click
       const [download] = await Promise.all([
         page.waitForEvent('download', { timeout: 10000 }),
         page.locator('.export-btn-card').filter({ hasText: /CSV/i }).click(),
@@ -271,7 +238,6 @@ test.describe('Epic 8: Data Export', () => {
       await page.locator('.nav-items-container').getByRole('button', { name: 'Export' }).click();
       await expect(page.locator('.export-tab')).toBeVisible({ timeout: 5000 });
 
-      // Both export buttons should be disabled when no scans exist
       const csvBtn = page.locator('.export-btn-card').filter({ hasText: /CSV/i });
       const jsonBtn = page.locator('.export-btn-card').filter({ hasText: /JSON/i });
 
@@ -287,11 +253,9 @@ test.describe('Epic 8: Data Export', () => {
       await page.locator('.nav-items-container').getByRole('button', { name: 'Export' }).click();
       await expect(page.locator('.export-tab')).toBeVisible({ timeout: 5000 });
 
-      // The summary box shows the count of scans ready to export
       const summaryCount = page.locator('.export-summary-count');
       await expect(summaryCount).toBeVisible();
       const countText = await summaryCount.textContent();
-      // 2 scans were seeded
       expect(Number(countText)).toBeGreaterThanOrEqual(2);
     });
   });
@@ -302,8 +266,8 @@ test.describe('Epic 8: Data Export', () => {
       await page.addInitScript(() => {
         const mockScans = [
           {
-            id: 'h-1', sku: 'afia-sunflower-500ml', bottleName: 'Afia 500ml',
-            timestamp: new Date().toISOString(), fillPercentage: 70, remainingMl: 350, consumedMl: 150, confidence: 'high'
+            id: 'h-1', sku: 'afia-corn-1.5l', bottleName: 'Afia 1.5L',
+            timestamp: new Date().toISOString(), fillPercentage: 70, remainingMl: 1050, consumedMl: 450, confidence: 'high'
           },
         ];
         localStorage.setItem('afia_scan_history', JSON.stringify(mockScans));
@@ -312,17 +276,14 @@ test.describe('Epic 8: Data Export', () => {
       await page.goto('/');
       await page.click('button[aria-label="History"]');
 
-      // Look for any export-related element in the history view
       const exportEl = page.locator(
         'button:has-text("Export"), button:has-text("Download"), [data-testid*="export"]'
       ).first();
 
-      // If an export option exists in the scan history view, it should be visible
       const hasExport = await exportEl.isVisible({ timeout: 3000 }).catch(() => false);
       if (hasExport) {
         await expect(exportEl).toBeEnabled();
       }
-      // If no export option in history view, that's also fine — export lives in admin only
     });
   });
 });

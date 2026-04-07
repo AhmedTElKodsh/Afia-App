@@ -1,25 +1,36 @@
 /**
  * Test data fixtures for Afia Oil Tracker E2E tests
+ *
+ * Single-SKU restriction: the app is locked to the 1.5L Afia Corn Oil
+ * bottle. All other historical SKUs (sunflower 250ml..3.5L) were removed
+ * from the registry — keep only the active bottle here.
  */
 
 export const testBottles = {
+  afiaCorn15L: {
+    sku: 'afia-corn-1.5l',
+    name: 'Afia Pure Corn Oil 1.5L',
+    volume: '1.5L',
+    oilType: 'Corn Oil',
+  },
+  /** Retained aliases: legacy multi-bottle tests imported these names — all now point to the single active SKU. */
   filippoBerio: {
-    sku: 'afia-sunflower-500ml',
-    name: 'Afia Pure Sunflower Oil 500ml',
-    volume: '500ml',
-    oilType: 'Sunflower Oil',
+    sku: 'afia-corn-1.5l',
+    name: 'Afia Pure Corn Oil 1.5L',
+    volume: '1.5L',
+    oilType: 'Corn Oil',
   },
   bertolli: {
-    sku: 'afia-sunflower-700ml',
-    name: 'Afia Pure Sunflower Oil 700ml',
-    volume: '700ml',
-    oilType: 'Sunflower Oil',
+    sku: 'afia-corn-1.5l',
+    name: 'Afia Pure Corn Oil 1.5L',
+    volume: '1.5L',
+    oilType: 'Corn Oil',
   },
   afia: {
-    sku: 'afia-sunflower-1l',
-    name: 'Afia Pure Sunflower Oil 1L',
-    volume: '1L',
-    oilType: 'Sunflower Oil',
+    sku: 'afia-corn-1.5l',
+    name: 'Afia Pure Corn Oil 1.5L',
+    volume: '1.5L',
+    oilType: 'Corn Oil',
   },
   invalid: {
     sku: 'invalid-bottle-xyz',
@@ -39,12 +50,12 @@ export const expectedResults = {
   highConfidence: {
     fillPercentage: 65,
     confidence: 'high',
-    remainingMl: 325,
+    remainingMl: 975, // 65% of 1500ml
   },
   lowConfidence: {
     fillPercentage: 45,
     confidence: 'low',
-    remainingMl: 225,
+    remainingMl: 675, // 45% of 1500ml
   },
 };
 

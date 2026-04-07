@@ -17,7 +17,7 @@ test.describe('Premium UI Components - Visual Regression', () => {
   });
 
   test('QR Landing Page - Default State', async ({ page }) => {
-    await page.goto('/?sku=afia-sunflower-500ml');
+    await page.goto('/?sku=afia-corn-1.5l');
     await page.waitForLoadState('networkidle');
     
     // Wait for fonts to load
@@ -28,7 +28,7 @@ test.describe('Premium UI Components - Visual Regression', () => {
 
   test('QR Landing Page - Offline State', async ({ page }) => {
     // Must navigate while online first so the page is loadable, then go offline
-    await page.goto('/?sku=afia-sunflower-500ml');
+    await page.goto('/?sku=afia-corn-1.5l');
     await page.waitForLoadState('networkidle');
     await page.context().setOffline(true);
     await page.waitForTimeout(500);
@@ -37,7 +37,7 @@ test.describe('Premium UI Components - Visual Regression', () => {
   });
 
   test('Privacy Inline - Collapsed', async ({ page }) => {
-    await page.goto('/?sku=afia-sunflower-500ml');
+    await page.goto('/?sku=afia-corn-1.5l');
     await page.waitForSelector('.privacy-inline-card');
     
     const privacyCard = page.locator('.privacy-inline-card');
@@ -45,7 +45,7 @@ test.describe('Premium UI Components - Visual Regression', () => {
   });
 
   test('Privacy Inline - Expanded', async ({ page }) => {
-    await page.goto('/?sku=afia-sunflower-500ml');
+    await page.goto('/?sku=afia-corn-1.5l');
     await page.waitForSelector('.privacy-inline-card');
     
     // Click "Learn More"
@@ -94,7 +94,7 @@ test.describe('Premium UI Components - Visual Regression', () => {
 
   test('Responsive - Tablet (768px)', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
-    await page.goto('/?sku=afia-sunflower-500ml');
+    await page.goto('/?sku=afia-corn-1.5l');
     await page.waitForLoadState('networkidle');
     
     expect(await page.screenshot()).toMatchSnapshot('responsive-tablet-768.png');
@@ -102,14 +102,14 @@ test.describe('Premium UI Components - Visual Regression', () => {
 
   test('Responsive - Desktop (1440px)', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('/?sku=afia-sunflower-500ml');
+    await page.goto('/?sku=afia-corn-1.5l');
     await page.waitForLoadState('networkidle');
     
     expect(await page.screenshot()).toMatchSnapshot('responsive-desktop-1440.png');
   });
 
   test('Dark Theme Consistency', async ({ page }) => {
-    await page.goto('/?sku=afia-sunflower-500ml');
+    await page.goto('/?sku=afia-corn-1.5l');
     await page.waitForLoadState('networkidle');
     
     // Check background color — app uses CSS variables, actual computed values:
@@ -130,7 +130,7 @@ test.describe('Premium UI Components - Visual Regression', () => {
 
 test.describe('Accessibility - Focus States', () => {
   test('Keyboard Navigation - Focus Visible', async ({ page }) => {
-    await page.goto('/?sku=afia-sunflower-500ml');
+    await page.goto('/?sku=afia-corn-1.5l');
 
     // Tab to first button
     await page.keyboard.press('Tab');
@@ -142,7 +142,7 @@ test.describe('Accessibility - Focus States', () => {
   });
 
   test('Keyboard Navigation - All Interactive Elements', async ({ page }) => {
-    await page.goto('/?sku=afia-sunflower-500ml');
+    await page.goto('/?sku=afia-corn-1.5l');
     
     const focusableElements = await page.locator('button, a, input, [tabindex="0"]').count();
     
