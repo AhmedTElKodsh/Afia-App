@@ -66,6 +66,6 @@ test.describe('Admin Test Lab', () => {
     // TestLab shows its main interface elements
     await expect(page.locator('h1:has-text("TEST LAB")')).toBeVisible();
     await expect(page.locator('text=SELECT TEST MODE')).toBeVisible();
-    await expect(page.locator('button:has-text("Scan Mock QR")')).toBeVisible();
+    await expect(page.locator('button:has-text("Start Test Scan")')).toBeVisible();
   });
 });

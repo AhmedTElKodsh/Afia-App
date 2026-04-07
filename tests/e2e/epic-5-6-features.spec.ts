@@ -86,9 +86,9 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
       const pageHeader = page.locator('.page-title, h1');
       await expect(pageHeader.first()).toContainText('Overview');
       
-      // Go to Registry
-      await page.getByRole('button', { name: /Registry/i }).click();
-      await expect(pageHeader.first()).toContainText('Registry');
+      // Go to Bottles
+      await page.getByRole('button', { name: /Bottles/i }).click();
+      await expect(pageHeader.first()).toContainText('Bottles');
       
       // Go to QR Codes
       await page.getByRole('button', { name: /QR Codes/i }).click();
