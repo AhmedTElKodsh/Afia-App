@@ -1,25 +1,12 @@
 import type { LLMResponse } from "../types.ts";
 import type { BottleEntry } from "../bottleRegistry.ts";
 import { parseLLMResponse } from "./parseLLMResponse.ts";
+import { buildOpenAIFewShotParts } from "../referenceFrames.ts";
+import { buildAnalysisPrompt } from "./buildAnalysisPrompt.ts";
 
 const MISTRAL_URL = "https://api.mistral.ai/v1/chat/completions";
 // pixtral-12b-2409 is Mistral's vision-capable model
 const MODEL = "pixtral-12b-2409";
-
-function buildSystemPrompt(debugReasoning: boolean): string {
-  const schema = debugReasoning
-    ? `{"fillPercentage":<0-100>,"confidence":"<high|medium|low>","imageQualityIssues":[<strings>],"reasoning":"<brief>"}`
-    : `{"fillPercentage":<0-100>,"confidence":"<high|medium|low>","imageQualityIssues":[<strings>]}`;
-  return `You are a CV system estimating cooking oil fill levels from bottle images.
-
-Analyze the image and return this JSON:
-${schema}
-
-Rules:
-- fillPercentage: visible liquid height / total bottle height × 100. Account for meniscus. Exclude cap and label.
-- confidence: "high"=clear+well-lit, "medium"=acceptable, "low"=poor quality
-- imageQualityIssues: list any of: blur, poor_lighting, obstruction, reflection`;
-}
 
 export async function callMistral(
   imageBase64: string,
@@ -27,20 +14,19 @@ export async function callMistral(
   apiKey: string,
   debugReasoning = false
 ): Promise<LLMResponse> {
-  const userText = `Bottle: ${bottle.name} (${bottle.sku}), ${bottle.totalVolumeMl}ml, shape=${bottle.geometry.shape}. Return JSON fill estimate.`;
+  const userText = `Bottle: ${bottle.name} (${bottle.sku}), ${bottle.totalVolumeMl}ml total. Return JSON fill estimate.`;
 
   const requestBody = {
     model: MODEL,
     messages: [
-      { role: "system", content: buildSystemPrompt(debugReasoning) },
+      { role: "system", content: buildAnalysisPrompt(debugReasoning, bottle.promptAnchors) },
       {
         role: "user",
         content: [
+          ...buildOpenAIFewShotParts(),
+          { type: "text", text: "Now estimate the fill level for THIS bottle:" },
           { type: "text", text: userText },
-          {
-            type: "image_url",
-            image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
-          },
+          { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}` } },
         ],
       },
     ],

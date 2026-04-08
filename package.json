@@ -15,7 +15,8 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
     "lint": "eslint .",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "generate:frames": "node scripts/encode_reference_frames.js > worker/src/referenceFrames.ts"
   },
   "dependencies": {
     "docx": "^9.6.0",

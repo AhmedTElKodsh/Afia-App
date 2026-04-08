@@ -6,7 +6,7 @@
  * 
  * Based on research from:
  * - ExposureNet: Mobile camera exposure parameters autonomous control
- * - Image Quality Assessment (Laplacian variance method)
+ * - Image Quality Assessment (Laplacian standard deviation method)
  * - MediaPipe pose detection for angle guidance
  */
 
@@ -65,13 +65,21 @@ let processingCanvas: HTMLCanvasElement | null = null;
 let processingContext: CanvasRenderingContext2D | null = null;
 
 /**
- * Get or create processing canvas for image analysis
+ * Get or create processing canvas for image analysis.
+ * Recreates both canvas and context if the context has been invalidated
+ * (e.g. the browser reclaimed GPU resources while the tab was backgrounded).
  */
 function getProcessingCanvas(): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } {
+  // Detect stale context: recreate if the context's canvas reference no longer matches.
+  if (processingContext && processingContext.canvas !== processingCanvas) {
+    processingCanvas = null;
+    processingContext = null;
+  }
+
   if (!processingCanvas || !processingContext) {
     processingCanvas = document.createElement('canvas');
     processingContext = processingCanvas.getContext('2d', { willReadFrequently: true });
-    
+
     if (!processingContext) {
       throw new Error('Unable to create canvas context for image analysis');
     }
@@ -127,10 +135,10 @@ function applyLaplacianFilter(grayData: Uint8ClampedArray, width: number, height
 }
 
 /**
- * Calculate variance of Laplacian response
- * Higher variance = sharper image (more edges)
+ * Calculate standard deviation of Laplacian response
+ * Higher std-dev = sharper image (more edges)
  */
-function calculateVariance(data: Float32Array): number {
+function calculateStdDev(data: Float32Array): number {
   const n = data.length;
   let sum = 0;
   
@@ -151,7 +159,7 @@ function calculateVariance(data: Float32Array): number {
 }
 
 /**
- * Detect blur using Laplacian variance method
+ * Detect blur using Laplacian standard deviation method
  * 
  * @param imageSource - Image, Video, or Canvas element
  * @returns Blur score (0-100, higher = sharper)
@@ -175,12 +183,14 @@ export function detectBlur(imageSource: HTMLImageElement | HTMLVideoElement | HT
     // Apply Laplacian filter
     const laplacian = applyLaplacianFilter(grayData, size, size);
     
-    // Calculate variance
-    const variance = calculateVariance(laplacian);
-    
-    // Normalize to 0-100 scale
-    // Typical variance ranges: 0-50 (blurry), 50-150 (acceptable), 150+ (sharp)
-    const normalizedScore = Math.min(100, Math.max(0, variance * 2));
+    // Calculate std-dev of Laplacian response (higher = sharper)
+    const stdDev = calculateStdDev(laplacian);
+
+    // Normalize to 0-100 scale.
+    // Typical std-dev ranges on a 100×100 downscaled image:
+    //   0–15  → blurry, 15–50 → acceptable, 50+ → sharp
+    // Scaling ×2 maps the useful 0–50 range onto 0–100.
+    const normalizedScore = Math.min(100, Math.max(0, stdDev * 2));
     
     return normalizedScore;
   } catch (error) {
@@ -253,7 +263,7 @@ export function assessLighting(imageSource: HTMLImageElement | HTMLVideoElement 
     let status: 'too-dark' | 'too-bright' | 'low-contrast' | 'good' = 'good';
     let isAcceptable = true;
     
-    if (brightness < 60) {
+    if (brightness < 40) {
       status = 'too-dark';
       isAcceptable = false;
     } else if (brightness > 220) {
@@ -353,14 +363,14 @@ function generateGuidanceMessage(
 ): { message: string; type: 'success' | 'warning' | 'error' } {
   // Priority order: blur > lighting > composition
   
-  if (blurScore < 40) {
+  if (blurScore < 30) {
     return {
       message: 'Hold steady - image is blurry',
       type: 'error',
     };
   }
-  
-  if (blurScore < 60) {
+
+  if (blurScore < 45) {
     return {
       message: 'Hold still...',
       type: 'warning',
@@ -516,7 +526,7 @@ export function createDebouncedAssessment(
 export const _testUtils = {
   toGrayscale,
   applyLaplacianFilter,
-  calculateVariance,
+  calculateStdDev,
   calculateBrightness,
   calculateContrast,
   generateGuidanceMessage,

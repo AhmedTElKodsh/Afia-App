@@ -50,7 +50,7 @@ export const expectedResults = {
   highConfidence: {
     fillPercentage: 65,
     confidence: 'high',
-    remainingMl: 975, // 65% of 1500ml
+    remainingMl: 1137, // calibrated: interpolated from afia-corn-1.5l table at fillHeightPct=65
   },
   lowConfidence: {
     fillPercentage: 45,

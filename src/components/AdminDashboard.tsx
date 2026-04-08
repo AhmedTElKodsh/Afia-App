@@ -146,7 +146,7 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
       } else if (res.status === 401) {
         setError(t('admin.login.errorInvalid'));
       } else if (res.status === 503) {
-        // Worker has no ADMIN_PASSWORD secret — fall back to local env check
+        // Worker has no ADMIN_PASSWORD secret — fall back to local env check (POC only)
         if (ADMIN_PASSWORD && password === ADMIN_PASSWORD) {
           const expiresAt = Date.now() + 3600000;
           sessionStorage.setItem(SESSION_KEY, btoa(`${expiresAt}:local`));

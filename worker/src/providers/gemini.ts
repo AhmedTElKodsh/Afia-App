@@ -1,25 +1,13 @@
 import type { LLMResponse } from "../types.ts";
 import type { BottleEntry } from "../bottleRegistry.ts";
 import { parseLLMResponse } from "./parseLLMResponse.ts";
+import { buildGeminiFewShotParts } from "../referenceFrames.ts";
+import { buildAnalysisPrompt } from "./buildAnalysisPrompt.ts";
 
 const GEMINI_API_BASE =
-  "https://generativelanguage.googleapis.com/v1beta/models";
+  "https://generativelanguage.googleapis.com/v1/models";
 const MODEL = "gemini-2.0-flash";
 
-function buildSystemPrompt(debugReasoning: boolean): string {
-  const schema = debugReasoning
-    ? `{"fillPercentage":<0-100>,"confidence":"<high|medium|low>","imageQualityIssues":[<strings>],"reasoning":"<brief>"}`
-    : `{"fillPercentage":<0-100>,"confidence":"<high|medium|low>","imageQualityIssues":[<strings>]}`;
-  return `You are a CV system estimating cooking oil fill levels from bottle images.
-
-Analyze the image and return this JSON:
-${schema}
-
-Rules:
-- fillPercentage: visible liquid height / total bottle height × 100. Account for meniscus. Exclude cap and label.
-- confidence: "high"=clear+well-lit, "medium"=acceptable, "low"=poor quality
-- imageQualityIssues: list any of: blur, poor_lighting, obstruction, reflection`;
-}
 
 export async function callGemini(
   imageBase64: string,
@@ -27,23 +15,20 @@ export async function callGemini(
   apiKeys: string[],
   debugReasoning = false
 ): Promise<LLMResponse> {
-  const userMessage = `Bottle: ${bottle.name} (${bottle.sku}), ${bottle.totalVolumeMl}ml, shape=${bottle.geometry.shape}. Return JSON fill estimate.`;
+  const userMessage = `Bottle: ${bottle.name} (${bottle.sku}), ${bottle.totalVolumeMl}ml total. Return JSON fill estimate.`;
 
   const requestBody = {
     system_instruction: {
-      parts: [{ text: buildSystemPrompt(debugReasoning) }],
+      parts: [{ text: buildAnalysisPrompt(debugReasoning, bottle.promptAnchors) }],
     },
     contents: [
       {
         role: "user",
         parts: [
+          ...buildGeminiFewShotParts(),
+          { text: "Now estimate the fill level for THIS bottle:" },
           { text: userMessage },
-          {
-            inline_data: {
-              mime_type: "image/jpeg",
-              data: imageBase64,
-            },
-          },
+          { inline_data: { mime_type: "image/jpeg" as const, data: imageBase64 } },
         ],
       },
     ],

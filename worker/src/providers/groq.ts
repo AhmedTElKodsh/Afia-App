@@ -1,26 +1,11 @@
 import type { LLMResponse } from "../types.ts";
 import type { BottleEntry } from "../bottleRegistry.ts";
 import { parseLLMResponse } from "./parseLLMResponse.ts";
+import { buildOpenAIFewShotParts } from "../referenceFrames.ts";
+import { buildAnalysisPrompt } from "./buildAnalysisPrompt.ts";
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
-
-function buildSystemPrompt(debugReasoning: boolean): string {
-  const schema = debugReasoning
-    ? `{"fillPercentage":<0-100>,"confidence":"<high|medium|low>","imageQualityIssues":[<strings>],"reasoning":"<brief>"}`
-    : `{"fillPercentage":<0-100>,"confidence":"<high|medium|low>","imageQualityIssues":[<strings>]}`;
-  return `You are a CV system estimating cooking oil fill levels from bottle images.
-
-Task: Estimate remaining oil as % where 0=empty, 100=full.
-
-Rules:
-- fillPercentage: visible liquid height / total bottle height × 100. Account for meniscus. Exclude cap and label.
-- confidence: "high"=clear+well-lit, "medium"=acceptable, "low"=poor quality
-- imageQualityIssues: list any of: blur, poor_lighting, obstruction, reflection
-
-Return JSON:
-${schema}`;
-}
 
 export async function callGroq(
   imageBase64: string,
@@ -28,20 +13,19 @@ export async function callGroq(
   apiKey: string,
   debugReasoning = false
 ): Promise<LLMResponse> {
-  const userText = `Bottle: ${bottle.name} (${bottle.sku}), ${bottle.totalVolumeMl}ml, shape=${bottle.geometry.shape}. Return JSON fill estimate.`;
+  const userText = `Bottle: ${bottle.name} (${bottle.sku}), ${bottle.totalVolumeMl}ml total. Return JSON fill estimate.`;
 
   const requestBody = {
     model: MODEL,
     messages: [
-      { role: "system", content: buildSystemPrompt(debugReasoning) },
+      { role: "system", content: buildAnalysisPrompt(debugReasoning, bottle.promptAnchors) },
       {
         role: "user",
         content: [
+          ...buildOpenAIFewShotParts(),
+          { type: "text", text: "Now estimate the fill level for THIS bottle:" },
           { type: "text", text: userText },
-          {
-            type: "image_url",
-            image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
-          },
+          { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}` } },
         ],
       },
     ],

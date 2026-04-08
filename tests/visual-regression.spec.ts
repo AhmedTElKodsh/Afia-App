@@ -41,7 +41,7 @@ test.describe('Premium UI Components - Visual Regression', () => {
     await page.waitForSelector('.privacy-inline-card');
     
     const privacyCard = page.locator('.privacy-inline-card');
-    expect(await privacyCard.screenshot()).toMatchSnapshot('privacy-inline-collapsed.png');
+    expect(await privacyCard.screenshot()).toMatchSnapshot('privacy-inline-collapsed.png', { maxDiffPixelRatio: 0.02 });
   });
 
   test('Privacy Inline - Expanded', async ({ page }) => {

@@ -1,6 +1,7 @@
 import type { Context } from "hono";
 import type { Env } from "./types.ts";
 import { getBottleBySku } from "./bottleRegistry.ts";
+import { calculateRemainingMl } from "../../shared/volumeCalculator.ts";
 import { callGemini } from "./providers/gemini.ts";
 import { callGroq } from "./providers/groq.ts";
 import { callOpenRouter } from "./providers/openrouter.ts";
@@ -52,25 +53,29 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
       return c.json({ error: "Image too large (max 4MB)", code: "IMAGE_TOO_LARGE" }, 400);
     }
 
-    const bottle = getBottleBySku(body.sku);
+    // Extract as typed consts so TypeScript preserves string narrowing inside closures
+    const imageBase64 = body.imageBase64;
+    const sku = body.sku;
+
+    const bottle = getBottleBySku(sku);
     if (!bottle) {
-      return c.json({ error: `Unknown SKU: ${body.sku}`, code: "UNKNOWN_SKU" }, 400);
+      return c.json({ error: `Unknown SKU: ${sku}`, code: "UNKNOWN_SKU" }, 400);
     }
 
-    const tokensEstimated = estimateTokens(body.imageBase64);
+    const tokensEstimated = estimateTokens(imageBase64);
 
     // --- KV response cache (30 min TTL) ---
-    const cacheKey = await buildCacheKey(body.imageBase64, body.sku);
+    const cacheKey = await buildCacheKey(imageBase64, sku);
     const cached = await c.env.RATE_LIMIT_KV.get(cacheKey);
     if (cached) {
       const { llmResult, aiProvider } = JSON.parse(cached) as {
         llmResult: LLMResponse;
-        aiProvider: "gemini" | "groq";
+        aiProvider: "gemini" | "groq" | "openrouter" | "mistral";
       };
-      const remainingMl = Math.round(bottle.totalVolumeMl * (llmResult.fillPercentage / 100));
+      const remainingMl = Math.round(calculateRemainingMl(llmResult.fillPercentage, bottle.totalVolumeMl, bottle.geometry));
       const latencyMs = Date.now() - startTime;
       await logger.info("Cache hit — returning cached result", {
-        sku: body.sku,
+        sku,
         cacheKey,
         latencyMs,
       });
@@ -90,8 +95,11 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
       });
     }
 
+    type ProviderName = "gemini" | "groq" | "openrouter" | "mistral";
+    type Provider = { name: ProviderName; key: string; call: () => Promise<LLMResponse> };
+
     const scanId = crypto.randomUUID();
-    let aiProvider: "gemini" | "groq" | "openrouter" | "mistral" = "gemini";
+    let aiProvider: ProviderName = "gemini";
     let keyUsed = "gemini_key_1";
 
     // Collect all available Gemini API keys for sequential fallback
@@ -101,56 +109,38 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
       c.env.GEMINI_API_KEY3,
       c.env.GEMINI_API_KEY4,
     ].filter((k): k is string => typeof k === "string" && k.length > 0);
+    const providers: Provider[] = [
+      { name: "gemini",     key: "gemini_key_1",  call: () => callGemini(imageBase64, bottle, geminiKeys, debugReasoning) },
+      { name: "groq",       key: "groq",          call: () => { if (!c.env.GROQ_API_KEY) throw new Error("No Groq API key configured"); return callGroq(imageBase64, bottle, c.env.GROQ_API_KEY, debugReasoning); } },
+      { name: "openrouter", key: "openrouter",    call: () => { if (!c.env.OPENROUTER_API_KEY) throw new Error("No OpenRouter API key configured"); return callOpenRouter(imageBase64, bottle, c.env.OPENROUTER_API_KEY, debugReasoning); } },
+      { name: "mistral",    key: "mistral",       call: () => { if (!c.env.MISTRAL_API_KEY) throw new Error("No Mistral API key configured"); return callMistral(imageBase64, bottle, c.env.MISTRAL_API_KEY, debugReasoning); } },
+    ];
 
     // Fallback chain: Gemini (×4 keys) → Groq → OpenRouter → Mistral
-    let llmResult: LLMResponse;
-    try {
-      llmResult = await callGemini(body.imageBase64, bottle, geminiKeys, debugReasoning);
-      await quotaMonitor.trackRequest(keyUsed);
-    } catch (geminiError) {
-      await logger.warn("All Gemini keys failed, trying Groq", { error: String(geminiError), sku: body.sku });
-
+    let llmResult!: LLMResponse;
+    const providerErrors: string[] = [];
+    let succeeded = false;
+    for (const provider of providers) {
       try {
-        aiProvider = "groq";
-        keyUsed = "groq";
-        if (!c.env.GROQ_API_KEY) throw new Error("No Groq API key configured");
-        llmResult = await callGroq(body.imageBase64, bottle, c.env.GROQ_API_KEY, debugReasoning);
+        llmResult = await provider.call();
+        aiProvider = provider.name;
+        keyUsed = provider.key;
         await quotaMonitor.trackRequest(keyUsed);
-      } catch (groqError) {
-        await logger.warn("Groq failed, trying OpenRouter", { error: String(groqError), sku: body.sku });
-
-        try {
-          aiProvider = "openrouter";
-          keyUsed = "openrouter";
-          if (!c.env.OPENROUTER_API_KEY) throw new Error("No OpenRouter API key configured");
-          llmResult = await callOpenRouter(body.imageBase64, bottle, c.env.OPENROUTER_API_KEY, debugReasoning);
-          await quotaMonitor.trackRequest(keyUsed);
-        } catch (openrouterError) {
-          await logger.warn("OpenRouter failed, trying Mistral", { error: String(openrouterError), sku: body.sku });
-
-          try {
-            aiProvider = "mistral";
-            keyUsed = "mistral";
-            if (!c.env.MISTRAL_API_KEY) throw new Error("No Mistral API key configured");
-            llmResult = await callMistral(body.imageBase64, bottle, c.env.MISTRAL_API_KEY, debugReasoning);
-            await quotaMonitor.trackRequest(keyUsed);
-          } catch (mistralError) {
-            const latencyMs = Date.now() - startTime;
-            await logger.error("All AI providers failed", {
-              geminiError: String(geminiError),
-              groqError: String(groqError),
-              openrouterError: String(openrouterError),
-              mistralError: String(mistralError),
-              sku: body.sku,
-              latencyMs,
-            });
-            return c.json(
-              { error: "All AI providers failed", code: "SERVICE_UNAVAILABLE" },
-              503
-            );
-          }
+        succeeded = true;
+        break;
+      } catch (err) {
+        providerErrors.push(`${provider.name}: ${String(err)}`);
+        const next = providers[providers.indexOf(provider) + 1];
+        if (next) {
+          await logger.warn(`${provider.name} failed, trying ${next.name}`, { error: String(err), sku });
         }
       }
+    }
+
+    if (!succeeded) {
+      const latencyMs = Date.now() - startTime;
+      await logger.error("All AI providers failed", { errors: providerErrors, sku, latencyMs });
+      return c.json({ error: "All AI providers failed", code: "SERVICE_UNAVAILABLE" }, 503);
     }
 
     const latencyMs = Date.now() - startTime;
@@ -167,7 +157,7 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
     // Log successful analysis
     await logger.info("Analysis completed", {
       scanId,
-      sku: body.sku,
+      sku,
       fillPercentage: llmResult.fillPercentage,
       confidence: llmResult.confidence,
       aiProvider: keyUsed,
@@ -178,7 +168,7 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
 
     // Store scan data to Supabase (non-blocking — don't fail the response if storage fails)
     c.executionCtx.waitUntil(
-      storeScan(c.env, scanId, body.imageBase64, {
+      storeScan(c.env, scanId, imageBase64, {
         scanId,
         timestamp: new Date().toISOString(),
         sku: bottle.sku,
@@ -193,7 +183,7 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
     );
 
     // Calculate remaining ml from fill percentage and bottle volume
-    const remainingMl = Math.round(bottle.totalVolumeMl * (llmResult.fillPercentage / 100));
+    const remainingMl = Math.round(calculateRemainingMl(llmResult.fillPercentage, bottle.totalVolumeMl, bottle.geometry));
 
     return c.json({
       scanId,

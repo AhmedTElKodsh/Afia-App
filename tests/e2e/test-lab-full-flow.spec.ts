@@ -233,8 +233,8 @@ test.describe('TestLab: Mock QR → Camera → Analyze → Results (User Flow)',
     await selectBottleAndStartScan(page, testBottles.filippoBerio.sku);
     await triggerAnalyzeAndWaitForResult(page);
 
-    // Mock API returns fillPercentage: 65
-    await expect(page.locator('.result-display')).toContainText(/65/);
+    // Mock API returns fillPercentage: 65; calibrated bottle renders ~1137 ml (not linear 975 ml)
+    await expect(page.locator('.result-display')).toContainText(/1137/);
   });
 
   test('results show high confidence badge for successful analysis', async ({ page }) => {
