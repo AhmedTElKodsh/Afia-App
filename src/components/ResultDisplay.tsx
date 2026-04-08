@@ -121,7 +121,7 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
           <BottleOverlay
             capturedImage={capturedImage}
             fillPercentage={result.fillPercentage}
-            bottleHeightMm={bottle.geometry.heightMm}
+            bottleHeightMm={bottle.geometry.heightMm ?? 0}
             bottleName={bottle.name}
             totalVolumeMl={bottle.totalVolumeMl}
           />
