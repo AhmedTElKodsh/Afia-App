@@ -9,13 +9,21 @@ const app = new Hono<{ Bindings: Env }>();
 
 // CORS middleware — restrict to known origins
 app.use("*", async (c, next) => {
-  const allowedOrigins = c.env.ALLOWED_ORIGINS?.split(",") ?? [
+  const allowedOrigins = c.env.ALLOWED_ORIGINS?.split(",").map((o) => o.trim()) ?? [
     "http://localhost:5173",
     "http://localhost:4173",
   ];
 
+  // Wildcard suffixes: allow all Cloudflare Pages preview deployments
+  // e.g. https://abc123.afia-app.pages.dev as well as the canonical root
+  const allowedSuffixes = [".afia-app.pages.dev", ".afia-oil-tracker.pages.dev"];
+
   const corsMiddleware = cors({
-    origin: (origin) => (allowedOrigins.includes(origin) ? origin : null),
+    origin: (origin) => {
+      if (allowedOrigins.includes(origin)) return origin;
+      if (allowedSuffixes.some((s) => origin.endsWith(s))) return origin;
+      return null;
+    },
     allowMethods: ["POST", "OPTIONS"],
     allowHeaders: ["Content-Type"],
     maxAge: 86400,
