@@ -24,10 +24,7 @@
   display: block;
 }
 
-/* Hide video when not active */
-.camera-viewfinder:not(.camera-active) .camera-video {
-  display: none;
-}
+/* Video is always in DOM so refs stay valid; JSX controls visibility inline */
 
 /* ========================================
    Hidden Canvas
@@ -39,6 +36,18 @@
   height: 1px;
   opacity: 0;
   pointer-events: none;
+}
+
+/* ========================================
+   State Overlays (loading / error / permission)
+   Absolute-positioned over the always-in-DOM video element
+   ======================================== */
+
+.camera-state-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: var(--color-bg-primary);
 }
 
 /* ========================================

@@ -2,7 +2,8 @@ import {
   useRef,
   useState,
   useEffect,
-  useCallback
+  useCallback,
+  useMemo
 } from "react";
 import { useTranslation } from "react-i18next";
 import { Camera, AlertTriangle, RotateCcw, Flashlight, FlashlightOff } from "lucide-react";
@@ -53,17 +54,23 @@ export function CameraViewfinder({
   const [torchOn, setTorchOn] = useState(false);
   const [torchSupported, setTorchSupported] = useState(false);
 
-  // Live guidance hook
-  const guidance = useCameraGuidance({
+  // Prevent concurrent startCamera calls without depending on cameraState in the callback
+  const isStartingRef = useRef(false);
+
+  // Stable guidance config — avoids recreating guidance on every render
+  const guidanceConfig = useMemo(() => ({
     minBlurScore: CAMERA_CONFIG.minQuality.blurScore,
     requireGoodLighting: true,
-  });
+  }), []);
+
+  const guidance = useCameraGuidance(guidanceConfig);
 
   /**
    * Initialize and start the camera stream
    */
   const startCamera = useCallback(async () => {
-    if (cameraState === 'requesting') return;
+    if (isStartingRef.current) return;
+    isStartingRef.current = true;
     setCameraState('requesting');
 
     try {
@@ -74,25 +81,23 @@ export function CameraViewfinder({
 
       const constraints = getVideoConstraints(preferBackCamera);
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      
+
       streamRef.current = stream;
+
+      // Attach stream — videoRef is always in the DOM now (see render below)
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        
-        // Start guidance if enabled
-        if (enableLiveGuidance) {
-          guidance.startGuidance(videoRef.current);
-        }
       }
 
       // Check if hardware features (like torch) are supported
       const hasTorch = await checkTorchSupport(stream);
       setTorchSupported(hasTorch);
-      
+
       setCameraState('active');
     } catch (error) {
       console.error('Camera initialization error:', error);
-      
+      isStartingRef.current = false;
+
       const err = error as Error;
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         setCameraState('permission-denied');
@@ -102,7 +107,7 @@ export function CameraViewfinder({
         onError(t('camera.captureError'));
       }
     }
-  }, [cameraState, onError, onPermissionDenied, preferBackCamera, enableLiveGuidance, guidance]);
+  }, [onError, onPermissionDenied, preferBackCamera, t]);
 
   /**
    * Toggle torch/flashlight with error handling
@@ -201,79 +206,87 @@ export function CameraViewfinder({
   }, []);
 
   /**
-   * Start camera on mount
+   * Start guidance analysis once camera is active
    */
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (cameraState === 'active' && enableLiveGuidance && videoRef.current) {
+      guidance.startGuidance(videoRef.current);
+      isStartingRef.current = false;
+    }
+  }, [cameraState, enableLiveGuidance, guidance]);
+
+  /**
+   * Start camera on mount — runs only once (startCamera is stable, no cameraState dep)
+   */
+  useEffect(() => {
     startCamera();
-  }, [startCamera]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Render based on camera state
-  if (cameraState === 'requesting') {
-    return (
-      <div className="camera-viewfinder camera-loading" role="status" aria-live="polite">
-        <div className="camera-loading-spinner" aria-hidden="true" />
-        <p className="camera-loading-text">{t('camera.starting')}</p>
-      </div>
-    );
-  }
-
-  if (cameraState === 'permission-denied') {
-    return (
-      <div className="camera-viewfinder camera-error" role="alert">
-        <div className="camera-error-badge" aria-hidden="true">
-          <Camera size={28} strokeWidth={2} className="camera-error-badge-icon" />
-        </div>
-        <h3 className="camera-error-title">{t('camera.accessRequired')}</h3>
-        <p className="camera-error-text">{t('camera.permissionMessage')}</p>
-        <button
-          className="btn btn-primary"
-          onClick={startCamera}
-          type="button"
-          style={{ display: "flex", alignItems: "center", gap: "8px" }}
-        >
-          <RotateCcw size={18} />
-          {t('camera.tryAgain')}
-        </button>
-      </div>
-    );
-  }
-
-  if (cameraState === 'error') {
-    return (
-      <div className="camera-viewfinder camera-error" role="alert">
-        <div className="camera-error-badge" aria-hidden="true">
-          <AlertTriangle size={28} strokeWidth={2} className="camera-error-badge-icon" />
-        </div>
-        <h3 className="camera-error-title">{t('camera.unavailable')}</h3>
-        <p className="camera-error-text">{t('camera.permissionMessage')}</p>
-        <button
-          className="btn btn-secondary"
-          onClick={startCamera}
-          type="button"
-        >
-          {t('common.retry')}
-        </button>
-      </div>
-    );
-  }
+  const isNonActive = cameraState === 'requesting' || cameraState === 'permission-denied' || cameraState === 'error' || cameraState === 'idle';
 
   return (
+    // Video and canvas are always in the DOM so videoRef is available when the stream arrives
     <div className={`camera-viewfinder camera-container ${cameraState === 'active' ? 'camera-active' : ''}`}>
-      {/* Video Feed */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
+        muted
         className="camera-video"
+        style={isNonActive ? { visibility: 'hidden', position: 'absolute' } : undefined}
         aria-label={t('camera.liveFeedAriaLabel')}
       />
-
-      {/* Hidden Canvas for Processing */}
       <canvas ref={canvasRef} style={{ display: "none" }} />
 
-      {/* Guidance Overlay */}
-      {enableLiveGuidance && (
+      {/* Loading overlay */}
+      {(cameraState === 'requesting' || cameraState === 'idle') && (
+        <div className="camera-state-overlay camera-loading" role="status" aria-live="polite">
+          <div className="camera-loading-spinner" aria-hidden="true" />
+          <p className="camera-loading-text">{t('camera.starting')}</p>
+        </div>
+      )}
+
+      {/* Permission denied overlay */}
+      {cameraState === 'permission-denied' && (
+        <div className="camera-state-overlay camera-error" role="alert">
+          <div className="camera-error-badge" aria-hidden="true">
+            <Camera size={28} strokeWidth={2} className="camera-error-badge-icon" />
+          </div>
+          <h3 className="camera-error-title">{t('camera.accessRequired')}</h3>
+          <p className="camera-error-text">{t('camera.permissionMessage')}</p>
+          <button
+            className="btn btn-primary"
+            onClick={startCamera}
+            type="button"
+            style={{ display: "flex", alignItems: "center", gap: "8px" }}
+          >
+            <RotateCcw size={18} />
+            {t('camera.tryAgain')}
+          </button>
+        </div>
+      )}
+
+      {/* Error overlay */}
+      {cameraState === 'error' && (
+        <div className="camera-state-overlay camera-error" role="alert">
+          <div className="camera-error-badge" aria-hidden="true">
+            <AlertTriangle size={28} strokeWidth={2} className="camera-error-badge-icon" />
+          </div>
+          <h3 className="camera-error-title">{t('camera.unavailable')}</h3>
+          <p className="camera-error-text">{t('camera.permissionMessage')}</p>
+          <button
+            className="btn btn-secondary"
+            onClick={startCamera}
+            type="button"
+          >
+            {t('common.retry')}
+          </button>
+        </div>
+      )}
+
+      {/* Guidance Overlay — only when active */}
+      {cameraState === 'active' && enableLiveGuidance && (
         <div className="camera-guidance-overlay">
           {/* Top Info */}
           <div className="guidance-header">
@@ -293,7 +306,7 @@ export function CameraViewfinder({
               <div className="corner corner-bl" />
               <div className="corner corner-br" />
             </div>
-            
+
             {guidance.state.assessment && !guidance.state.isReady && (
               <p className="guidance-hint">
                 {guidance.state.assessment.guidanceMessage}
@@ -316,18 +329,20 @@ export function CameraViewfinder({
         </div>
       )}
 
-      {/* Capture Button */}
-      <button
-        key="stable-capture-btn"
-        className="camera-capture-btn"
-        onClick={handleCapture}
-        type="button"
-        aria-label={t('camera.capturePhotoAriaLabel')}
-        disabled={!guidance.state.isReady && enableLiveGuidance}
-        aria-disabled={!guidance.state.isReady && enableLiveGuidance}
-      >
-        <span className="capture-btn-inner" aria-hidden="true" />
-      </button>
+      {/* Capture Button — only when active */}
+      {cameraState === 'active' && (
+        <button
+          key="stable-capture-btn"
+          className="camera-capture-btn"
+          onClick={handleCapture}
+          type="button"
+          aria-label={t('camera.capturePhotoAriaLabel')}
+          disabled={!guidance.state.isReady && enableLiveGuidance}
+          aria-disabled={!guidance.state.isReady && enableLiveGuidance}
+        >
+          <span className="capture-btn-inner" aria-hidden="true" />
+        </button>
+      )}
     </div>
   );
 }
