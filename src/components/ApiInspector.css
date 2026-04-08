@@ -1,0 +1,47 @@
+.api-inspector {
+  padding: var(--space-lg);
+}
+
+.api-inspector-description {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-md);
+  font-size: 0.875rem;
+}
+
+.api-inspector-hint {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.api-inspector-divider {
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: 0.8125rem;
+  margin: var(--space-md) 0;
+}
+
+.api-inspector-file-label {
+  display: block;
+}
+
+.api-inspector-result-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: var(--space-md);
+  margin-bottom: var(--space-sm);
+}
+
+.api-inspector-error {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin-top: var(--space-md);
+}

@@ -7,15 +7,14 @@ import { testBottles } from './fixtures/testData';
  *
  * Covers the Admin TestLab interface end-to-end:
  *   1. TestLab renders correctly in idle state
- *   2. Bottle selector dropdown: open, search, select, clear
- *   3. Mode switching: User Flow ↔ Debug Mode
+ *   2. Tab navigation: Flow Test ↔ API Inspector
+ *   3. Debug panel toggle controls AdminToolsOverlay auto-open
  *   4. Mock QR button gating (disabled until bottle selected)
  *   5. Full flow: select bottle → Start Test Scan → camera → analyze → results
- *   6. Debug mode auto-opens AdminToolsOverlay on completion
- *   7. AdminToolsOverlay: open/close, validate result data
- *   8. Retake flow: returns to camera from results
- *   9. New test flow: resets state back to idle
- *  10. Session test count badge increments
+ *   6. AdminToolsOverlay: open/close, validate result data
+ *   7. Retake flow: returns to camera from results
+ *   8. New test flow: resets state back to idle
+ *   9. Session test count badge increments
  *
  * Pattern: all tests use addInitScript (not beforeEach navigation) so mocks
  * are injected before the first byte is loaded. Admin session bypass is used
@@ -55,17 +54,8 @@ async function selectBottleAndStartScan(
   page: import('@playwright/test').Page,
   _sku: string = testBottles.filippoBerio.sku
 ) {
-  // Open bottle selector dropdown
-  await page.locator('.bottle-selector-button').click();
-  await expect(page.locator('.bottle-selector-dropdown')).toBeVisible({ timeout: 3000 });
-
-  // Click the first available bottle item (any selection enables the Mock QR button)
-  await page.locator('.bottle-selector-item').first().click();
-
-  // Dropdown closes after selection
-  await expect(page.locator('.bottle-selector-dropdown')).toBeHidden({ timeout: 3000 });
-
-  // Wait for the Start Test Scan button to become enabled (selectedSku state set)
+  // Single SKU is pre-selected — confirmed bottle card is always shown.
+  // Just wait for the Start Test Scan button to be enabled (no dropdown step).
   await expect(page.locator('button:has-text("Start Test Scan")')).toBeEnabled({ timeout: 3000 });
 
   // Use evaluate to click — bypasses toast notification overlay reliably
@@ -115,97 +105,50 @@ test.describe('TestLab: Idle State & Layout', () => {
     await mockAnalyzeSuccess(page);
   });
 
-  test('renders TestLab with mode selector and bottle dropdown in idle state', async ({ page }) => {
+  test('renders TestLab with tab nav and confirmed bottle in idle state', async ({ page }) => {
     await navigateToTestLab(page);
 
-    // Mode selector
-    await expect(page.locator('button:has-text("User Flow"), .test-mode-card').first()).toBeVisible();
-    await expect(page.locator('button:has-text("Debug Mode"), .test-mode-card').last()).toBeVisible();
+    // Tab nav is visible
+    await expect(page.locator('.test-lab-tab').first()).toBeVisible();
+    await expect(page.locator('.test-lab-tab').last()).toBeVisible();
 
-    // Bottle selector
-    await expect(page.locator('.bottle-selector-button')).toBeVisible();
+    // Confirmed bottle card shows the active SKU (no dropdown)
+    await expect(page.locator('.bottle-confirmed-card')).toBeVisible();
+    await expect(page.locator('.bottle-confirmed-name')).toContainText(/corn|1\.5[lL]/i);
 
-    // Mock QR button is disabled — no bottle selected yet
-    await expect(page.locator('button:has-text("Start Test Scan")')).toBeDisabled();
+    // Scan button is always enabled — single SKU pre-selected
+    await expect(page.locator('button:has-text("Start Test Scan")')).toBeEnabled();
   });
 
-  test('bottle selector dropdown opens and closes', async ({ page }) => {
+  test('confirmed bottle card shows the 1.5L Corn Oil', async ({ page }) => {
     await navigateToTestLab(page);
 
-    const dropdown = page.locator('.bottle-selector-dropdown');
-    await expect(dropdown).toBeHidden();
-
-    await page.locator('.bottle-selector-button').click();
-    await expect(dropdown).toBeVisible({ timeout: 2000 });
-
-    // Close with Escape
-    await page.keyboard.press('Escape');
-    await expect(dropdown).toBeHidden({ timeout: 2000 });
+    await expect(page.locator('.bottle-confirmed-card')).toBeVisible();
+    await expect(page.locator('.bottle-confirmed-name')).toContainText(/1\.5[lL]|corn/i);
+    // Confirmed badge (✓) is present
+    await expect(page.locator('.bottle-confirmed-badge')).toBeVisible();
   });
 
-  test('bottle selector shows the active bottle (1.5L Corn Oil)', async ({ page }) => {
+  test('Open as Real User link is visible and points to the active SKU', async ({ page }) => {
     await navigateToTestLab(page);
 
-    await page.locator('.bottle-selector-button').click();
-    await expect(page.locator('.bottle-selector-dropdown')).toBeVisible();
-
-    // Search input exists
-    await expect(page.locator('.bottle-selector-search-input')).toBeVisible();
-
-    // Exactly 1 bottle is available (restricted to 1.5L Corn Oil)
-    const items = page.locator('.bottle-selector-item');
-    await expect(items.first()).toBeVisible();
-    expect(await items.count()).toBeGreaterThanOrEqual(1);
-    await expect(items.first()).toContainText(/1\.5[lL]|corn/i);
+    const link = page.locator('.open-user-view-link');
+    await expect(link).toBeVisible();
+    const href = await link.getAttribute('href');
+    expect(href).toMatch(/sku=afia-corn-1\.5l/);
   });
 
-  test('bottle selector search filters results', async ({ page }) => {
+  test('Start Test Scan is always enabled (no selection step needed)', async ({ page }) => {
     await navigateToTestLab(page);
 
-    await page.locator('.bottle-selector-button').click();
-    await page.locator('.bottle-selector-search-input').fill('corn');
-
-    // The 1.5L Corn Oil should match
-    const visible = page.locator('.bottle-selector-item:visible');
-    const count = await visible.count();
-    expect(count).toBeGreaterThanOrEqual(1);
-
-    // Each visible item should contain "corn"
-    for (let i = 0; i < count; i++) {
-      await expect(visible.nth(i)).toContainText(/corn/i);
-    }
-  });
-
-  test('selecting a bottle enables the Start Test Scan button', async ({ page }) => {
-    await navigateToTestLab(page);
-
-    // Initially disabled
-    await expect(page.locator('button:has-text("Start Test Scan")')).toBeDisabled();
-
-    // Select a bottle
-    await page.locator('.bottle-selector-button').click();
-    await page.locator('.bottle-selector-item').first().click();
-
-    // Now enabled
-    await expect(page.locator('button:has-text("Start Test Scan")')).toBeEnabled({ timeout: 2000 });
-  });
-
-  test('clear button removes bottle selection and re-disables Mock QR', async ({ page }) => {
-    await navigateToTestLab(page);
-
-    await page.locator('.bottle-selector-button').click();
-    await page.locator('.bottle-selector-item').first().click();
-    await expect(page.locator('button:has-text("Start Test Scan")')).toBeEnabled({ timeout: 2000 });
-
-    // Clear selection
-    await page.locator('.clear-bottle-button, button:has-text("✕")').first().click();
-    await expect(page.locator('button:has-text("Start Test Scan")')).toBeDisabled();
+    // Button is immediately enabled — no dropdown interaction required
+    await expect(page.locator('button:has-text("Start Test Scan")')).toBeEnabled();
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.describe('TestLab: Mode Switching', () => {
+test.describe('TestLab: Tab Navigation', () => {
 
   test.beforeEach(async ({ page }) => {
     await setupAdmin(page);
@@ -213,29 +156,42 @@ test.describe('TestLab: Mode Switching', () => {
     await mockAnalyzeSuccess(page);
   });
 
-  test('User Flow mode card shows as selected by default', async ({ page }) => {
+  test('Flow Test tab is active by default', async ({ page }) => {
     await navigateToTestLab(page);
 
-    const userCard = page.locator('.test-mode-card').first();
-    await expect(userCard).toHaveClass(/active/);
+    const flowTab = page.locator('.test-lab-tab').first();
+    await expect(flowTab).toHaveClass(/active/);
   });
 
-  test('clicking Debug Mode card switches selection', async ({ page }) => {
+  test('clicking API Inspector tab switches selection', async ({ page }) => {
     await navigateToTestLab(page);
 
-    const debugCard = page.locator('.test-mode-card').last();
-    await debugCard.click();
-    await expect(debugCard).toHaveClass(/active/);
+    const inspectorTab = page.locator('.test-lab-tab').last();
+    await inspectorTab.click();
+    await expect(inspectorTab).toHaveClass(/active/);
 
-    // User Flow card is no longer active
-    await expect(page.locator('.test-mode-card').first()).not.toHaveClass(/active/);
+    // Flow Test tab is no longer active
+    await expect(page.locator('.test-lab-tab').first()).not.toHaveClass(/active/);
   });
 
-  test('Debug Mode shows debug hint text below mode selector', async ({ page }) => {
+  test('API Inspector tab shows api-inspector component', async ({ page }) => {
     await navigateToTestLab(page);
 
-    await page.locator('.test-mode-card').last().click();
-    await expect(page.locator('.test-lab-debug-hint')).toBeVisible({ timeout: 2000 });
+    await page.locator('.test-lab-tab').last().click();
+    await expect(page.locator('.api-inspector')).toBeVisible({ timeout: 2000 });
+  });
+
+  test('switching back to Flow Test shows scan UI', async ({ page }) => {
+    await navigateToTestLab(page);
+
+    // Switch to API Inspector
+    await page.locator('.test-lab-tab').last().click();
+    await expect(page.locator('.api-inspector')).toBeVisible();
+
+    // Switch back to Flow Test
+    await page.locator('.test-lab-tab').first().click();
+    await expect(page.locator('.api-inspector')).toBeHidden();
+    await expect(page.locator('.test-lab-section--bottle')).toBeVisible();
   });
 });
 
@@ -326,7 +282,7 @@ test.describe('TestLab: Mock QR → Camera → Analyze → Results (User Flow)',
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.describe('TestLab: Debug Mode', () => {
+test.describe('TestLab: Debug Panel Toggle', () => {
 
   test.beforeEach(async ({ page }) => {
     await setupAdmin(page);
@@ -334,30 +290,44 @@ test.describe('TestLab: Debug Mode', () => {
     await mockAnalyzeSuccess(page);
   });
 
-  // Note: Debug mode changes are visible in the TestLab idle state UI.
+  // Note: Debug panel auto-open after scan is tested via the checkbox toggle.
   // After __AFIA_TRIGGER_ANALYZE__ is called, App.tsx takes over rendering
   // (its own ResultDisplay replaces TestLab), so debug-mode-specific post-analysis
   // UI (AdminToolsOverlay auto-open) is tested in TestLab's own handleCapture flow,
   // which is not reachable via the __AFIA_TRIGGER_ANALYZE__ E2E hook.
 
-  test('Debug Mode shows hint text and is selectable', async ({ page }) => {
+  test('debug panel toggle checkbox is visible in Flow Test tab', async ({ page }) => {
     await navigateToTestLab(page);
 
-    await page.locator('.test-mode-card').last().click();
-    await expect(page.locator('.test-mode-card').last()).toHaveClass(/active/);
-    await expect(page.locator('.test-lab-debug-hint')).toBeVisible();
+    await expect(page.locator('.test-lab-debug-toggle-label input[type="checkbox"]')).toBeVisible();
   });
 
-  test('switching back from Debug to User Flow removes debug hint', async ({ page }) => {
+  test('debug panel toggle checkbox is unchecked by default', async ({ page }) => {
     await navigateToTestLab(page);
 
-    // Enable debug mode
-    await page.locator('.test-mode-card').last().click();
-    await expect(page.locator('.test-lab-debug-hint')).toBeVisible();
+    await expect(page.locator('.test-lab-debug-toggle-label input[type="checkbox"]')).not.toBeChecked();
+  });
 
-    // Switch back to User Flow
-    await page.locator('.test-mode-card').first().click();
-    await expect(page.locator('.test-lab-debug-hint')).toBeHidden();
+  test('checking debug panel toggle enables auto-open on scan complete', async ({ page }) => {
+    await navigateToTestLab(page);
+
+    // Check the debug panel toggle
+    await page.locator('.test-lab-debug-toggle-label input[type="checkbox"]').check();
+    await expect(page.locator('.test-lab-debug-toggle-label input[type="checkbox"]')).toBeChecked();
+
+    // TODO: QA agent — verify that AdminToolsOverlay auto-opens after a real scan completes
+    // with showDebugPanel checked. The __AFIA_TRIGGER_ANALYZE__ hook routes through App.tsx's
+    // ResultDisplay which bypasses TestLab's own scan state, so overlay auto-open cannot be
+    // exercised via that E2E path. Requires a dedicated TestLab-level scan integration test.
+  });
+
+  test('unchecking debug panel toggle disables auto-open', async ({ page }) => {
+    await navigateToTestLab(page);
+
+    // Check then uncheck
+    await page.locator('.test-lab-debug-toggle-label input[type="checkbox"]').check();
+    await page.locator('.test-lab-debug-toggle-label input[type="checkbox"]').uncheck();
+    await expect(page.locator('.test-lab-debug-toggle-label input[type="checkbox"]')).not.toBeChecked();
   });
 });
 

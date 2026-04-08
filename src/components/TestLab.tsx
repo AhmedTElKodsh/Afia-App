@@ -1,9 +1,9 @@
 /**
  * TestLab Component
- * 
+ *
  * Unified admin testing interface that simulates the exact user scanning workflow
  * while providing optional debug tools for validation.
- * 
+ *
  * Features:
  * - Exact user flow simulation
  * - Mock QR code scanning
@@ -18,12 +18,13 @@
 
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Beaker, QrCode, ChevronDown, Search, Smartphone, Wrench, Target, RefreshCcw, AlertTriangle, TestTube } from "lucide-react";
-import { activeBottleRegistry, getBottleBySku } from "../data/bottleRegistry.ts";
+import { Beaker, QrCode, Smartphone, RefreshCcw, AlertTriangle, TestTube, ExternalLink } from "lucide-react";
+import { getBottleBySku, ACTIVE_SKU } from "../data/bottleRegistry.ts";
 import { CameraViewfinder } from "./CameraViewfinder.tsx";
 import { ResultDisplay } from "./ResultDisplay.tsx";
 import { AdminToolsOverlay } from "./AdminToolsOverlay.tsx";
 import { AdminOnboarding } from "./AdminOnboarding.tsx";
+import { ApiInspector } from "./ApiInspector.tsx";
 import { useToast } from "./Toast.tsx";
 import { analytics } from "../utils/analytics.ts";
 import { useScanHistory } from "../hooks/useScanHistory.ts";
@@ -31,7 +32,6 @@ import "./TestLab.css";
 
 const WORKER_URL = import.meta.env.VITE_WORKER_URL || "";
 
-export type TestModeType = "user" | "debug";
 export type EntryPointType = "mock-qr" | "bottle-select" | "manual-sku";
 export type TestLabState = "idle" | "scanning" | "analyzing" | "complete" | "error";
 
@@ -47,9 +47,11 @@ export function TestLab({ isAdmin }: TestLabProps) {
 
   const isRTL = i18n.language === 'ar';
 
-  // Test configuration
-  const [testMode, setTestMode] = useState<TestModeType>("user");
-  const [selectedSku, setSelectedSku] = useState<string>("");
+  // Tab and debug panel state
+  const [activeTab, setActiveTab] = useState<"flow" | "inspector">("flow");
+  const [showDebugPanel, setShowDebugPanel] = useState<boolean>(false);
+
+  const selectedSku = ACTIVE_SKU;
   const [testCount, setTestCount] = useState(0);
 
   // Scan flow state
@@ -57,53 +59,45 @@ export function TestLab({ isAdmin }: TestLabProps) {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [result, setResult] = useState<import("../state/appState").AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+
   // UI state
   const [showAdminTools, setShowAdminTools] = useState(false);
-  const [showBottleDropdown, setShowBottleDropdown] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => {
     const hasSeenOnboarding = localStorage.getItem('afia_admin_onboarding_seen');
     return !hasSeenOnboarding && isAdmin;
   });
-  const [searchQuery, setSearchQuery] = useState("");
-
   // Test session tracking
   const [sessionId] = useState<string>(() => `test_session_${crypto.randomUUID()}`);
 
-  // Reset admin tools when switching modes
-  const handleModeChange = useCallback((mode: TestModeType) => {
-    analytics.testModeChanged(testMode, mode);
-    setTestMode(mode);
-    setShowAdminTools(false);
-  }, [testMode]);
-
-  // Initialize session on mount
+  // F5 fix: session start fires once on mount only — not on every showOnboarding toggle
   useEffect(() => {
-    // Track session start
-    analytics.testSessionStart('test-lab', testMode);
+    analytics.testSessionStart('test-lab', 'flow');
+  }, []);
 
-    // Track onboarding if shown
+  // Track onboarding start separately (fires when onboarding is shown)
+  useEffect(() => {
     if (showOnboarding) {
       analytics.adminOnboardingStarted(sessionId);
     }
-  }, [testMode, showOnboarding, sessionId]);
+  }, [showOnboarding, sessionId]);
 
-  // In DEBUG MODE, auto-open admin tools when scan completes
+  // F6 fix: sync overlay state with debug panel checkbox when scan is complete.
+  // Opens on completion if checked; closes if user unchecks mid-session.
+  // Manual overlay toggle (AC-6) still works — user can reopen after unchecking.
   useEffect(() => {
-    if (scanState === "complete" && testMode === "debug") {
-      setShowAdminTools(true);
+    if (scanState === "complete") {
+      setShowAdminTools(showDebugPanel);
     }
-  }, [scanState, testMode]);
+  }, [scanState, showDebugPanel]);
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Escape: Close dropdown or admin tools
+      // Escape: Close admin tools
       if (e.key === 'Escape') {
-        setShowBottleDropdown(false);
         setShowAdminTools(false);
       }
-      
+
       // Ctrl+Enter: Trigger scan (if bottle selected)
       if (e.ctrlKey && e.key === 'Enter' && selectedSku && scanState === 'idle') {
         setScanState('scanning');
@@ -115,7 +109,7 @@ export function TestLab({ isAdmin }: TestLabProps) {
   }, [selectedSku, scanState]);
 
   // Get selected bottle
-  const selectedBottle = useMemo(() => 
+  const selectedBottle = useMemo(() =>
     selectedSku ? getBottleBySku(selectedSku) : null
   , [selectedSku]);
 
@@ -135,22 +129,9 @@ export function TestLab({ isAdmin }: TestLabProps) {
     return map[oilType] ?? "🫙";
   };
 
-  // Handle bottle selection from dropdown (only selects, doesn't start scan)
-  const handleBottleSelect = useCallback((sku: string) => {
-    const bottle = getBottleBySku(sku);
-    setSelectedSku(sku);
-    setShowBottleDropdown(false);
-    // Do NOT auto-start scan — user must click Scan Mock QR
-
-    // Track analytics
-    analytics.bottleSelected(sku, 'bottle-select');
-    info(`${t('admin.testLab.readyNewScan')}: ${bottle ? getLocalizedBottleName(sku, bottle.name) : ""}`);
-  }, [info, t]);
-
   // Handle mock QR scan
   const handleMockQrScan = useCallback((sku: string) => {
     const bottle = getBottleBySku(sku);
-    setSelectedSku(sku);
     setScanState("scanning");
 
     // Track analytics
@@ -275,251 +256,185 @@ export function TestLab({ isAdmin }: TestLabProps) {
             <p className="test-lab-subtitle">
               {t('admin.testLab.subtitle')}
             </p>
+            {/* Open as Real User — persistent in header, always visible */}
+            <a
+              href={`/?sku=${ACTIVE_SKU}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="open-user-view-link"
+            >
+              <ExternalLink size={14} strokeWidth={2} />
+              {t('admin.testLab.openUserView')}
+            </a>
           </div>
         </div>
       </div>
 
-      {/* Test Mode Selector */}
-      <div className="test-lab-section test-lab-section--mode">
-        <h2 className="test-lab-section-title">{t('admin.testLab.selectMode')}</h2>
-        <div className="test-mode-selector">
-          <button
-            className={`test-mode-card ${testMode === "user" ? "active" : ""}`}
-            onClick={() => handleModeChange("user")}
-            type="button"
-          >
-            <div className="test-mode-icon"><Smartphone size={24} strokeWidth={2} /></div>
-            <h3 className="test-mode-title">{t('admin.testLab.userFlow')}</h3>
-            <p className="test-mode-description">{t('admin.testLab.userFlowDesc')}</p>
-            <div className="test-mode-indicator">
-              {testMode === "user" ? `● ${t('admin.testLab.selected')}` : "○"}
-            </div>
-          </button>
-          
-          <button
-            className={`test-mode-card ${testMode === "debug" ? "active" : ""}`}
-            onClick={() => handleModeChange("debug")}
-            type="button"
-          >
-            <div className="test-mode-icon"><Wrench size={24} strokeWidth={2} /></div>
-            <h3 className="test-mode-title">{t('admin.testLab.debugMode')}</h3>
-            <p className="test-mode-description">{t('admin.testLab.debugModeDesc')}</p>
-            <div className="test-mode-indicator">
-              {testMode === "debug" ? `● ${t('admin.testLab.selected')}` : "○"}
-            </div>
-          </button>
-        </div>
+      {/* Tab Navigation — F11 fix: proper ARIA tab semantics */}
+      <div className="test-lab-tabs" role="tablist">
+        <button
+          className={`test-lab-tab ${activeTab === "flow" ? "active" : ""}`}
+          onClick={() => { setActiveTab("flow"); setShowAdminTools(false); }}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "flow"}
+        >
+          <Smartphone size={16} strokeWidth={2} />
+          {t('admin.testLab.tabFlow')}
+        </button>
+        <button
+          className={`test-lab-tab ${activeTab === "inspector" ? "active" : ""}`}
+          onClick={() => setActiveTab("inspector")}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "inspector"}
+        >
+          <Beaker size={16} strokeWidth={2} />
+          {t('admin.testLab.tabInspector')}
+        </button>
       </div>
 
-      {/* Entry Point Selector */}
-      {scanState === "idle" && (
-        <div className="test-lab-section test-lab-section--bottle" style={{ textAlign: 'center' }}>
-          <h2 className="test-lab-section-title">{t('admin.testLab.selectBottleScanQr')}</h2>
-          {testMode === "debug" && (
-            <p className="test-lab-debug-hint">
-              <Wrench size={13} strokeWidth={2} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
-              {t('admin.testLab.debugHint')}
-            </p>
-          )}
-          
-          {/* Bottle Selector Dropdown */}
-          <div className="bottle-selector-container">
-            <button
-              className="bottle-selector-button"
-              onClick={() => setShowBottleDropdown(!showBottleDropdown)}
-              type="button"
-            >
-              <span className="bottle-selector-icon"><Target size={20} strokeWidth={2} /></span>
-              <span className="bottle-selector-text">
-                {selectedBottle ? getLocalizedBottleName(selectedSku, selectedBottle.name) : t('admin.testLab.selectBottlePlaceholder')}
-              </span>
-              <ChevronDown 
-                size={20} 
-                className={`bottle-selector-chevron ${showBottleDropdown ? "rotated" : ""}`} 
+      {/* Flow Test Tab */}
+      {activeTab === "flow" && (
+        <>
+          {/* Debug Panel Toggle */}
+          <div className="test-lab-debug-toggle">
+            <label className="test-lab-debug-toggle-label">
+              <input
+                type="checkbox"
+                checked={showDebugPanel}
+                onChange={(e) => setShowDebugPanel(e.target.checked)}
               />
-            </button>
-
-            {showBottleDropdown && (
-              <div className="bottle-selector-dropdown">
-                <div className="bottle-selector-search">
-                  <Search size={16} strokeWidth={2} />
-                  <input
-                    type="text"
-                    className="bottle-selector-search-input"
-                    placeholder={t('admin.testLab.searchPlaceholder')}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    autoFocus
-                  />
-                </div>
-                <div className="bottle-selector-list">
-                  {activeBottleRegistry
-                    .filter(bottle =>
-                      searchQuery === '' ||
-                      bottle.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      bottle.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      bottle.oilType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      getLocalizedBottleName(bottle.sku, bottle.name).toLowerCase().includes(searchQuery.toLowerCase())
-                    )
-                    .map((bottle) => (
-                      <button
-                        key={bottle.sku}
-                        className={`bottle-selector-item ${selectedSku === bottle.sku ? "selected" : ""}`}
-                        onClick={() => handleBottleSelect(bottle.sku)}
-                        type="button"
-                      >
-                        <span className="bottle-item-icon">{getOilEmoji(bottle.oilType)}</span> {getLocalizedBottleName(bottle.sku, bottle.name)}
-                        {selectedSku === bottle.sku && (
-                          <span className="bottle-selector-check">✓</span>
-                        )}
-                      </button>
-                    ))}
-                  {searchQuery && activeBottleRegistry.filter(b =>
-                    b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    getLocalizedBottleName(b.sku, b.name).toLowerCase().includes(searchQuery.toLowerCase())
-                  ).length === 0 && (
-                    <div className="bottle-selector-no-results">
-                      {t('admin.testLab.noResults', { query: searchQuery })}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+              {t('admin.testLab.showDebugPanel')}
+            </label>
           </div>
 
-          {/* Selected Bottle Display */}
-          {selectedBottle && scanState === "idle" && (
-            <div className="selected-bottle-display">
-              <span>{getOilEmoji(selectedBottle.oilType)} {getLocalizedBottleName(selectedSku, selectedBottle.name)}</span>
-              <button
-                className="clear-bottle-button"
-                onClick={() => {
-                  setSelectedSku("");
-                              }}
-                type="button"
-              >
-                ✕ {t('admin.testLab.clear')}
-              </button>
+          {/* Entry Point — single SKU, no dropdown needed */}
+          {scanState === "idle" && (
+            <div className="test-lab-section test-lab-section--bottle" style={{ textAlign: 'center' }}>
+              <h2 className="test-lab-section-title">{t('admin.testLab.selectBottleScanQr')}</h2>
+
+              {/* Confirmed bottle card — always the single active SKU */}
+              {selectedBottle && (
+                <div className="bottle-confirmed-card">
+                  <span className="bottle-confirmed-emoji">{getOilEmoji(selectedBottle.oilType)}</span>
+                  <span className="bottle-confirmed-name">{getLocalizedBottleName(selectedSku, selectedBottle.name)}</span>
+                  <span className="bottle-confirmed-badge">✓</span>
+                </div>
+              )}
+
+              {/* Scan button — always enabled (bottle is pre-selected) */}
+              <div className="entry-point-buttons" style={{ marginTop: 'var(--space-md)', justifyContent: 'center' }}>
+                <button
+                  className="entry-point-button entry-point-button--primary"
+                  onClick={() => handleMockQrScan(selectedSku)}
+                  type="button"
+                  style={{ width: '100%', maxWidth: '320px' }}
+                >
+                  <QrCode size={22} strokeWidth={2} />
+                  <span>{t('admin.testLab.scanMockQr')}</span>
+                </button>
+              </div>
             </div>
           )}
 
-          {/* Mock QR Button — full-width, primary, disabled until bottle is selected */}
-          <div className="entry-point-buttons" style={{ marginTop: 'var(--space-md)', justifyContent: 'center' }}>
-            <button
-              className="entry-point-button entry-point-button--primary"
-              onClick={() => {
-                if (!selectedSku) return;
-                handleMockQrScan(selectedSku);
-              }}
-              disabled={!selectedSku}
-              type="button"
-              style={{ width: '100%', maxWidth: '320px' }}
-              title={selectedSku ? t('admin.testLab.startWithSelected') : t('admin.testLab.pleaseSelectFirst')}
-            >
-              <QrCode size={22} strokeWidth={2} />
-              <span>{t('admin.testLab.scanMockQr')}</span>
-            </button>
-            {!selectedSku && (
-              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', margin: '4px 0 0 0' }}>
-                {t('admin.testLab.selectToActivate')}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Scan Flow */}
-      {scanState === "scanning" && selectedBottle && (
-        <div className="test-lab-section">
-          <h2 className="test-lab-section-title">{t('admin.testLab.capturePhoto')}</h2>
-          <CameraViewfinder
-            onCapture={handleCapture}
-            onError={handleError}
-            onPermissionDenied={() => handleError(t('camera.permissionDenied'))}
-          />
-        </div>
-      )}
-
-      {/* Analyzing State */}
-      {scanState === "analyzing" && (
-        <div className="test-lab-section">
-          <div className="analyzing-state">
-            <div className="analyzing-spinner" />
-            <p className="analyzing-text">{t('admin.testLab.analyzing')}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Results */}
-      {scanState === "complete" && result && selectedBottle && (
-        <div className="test-lab-section">
-          <ResultDisplay
-            result={result}
-            bottle={selectedBottle}
-            capturedImage={capturedImage || undefined}
-            onRetake={handleRetake}
-          />
-          
-          {/* Admin Tools Overlay */}
-          {isAdmin && (
-            <AdminToolsOverlay
-              result={result}
-              isOpen={showAdminTools}
-              onOpen={() => setShowAdminTools(true)}
-              onClose={() => setShowAdminTools(false)}
-              onSaveValidation={handleValidationSave}
-            />
+          {/* Scan Flow */}
+          {scanState === "scanning" && selectedBottle && (
+            <div className="test-lab-section">
+              <h2 className="test-lab-section-title">{t('admin.testLab.capturePhoto')}</h2>
+              <CameraViewfinder
+                onCapture={handleCapture}
+                onError={handleError}
+                onPermissionDenied={() => handleError(t('camera.permissionDenied'))}
+              />
+            </div>
           )}
-          
-          {/* Action Buttons */}
-          <div className="test-lab-result-actions">
-            <button
-              className="test-lab-back-button"
-              onClick={handleNewTest}
-              type="button"
-            >
-              <RefreshCcw size={20} strokeWidth={2} />
-              <span>{t('admin.testLab.backToTestLab')}</span>
-            </button>
-          </div>
-        </div>
+
+          {/* Analyzing State */}
+          {scanState === "analyzing" && (
+            <div className="test-lab-section">
+              <div className="analyzing-state">
+                <div className="analyzing-spinner" />
+                <p className="analyzing-text">{t('admin.testLab.analyzing')}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Results */}
+          {scanState === "complete" && result && selectedBottle && (
+            <div className="test-lab-section">
+              <ResultDisplay
+                result={result}
+                bottle={selectedBottle}
+                capturedImage={capturedImage || undefined}
+                onRetake={handleRetake}
+              />
+
+              {/* Admin Tools Overlay */}
+              {isAdmin && (
+                <AdminToolsOverlay
+                  result={result}
+                  isOpen={showAdminTools}
+                  onOpen={() => setShowAdminTools(true)}
+                  onClose={() => setShowAdminTools(false)}
+                  onSaveValidation={handleValidationSave}
+                />
+              )}
+
+              {/* Action Buttons */}
+              <div className="test-lab-result-actions">
+                <button
+                  className="test-lab-back-button"
+                  onClick={handleNewTest}
+                  type="button"
+                >
+                  <RefreshCcw size={20} strokeWidth={2} />
+                  <span>{t('admin.testLab.backToTestLab')}</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Error State */}
+          {scanState === "error" && error && (
+            <div className="test-lab-section">
+              <div className="test-lab-error-card" role="alert">
+              {/* Icon badge */}
+              <div className="test-lab-error-icon-wrap" aria-hidden="true">
+                <AlertTriangle size={28} strokeWidth={2} className="test-lab-error-icon" />
+              </div>
+
+              {/* Message */}
+              <div className="test-lab-error-body">
+                <h4 className="test-lab-error-title">{t('admin.testLab.errorTitle')}</h4>
+                <p className="test-lab-error-msg">{error}</p>
+              </div>
+
+              <div className="test-lab-error-actions">
+                <button
+                  className="error-retry-button"
+                  onClick={handleRetry}
+                  type="button"
+                >
+                  <RefreshCcw size={16} strokeWidth={2} />
+                  <span>{t('common.retry')}</span>
+                </button>
+                <button
+                  className="test-lab-back-button"
+                  onClick={handleNewTest}
+                  type="button"
+                >
+                  <span>{t('admin.testLab.backToTestLab')}</span>
+                </button>
+              </div>
+            </div>
+            </div>
+          )}
+        </>
       )}
 
-      {/* Error State */}
-      {scanState === "error" && error && (
-        <div className="test-lab-section">
-          <div className="test-lab-error-card" role="alert">
-          {/* Icon badge */}
-          <div className="test-lab-error-icon-wrap" aria-hidden="true">
-            <AlertTriangle size={28} strokeWidth={2} className="test-lab-error-icon" />
-          </div>
-
-          {/* Message */}
-          <div className="test-lab-error-body">
-            <h4 className="test-lab-error-title">{t('admin.testLab.errorTitle')}</h4>
-            <p className="test-lab-error-msg">{error}</p>
-          </div>
-
-          <div className="test-lab-error-actions">
-            <button
-              className="error-retry-button"
-              onClick={handleRetry}
-              type="button"
-            >
-              <RefreshCcw size={16} strokeWidth={2} />
-              <span>{t('common.retry')}</span>
-            </button>
-            <button
-              className="test-lab-back-button"
-              onClick={handleNewTest}
-              type="button"
-            >
-              <span>{t('admin.testLab.backToTestLab')}</span>
-            </button>
-          </div>
-        </div>
-        </div>
-      )}
+      {/* API Inspector Tab */}
+      {activeTab === "inspector" && <ApiInspector selectedSku={selectedSku} />}
     </div>
   );
 }
