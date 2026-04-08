@@ -159,7 +159,7 @@ test.describe('Epic 7: Single-SKU Restriction (1.5L only)', () => {
       await expect(page.locator('.nav-label:has-text("Test Lab"), .app-ctrl-admin-label').first()).toBeVisible({ timeout: 5000 });
     });
 
-    test('bottle selector only offers the 1.5L Corn Oil bottle', async ({ page }) => {
+    test('bottle selector shows the 1.5L Corn Oil as confirmed (no dropdown)', async ({ page }) => {
       await page.addInitScript(() => {
         window.sessionStorage.setItem('afia_admin_session', 'valid-token');
         window.sessionStorage.setItem('afia_admin_session_expires', String(Date.now() + 3600000));
@@ -170,14 +170,13 @@ test.describe('Epic 7: Single-SKU Restriction (1.5L only)', () => {
       await page.waitForLoadState('networkidle');
       await page.locator('button[aria-label="Test Lab"]').click();
 
-      await page.locator('.bottle-selector-button').click();
-      const items = page.locator('.bottle-selector-item');
-      await expect(items.first()).toBeVisible({ timeout: 3000 });
+      // No dropdown — single confirmed bottle card is shown
+      await expect(page.locator('.bottle-confirmed-card')).toBeVisible({ timeout: 3000 });
+      await expect(page.locator('.bottle-confirmed-name')).toContainText(/1\.5[lL]|corn/i);
 
-      // Exactly one bottle available — the single-SKU restriction
-      const count = await items.count();
+      // Exactly one confirmed card — the single-SKU restriction
+      const count = await page.locator('.bottle-confirmed-card').count();
       expect(count).toBe(1);
-      await expect(items.first()).toContainText(ACTIVE_NAME_FRAGMENT);
     });
   });
 });
