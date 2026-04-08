@@ -111,6 +111,14 @@
   padding-bottom: 110px;
 }
 
+/* Camera fullscreen - no nav, no padding, covers viewport */
+.camera-fullscreen-view {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--color-bg-primary);
+}
+
 /* Mobile */
 @media (max-width: 480px) {
   .main-navigation {

@@ -88,6 +88,7 @@
     "capturePhotoAriaLabel": "Capture photo",
     "analyzingAriaLabel": "Analyzing bottle",
     "guideText": "Align bottle in frame",
+    "showFrontLabel": "Position front label facing camera",
     "deviceSettings": "Could not access camera. Please check your device settings.",
     "iosSettingsInstructions": "Go to Settings → Safari → Camera → Allow",
     "androidSettingsInstructions": "Go to Settings → Apps → Browser → Permissions → Camera → Allow"

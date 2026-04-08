@@ -6,7 +6,7 @@ import {
   useMemo
 } from "react";
 import { useTranslation } from "react-i18next";
-import { Camera, AlertTriangle, RotateCcw, Flashlight, FlashlightOff } from "lucide-react";
+import { Camera, AlertTriangle, RotateCcw, Flashlight, FlashlightOff, X } from "lucide-react";
 import "./CameraViewfinder.css";
 import {
   CAMERA_CONFIG,
@@ -30,6 +30,8 @@ interface CameraViewfinderProps {
   onError: (message: string) => void;
   /** Callback triggered when permission is denied */
   onPermissionDenied: () => void;
+  /** Callback to exit camera view (back button) */
+  onCancel?: () => void;
   /** Prefer back/environment camera if true */
   preferBackCamera?: boolean;
   /** Enable real-time quality guidance overlay */
@@ -38,10 +40,61 @@ interface CameraViewfinderProps {
 
 type CameraState = 'idle' | 'requesting' | 'active' | 'permission-denied' | 'error';
 
+/** Oil bottle silhouette guide — changes colour by quality score */
+function BottleGuide({ isReady, score }: { isReady: boolean; score: number }) {
+  const color = isReady ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444';
+  const opacity = isReady ? 0.95 : 0.75;
+  return (
+    <div className={`bottle-guide-wrapper${isReady ? ' ready' : ''}`}>
+      <svg
+        className="bottle-guide-svg"
+        viewBox="0 0 120 210"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        {/* Bottle body */}
+        <path
+          d="M 44 2 H 76 V 15 L 85 28 L 90 46 V 168 Q 90 182 60 182 Q 30 182 30 168 V 46 L 35 28 L 44 15 Z"
+          stroke={color}
+          strokeWidth="3.5"
+          strokeLinejoin="round"
+          opacity={opacity}
+        />
+        {/* Handle (right side) */}
+        <path
+          d="M 90 64 Q 112 64 112 94 Q 112 124 90 124"
+          stroke={color}
+          strokeWidth="3"
+          strokeLinecap="round"
+          opacity={opacity * 0.85}
+        />
+        {/* Label area — dashed */}
+        <rect
+          x="33" y="62" width="54" height="78" rx="4"
+          stroke={color}
+          strokeWidth="1.5"
+          strokeDasharray="6 3"
+          opacity={opacity * 0.55}
+        />
+        {/* Fill-level guide line */}
+        <line
+          x1="33" y1="100" x2="87" y2="100"
+          stroke={color}
+          strokeWidth="1"
+          strokeDasharray="3 3"
+          opacity={opacity * 0.35}
+        />
+      </svg>
+    </div>
+  );
+}
+
 export function CameraViewfinder({
   onCapture,
   onError,
   onPermissionDenied,
+  onCancel,
   preferBackCamera = true,
   enableLiveGuidance = true,
 }: CameraViewfinderProps) {
@@ -288,43 +341,57 @@ export function CameraViewfinder({
       {/* Guidance Overlay — only when active */}
       {cameraState === 'active' && enableLiveGuidance && (
         <div className="camera-guidance-overlay">
-          {/* Top Info */}
+          {/* Header: back button · status pill · torch */}
           <div className="guidance-header">
-            <div className={`guidance-status-pill ${guidance.state.isReady ? 'ready' : ''}`}>
+            {onCancel ? (
+              <button
+                className="camera-back-btn"
+                onClick={onCancel}
+                type="button"
+                aria-label={t('common.back')}
+              >
+                <X size={22} strokeWidth={2.5} />
+              </button>
+            ) : <div style={{ width: 44 }} />}
+
+            <div className={`guidance-status-pill${guidance.state.isReady ? ' ready' : ''}`}>
               <div className="status-dot" />
               <span className="status-text">
                 {guidance.state.isReady ? t('camera.ready') : t('camera.alignBottle')}
               </span>
             </div>
-          </div>
 
-          {/* Framing Guide */}
-          <div className="guidance-center">
-            <div className={`framing-box ${guidance.state.isReady ? 'ready' : ''}`}>
-              <div className="corner corner-tl" />
-              <div className="corner corner-tr" />
-              <div className="corner corner-bl" />
-              <div className="corner corner-br" />
-            </div>
-
-            {guidance.state.assessment && !guidance.state.isReady && (
-              <p className="guidance-hint">
-                {guidance.state.assessment.guidanceMessage}
-              </p>
-            )}
-          </div>
-
-          {/* Bottom Controls */}
-          <div className="guidance-footer">
-            {torchSupported && (
+            {torchSupported ? (
               <button
-                className={`camera-control-btn torch-btn ${torchOn ? 'active' : ''}`}
+                className={`camera-control-btn torch-btn${torchOn ? ' active' : ''}`}
                 onClick={toggleTorch}
+                type="button"
                 aria-label={torchOn ? t('camera.flashlightOff') : t('camera.flashlightOn')}
               >
-                {torchOn ? <FlashlightOff size={24} /> : <Flashlight size={24} />}
+                {torchOn ? <FlashlightOff size={22} /> : <Flashlight size={22} />}
               </button>
-            )}
+            ) : <div style={{ width: 44 }} />}
+          </div>
+
+          {/* Centre: bottle silhouette guide */}
+          <div className="guidance-center">
+            <BottleGuide
+              isReady={guidance.state.isReady}
+              score={guidance.state.assessment?.overallScore ?? 0}
+            />
+          </div>
+
+          {/* Footer: contextual hint pill above capture button */}
+          <div className="guidance-footer">
+            <div className={`guidance-hint-pill${guidance.state.isReady ? ' ready' : ` ${guidance.state.assessment?.guidanceType ?? 'warning'}`}`}>
+              <span className="guidance-hint-text">
+                {guidance.state.isReady
+                  ? t('camera.ready')
+                  : guidance.state.assessment && guidance.state.assessment.overallScore < 60
+                    ? guidance.state.assessment.guidanceMessage
+                    : t('camera.showFrontLabel')}
+              </span>
+            </div>
           </div>
         </div>
       )}

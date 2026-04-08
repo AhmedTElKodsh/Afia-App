@@ -88,6 +88,7 @@
     "capturePhotoAriaLabel": "التقاط صورة",
     "analyzingAriaLabel": "جاري تحليل الزجاجة",
     "guideText": "ضع الزجاجة في الإطار",
+    "showFrontLabel": "وجّه الملصق الأمامي نحو الكاميرا",
     "deviceSettings": "تعذّر الوصول إلى الكاميرا. يرجى التحقق من إعدادات جهازك.",
     "iosSettingsInstructions": "اذهب إلى الإعدادات ← Safari ← الكاميرا ← السماح",
     "androidSettingsInstructions": "اذهب إلى الإعدادات ← التطبيقات ← المتصفح ← الصلاحيات ← الكاميرا ← السماح"

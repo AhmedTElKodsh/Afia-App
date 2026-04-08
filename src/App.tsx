@@ -288,13 +288,13 @@ export default function App() {
 
     case "CAMERA_ACTIVE":
       return (
-        <div className="app-with-nav">
-        <AppControls isAdminMode={isAdminMode} />
-          <Navigation currentView={currentView} onViewChange={setCurrentView} isAdminMode={isAdminMode} />
-          <CameraViewfinder 
+        <div className="camera-fullscreen-view">
+          <AppControls isAdminMode={isAdminMode} />
+          <CameraViewfinder
             onCapture={handleCapture}
             onError={setError}
             onPermissionDenied={() => setError('Camera permission denied')}
+            onCancel={() => setAppState("IDLE")}
           />
         </div>
       );
