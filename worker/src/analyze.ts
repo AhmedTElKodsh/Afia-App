@@ -3,6 +3,8 @@ import type { Env } from "./types.ts";
 import { getBottleBySku } from "./bottleRegistry.ts";
 import { callGemini } from "./providers/gemini.ts";
 import { callGroq } from "./providers/groq.ts";
+import { callOpenRouter } from "./providers/openrouter.ts";
+import { callMistral } from "./providers/mistral.ts";
 import { storeScan } from "./storage/supabaseClient.ts";
 import { MonitoringLogger } from "./monitoring/logger.ts";
 import { QuotaMonitor } from "./monitoring/quotaMonitor.ts";
@@ -89,7 +91,7 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
     }
 
     const scanId = crypto.randomUUID();
-    let aiProvider: "gemini" | "groq" = "gemini";
+    let aiProvider: "gemini" | "groq" | "openrouter" | "mistral" = "gemini";
     let keyUsed = "gemini_key_1";
 
     // Collect all available Gemini API keys for sequential fallback
@@ -97,36 +99,57 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
       c.env.GEMINI_API_KEY,
       c.env.GEMINI_API_KEY2,
       c.env.GEMINI_API_KEY3,
+      c.env.GEMINI_API_KEY4,
     ].filter((k): k is string => typeof k === "string" && k.length > 0);
 
-    // Try Gemini first with all keys (sequential fallback), fall back to Groq
+    // Fallback chain: Gemini (×4 keys) → Groq → OpenRouter → Mistral
     let llmResult: LLMResponse;
     try {
       llmResult = await callGemini(body.imageBase64, bottle, geminiKeys, debugReasoning);
       await quotaMonitor.trackRequest(keyUsed);
     } catch (geminiError) {
-      await logger.warn("All Gemini keys failed, falling back to Groq", {
-        error: String(geminiError),
-        sku: body.sku,
-      });
+      await logger.warn("All Gemini keys failed, trying Groq", { error: String(geminiError), sku: body.sku });
 
       try {
         aiProvider = "groq";
         keyUsed = "groq";
+        if (!c.env.GROQ_API_KEY) throw new Error("No Groq API key configured");
         llmResult = await callGroq(body.imageBase64, bottle, c.env.GROQ_API_KEY, debugReasoning);
         await quotaMonitor.trackRequest(keyUsed);
       } catch (groqError) {
-        const latencyMs = Date.now() - startTime;
-        await logger.error("All AI providers failed", {
-          geminiError: String(geminiError),
-          groqError: String(groqError),
-          sku: body.sku,
-          latencyMs,
-        });
-        return c.json(
-          { error: "All AI providers failed", code: "SERVICE_UNAVAILABLE" },
-          503
-        );
+        await logger.warn("Groq failed, trying OpenRouter", { error: String(groqError), sku: body.sku });
+
+        try {
+          aiProvider = "openrouter";
+          keyUsed = "openrouter";
+          if (!c.env.OPENROUTER_API_KEY) throw new Error("No OpenRouter API key configured");
+          llmResult = await callOpenRouter(body.imageBase64, bottle, c.env.OPENROUTER_API_KEY, debugReasoning);
+          await quotaMonitor.trackRequest(keyUsed);
+        } catch (openrouterError) {
+          await logger.warn("OpenRouter failed, trying Mistral", { error: String(openrouterError), sku: body.sku });
+
+          try {
+            aiProvider = "mistral";
+            keyUsed = "mistral";
+            if (!c.env.MISTRAL_API_KEY) throw new Error("No Mistral API key configured");
+            llmResult = await callMistral(body.imageBase64, bottle, c.env.MISTRAL_API_KEY, debugReasoning);
+            await quotaMonitor.trackRequest(keyUsed);
+          } catch (mistralError) {
+            const latencyMs = Date.now() - startTime;
+            await logger.error("All AI providers failed", {
+              geminiError: String(geminiError),
+              groqError: String(groqError),
+              openrouterError: String(openrouterError),
+              mistralError: String(mistralError),
+              sku: body.sku,
+              latencyMs,
+            });
+            return c.json(
+              { error: "All AI providers failed", code: "SERVICE_UNAVAILABLE" },
+              503
+            );
+          }
+        }
       }
     }
 

@@ -4,7 +4,7 @@ import { parseLLMResponse } from "./parseLLMResponse.ts";
 
 const GEMINI_API_BASE =
   "https://generativelanguage.googleapis.com/v1beta/models";
-const MODEL = "gemini-2.5-flash-latest";
+const MODEL = "gemini-2.0-flash";
 
 function buildSystemPrompt(debugReasoning: boolean): string {
   const schema = debugReasoning
@@ -50,9 +50,6 @@ export async function callGemini(
     generationConfig: {
       temperature: 0.1,
       responseMimeType: "application/json",
-      thinkingConfig: {
-        thinkingBudget: 0,
-      },
     },
   };
 

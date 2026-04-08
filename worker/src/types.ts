@@ -6,9 +6,12 @@ export interface Env {
   RATE_LIMIT_KV: KVNamespace;
   // Secrets (set via wrangler secret put)
   GEMINI_API_KEY: string;
-  GEMINI_API_KEY2?: string; // Optional second key for rotation
-  GEMINI_API_KEY3?: string; // Optional third key for rotation
-  GROQ_API_KEY: string;
+  GEMINI_API_KEY2?: string;
+  GEMINI_API_KEY3?: string;
+  GEMINI_API_KEY4?: string;
+  GROQ_API_KEY?: string;
+  OPENROUTER_API_KEY?: string;
+  MISTRAL_API_KEY?: string;
   ADMIN_PASSWORD?: string; // Admin dashboard password (server-side only)
   // Monitoring
   BETTERSTACK_TOKEN?: string; // Optional monitoring token
