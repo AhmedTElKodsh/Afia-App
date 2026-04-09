@@ -151,9 +151,9 @@
 - **Processing**: Server-side `validateFeedback()` → R2 metadata update
 
 ### providers/gemini.ts
-- **Model**: `gemini-2.0-flash`
-- **Config**: temperature 0.1, JSON response mode
-- **Prompt**: Shared `buildAnalysisPrompt()` from `providers/buildAnalysisPrompt.ts`
+- **Model**: `gemini-2.5-flash-latest`
+- **Config**: temperature 0.1, JSON response mode, thinking budget 0
+- **Prompt**: System prompt for fill level estimation + image quality assessment
 
 ### providers/groq.ts
 - **Model**: `meta-llama/llama-4-scout-17b-16e-instruct`

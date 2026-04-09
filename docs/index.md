@@ -9,7 +9,7 @@
 - **Repository Type**: Multi-part (frontend + worker)
 - **Frontend**: React 19 + TypeScript 5.9 + Vite 7 (PWA)
 - **Backend**: Cloudflare Workers + Hono 4.7
-- **AI**: Gemini 2.0 Flash (primary) + Groq Llama 4 Scout (fallback)
+- **AI**: Gemini 2.5 Flash (primary) + Groq Llama 4 Scout (fallback)
 - **Status**: POC complete (5 epics, 38 stories)
 
 ## Documentation
@@ -23,7 +23,6 @@
 | [API Contracts](./api-contracts.md) | REST endpoints (POST /analyze, POST /feedback, GET /health), request/response schemas, error codes |
 | [Data Models](./data-models.md) | All TypeScript interfaces, static data registries, data flow diagram, local storage |
 | [Development Guide](./development-guide.md) | Setup instructions, npm scripts, testing, building, deployment, environment variables, conventions |
-| [Testing Pyramid](./testing-pyramid.md) | 4-layer test strategy: Vitest unit → Playwright E2E → Admin TestLab → Real device |
 | [Known Issues](./known-issues.md) | Code duplication, R2 disabled, naming inconsistency, missing test coverage, security notes |
 
 ## Quick Reference
