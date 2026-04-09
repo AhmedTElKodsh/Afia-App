@@ -10,13 +10,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   resolve: {
     alias: {
-      // @supabase/supabase-js lives in worker/node_modules, not root node_modules.
-      // Vite's import-analysis resolves imports at transform time (before vi.mock can
-      // intercept), so we point it at the real package path for test resolution.
-      // The Cloudflare plugin uses its own environment for the worker build.
+      // @supabase/supabase-js lives in worker/node_modules, which is NOT installed
+      // during the root `npm ci` step in CI. Vite's import-analysis resolves imports
+      // at transform time (before vi.mock can intercept), so we redirect to a committed
+      // stub. Worker tests mock supabaseClient.ts entirely via vi.mock() — the stub
+      // is never called. The Cloudflare plugin uses its own environment for the worker
+      // build and resolves the real package from worker/node_modules.
       "@supabase/supabase-js": path.resolve(
         __dirname,
-        "worker/node_modules/@supabase/supabase-js",
+        "src/test/__mocks__/supabase-stub.ts",
       ),
     },
   },
