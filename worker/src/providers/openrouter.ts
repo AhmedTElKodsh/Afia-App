@@ -5,8 +5,9 @@ import { buildOpenAIFewShotParts } from "../referenceFrames.ts";
 import { buildAnalysisPrompt } from "./buildAnalysisPrompt.ts";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-// gemini-2.0-flash via OpenRouter — vision-capable, separate quota from direct Gemini keys
-const MODEL = "google/gemini-2.0-flash";
+// gemini-2.5-flash via OpenRouter — vision-capable, separate quota from direct Gemini keys
+// (gemini-2.0-flash was deprecated April 2026)
+const MODEL = "google/gemini-2.5-flash";
 
 export async function callOpenRouter(
   imageBase64: string,

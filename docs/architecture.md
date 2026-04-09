@@ -114,11 +114,13 @@ Request
 
 | Provider      | Model                                       | Role     | API Style          |
 | ------------- | ------------------------------------------- | -------- | ------------------ |
-| Google Gemini | `gemini-2.5-flash-latest`                   | Primary  | Google AI REST API |
+| Google Gemini | `gemini-2.0-flash`                          | Primary  | Google AI REST API |
 | Groq          | `meta-llama/llama-4-scout-17b-16e-instruct` | Fallback | OpenAI-compatible  |
+| OpenRouter    | `google/gemini-2.0-flash`                   | Fallback | OpenAI-compatible  |
+| Mistral       | `pixtral-12b-2409`                          | Fallback | OpenAI-compatible  |
 
-- **Automatic failover**: If Gemini throws, Groq is tried
-- **Key rotation**: Up to 3 Gemini API keys (`GEMINI_API_KEY`, `GEMINI_API_KEY2`, `GEMINI_API_KEY3`) randomly selected per request
+- **Automatic failover**: Gemini (×4 keys) → Groq → OpenRouter → Mistral
+- **Key rotation**: Up to 4 Gemini API keys (`GEMINI_API_KEY`–`GEMINI_API_KEY4`) tried sequentially per request
 - **Temperature**: 0.1 for both (deterministic output)
 - **Response format**: JSON mode enforced (`responseMimeType` for Gemini, `response_format` for Groq)
 - **Structured output**: Both providers return `{fillPercentage, confidence, imageQualityIssues[], reasoning}`

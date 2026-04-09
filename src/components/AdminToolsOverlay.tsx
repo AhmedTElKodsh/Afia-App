@@ -15,7 +15,7 @@
 
 import { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, ChevronUp, Copy, Check, ThumbsUp, ThumbsDown, Clock, Cpu, CheckCircle, Camera, Wrench, BarChart2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Copy, Check, ThumbsUp, ThumbsDown, Clock, Cpu, CheckCircle, Camera, Wrench, BarChart2, Zap } from "lucide-react";
 import type { AnalysisResult } from "../state/appState.ts";
 import "./AdminToolsOverlay.css";
 
@@ -227,6 +227,28 @@ export function AdminToolsOverlay({
                     {result.aiProvider?.toUpperCase() || "N/A"}
                   </span>
                   <span className="admin-tools-metric-label">{t('admin.tools.metrics.aiProvider.label')}</span>
+                  {result.cacheHit && (
+                    <span className="admin-tools-metric-status success">
+                      {t('admin.tools.metrics.aiProvider.cached')}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="admin-tools-metric-card">
+                <div className="admin-tools-metric-icon"><Zap size={20} strokeWidth={2} /></div>
+                <div className="admin-tools-metric-content">
+                  <span className="admin-tools-metric-value">
+                    {result.tokensEstimated != null
+                      ? t('admin.tools.metrics.tokens.value', { count: result.tokensEstimated })
+                      : "—"}
+                  </span>
+                  <span className="admin-tools-metric-label">{t('admin.tools.metrics.tokens.label')}</span>
+                  {result.tokensEstimated != null && (
+                    <span className="admin-tools-metric-status">
+                      {result.aiProvider?.toUpperCase() || ""}
+                    </span>
+                  )}
                 </div>
               </div>
 

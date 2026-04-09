@@ -399,7 +399,12 @@
         },
         "aiProvider": {
           "label": "AI Provider",
-          "value": "{provider}"
+          "value": "{provider}",
+          "cached": "✅ Cache hit"
+        },
+        "tokens": {
+          "label": "Tokens (est.)",
+          "value": "{{count}} tok"
         },
         "confidence": {
           "label": "Confidence",

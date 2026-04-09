@@ -16,6 +16,8 @@ export interface AnalysisResult {
   confidence: "high" | "medium" | "low";
   aiProvider: "gemini" | "groq";
   latencyMs: number;
+  cacheHit?: boolean;
+  tokensEstimated?: number;
   imageQualityIssues?: string[];
 }
 

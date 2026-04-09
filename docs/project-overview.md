@@ -12,7 +12,7 @@ Consumers have no easy way to track how much cooking oil they've used from a bot
 
 A zero-install camera-based tool that:
 1. Identifies the bottle via QR code (SKU-based lookup)
-2. Uses AI vision (Gemini 2.5 Flash / Groq Llama 4 Scout) to estimate fill level as a percentage
+2. Uses AI vision (Gemini 2.0 Flash / Groq Llama 4 Scout / OpenRouter / Mistral Pixtral) to estimate fill level as a percentage
 3. Applies geometric formulas (cylinder/frustum) to convert percentage to exact milliliters
 4. Calculates nutrition facts from USDA per-100g data and oil density
 5. Collects user feedback to build a validated training dataset for future model improvement
@@ -46,8 +46,8 @@ QR Code Scan → Landing Page → Camera Capture → Photo Preview → AI Analys
 | Styling | CSS Custom Properties (no UI library) | — |
 | Backend Framework | Hono | 4.7 |
 | Backend Runtime | Cloudflare Workers | — |
-| AI Primary | Google Gemini 2.5 Flash | latest |
-| AI Fallback | Groq + Llama 4 Scout | 17b |
+| AI Primary | Google Gemini 2.0 Flash | gemini-2.0-flash |
+| AI Fallback | Groq Llama 4 Scout → OpenRouter → Mistral Pixtral | 17b |
 | Object Storage | Cloudflare R2 | — |
 | KV Storage | Cloudflare KV (rate limiting) | — |
 | Testing | Vitest | 4.0 |

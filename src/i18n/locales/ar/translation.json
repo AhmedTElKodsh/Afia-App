@@ -399,7 +399,12 @@
         },
         "aiProvider": {
           "label": "مزود الذكاء الاصطناعي",
-          "value": "{{provider}}"
+          "value": "{{provider}}",
+          "cached": "✅ من الذاكرة المؤقتة"
+        },
+        "tokens": {
+          "label": "الرموز (تقدير)",
+          "value": "{{count}} رمز"
         },
         "confidence": {
           "label": "الثقة",

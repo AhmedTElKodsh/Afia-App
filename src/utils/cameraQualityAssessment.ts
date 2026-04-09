@@ -319,6 +319,17 @@ export function analyzeComposition(
   imageSource: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
 ): CompositionAssessment {
   try {
+    // ── ROI: tighter crop matching the overlay's ~52%-wide footprint ──────────
+    const CROP_X_START = 0.30;   // horizontal start (was 0.20)
+    const CROP_X_END   = 0.70;   // horizontal end   (was 0.80)
+    const CROP_Y_START = 0.10;   // vertical start   (was 0)
+    const CROP_Y_END   = 0.90;   // vertical end     (was 1.0)
+    // ── Shape gates ───────────────────────────────────────────────────────────
+    const BOTTLE_ASPECT_MAX      = 0.75;  // bboxW/bboxH must be ≤ this (bottle ≈ 0.62)
+    const BBOX_MIN_HEIGHT        = 8;     // minimum bbox height in canvas rows
+    const NECK_TOP_FRACTION      = 0.25;  // top 25% of bbox = neck zone
+    const NECK_BODY_FRACTION     = 0.60;  // bottom 60% of bbox = body zone
+    const NECK_MAX_DENSITY_RATIO = 0.40;  // neck pixel density < 40% of body density
     const { canvas, ctx } = getProcessingCanvas();
 
     // Small portrait crop — centre 60 % of width, full height
@@ -331,9 +342,11 @@ export function analyzeComposition(
     const srcEl = imageSource as HTMLVideoElement;
     const srcW = srcEl.videoWidth || (imageSource as HTMLImageElement).naturalWidth || W;
     const srcH = srcEl.videoHeight || (imageSource as HTMLImageElement).naturalHeight || H;
-    const cropX = srcW * 0.20;
-    const cropW = srcW * 0.60;
-    ctx.drawImage(imageSource, cropX, 0, cropW, srcH, 0, 0, W, H);
+    const cropX = srcW * CROP_X_START;
+    const cropW = srcW * (CROP_X_END - CROP_X_START);
+    const cropY = srcH * CROP_Y_START;
+    const cropH = srcH * (CROP_Y_END - CROP_Y_START);
+    ctx.drawImage(imageSource, cropX, cropY, cropW, cropH, 0, 0, W, H);
 
     const imageData = ctx.getImageData(0, 0, W, H);
     const data = imageData.data;
@@ -341,6 +354,9 @@ export function analyzeComposition(
     let minRow = H;
     let maxRow = -1;
     let matchCount = 0;
+    let minCol = W;
+    let maxCol = -1;
+    const rowCounts = new Array<number>(H).fill(0);
 
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
@@ -373,6 +389,9 @@ export function analyzeComposition(
           matchCount++;
           if (y < minRow) minRow = y;
           if (y > maxRow) maxRow = y;
+          if (x < minCol) minCol = x;
+          if (x > maxCol) maxCol = x;
+          rowCounts[y]++;
         }
       }
     }
@@ -390,8 +409,34 @@ export function analyzeComposition(
       };
     }
 
+    // Gate 1b: bounding box too small for reliable shape checks
+    const bboxHeight = maxRow - minRow;
+    const bboxWidth  = maxCol - minCol;
+    if (bboxHeight < BBOX_MIN_HEIGHT || bboxWidth < 2) {
+      return { isCentered: false, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: false };
+    }
+    // Note: bboxWidth > 0 guaranteed by bottleDetected check above, but < 2 guard
+    // prevents division-by-zero in density calc when a single pixel column matches.
+
+    // Gate 2: aspect ratio — bottle must be taller than wide
+    const aspectRatio = bboxWidth / bboxHeight;
+    if (aspectRatio > BOTTLE_ASPECT_MAX) {
+      return { isCentered: true, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: false };
+    }
+
+    // Gate 3: neck sparsity — top 25% of bbox must be sparser than bottom 60%
+    const neckRows  = Math.max(1, Math.floor(bboxHeight * NECK_TOP_FRACTION));
+    const bodyRows  = Math.max(1, Math.floor(bboxHeight * NECK_BODY_FRACTION));
+    const neckTotal = rowCounts.slice(minRow, minRow + neckRows).reduce((a, b) => a + b, 0);
+    const bodyTotal = rowCounts.slice(maxRow - bodyRows, maxRow).reduce((a, b) => a + b, 0);
+    const neckDensity = neckTotal / (neckRows * bboxWidth);
+    const bodyDensity = bodyTotal / (bodyRows * bboxWidth);
+    if (bodyDensity > 0 && neckDensity >= NECK_MAX_DENSITY_RATIO * bodyDensity) {
+      return { isCentered: true, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: false };
+    }
+
     // Vertical span of matched pixels relative to crop height
-    const spanFraction = (maxRow - minRow) / H;
+    const spanFraction = bboxHeight / H;
 
     // At optimal distance the bottle should fill ≈ 65 % of the crop height.
     // Under 45 % → too far; over 90 % → too close.

@@ -12,6 +12,8 @@ export interface StoredScan {
   confidence: "high" | "medium" | "low";
   aiProvider?: "gemini" | "groq";
   latencyMs?: number;
+  tokensEstimated?: number;
+  cacheHit?: boolean;
   feedbackRating?: "about_right" | "too_high" | "too_low" | "way_off";
 }
 
@@ -197,5 +199,7 @@ export function createStoredScan(
     confidence: result.confidence,
     aiProvider: result.aiProvider,
     latencyMs: result.latencyMs,
+    tokensEstimated: result.tokensEstimated,
+    cacheHit: result.cacheHit,
   };
 }
