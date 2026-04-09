@@ -5,8 +5,10 @@ import { buildGeminiFewShotParts } from "../referenceFrames.ts";
 import { buildAnalysisPrompt } from "./buildAnalysisPrompt.ts";
 
 const GEMINI_API_BASE =
-  "https://generativelanguage.googleapis.com/v1/models";
-const MODEL = "gemini-2.0-flash";
+  "https://generativelanguage.googleapis.com/v1beta/models";
+// gemini-2.0-flash was deprecated April 2026 — gemini-2.5-flash is the
+// recommended price/performance replacement on the v1beta endpoint.
+const MODEL = "gemini-2.5-flash";
 
 
 export async function callGemini(
@@ -35,6 +37,9 @@ export async function callGemini(
     generationConfig: {
       temperature: 0.1,
       responseMimeType: "application/json",
+      // Disable thinking tokens — on by default in gemini-2.5-flash and can
+      // exceed Cloudflare Workers' 30 s CPU limit, causing the whole chain to fail.
+      thinkingConfig: { thinkingBudget: 0 },
     },
   };
 

@@ -31,7 +31,8 @@ export async function callGroq(
     ],
     temperature: 0.1,
     max_tokens: 200,
-    response_format: { type: "json_object" },
+    // response_format omitted: combining json_object mode with vision content
+    // causes 422 on llama-4-scout preview. The system prompt already instructs JSON output.
   };
 
   const res = await fetch(GROQ_API_URL, {

@@ -447,6 +447,7 @@
 }
 
 .bottle-guide-wrapper {
+  position: relative;
   width: 52%;
   max-width: 190px;
   display: flex;
@@ -474,6 +475,22 @@
 /* Glow when ready */
 .bottle-guide-wrapper.ready .bottle-guide-svg {
   filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.55));
+}
+
+/* Distance hint text inside the guide wrapper */
+.bottle-guide-hint {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 600;
+  color: #f59e0b;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  white-space: nowrap;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  pointer-events: none;
 }
 
 /* --- Footer: hint pill above capture button --- */

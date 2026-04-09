@@ -52,10 +52,18 @@ export interface CompositionAssessment {
   isCentered: boolean;
   /** Is camera level? */
   isLevel: boolean;
-  /** Distance status */
-  distance: 'too-close' | 'too-far' | 'good';
-  /** Subject visibility percentage */
+  /**
+   * Distance / presence status.
+   * 'not-detected' = no bottle found in centre region → block capture, outline red.
+   * 'too-far'      = bottle visible but smaller than guide → outline yellow.
+   * 'too-close'    = bottle larger than guide → outline yellow.
+   * 'good'         = bottle fills the guide → outline green.
+   */
+  distance: 'too-close' | 'too-far' | 'good' | 'not-detected';
+  /** Subject visibility percentage (apparent width as % of frame) */
   visibility: number;
+  /** True when a foreground object is detected inside the guide region */
+  bottleDetected: boolean;
 }
 
 /**
@@ -292,136 +300,202 @@ export function assessLighting(imageSource: HTMLImageElement | HTMLVideoElement 
 }
 
 /**
- * Analyze composition (centering, level, distance)
- * Note: This is a simplified version. For production, integrate with MediaPipe.
+ * Detect the Afia corn oil bottle using HSV colour segmentation.
+ *
+ * The Afia 1.5L bottle has two reliable colour signatures that survive most
+ * lighting conditions:
+ *   • Green label  — H 80–170°, S ≥ 25 %, V ≥ 20 %
+ *   • Amber/golden oil inside — H 25–65°, S ≥ 30 %, V ≥ 40 %
+ *
+ * We sample only the centre 60 % of the frame horizontally (where the overlay
+ * sits) so background objects at the edges are ignored.
+ *
+ * Outputs:
+ *   bottleDetected — true when enough matching pixels are found
+ *   distance       — based on the vertical span of the matched region vs. the
+ *                    expected span at optimal distance (≈ 65 % of crop height)
  */
 export function analyzeComposition(
   imageSource: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
 ): CompositionAssessment {
   try {
     const { canvas, ctx } = getProcessingCanvas();
-    
-    const size = 50;
-    canvas.width = size;
-    canvas.height = size;
-    
-    ctx.drawImage(imageSource, 0, 0, size, size);
-    const imageData = ctx.getImageData(0, 0, size, size);
-    
-    // Simple center of mass analysis
-    let totalX = 0;
-    let totalWeight = 0;
-    
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        const i = (y * size + x) * 4;
-        const luminance = 0.299 * imageData.data[i] + 0.587 * imageData.data[i + 1] + 0.114 * imageData.data[i + 2];
-        
-        // Weight by difference from average (edges have higher weight)
-        const weight = Math.abs(luminance - 128);
-        totalX += x * weight;
-        totalWeight += weight;
+
+    // Small portrait crop — centre 60 % of width, full height
+    const W = 60;
+    const H = 100;
+    canvas.width = W;
+    canvas.height = H;
+
+    // Draw only the horizontal centre of the source into our canvas
+    const srcEl = imageSource as HTMLVideoElement;
+    const srcW = srcEl.videoWidth || (imageSource as HTMLImageElement).naturalWidth || W;
+    const srcH = srcEl.videoHeight || (imageSource as HTMLImageElement).naturalHeight || H;
+    const cropX = srcW * 0.20;
+    const cropW = srcW * 0.60;
+    ctx.drawImage(imageSource, cropX, 0, cropW, srcH, 0, 0, W, H);
+
+    const imageData = ctx.getImageData(0, 0, W, H);
+    const data = imageData.data;
+
+    let minRow = H;
+    let maxRow = -1;
+    let matchCount = 0;
+
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const idx = (y * W + x) * 4;
+        const r = data[idx];
+        const g = data[idx + 1];
+        const b = data[idx + 2];
+
+        // RGB → HSV
+        const rN = r / 255, gN = g / 255, bN = b / 255;
+        const max = Math.max(rN, gN, bN);
+        const min = Math.min(rN, gN, bN);
+        const delta = max - min;
+        const v = max;
+        const s = max > 0 ? delta / max : 0;
+        let h = 0;
+        if (delta > 0) {
+          if (max === rN)      h = ((gN - bN) / delta % 6) * 60;
+          else if (max === gN) h = ((bN - rN) / delta + 2) * 60;
+          else                 h = ((rN - gN) / delta + 4) * 60;
+          if (h < 0) h += 360;
+        }
+
+        // Afia green label: H 80–170°, S ≥ 25 %, V ≥ 18 %
+        const isGreen = h >= 80 && h <= 170 && s >= 0.25 && v >= 0.18;
+        // Amber/golden oil: H 25–65°, S ≥ 28 %, V ≥ 38 %
+        const isAmber = h >= 25 && h <= 65 && s >= 0.28 && v >= 0.38;
+
+        if (isGreen || isAmber) {
+          matchCount++;
+          if (y < minRow) minRow = y;
+          if (y > maxRow) maxRow = y;
+        }
       }
     }
-    
-    const centerX = totalWeight > 0 ? totalX / totalWeight : size / 2;
-    
-    // Check if centered (within 20% of center)
-    const isCentered = Math.abs(centerX - size / 2) < size * 0.2;
-    
-    // Assume level for now (would use accelerometer/gyroscope in production)
-    const isLevel = true;
-    
-    // Simple distance estimation based on average brightness variance
-    // (closer objects typically have more detail)
-    const distance: 'too-close' | 'too-far' | 'good' = 'good';
-    
+
+    const matchRatio = matchCount / (W * H);
+    const bottleDetected = matchRatio >= 0.04 && maxRow > minRow;
+
+    if (!bottleDetected) {
+      return {
+        isCentered: false,
+        isLevel: true,
+        distance: 'not-detected',
+        visibility: 0,
+        bottleDetected: false,
+      };
+    }
+
+    // Vertical span of matched pixels relative to crop height
+    const spanFraction = (maxRow - minRow) / H;
+
+    // At optimal distance the bottle should fill ≈ 65 % of the crop height.
+    // Under 45 % → too far; over 90 % → too close.
+    let distance: 'too-close' | 'too-far' | 'good' | 'not-detected';
+    if (spanFraction < 0.30) {
+      distance = 'not-detected'; // too small to be confident
+    } else if (spanFraction < 0.45) {
+      distance = 'too-far';
+    } else if (spanFraction > 0.90) {
+      distance = 'too-close';
+    } else {
+      distance = 'good';
+    }
+
     return {
-      isCentered,
-      isLevel,
+      isCentered: true,
+      isLevel: true,
       distance,
-      visibility: 100,
+      visibility: Math.round(spanFraction * 100),
+      bottleDetected: distance !== 'not-detected',
     };
   } catch (error) {
     console.error('Composition analysis error:', error);
     return {
-      isCentered: true,
+      isCentered: false,
       isLevel: true,
-      distance: 'good',
-      visibility: 100,
+      distance: 'not-detected',
+      visibility: 0,
+      bottleDetected: false,
     };
   }
 }
 
 /**
- * Generate guidance message based on quality assessment
+ * Generate guidance message based on quality assessment.
+ * Priority: bottle alignment > lighting > blur — composition is checked first
+ * because it's the most common issue on mobile.
  */
 function generateGuidanceMessage(
   blurScore: number,
   lighting: LightingAssessment,
   composition: CompositionAssessment
 ): { message: string; type: 'success' | 'warning' | 'error' } {
-  // Priority order: blur > lighting > composition
-  
-  if (blurScore < 30) {
+  // Bottle position / presence (highest priority)
+  if (!composition.bottleDetected || composition.distance === 'not-detected') {
     return {
-      message: 'Hold steady - image is blurry',
+      message: 'Point camera at the bottle',
       type: 'error',
     };
   }
 
-  if (blurScore < 45) {
-    return {
-      message: 'Hold still...',
-      type: 'warning',
-    };
-  }
-  
-  if (lighting.status === 'too-dark') {
-    return {
-      message: 'Move to a brighter location',
-      type: 'error',
-    };
-  }
-  
-  if (lighting.status === 'too-bright') {
-    return {
-      message: 'Reduce glare - avoid direct light',
-      type: 'warning',
-    };
-  }
-  
-  if (lighting.status === 'low-contrast') {
-    return {
-      message: 'Improve lighting contrast',
-      type: 'warning',
-    };
-  }
-  
-  if (!composition.isCentered) {
-    return {
-      message: 'Center the bottle in frame',
-      type: 'warning',
-    };
-  }
-  
-  if (composition.distance === 'too-close') {
-    return {
-      message: 'Move camera back slightly',
-      type: 'warning',
-    };
-  }
-  
   if (composition.distance === 'too-far') {
     return {
       message: 'Move closer to the bottle',
       type: 'warning',
     };
   }
-  
-  // All good!
+
+  if (composition.distance === 'too-close') {
+    return {
+      message: 'Move camera back slightly',
+      type: 'warning',
+    };
+  }
+
+  // Lighting
+  if (lighting.status === 'too-dark') {
+    return {
+      message: 'Move to a brighter location',
+      type: 'error',
+    };
+  }
+
+  if (lighting.status === 'too-bright') {
+    return {
+      message: 'Reduce glare — avoid direct light',
+      type: 'warning',
+    };
+  }
+
+  if (lighting.status === 'low-contrast') {
+    return {
+      message: 'Improve lighting contrast',
+      type: 'warning',
+    };
+  }
+
+  // Blur
+  if (blurScore < 30) {
+    return {
+      message: 'Hold steady — image is blurry',
+      type: 'error',
+    };
+  }
+
+  if (blurScore < 45) {
+    return {
+      message: 'Hold still…',
+      type: 'warning',
+    };
+  }
+
   return {
-    message: 'Perfect! Hold steady...',
+    message: 'Perfect! Hold steady…',
     type: 'success',
   };
 }
@@ -450,17 +524,25 @@ export function assessImageQuality(
   const lighting = assessLighting(imageSource);
   const composition = analyzeComposition(imageSource);
   
-  // Calculate overall score (weighted average)
+  // Composition contributes 40 % so a missing/misaligned bottle visibly drops
+  // the overall score and prevents the "Ready" state.
+  const compositionScore =
+    composition.distance === 'good'          ? 100 :
+    composition.distance === 'too-far' ||
+    composition.distance === 'too-close'     ?  40 : 0;
+
   const overallScore = Math.round(
-    blurScore * 0.5 +
-    (lighting.isAcceptable ? 100 : 50) * 0.3 +
-    (composition.isCentered ? 100 : 50) * 0.2
+    blurScore * 0.4 +
+    (lighting.isAcceptable ? 100 : 50) * 0.2 +
+    compositionScore * 0.4
   );
-  
-  // Determine if good quality
-  const isGoodQuality = 
+
+  // Bottle must be detected AND at the right distance before capture is allowed.
+  const isGoodQuality =
     blurScore >= minBlurScore &&
-    (!requireGoodLighting || lighting.isAcceptable);
+    (!requireGoodLighting || lighting.isAcceptable) &&
+    composition.bottleDetected &&
+    composition.distance === 'good';
   
   // Generate guidance message
   const { message: guidanceMessage, type: guidanceType } = generateGuidanceMessage(

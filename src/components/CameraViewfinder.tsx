@@ -40,49 +40,80 @@ interface CameraViewfinderProps {
 
 type CameraState = 'idle' | 'requesting' | 'active' | 'permission-denied' | 'error';
 
-/** Oil bottle silhouette guide — changes colour by quality score */
-function BottleGuide({ isReady, score }: { isReady: boolean; score: number }) {
-  const color = isReady ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444';
-  const opacity = isReady ? 0.95 : 0.75;
+/** Oil bottle silhouette guide — colour reflects distance / quality state:
+ *  green  = bottle fills the outline (optimal distance, good quality)
+ *  yellow = bottle detected but wrong distance (too far or too close)
+ *  red    = no bottle detected in centre region
+ */
+function BottleGuide({
+  isReady,
+  distance,
+}: {
+  isReady: boolean;
+  distance: 'good' | 'too-far' | 'too-close' | 'not-detected';
+}) {
+  let color: string;
+  if (isReady || distance === 'good') {
+    color = '#10b981'; // green
+  } else if (distance === 'too-far' || distance === 'too-close') {
+    color = '#f59e0b'; // amber
+  } else {
+    color = '#ef4444'; // red — no bottle
+  }
+  const opacity = (isReady || distance === 'good') ? 0.95 : 0.78;
+
   return (
     <div className={`bottle-guide-wrapper${isReady ? ' ready' : ''}`}>
+      {/* Distance hint strip above/below the guide */}
+      {!isReady && distance === 'too-far' && (
+        <div className="bottle-guide-hint">Move closer</div>
+      )}
+      {!isReady && distance === 'too-close' && (
+        <div className="bottle-guide-hint">Move back</div>
+      )}
       <svg
         className="bottle-guide-svg"
-        viewBox="0 0 120 210"
+        viewBox="0 0 130 210"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
       >
-        {/* Bottle body */}
+        {/* ── Bottle body (Afia 1.5L corn oil silhouette) ── */}
+        {/* Cap */}
+        <rect x="47" y="2" width="36" height="11" rx="4"
+          stroke={color} strokeWidth="2.5" opacity={opacity} />
+        {/* Neck + shoulder: narrow at top, widens into body */}
         <path
-          d="M 44 2 H 76 V 15 L 85 28 L 90 46 V 168 Q 90 182 60 182 Q 30 182 30 168 V 46 L 35 28 L 44 15 Z"
+          d="M 50 13 Q 48 20 38 32 Q 28 44 26 54
+             L 26 174 Q 26 190 65 190 Q 104 190 104 174
+             L 104 54 Q 102 44 92 32 Q 82 20 80 13 Z"
           stroke={color}
           strokeWidth="3.5"
           strokeLinejoin="round"
           opacity={opacity}
         />
-        {/* Handle (right side) */}
+        {/* Handle (right side — D-shaped loop) */}
         <path
-          d="M 90 64 Q 112 64 112 94 Q 112 124 90 124"
+          d="M 104 78 Q 128 78 128 108 Q 128 138 104 138"
           stroke={color}
           strokeWidth="3"
           strokeLinecap="round"
           opacity={opacity * 0.85}
         />
-        {/* Label area — dashed */}
+        {/* Label area — dashed rectangle on body */}
         <rect
-          x="33" y="62" width="54" height="78" rx="4"
+          x="30" y="68" width="70" height="88" rx="5"
           stroke={color}
           strokeWidth="1.5"
           strokeDasharray="6 3"
-          opacity={opacity * 0.55}
+          opacity={opacity * 0.50}
         />
-        {/* Fill-level guide line */}
+        {/* Mid fill-level guide line */}
         <line
-          x1="33" y1="100" x2="87" y2="100"
+          x1="30" y1="112" x2="100" y2="112"
           stroke={color}
           strokeWidth="1"
-          strokeDasharray="3 3"
+          strokeDasharray="4 4"
           opacity={opacity * 0.35}
         />
       </svg>
@@ -377,7 +408,7 @@ export function CameraViewfinder({
           <div className="guidance-center">
             <BottleGuide
               isReady={guidance.state.isReady}
-              score={guidance.state.assessment?.overallScore ?? 0}
+              distance={guidance.state.assessment?.composition.distance ?? 'not-detected'}
             />
           </div>
 
