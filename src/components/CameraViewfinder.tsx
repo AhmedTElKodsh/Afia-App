@@ -48,32 +48,41 @@ type CameraState = 'idle' | 'requesting' | 'active' | 'permission-denied' | 'err
 function BottleGuide({
   isReady,
   distance,
+  isCentered,
 }: {
   isReady: boolean;
   distance: 'good' | 'too-far' | 'too-close' | 'not-detected';
+  isCentered: boolean;
 }) {
+  const { t } = useTranslation();
   let color: string;
-  if (isReady || distance === 'good') {
+  if (distance === 'good') {
     color = '#10b981'; // green
   } else if (distance === 'too-far' || distance === 'too-close') {
     color = '#f59e0b'; // amber
   } else {
     color = '#ef4444'; // red — no bottle
   }
-  const opacity = (isReady || distance === 'good') ? 0.95 : 0.78;
+  const opacity = distance === 'good' ? 0.95 : 0.78;
 
   return (
     <div className={`bottle-guide-wrapper${isReady ? ' ready' : ''}`}>
-      {/* Distance hint strip above/below the guide */}
+      {/* Hints hidden while ready — avoids flash if distance prop lags */}
       {!isReady && distance === 'too-far' && (
-        <div className="bottle-guide-hint">Move closer</div>
+        <div className="bottle-guide-hint">
+          {isCentered ? t('camera.moveCloser') : t('camera.centreBottle')}
+        </div>
       )}
       {!isReady && distance === 'too-close' && (
-        <div className="bottle-guide-hint">Move back</div>
+        <div className="bottle-guide-hint">{t('camera.moveBack')}</div>
+      )}
+      {!isReady && distance === 'not-detected' && (
+        <div className="bottle-guide-hint">{t('camera.alignBottle')}</div>
       )}
       <svg
         className="bottle-guide-svg"
         viewBox="0 0 130 210"
+        preserveAspectRatio="xMidYMid slice"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
@@ -409,6 +418,7 @@ export function CameraViewfinder({
             <BottleGuide
               isReady={guidance.state.isReady}
               distance={guidance.state.assessment?.composition.distance ?? 'not-detected'}
+              isCentered={guidance.state.assessment?.composition.isCentered ?? true}
             />
           </div>
 
@@ -419,7 +429,7 @@ export function CameraViewfinder({
                 {guidance.state.isReady
                   ? t('camera.ready')
                   : guidance.state.assessment && guidance.state.assessment.overallScore < 60
-                    ? guidance.state.assessment.guidanceMessage
+                    ? t(guidance.state.assessment.guidanceMessage)
                     : t('camera.showFrontLabel')}
               </span>
             </div>

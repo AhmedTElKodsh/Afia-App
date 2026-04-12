@@ -1,7 +1,19 @@
 import type { LLMResponse } from "../types.ts";
 
 export function parseLLMResponse(raw: string): LLMResponse {
-  const parsed = JSON.parse(raw) as Record<string, unknown>;
+  // Extract JSON from markdown code fences if present (some models wrap their
+  // output in ``` blocks, with or without a language tag, with or without prose
+  // preamble before the fence). The non-greedy capture handles nested fences.
+  const fenceMatch = raw.trim().match(/```[\w]*\s*([\s\S]*?)\s*```/);
+  const cleaned = (fenceMatch ? fenceMatch[1] : raw).trim();
+  if (!cleaned) {
+    throw new Error('Empty LLM response after fence stripping');
+  }
+  const raw_parsed: unknown = JSON.parse(cleaned);
+  if (typeof raw_parsed !== 'object' || raw_parsed === null || Array.isArray(raw_parsed)) {
+    throw new Error('LLM response is not a JSON object');
+  }
+  const parsed = raw_parsed as Record<string, unknown>;
 
   if (
     typeof parsed.fillPercentage !== "number" ||

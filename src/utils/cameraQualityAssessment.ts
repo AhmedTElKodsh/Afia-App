@@ -60,10 +60,14 @@ export interface CompositionAssessment {
    * 'good'         = bottle fills the guide → outline green.
    */
   distance: 'too-close' | 'too-far' | 'good' | 'not-detected';
-  /** Subject visibility percentage (apparent width as % of frame) */
+  /** Vertical span of detected bottle region as % of the cropped frame height (0–100) */
   visibility: number;
   /** True when a foreground object is detected inside the guide region */
   bottleDetected: boolean;
+  /** Horizontal width of detected bottle region as fraction of crop width (0–1); 0 when not detected */
+  widthFraction: number;
+  /** Horizontal centroid of matched pixels, normalised 0–1 (0 = left, 1 = right); 0.5 when not detected */
+  centroidX: number;
 }
 
 /**
@@ -302,18 +306,20 @@ export function assessLighting(imageSource: HTMLImageElement | HTMLVideoElement 
 /**
  * Detect the Afia corn oil bottle using HSV colour segmentation.
  *
- * The Afia 1.5L bottle has two reliable colour signatures that survive most
- * lighting conditions:
- *   • Green label  — H 80–170°, S ≥ 25 %, V ≥ 20 %
- *   • Amber/golden oil inside — H 25–65°, S ≥ 30 %, V ≥ 40 %
+ * Colour signatures (tightened to reduce false positives from grass, wood, skin):
+ *   • Green label  — H 90–160°, S ≥ 35 %, V ≥ 22 %
+ *   • Amber/golden oil — H 28–58°, S ≥ 38 %, V ≥ 42 %
  *
- * We sample only the centre 60 % of the frame horizontally (where the overlay
- * sits) so background objects at the edges are ignored.
+ * ROI: centre 40 % horizontally (30–70 %) and 80 % vertically (10–90 %),
+ * matching the SVG overlay footprint and excluding floor/ceiling stray colour.
  *
  * Outputs:
- *   bottleDetected — true when enough matching pixels are found
- *   distance       — based on the vertical span of the matched region vs. the
- *                    expected span at optimal distance (≈ 65 % of crop height)
+ *   bottleDetected — true when matched pixels ≥ 4 % of crop AND three shape
+ *                    gates pass: bbox height ≥ 8 rows, aspect ratio ≤ 0.75
+ *                    (bottle is taller than wide), neck sparser than body.
+ *   distance       — 'too-far' when span < 55 % or width < 20 % or off-centre;
+ *                    'too-close' when span > 90 %; 'good' when all pass.
+ *   isCentered     — centroid X within ±15 % of crop midpoint (normalised).
  */
 export function analyzeComposition(
   imageSource: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
@@ -321,26 +327,54 @@ export function analyzeComposition(
   try {
     const { canvas, ctx } = getProcessingCanvas();
 
-    // Small portrait crop — centre 60 % of width, full height
+    // ── ROI: tighter crop matching the overlay's ~52%-wide footprint ──────────
+    const CROP_X_START = 0.30;   // horizontal start (was 0.20)
+    const CROP_X_END   = 0.70;   // horizontal end   (was 0.80)
+    const CROP_Y_START = 0.10;   // vertical start   (was 0)
+    const CROP_Y_END   = 0.90;   // vertical end     (was 1.0)
+    // ── Shape gates ───────────────────────────────────────────────────────────
+    const BOTTLE_ASPECT_MAX      = 0.75;  // bboxW/bboxH must be ≤ this (bottle ≈ 0.62)
+    const BBOX_MIN_HEIGHT        = 8;     // minimum bbox height in canvas rows
+    const NECK_TOP_FRACTION      = 0.25;  // top 25% of bbox = neck zone
+    const NECK_BODY_FRACTION     = 0.60;  // bottom 60% of bbox = body zone
+    const NECK_MAX_DENSITY_RATIO = 0.40;  // neck pixel density < 40% of body density
+    // ── Processing canvas — destination stays fixed ───────────────────────────
     const W = 60;
     const H = 100;
     canvas.width = W;
     canvas.height = H;
 
-    // Draw only the horizontal centre of the source into our canvas
+    // Draw only the horizontal centre of the source into our canvas.
+    // Explicit fallbacks for all three source types (video / image / canvas).
     const srcEl = imageSource as HTMLVideoElement;
-    const srcW = srcEl.videoWidth || (imageSource as HTMLImageElement).naturalWidth || W;
-    const srcH = srcEl.videoHeight || (imageSource as HTMLImageElement).naturalHeight || H;
-    const cropX = srcW * 0.20;
-    const cropW = srcW * 0.60;
-    ctx.drawImage(imageSource, cropX, 0, cropW, srcH, 0, 0, W, H);
+    const srcW = srcEl.videoWidth
+      || (imageSource as HTMLImageElement).naturalWidth
+      || (imageSource as HTMLCanvasElement).width
+      || W;
+    const srcH = srcEl.videoHeight
+      || (imageSource as HTMLImageElement).naturalHeight
+      || (imageSource as HTMLCanvasElement).height
+      || H;
+    // Video metadata not yet loaded — canvas would contain only black pixels.
+    if (srcW === 0 || srcH === 0) {
+      return { isCentered: false, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: false, widthFraction: 0, centroidX: 0.5 };
+    }
+    const cropX = srcW * CROP_X_START;
+    const cropW = srcW * (CROP_X_END - CROP_X_START);
+    const cropY = srcH * CROP_Y_START;
+    const cropH = srcH * (CROP_Y_END - CROP_Y_START);
+    ctx.drawImage(imageSource, cropX, cropY, cropW, cropH, 0, 0, W, H);
 
     const imageData = ctx.getImageData(0, 0, W, H);
     const data = imageData.data;
 
     let minRow = H;
     let maxRow = -1;
+    let minCol = W;
+    let maxCol = -1;
     let matchCount = 0;
+    let totalMatchX = 0;
+    const rowCounts = new Array<number>(H).fill(0);
 
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
@@ -364,13 +398,17 @@ export function analyzeComposition(
           if (h < 0) h += 360;
         }
 
-        // Afia green label: H 80–170°, S ≥ 25 %, V ≥ 18 %
-        const isGreen = h >= 80 && h <= 170 && s >= 0.25 && v >= 0.18;
-        // Amber/golden oil: H 25–65°, S ≥ 28 %, V ≥ 38 %
-        const isAmber = h >= 25 && h <= 65 && s >= 0.28 && v >= 0.38;
+        // Afia green label: H 90–160°, S ≥ 35 %, V ≥ 22 %
+        const isGreen = h >= 90 && h <= 160 && s >= 0.35 && v >= 0.22;
+        // Amber/golden oil: H 28–58°, S ≥ 38 %, V ≥ 42 %
+        const isAmber = h >= 28 && h <= 58 && s >= 0.38 && v >= 0.42;
 
         if (isGreen || isAmber) {
           matchCount++;
+          totalMatchX += x;
+          if (x < minCol) minCol = x;
+          if (x > maxCol) maxCol = x;
+          rowCounts[y]++;
           if (y < minRow) minRow = y;
           if (y > maxRow) maxRow = y;
         }
@@ -378,6 +416,8 @@ export function analyzeComposition(
     }
 
     const matchRatio = matchCount / (W * H);
+    // Gate 0: colour mass threshold — any single-pixel match sets maxRow > minRow,
+    // so the span check is implicit here once matchRatio passes.
     const bottleDetected = matchRatio >= 0.04 && maxRow > minRow;
 
     if (!bottleDetected) {
@@ -387,31 +427,70 @@ export function analyzeComposition(
         distance: 'not-detected',
         visibility: 0,
         bottleDetected: false,
+        widthFraction: 0,
+        centroidX: 0.5,
       };
     }
 
-    // Vertical span of matched pixels relative to crop height
-    const spanFraction = (maxRow - minRow) / H;
+    // Gate 1b: bounding box too small for reliable shape checks
+    const bboxHeight = maxRow - minRow;
+    const bboxWidth  = maxCol - minCol;
+    if (bboxHeight < BBOX_MIN_HEIGHT || bboxWidth < 2) {
+      return { isCentered: false, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: false, widthFraction: 0, centroidX: 0.5 };
+    }
 
-    // At optimal distance the bottle should fill ≈ 65 % of the crop height.
-    // Under 45 % → too far; over 90 % → too close.
-    let distance: 'too-close' | 'too-far' | 'good' | 'not-detected';
+    // Centroid X — computed before shape gates so all early returns use the real value.
+    // matchCount > 0 guaranteed here: passed matchRatio >= 0.04 (requires ≥ 240 of 6000 px).
+    const centroidX  = matchCount > 0 ? totalMatchX / matchCount / W : 0.5;
+    const isCentered = Math.abs(centroidX - 0.5) <= 0.15;
+
+    // Gate 2: aspect ratio — bottle must be taller than wide (Afia 1.5L ≈ 0.62)
+    const aspectRatio = bboxWidth / bboxHeight;
+    if (aspectRatio > BOTTLE_ASPECT_MAX) {
+      return { isCentered, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: true, widthFraction: bboxWidth / W, centroidX };
+    }
+
+    // Gate 3: neck sparsity — top 25% of bbox must be sparser than bottom 60%
+    // rowCounts[y] is absolute canvas row — slice uses absolute indices.
+    // +1 on end: Array.slice is end-exclusive; maxRow itself must be included.
+    const neckRows   = Math.max(1, Math.floor(bboxHeight * NECK_TOP_FRACTION));
+    const bodyRows   = Math.max(1, Math.floor(bboxHeight * NECK_BODY_FRACTION));
+    const neckTotal  = rowCounts.slice(minRow, minRow + neckRows).reduce((a, b) => a + b, 0);
+    const bodyTotal  = rowCounts.slice(maxRow - bodyRows, maxRow + 1).reduce((a, b) => a + b, 0);
+    const neckDensity = neckTotal / (neckRows * bboxWidth);
+    const bodyDensity = bodyTotal / (bodyRows * bboxWidth);
+    if (bodyDensity === 0 || neckDensity >= NECK_MAX_DENSITY_RATIO * bodyDensity) {
+      return { isCentered, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: true, widthFraction: bboxWidth / W, centroidX };
+    }
+
+    const spanFraction  = bboxHeight / H;
+    const widthFraction = bboxWidth / W;
+
+    // Spec §4.2: matched region too short for confident classification even after shape gates.
+    // TODO: tune widthFraction < 0.20 threshold after device testing (spec §4.1 table uses 0.35).
     if (spanFraction < 0.30) {
-      distance = 'not-detected'; // too small to be confident
-    } else if (spanFraction < 0.45) {
-      distance = 'too-far';
-    } else if (spanFraction > 0.90) {
+      return { isCentered, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: true, widthFraction, centroidX };
+    }
+
+    // 'good' requires: vertical 55–90 %, width ≥ 20 %, and centred.
+    // Any single failure → 'too-far' (amber); span > 90 % → 'too-close'.
+    let distance: 'too-close' | 'too-far' | 'good';
+    if (spanFraction > 0.90) {
       distance = 'too-close';
+    } else if (spanFraction < 0.55 || widthFraction < 0.20 || !isCentered) {
+      distance = 'too-far';
     } else {
       distance = 'good';
     }
 
     return {
-      isCentered: true,
+      isCentered,
       isLevel: true,
       distance,
       visibility: Math.round(spanFraction * 100),
-      bottleDetected: distance !== 'not-detected',
+      bottleDetected: true,
+      widthFraction,
+      centroidX,
     };
   } catch (error) {
     console.error('Composition analysis error:', error);
@@ -421,12 +500,15 @@ export function analyzeComposition(
       distance: 'not-detected',
       visibility: 0,
       bottleDetected: false,
+      widthFraction: 0,
+      centroidX: 0.5,
     };
   }
 }
 
 /**
  * Generate guidance message based on quality assessment.
+ * Returns an i18n key (camera.*) so callers can translate via t().
  * Priority: bottle alignment > lighting > blur — composition is checked first
  * because it's the most common issue on mobile.
  */
@@ -437,65 +519,45 @@ function generateGuidanceMessage(
 ): { message: string; type: 'success' | 'warning' | 'error' } {
   // Bottle position / presence (highest priority)
   if (!composition.bottleDetected || composition.distance === 'not-detected') {
-    return {
-      message: 'Point camera at the bottle',
-      type: 'error',
-    };
+    return { message: 'camera.alignBottle', type: 'error' };
   }
 
   if (composition.distance === 'too-far') {
-    return {
-      message: 'Move closer to the bottle',
-      type: 'warning',
-    };
+    // Spec §4.3: differentiate off-centre from genuinely too far.
+    if (!composition.isCentered && composition.visibility > 30) {
+      return { message: 'camera.centreBottle', type: 'warning' };
+    }
+    return { message: 'camera.moveCloser', type: 'warning' };
   }
 
   if (composition.distance === 'too-close') {
-    return {
-      message: 'Move camera back slightly',
-      type: 'warning',
-    };
+    return { message: 'camera.moveBack', type: 'warning' };
   }
 
   // Lighting
   if (lighting.status === 'too-dark') {
-    return {
-      message: 'Move to a brighter location',
-      type: 'error',
-    };
+    return { message: 'camera.tooDark', type: 'error' };
   }
 
   if (lighting.status === 'too-bright') {
-    return {
-      message: 'Reduce glare — avoid direct light',
-      type: 'warning',
-    };
+    return { message: 'camera.tooBright', type: 'warning' };
   }
 
   if (lighting.status === 'low-contrast') {
-    return {
-      message: 'Improve lighting contrast',
-      type: 'warning',
-    };
+    return { message: 'camera.lowContrast', type: 'warning' };
   }
 
   // Blur
   if (blurScore < 30) {
-    return {
-      message: 'Hold steady — image is blurry',
-      type: 'error',
-    };
+    return { message: 'camera.holdSteady', type: 'error' };
   }
 
   if (blurScore < 45) {
-    return {
-      message: 'Hold still…',
-      type: 'warning',
-    };
+    return { message: 'camera.holdStill', type: 'warning' };
   }
 
   return {
-    message: 'Perfect! Hold steady…',
+    message: 'camera.perfect',
     type: 'success',
   };
 }

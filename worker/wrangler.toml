@@ -1,15 +1,21 @@
-name = "afia-worker"
+name = "afia-app"
 main = "src/index.ts"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
-# Non-secret env vars (secrets set via `wrangler secret put`)
 ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173"
-# Supabase configuration for persistent storage
 SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co"
-# Set to "true" to include reasoning field in LLM output (adds ~30-50 output tokens)
 DEBUG_REASONING = "false"
+
+# Backblaze B2 (Object Storage) — set actual values in .dev.vars for local dev,
+# or via wrangler secret put / Cloudflare dashboard for production.
+B2_ACCOUNT_ID = ""
+B2_BUCKET_ID = ""
+B2_DOWNLOAD_URL = ""
+
+# Upstash Redis (Edge State & Rate Limiting) — see above note.
+UPSTASH_REDIS_REST_URL = ""
 
 [[kv_namespaces]]
 binding = "RATE_LIMIT_KV"

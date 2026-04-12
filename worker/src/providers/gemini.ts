@@ -4,10 +4,12 @@ import { parseLLMResponse } from "./parseLLMResponse.ts";
 import { buildGeminiFewShotParts } from "../referenceFrames.ts";
 import { buildAnalysisPrompt } from "./buildAnalysisPrompt.ts";
 
+// v1beta has weaker stability guarantees than v1 (breaking changes possible
+// without notice). Migrate to v1 once gemini-2.5-flash is promoted there.
 const GEMINI_API_BASE =
   "https://generativelanguage.googleapis.com/v1beta/models";
 // gemini-2.0-flash was deprecated April 2026 — gemini-2.5-flash is the
-// recommended price/performance replacement on the v1beta endpoint.
+// recommended price/performance replacement.
 const MODEL = "gemini-2.5-flash";
 
 
@@ -39,6 +41,9 @@ export async function callGemini(
       responseMimeType: "application/json",
       // Disable thinking tokens — on by default in gemini-2.5-flash and can
       // exceed Cloudflare Workers' 30 s CPU limit, causing the whole chain to fail.
+      // Trade-off: reasoning quality may degrade on ambiguous images. If accuracy
+      // issues arise, try a small non-zero budget (e.g. 512) and verify it fits
+      // within the Workers CPU limit experimentally before shipping.
       thinkingConfig: { thinkingBudget: 0 },
     },
   };

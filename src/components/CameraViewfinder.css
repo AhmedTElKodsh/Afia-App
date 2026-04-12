@@ -477,10 +477,13 @@
   filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.55));
 }
 
-/* Distance hint text inside the guide wrapper */
+/* Distance hint text inside the guide wrapper.
+   Uses bottom: 100% so it always floats above the wrapper regardless of height,
+   avoiding the fragility of a fixed top: -24px offset. */
 .bottle-guide-hint {
   position: absolute;
-  top: -24px;
+  bottom: 100%;
+  margin-bottom: 6px;
   left: 50%;
   transform: translateX(-50%);
   font-size: 11px;

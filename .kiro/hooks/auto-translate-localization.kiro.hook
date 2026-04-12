@@ -1,0 +1,25 @@
+{
+  "enabled": true,
+  "name": "Auto-Translate Localization Files",
+  "description": "Monitors changes to localization files (.json, .yaml, .yml, .properties, .po, .xml) and automatically generates translations for all configured target languages while maintaining context and locale-specific conventions",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "*.json",
+      "*.yaml",
+      "*.yml",
+      "*.properties",
+      "*.po",
+      "*.xml",
+      "**/locales/**/*",
+      "**/i18n/**/*",
+      "**/translations/**/*",
+      "**/lang/**/*"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A localization file has been modified. Please:\n1. Identify the new or modified text entries in the changed file\n2. Detect the source language from the file path or content\n3. Identify all target language files that need updates (look for similar files in sibling directories or with language suffixes)\n4. Generate accurate translations for each target language, maintaining:\n   - Proper context and meaning\n   - Locale-specific conventions (date formats, number formats, etc.)\n   - Placeholder syntax and variable names\n   - Text length considerations for UI elements\n5. Apply the translations to the corresponding target language files\n6. Preserve the file structure and formatting of the original files\n\nIf you cannot determine the target languages automatically, ask the user which languages should be supported."
+  }
+}

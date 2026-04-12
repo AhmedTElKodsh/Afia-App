@@ -1,0 +1,29 @@
+{
+  "enabled": true,
+  "name": "Update Documentation on Source Changes",
+  "description": "Monitors TypeScript and Python source files, configuration files, and related project files. When changes are detected, prompts the agent to review and update documentation in README.md or the docs/ folder to keep it synchronized with code changes.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "src/**/*.ts",
+      "src/**/*.tsx",
+      "src/**/*.py",
+      "worker/**/*.ts",
+      "worker/**/*.py",
+      "scripts/**/*.ts",
+      "scripts/**/*.py",
+      "*.config.ts",
+      "*.config.js",
+      "package.json",
+      "tsconfig.json",
+      "requirements.txt",
+      "pyproject.toml",
+      "setup.py"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A source file has been modified. Please review the changes and update the documentation accordingly. Check if README.md needs updates for any API changes, new features, or configuration changes. If there's relevant documentation in the docs/ folder, update those files as well to reflect the code changes."
+  }
+}

@@ -34,7 +34,13 @@
       "WebFetch(domain:developers.cloudflare.com)",
       "WebFetch(domain:ai.google.dev)",
       "WebFetch(domain:console.groq.com)",
-      "WebFetch(domain:pages.cloudflare.com)"
+      "WebFetch(domain:pages.cloudflare.com)",
+      "Bash(npx playwright:*)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(claude plugin:*)",
+      "mcp__plugin_claude-mem_mcp-search__smart_outline",
+      "Bash(npx vitest:*)",
+      "mcp__plugin_claude-mem_mcp-search__get_observations"
     ]
   }
 }
