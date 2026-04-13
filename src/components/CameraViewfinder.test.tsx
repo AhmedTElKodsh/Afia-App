@@ -5,13 +5,25 @@ import { CameraViewfinder } from './CameraViewfinder';
 // Stable mock for useCameraGuidance — returning the same object reference every call
 // prevents startCamera's useCallback from recreating on every render, which would
 // trigger the useEffect([startCamera]) to fire again and consume the queued mock value.
+let mockIsReady = true;
 vi.mock('../hooks/useCameraGuidance', () => {
-  const stableGuidance = {
-    state: { isReady: true, assessment: null },
-    startGuidance: vi.fn(),
-    stopGuidance: vi.fn(),
+  return { 
+    useCameraGuidance: () => ({
+      state: { 
+        isReady: mockIsReady, 
+        assessment: { 
+          guidanceType: 'warning', 
+          overallScore: 50, 
+          composition: { distance: 'not-detected', isCentered: true },
+          guidanceMessage: 'camera.alignBottle'
+        },
+        holdProgress: 0,
+        isHolding: false,
+      },
+      startGuidance: vi.fn(),
+      stopGuidance: vi.fn(),
+    })
   };
-  return { useCameraGuidance: () => stableGuidance };
 });
 
 // Mock MediaDevices API
@@ -29,6 +41,21 @@ const getUserMediaSpy = vi.fn();
 beforeEach(() => {
   // Mock console.error to reduce noise
   vi.spyOn(console, 'error').mockImplementation(() => {});
+  
+  // Mock canvas getContext
+  const mockCtx = {
+    drawImage: vi.fn(),
+    getImageData: vi.fn(() => ({
+      data: new Uint8ClampedArray(4),
+      width: 1,
+      height: 1,
+    })),
+    canvas: { width: 0, height: 0 },
+  };
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+    mockCtx as unknown as CanvasRenderingContext2D
+  );
+  vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/jpeg;base64,mock');
 });
 
 afterEach(() => {
@@ -217,9 +244,50 @@ describe('CameraViewfinder', () => {
   describe('image capture', () => {
     beforeEach(() => {
       getUserMediaSpy.mockResolvedValueOnce(mockStream);
+      mockIsReady = false;
+    });
+
+    it('should show "Capture manually" label when live guidance is enabled', async () => {
+      render(<CameraViewfinder 
+        onCapture={mockOnCapture}
+        onError={mockOnError}
+        onPermissionDenied={mockOnPermissionDenied}
+        enableLiveGuidance={true}
+      />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Capture manually')).toBeInTheDocument();
+      });
+    });
+
+    it('should trigger onCapture when isReady becomes true (auto-capture)', async () => {
+      const { rerender } = render(<CameraViewfinder 
+        onCapture={mockOnCapture}
+        onError={mockOnError}
+        onPermissionDenied={mockOnPermissionDenied}
+        enableLiveGuidance={true}
+      />);
+      
+      await waitFor(() => {
+        expect(screen.getByLabelText('Live camera feed for bottle scanning')).toBeInTheDocument();
+      });
+
+      // Simulate guidance becoming ready
+      mockIsReady = true;
+      rerender(<CameraViewfinder 
+        onCapture={mockOnCapture}
+        onError={mockOnError}
+        onPermissionDenied={mockOnPermissionDenied}
+        enableLiveGuidance={true}
+      />);
+
+      await waitFor(() => {
+        expect(mockOnCapture).toHaveBeenCalled();
+      });
     });
 
     it('should have capture button available', async () => {
+      mockIsReady = true;
       render(<CameraViewfinder 
         onCapture={mockOnCapture}
         onError={mockOnError}

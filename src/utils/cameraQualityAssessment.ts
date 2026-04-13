@@ -575,54 +575,72 @@ export function assessImageQuality(
   options: {
     minBlurScore?: number;
     requireGoodLighting?: boolean;
+    precomputedBlurScore?: number; // NEW: allow passing throttled blur score
   } = {}
 ): QualityAssessment {
   const {
     minBlurScore = 50,
     requireGoodLighting = true,
+    precomputedBlurScore,
   } = options;
-  
-  // Run all assessments
-  const blurScore = detectBlur(imageSource);
-  const lighting = assessLighting(imageSource);
-  const composition = analyzeComposition(imageSource);
-  
-  // Composition contributes 40 % so a missing/misaligned bottle visibly drops
-  // the overall score and prevents the "Ready" state.
-  const compositionScore =
-    composition.distance === 'good'          ? 100 :
-    composition.distance === 'too-far' ||
-    composition.distance === 'too-close'     ?  40 : 0;
 
-  const overallScore = Math.round(
-    blurScore * 0.4 +
-    (lighting.isAcceptable ? 100 : 50) * 0.2 +
-    compositionScore * 0.4
-  );
+  // Internal implementation to allow timing guard
+  const _runAssessment = (): QualityAssessment => {
+    // Run all assessments
+    const blurScore = precomputedBlurScore !== undefined ? precomputedBlurScore : detectBlur(imageSource);
+    const lighting = assessLighting(imageSource);
+    const composition = analyzeComposition(imageSource);
+    
+    // Composition contributes 40 % so a missing/misaligned bottle visibly drops
+    // the overall score and prevents the "Ready" state.
+    const compositionScore =
+      composition.distance === 'good'          ? 100 :
+      composition.distance === 'too-far' ||
+      composition.distance === 'too-close'     ?  40 : 0;
 
-  // Bottle must be detected AND at the right distance before capture is allowed.
-  const isGoodQuality =
-    blurScore >= minBlurScore &&
-    (!requireGoodLighting || lighting.isAcceptable) &&
-    composition.bottleDetected &&
-    composition.distance === 'good';
-  
-  // Generate guidance message
-  const { message: guidanceMessage, type: guidanceType } = generateGuidanceMessage(
-    blurScore,
-    lighting,
-    composition
-  );
-  
-  return {
-    overallScore,
-    blurScore: Math.round(blurScore),
-    lighting,
-    composition,
-    isGoodQuality,
-    guidanceMessage,
-    guidanceType,
+    const overallScore = Math.round(
+      blurScore * 0.4 +
+      (lighting.isAcceptable ? 100 : 50) * 0.2 +
+      compositionScore * 0.4
+    );
+
+    // Bottle must be detected AND at the right distance before capture is allowed.
+    const isGoodQuality =
+      blurScore >= minBlurScore &&
+      (!requireGoodLighting || lighting.isAcceptable) &&
+      composition.bottleDetected &&
+      composition.distance === 'good';
+    
+    // Generate guidance message
+    const { message: guidanceMessage, type: guidanceType } = generateGuidanceMessage(
+      blurScore,
+      lighting,
+      composition
+    );
+    
+    return {
+      overallScore,
+      blurScore: Math.round(blurScore),
+      lighting,
+      composition,
+      isGoodQuality,
+      guidanceMessage,
+      guidanceType,
+    };
   };
+
+  // Winston: dev-only timing guard
+  if (import.meta.env.DEV) {
+    const t0 = performance.now();
+    const result = _runAssessment();
+    const elapsed = performance.now() - t0;
+    if (elapsed > 6) {
+      console.warn(`[camera] assessment took ${elapsed.toFixed(1)} ms — consider throttling`);
+    }
+    return result;
+  }
+
+  return _runAssessment();
 }
 
 /**
