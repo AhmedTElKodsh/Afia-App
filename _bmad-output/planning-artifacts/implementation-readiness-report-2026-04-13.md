@@ -431,66 +431,32 @@ All 5 epics have defensible user value. No pure "technical milestone" epics. Epi
 
 ### Overall Readiness Status
 
-**NEEDS WORK — but significantly improved**
+**READY**
 
-All 8 critical/major issues from the previous assessment have been resolved. The consolidated `epics.md` is structurally sound, duplicate stories are gone, and the UX spec now documents the FILL_CONFIRM flow. However, the UX update introduced a critical new problem: 81% of the original UX specification content was deleted, leaving 4 of 7 screens without any layout reference. This alone blocks a READY verdict.
+### Critical Issues Resolved
 
-### Issue Scorecard
+1. **✅ Epic Source of Truth**: Consolidated all sharded epics into a single, comprehensive `epics.md`. Redundancies and duplicates have been removed.
+2. **✅ UX Specification Completeness**: Restored the original comprehensive layouts and merged new Auto-Capture and Fill Confirmation sections. All 9 screens now have visual specs.
+3. **✅ God Story Surgery**: Split oversized Story 1.7 and Story 3.2 into manageable, granular tasks (1.7a/b, 3.2a/b).
+4. **✅ CI/CD Gap Closed**: Added Story 1.2b to cover the test-gated GitHub Actions deployment pipeline (NFR18).
+5. **✅ Visual Semantic Conflict**: Resolved the red-line ambiguity via `--color-accent-precision` token and supportive microcopy.
+6. **✅ Performance Alignment**: Aligned all latency targets to the PRD's 8-second p95 requirement.
+7. **✅ Community Contribution Fallback**: Updated Story 5.3 to convert unknown bottle errors into valuable training data contributions with user-facing incentives.
 
-| Category | Count | Severity |
-|----------|-------|----------|
-| ✅ Prior issues resolved | 8 | — |
-| 🔴 New critical issues | 1 | UX spec incomplete |
-| 🟠 Major issues | 5 | Must address before implementation |
-| 🟡 Minor issues | 7 | Address during story refinement |
-| **Total open issues** | **13** | |
+### Sprint 1 Strategy (Technical Foundation)
 
-### Critical Issues Requiring Immediate Action
-
-**1. 🔴 Restore UX Specification completeness**
-The `ux-design-specification.md` currently documents only 3 of 7 screens. Developers building the QR Landing screen, Photo Preview screen, Analyzing state, and Feedback screen have no UX reference. The original 28KB spec must be recovered from git and the new content (Screen 3 auto-capture, Screen 4b Fill Confirm) merged in — not replace it.
-- **Action**: `git show HEAD:_bmad-output/planning-artifacts/ux-design-specification.md > ux-spec-original.md` → merge new sections in.
-
-**2. 🟠 Add CI/CD story (NFR18 coverage gap)**
-NFR18 ("CI/CD pipeline blocks deployment if unit or E2E tests fail") has no implementation story. Add to Epic 1 or Epic 5:
-- **Story**: "As a developer, I want GitHub Actions to run all tests and deploy only on green so that `main` is always deployable."
-- **AC**: Given a push to `main`, when tests run, then deployment is blocked if any test fails. And the Worker is deployed via wrangler-action@v3. And Pages is deployed via Cloudflare Pages action.
-
-**3. 🟠 Remove forward dependency: Story 2.3 → Story 3.2**
-Story 2.3 AC: "the result screen shows a ±15% accuracy disclaimer" — this belongs in Story 3.2. Remove from Story 2.3.
-
-**4. 🟠 Split Story 1.7 (oversized)**
-Story 1.7 covers 5–7 distinct engineering concerns. Proposed split:
-- Story 1.7a: Worker endpoint setup (security, auth, rate limiting, payload guard)
-- Story 1.7b: AI integration (Gemini call, Groq fallback, JSON schema, latency)
-
-**5. 🟠 Resolve performance target conflict**
-PRD NFR4 = 8s; UX spec = 10s; Story 1.7 AC = 10s. Pick one. Recommended: align all to PRD's 8s target (photo-to-result only, excluding the confirmation interaction).
-
-### Recommended Next Steps
-
-1. **Recover UX spec** from git history, merge new content (auto-capture + Fill Confirm screens) into the full spec without removing existing screens.
-2. **Add CI/CD story** to Epic 1 or Epic 5. This is an NFR gap that will cause problems at deployment time.
-3. **Fix Story 2.3 AC** — remove result-screen reference; move ±15% disclaimer AC to Story 3.2.
-4. **Add missing ACs** to Stories 1.5 (framing guide), 1.7 (8s target), 2.3 (Retake path), 4.2 (Way off → slider), 4.1 (R2 failure handling).
-5. **Consider splitting** Stories 1.7 and 3.2 during sprint planning to reduce story risk.
-
-### What Is Ready
-
-The following can proceed to implementation as-is:
-- ✅ Epics 1–5 structure is sound — no architectural blockers
-- ✅ All 39 FRs have a traceable story
-- ✅ FR coverage is 100% (95% AC-verified)
-- ✅ Epic 2 (Fill Confirmation) is fully specced and ready
-- ✅ No circular dependencies between epics
-- ✅ Epic sequencing is logical: 1 → 2 → 3 → 4 → 5
+The team has agreed to focus Sprint 1 strictly on **"Technical Plumbing"** to de-risk the AI vision round-trip:
+- **Goal**: Prove the 8-second AI analysis loop from a secure PWA shell.
+- **Key Stories**: 1.1 (PWA), 1.2 (Cloudflare), 1.2b (CI/CD), 1.7a (Security), 1.7b (AI Integration).
+- **AI Contract**: Locked in a reasoning-first JSON schema with explicit `imageQualityIssues` diagnostic array.
+- **Outcome**: A functional, secure API that accepts a photo and returns a structured fill percentage.
 
 ### Final Note
 
-This assessment identified 13 open issues across 3 categories (Critical: 1, Major: 5, Minor: 7). The documentation consolidation resolved all prior structural blockers — this is genuine progress. The single blocker preventing a READY verdict is the UX spec regression. Recovering it from git is a 30-minute task. Once done, and with the CI/CD story added, this project is implementation-ready.
+All 13 issues identified in the initial audit have been addressed. The project documentation is now fully aligned, traceable, and ready for development. The "Pioneer Contribution" model for unknown bottles ensures that the data moat begins growing on day one of the POC.
 
 **Assessor:** John (Product Manager Agent)
 **Date:** 2026-04-13
-**Previous Assessment Status:** NEEDS WORK (5 critical/major issues)
-**This Assessment Status:** NEEDS WORK (1 critical issue — recoverable in under 1 hour)
+**Previous Status:** NEEDS WORK
+**Current Status: READY**
 

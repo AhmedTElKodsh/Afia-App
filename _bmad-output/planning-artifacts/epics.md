@@ -210,6 +210,16 @@ As a developer, I want Cloudflare Pages, Worker, and R2 configured, so that I ha
 - **And** Worker enforces origin validation and rate limiting (10 req/min per IP)
 - **And** API keys (GEMINI_API_KEY, GROQ_API_KEY) are stored as Worker secrets
 
+### Story 1.2b: CI/CD Pipeline (NFR18)
+As a developer, I want a GitHub Actions pipeline that runs tests and deploys automatically, so that main is always stable and deployable.
+**Acceptance Criteria:**
+- **Given** a code push to the `master` branch
+- **When** the CI pipeline triggers
+- **Then** it runs vitest unit tests for both frontend and worker
+- **And** it blocks deployment if any test fails
+- **And** it automatically deploys the frontend to Cloudflare Pages on success
+- **And** it automatically deploys the worker via `wrangler-action@v3` on success
+
 ### Story 1.3: Bottle Registry & Nutrition Data
 As a developer, I want bottle registry and USDA nutrition data bundled in the app, so that bottle information loads instantly without network calls.
 **Acceptance Criteria:**
@@ -227,16 +237,18 @@ As a user, I want to scan a QR code and see my bottle information instantly, so 
 - **When** the app loads
 - **Then** I see the bottle name, capacity, and oil type displayed
 - **And** I see a "Start Scan" button to begin camera capture
+- **And** if SKU is not in registry, I am redirected to the "Unsupported Bottle" screen (Story 5.3)
 - **And** the page loads in under 3 seconds on first visit (cold)
 - **And** the page loads in under 1 second on repeat visits (cached)
 
 ### Story 1.5: Camera Activation & Permission Handling
-As a user, I want to activate my phone's rear camera with clear guidance if access is denied, so that I can prepare to photograph my oil bottle.
+As a user, I want to activate my phone's rear camera with clear guidance, so that I can prepare to photograph my oil bottle.
 **Acceptance Criteria:**
 - **Given** I am on the QR landing page and have tapped "Start Scan"
 - **When** the camera activation begins
 - **Then** the rear-facing camera activates (not front-facing)
 - **And** I see a live viewfinder showing the camera feed
+- **And** I see a color-coded framing guide overlay (green = aligned / amber = marginal / red = no bottle detected)
 - **And** the camera activates in under 2 seconds
 - **And** if permission is denied, I see a "Camera access required" message with iOS/Android specific instructions to enable it in settings.
 
@@ -244,22 +256,31 @@ As a user, I want to activate my phone's rear camera with clear guidance if acce
 As a user, I want to capture a still photo from the viewfinder and preview it, so that I can verify the image quality before submitting.
 **Acceptance Criteria:**
 - **Given** the camera viewfinder is active
-- **When** I tap the capture button
+- **When** I tap the capture button (or auto-capture triggers)
 - **Then** a still photo is captured from the current frame
 - **And** the viewfinder freezes showing the captured image
 - **And** I see "Retake" and "Use Photo" buttons
 - **And** the image is captured at 800px width with JPEG quality 0.78
 
-### Story 1.7: Worker API Proxy & AI Integration
-As a developer, I want a Worker /analyze endpoint that integrates Gemini with Groq fallback, so that fill estimates are fast, accurate, and reliable.
+### Story 1.7a: Worker API Proxy & Security
+As a developer, I want a secure Worker /analyze endpoint, so that I have a protected interface for AI requests.
 **Acceptance Criteria:**
-- **Given** a valid /analyze request with {sku, imageBase64}
+- **Given** an incoming request to /analyze
 - **When** processed by the Worker
-- **Then** it validates the SKU and image size (< 4MB)
-- **And** it calls Gemini 2.5 Flash with structured JSON prompt
+- **Then** it validates the SKU exists in the registry
+- **And** it rejects images larger than 4MB
+- **And** it enforces origin validation against the production domain
+- **And** it returns a 429 response if the rate limit is exceeded
+
+### Story 1.7b: AI Vision Integration & Fallback
+As a developer, I want the Worker to integrate Gemini with Groq fallback, so that fill estimates are reliable.
+**Acceptance Criteria:**
+- **Given** a valid /analyze request payload
+- **When** calling the AI providers
+- **Then** it calls Gemini 2.5 Flash with a structured JSON prompt
 - **And** it automatically falls back to Groq Llama 4 Scout if Gemini returns 429/5xx
-- **And** it returns fillPercentage (0-100) and confidence (high/medium/low)
-- **And** the round-trip completes in under 10 seconds (p95)
+- **And** the response follows the schema: `{"fillPercentage": number, "confidence": "high|medium|low", "imageQualityIssues": string[], "reasoning": string}`
+- **And** the total round-trip completes in under 8 seconds (p95)
 
 ---
 
@@ -280,6 +301,7 @@ As a user, I want a vertical slider beside my photo that repositions a dashed li
 - **When** I drag the vertical slider (Radix-based)
 - **Then** the red dashed SVG line moves in real-time to match the slider value.
 - **And** the slider enforces a minimum of 55ml (cannot set to 0).
+- **And** at 100% fill, the line aligns correctly with the bottle shoulder.
 - **And** the layout adapts to RTL by moving the slider to the right side of the image.
 
 ### Story 2.3: Confirmation Flow Integration
@@ -288,8 +310,9 @@ As a user, I want to be brought to the confirmation screen after analysis and lo
 - **Given** AI analysis completes
 - **When** I arrive at the confirmation screen
 - **Then** the slider initializes at the AI estimate snapped to the nearest 55ml.
+- **And** while waiting for AI result, I see a loading indicator with copy 'Analyzing your bottle…'
 - **And** tapping "Confirm" uses the slider value for all downstream nutrition/volume displays.
-- **And** the result screen shows a ±15% accuracy disclaimer.
+- **And** tapping "Retake" returns to the camera flow (Story 1.5).
 
 ---
 
@@ -303,13 +326,22 @@ As a developer, I want an engine that calculates volumes and nutritional values 
 - **Then** it computes remaining/consumed volumes in ml, tbsp, and cups.
 - **And** it calculates Calories, Total Fat, and Saturated Fat using bundled USDA data and 0.92 g/ml oil density.
 
-### Story 3.2: Result Screen Visualization
-As a user, I want to see a bold fill gauge and detailed volume/nutrition panels, so that my scan result feels meaningful.
+### Story 3.2a: Result Header & Fill Gauge
+As a user, I want to see a bold fill gauge, so that my scan result feels meaningful.
 **Acceptance Criteria:**
 - **Given** I have confirmed my fill level
 - **When** the result screen renders
 - **Then** I see a bottle-shaped SVG gauge that animates from 0 to the target level over 600ms.
-- **And** I see a breakdown of volumes in 3 units and a distinct "Nutrition Facts" panel.
+- **And** the animation respects `prefers-reduced-motion: reduce`.
+- **And** the result screen shows a ±15% accuracy disclaimer.
+
+### Story 3.2b: Nutrition & Volume Panels
+As a user, I want to see detailed volume and nutrition panels, so that I understand my oil consumption.
+**Acceptance Criteria:**
+- **Given** result data is available
+- **When** the screen renders
+- **Then** I see a breakdown of volumes in 3 units (ml, tbsp, cups).
+- **And** I see a distinct "Nutrition Facts" panel with Calories and Fat data.
 - **And** all text/background combinations meet WCAG 2.1 AA contrast ratios.
 
 ---
@@ -324,14 +356,16 @@ As a developer, I want every scan and correction stored in R2, so that we can bu
 - **Then** the image is saved to `images/{scanId}.jpg`
 - **And** metadata (sku, timestamp, provider, estimates, confidence) is saved to `metadata/{scanId}.json`.
 - **And** user corrections are appended to the metadata record.
+- **And** if R2 write fails, the error is logged but the user still sees their result.
 
 ### Story 4.2: Confidence & Feedback UI
 As a user, I want to see confidence indicators and provide quick accuracy feedback, so that I can help improve the system.
 **Acceptance Criteria:**
-- **Given** the result screen is displayed
+- **Given** the result screen is displayed (Story 3.2a)
 - **When** I view the results
 - **Then** I see a color-coded confidence badge (Green/Yellow/Orange).
 - **And** I can tap "About right", "Too high", "Too low", or "Way off" to provide quick feedback.
+- **And** tapping "Way off" (or high variance) displays the second correction slider (Story 7 UX).
 - **And** "Low confidence" results trigger a specific prompt to retake the photo.
 
 ### Story 4.3: Feedback Validation Logic
@@ -362,9 +396,12 @@ As a user, I want to be warned about iOS browser issues and informed about my pr
 - **Then** I see a visual prompt to "Open in Safari" to ensure camera compatibility.
 - **And** before my first scan, I see a privacy notice explaining that images are stored for AI improvement but no PII is collected.
 
-### Story 5.3: Unknown Bottle Handling
-As a user, I want to know if my bottle is unsupported, so that I understand why the scan cannot proceed.
+### Story 5.3: Unknown Bottle Handling & Community Contribution
+As a user, I want to contribute scans of unsupported bottles, so that I can help improve the app while feeling like a valued pioneer.
 **Acceptance Criteria:**
 - **Given** I scan an unregistered SKU
 - **When** the app loads
-- **Then** I see a "Bottle not yet supported" message with the scanned SKU displayed.
+- **Then** I see a "Help us learn this bottle" message instead of a hard error.
+- **And** I can still take and submit a photo as a "Community Contribution."
+- **And** the Worker stores the scan in R2 with the `unsupported_sku_contribution` metadata tag.
+- **And** the app displays a "Thank You" message showing my local contribution count (stored in localStorage).
