@@ -105,13 +105,6 @@ jobs:
           VITE_PROXY_URL: ${{ secrets.CLOUDFLARE_WORKER_URL || 'https://afia-worker.savona.workers.dev' }}
           VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD || '1234' }}
 
-      - name: Create Pages project (no-op if already exists)
-        run: npx wrangler pages project create afia-app --production-branch=master
-        continue-on-error: true
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
       - name: Remove auto-generated wrangler configs conflicting with Pages deploy
         run: rm -f dist/wrangler.json && rm -rf .wrangler/
 
