@@ -40,7 +40,15 @@
       "Bash(claude plugin:*)",
       "mcp__plugin_claude-mem_mcp-search__smart_outline",
       "Bash(npx vitest:*)",
-      "mcp__plugin_claude-mem_mcp-search__get_observations"
+      "mcp__plugin_claude-mem_mcp-search__get_observations",
+      "Bash(sed -n '78,104p' \"d:/AI Projects/Freelance/Afia-App/src/i18n/locales/en/translation.json\")",
+      "Bash(sed -n '78,104p' \"d:/AI Projects/Freelance/Afia-App/src/i18n/locales/ar/translation.json\")",
+      "Bash(echo \"TSC:$?\")",
+      "Bash(awk '{sum += $1} END {print \"Total:\", sum}')",
+      "Bash(echo \"TSC_EXIT:$?\")",
+      "Bash(grep -v \"^$\")",
+      "Bash(bc)",
+      "Bash(git -C \"d:/AI Projects/Freelance/Afia-App\" ls-files .wrangler/)"
     ]
   }
 }
