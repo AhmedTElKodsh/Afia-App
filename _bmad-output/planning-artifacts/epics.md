@@ -210,16 +210,6 @@ As a developer, I want Cloudflare Pages, Worker, and R2 configured, so that I ha
 - **And** Worker enforces origin validation and rate limiting (10 req/min per IP)
 - **And** API keys (GEMINI_API_KEY, GROQ_API_KEY) are stored as Worker secrets
 
-### Story 1.2b: CI/CD Pipeline (NFR18)
-As a developer, I want a GitHub Actions pipeline that runs tests and deploys automatically, so that main is always stable and deployable.
-**Acceptance Criteria:**
-- **Given** a code push to the `master` branch
-- **When** the CI pipeline triggers
-- **Then** it runs vitest unit tests for both frontend and worker
-- **And** it blocks deployment if any test fails
-- **And** it automatically deploys the frontend to Cloudflare Pages on success
-- **And** it automatically deploys the worker via `wrangler-action@v3` on success
-
 ### Story 1.3: Bottle Registry & Nutrition Data
 As a developer, I want bottle registry and USDA nutrition data bundled in the app, so that bottle information loads instantly without network calls.
 **Acceptance Criteria:**
@@ -249,6 +239,7 @@ As a user, I want to activate my phone's rear camera with clear guidance, so tha
 - **Then** the rear-facing camera activates (not front-facing)
 - **And** I see a live viewfinder showing the camera feed
 - **And** I see a color-coded framing guide overlay (green = aligned / amber = marginal / red = no bottle detected)
+- **And** if blur score exceeds threshold, I see a "Photo too blurry — hold steady" guidance message
 - **And** the camera activates in under 2 seconds
 - **And** if permission is denied, I see a "Camera access required" message with iOS/Android specific instructions to enable it in settings.
 
@@ -360,6 +351,7 @@ As a developer, I want every scan and correction stored in R2, so that we can bu
 
 ### Story 4.2: Confidence & Feedback UI
 As a user, I want to see confidence indicators and provide quick accuracy feedback, so that I can help improve the system.
+**Note:** This story depends on Epic 3 (Result Screen) being complete.
 **Acceptance Criteria:**
 - **Given** the result screen is displayed (Story 3.2a)
 - **When** I view the results
@@ -405,3 +397,13 @@ As a user, I want to contribute scans of unsupported bottles, so that I can help
 - **And** I can still take and submit a photo as a "Community Contribution."
 - **And** the Worker stores the scan in R2 with the `unsupported_sku_contribution` metadata tag.
 - **And** the app displays a "Thank You" message showing my local contribution count (stored in localStorage).
+
+### Story 5.4: CI/CD Pipeline (NFR18)
+As a developer, I want a GitHub Actions pipeline that runs tests and deploys automatically, so that main is always stable and deployable.
+**Acceptance Criteria:**
+- **Given** a code push to the `master` branch
+- **When** the CI pipeline triggers
+- **Then** it runs vitest unit tests for both frontend and worker
+- **And** it blocks deployment if any test fails
+- **And** it automatically deploys the frontend to Cloudflare Pages on success
+- **And** it automatically deploys the worker via `wrangler-action@v3` on success
