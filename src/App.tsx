@@ -46,6 +46,11 @@ export default function App() {
   const [isAdminUrlParam] = useState(() => window.location.search.includes("mode=admin"));
 
   const [currentView, setCurrentView] = useState<CurrentView>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const viewParam = params.get("view");
+    if (viewParam === "scan" || viewParam === "history" || viewParam === "admin") {
+      return viewParam as CurrentView;
+    }
     return isAdminUrlParam ? "admin" : "scan";
   });
   const [appState, setAppState] = useState<AppState>("IDLE");

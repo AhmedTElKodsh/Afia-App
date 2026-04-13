@@ -166,7 +166,7 @@ test.describe('TestLab: Tab Navigation', () => {
   test('clicking API Inspector tab switches selection', async ({ page }) => {
     await navigateToTestLab(page);
 
-    const inspectorTab = page.locator('.test-lab-tab').last();
+    const inspectorTab = page.locator('.test-lab-tab').filter({ hasText: /Inspector/i });
     await inspectorTab.click();
     await expect(inspectorTab).toHaveClass(/active/);
 
@@ -177,7 +177,7 @@ test.describe('TestLab: Tab Navigation', () => {
   test('API Inspector tab shows api-inspector component', async ({ page }) => {
     await navigateToTestLab(page);
 
-    await page.locator('.test-lab-tab').last().click();
+    await page.locator('.test-lab-tab').filter({ hasText: /Inspector/i }).click();
     await expect(page.locator('.api-inspector')).toBeVisible({ timeout: 2000 });
   });
 
@@ -185,7 +185,7 @@ test.describe('TestLab: Tab Navigation', () => {
     await navigateToTestLab(page);
 
     // Switch to API Inspector
-    await page.locator('.test-lab-tab').last().click();
+    await page.locator('.test-lab-tab').filter({ hasText: /Inspector/i }).click();
     await expect(page.locator('.api-inspector')).toBeVisible();
 
     // Switch back to Flow Test

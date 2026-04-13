@@ -25,6 +25,7 @@ import { ResultDisplay } from "./ResultDisplay.tsx";
 import { AdminToolsOverlay } from "./AdminToolsOverlay.tsx";
 import { AdminOnboarding } from "./AdminOnboarding.tsx";
 import { ApiInspector } from "./ApiInspector.tsx";
+import { VisualRegressionHarness } from "./VisualRegressionHarness.tsx";
 import { useToast } from "./Toast.tsx";
 import { analytics } from "../utils/analytics.ts";
 import { useScanHistory } from "../hooks/useScanHistory.ts";
@@ -48,7 +49,14 @@ export function TestLab({ isAdmin }: TestLabProps) {
   const isRTL = i18n.language === 'ar';
 
   // Tab and debug panel state
-  const [activeTab, setActiveTab] = useState<"flow" | "inspector">("flow");
+  const [activeTab, setActiveTab] = useState<"flow" | "inspector" | "visuals">(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get("tab");
+    if (tabParam === "flow" || tabParam === "inspector" || tabParam === "visuals") {
+      return tabParam as "flow" | "inspector" | "visuals";
+    }
+    return "flow";
+  });
   const [showDebugPanel, setShowDebugPanel] = useState<boolean>(false);
 
   const selectedSku = ACTIVE_SKU;
@@ -293,6 +301,16 @@ export function TestLab({ isAdmin }: TestLabProps) {
           <Beaker size={16} strokeWidth={2} />
           {t('admin.testLab.tabInspector')}
         </button>
+        <button
+          className={`test-lab-tab ${activeTab === "visuals" ? "active" : ""}`}
+          onClick={() => setActiveTab("visuals")}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "visuals"}
+        >
+          <TestTube size={16} strokeWidth={2} />
+          Visuals
+        </button>
       </div>
 
       {/* Flow Test Tab */}
@@ -436,6 +454,9 @@ export function TestLab({ isAdmin }: TestLabProps) {
 
       {/* API Inspector Tab */}
       {activeTab === "inspector" && <ApiInspector selectedSku={selectedSku} />}
+
+      {/* Visual Regression Tab */}
+      {activeTab === "visuals" && <VisualRegressionHarness />}
     </div>
   );
 }

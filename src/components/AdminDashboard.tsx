@@ -85,7 +85,10 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
       const token = sessionStorage.getItem(SESSION_KEY);
       const expiresAt = Number(sessionStorage.getItem(SESSION_EXPIRES_KEY) || "0");
       if (token && expiresAt > Date.now()) {
-        if (mounted) setIsAuthenticated(true);
+        if (mounted) {
+          setIsAuthenticated(true);
+          onAuthSuccess?.();
+        }
       } else {
         sessionStorage.removeItem(SESSION_KEY);
         sessionStorage.removeItem(SESSION_EXPIRES_KEY);
