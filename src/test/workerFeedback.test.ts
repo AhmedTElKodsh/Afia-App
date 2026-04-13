@@ -6,14 +6,27 @@ vi.mock("../../worker/src/storage/supabaseClient.ts", () => ({
   updateScanWithFeedback: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@supabase/supabase-js", () => ({
+  createClient: vi.fn().mockReturnValue({
+    from: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue({ data: { fill_percentage: 70 }, error: null }),
+  }),
+}));
+
 function createCtx(body: Record<string, unknown>) {
   return {
     req: { json: vi.fn().mockResolvedValue(body) },
-    env: {},
+    env: {
+      SUPABASE_URL: "https://test.supabase.co",
+      SUPABASE_ANON_KEY: "test-key",
+    },
     executionCtx: { waitUntil: vi.fn() },
     json: vi.fn().mockImplementation((data: unknown, status = 200) =>
       new Response(JSON.stringify(data), { status }),
     ),
+    get: vi.fn().mockReturnValue("test-request-id"),
   };
 }
 
@@ -80,15 +93,6 @@ describe("handleFeedback — request validation", () => {
       400,
     );
   });
-
-  it("returns 400 when llmFillPercentage is missing", async () => {
-    const ctx = createCtx({ ...VALID_BODY, llmFillPercentage: undefined });
-    await handleFeedback(ctx as never);
-    expect(ctx.json).toHaveBeenCalledWith(
-      expect.objectContaining({ code: "INVALID_REQUEST" }),
-      400,
-    );
-  });
 });
 
 describe("handleFeedback — accepted feedback", () => {
@@ -149,8 +153,7 @@ describe("handleFeedback — flagged feedback", () => {
   it("returns flagged for extreme delta (> 30% difference)", async () => {
     const ctx = createCtx({
       ...VALID_BODY,
-      llmFillPercentage: 20,
-      correctedFillPercentage: 90, // 70% delta
+      correctedFillPercentage: 20, // 50% delta from mocked 70% in DB
     });
     await handleFeedback(ctx as never);
     const [responseData] = (ctx.json as ReturnType<typeof vi.fn>).mock.calls[0];

@@ -38,6 +38,7 @@ describe("apiClient", () => {
             sku: "filippo-berio-500ml",
             imageBase64: "base64data",
           }),
+          signal: expect.any(AbortSignal),
         },
       );
 
@@ -123,6 +124,7 @@ describe("apiClient", () => {
             correctedFillPercentage: 80,
             responseTimeMs: 5000,
           }),
+          signal: expect.any(AbortSignal),
         },
       );
 
@@ -151,9 +153,8 @@ describe("apiClient", () => {
             scanId: "test-scan-id",
             accuracyRating: "too_high",
             llmFillPercentage: 85,
-            correctedFillPercentage: undefined,
-            responseTimeMs: undefined,
           }),
+          signal: expect.any(AbortSignal),
         },
       );
 

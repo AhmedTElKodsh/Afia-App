@@ -1,4 +1,5 @@
 import type { Context } from "hono";
+import { createClient } from "@supabase/supabase-js";
 import type { Env } from "./types.ts";
 import { validateFeedback } from "./validation/feedbackValidator.ts";
 import { updateScanWithFeedback } from "./storage/supabaseClient.ts";

@@ -8,6 +8,9 @@ describe("useCamera", () => {
   let mockTrack: MediaStreamTrack;
 
   beforeEach(() => {
+    // Ensure we are in a secure context for camera testing
+    vi.stubGlobal("isSecureContext", true);
+
     // Create mock track
     mockTrack = {
       stop: vi.fn(),

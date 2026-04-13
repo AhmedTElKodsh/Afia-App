@@ -69,6 +69,7 @@ function createCtx(
       responses.push({ data, status });
       return new Response(JSON.stringify(data), { status });
     }),
+    get: vi.fn().mockReturnValue("test-request-id"),
     _responses: responses,
   };
 }
