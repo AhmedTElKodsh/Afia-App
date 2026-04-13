@@ -49,10 +49,14 @@ function BottleGuide({
   isReady,
   distance,
   isCentered,
+  holdProgress = 0,
+  isHolding = false,
 }: {
   isReady: boolean;
   distance: 'good' | 'too-far' | 'too-close' | 'not-detected';
   isCentered: boolean;
+  holdProgress?: number;
+  isHolding?: boolean;
 }) {
   const { t } = useTranslation();
   let color: string;
@@ -125,6 +129,33 @@ function BottleGuide({
           strokeDasharray="4 4"
           opacity={opacity * 0.35}
         />
+
+        {/* ── Progress ring (Auto-capture hold) ── */}
+        {isHolding && (
+          <>
+            {/* Backing ring — semi-transparent white */}
+            <circle
+              cx="65" cy="105"
+              r="96"
+              fill="none"
+              stroke="rgba(255,255,255,0.20)"
+              strokeWidth="6"
+              strokeLinecap="round"
+            />
+            {/* Fill ring — animates clockwise from top */}
+            <circle
+              cx="65" cy="105"
+              r="96"
+              fill="none"
+              stroke="#10b981"
+              strokeWidth="6"
+              strokeLinecap="round"
+              strokeDasharray={`${holdProgress * 603} 603`}
+              transform="rotate(-90 65 105)"
+              opacity="0.95"
+            />
+          </>
+        )}
       </svg>
     </div>
   );
@@ -146,10 +177,12 @@ export function CameraViewfinder({
   const [cameraState, setCameraState] = useState<CameraState>('idle');
   const [torchOn, setTorchOn] = useState(false);
   const [torchSupported, setTorchSupported] = useState(false);
+  const [shutterFlash, setShutterFlash] = useState(false);
 
   // Prevent concurrent startCamera calls without depending on cameraState in the callback
   const isStartingRef = useRef(false);
   const isCapturingRef = useRef(false);
+  const hasFiredRef = useRef(false);
 
   // Stable guidance config — avoids recreating guidance on every render
   const guidanceConfig = useMemo(() => ({
@@ -158,6 +191,86 @@ export function CameraViewfinder({
   }), []);
 
   const guidance = useCameraGuidance(guidanceConfig);
+
+  /**
+   * Capture image from video
+   */
+  const handleCapture = useCallback(() => {
+    if (!videoRef.current || !canvasRef.current) return;
+    if (isCapturingRef.current) return;
+    isCapturingRef.current = true;
+
+    try {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+
+      if (!context) {
+        onError(t('camera.captureError'));
+        return;
+      }
+
+      // Set canvas size from config
+      canvas.width = CAMERA_CONFIG.capture.width;
+      canvas.height = CAMERA_CONFIG.capture.height;
+
+      // Draw video frame to canvas
+      context.drawImage(
+        video,
+        0, 0,
+        CAMERA_CONFIG.capture.width,
+        CAMERA_CONFIG.capture.height
+      );
+
+      // Convert to base64 JPEG
+      const imageBase64 = canvas.toDataURL(
+        'image/jpeg',
+        CAMERA_CONFIG.jpegQuality
+      );
+      const base64Only = imageBase64.replace(/^data:image\/jpeg;base64,/, '');
+
+      // Trigger shutter flash
+      setShutterFlash(true);
+      setTimeout(() => setShutterFlash(false), 200);
+
+      // Attempt QR detection synchronously using imported jsQR
+      let detectedQrData: string | null = null;
+      try {
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        detectedQrData = code ? code.data : null;
+      } catch (qrErr) {
+        console.warn("QR detection failed:", qrErr);
+      }
+
+      onCapture(base64Only, detectedQrData);
+
+    } catch (error) {
+      console.error('Capture error:', error);
+      onError(t('camera.captureFailed'));
+    } finally {
+      isCapturingRef.current = false;
+    }
+  }, [onCapture, onError, t]);
+
+  /**
+   * Auto-capture effect
+   */
+  useEffect(() => {
+    if (
+      guidance.state.isReady &&
+      !hasFiredRef.current &&
+      cameraState === 'active' &&
+      videoRef.current &&
+      canvasRef.current &&
+      !window.__AFIA_TEST_MODE__ // tests trigger analysis manually via __AFIA_TRIGGER_ANALYZE__
+    ) {
+      hasFiredRef.current = true;
+      // Multi-sensory "lock" confirmation
+      if (navigator.vibrate) navigator.vibrate([30, 40, 80]);
+      handleCapture();
+    }
+  }, [guidance.state.isReady, cameraState, handleCapture]);
 
   /**
    * Initialize and start the camera stream
@@ -238,63 +351,6 @@ export function CameraViewfinder({
   }, [torchOn]);
 
   /**
-   * Capture image from video
-   */
-  const handleCapture = useCallback(() => {
-    if (!videoRef.current || !canvasRef.current) return;
-    if (isCapturingRef.current) return;
-    isCapturingRef.current = true;
-
-    try {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      const context = canvas.getContext('2d', { willReadFrequently: true });
-
-      if (!context) {
-        onError(t('camera.captureError'));
-        return;
-      }
-
-      // Set canvas size from config
-      canvas.width = CAMERA_CONFIG.capture.width;
-      canvas.height = CAMERA_CONFIG.capture.height;
-
-      // Draw video frame to canvas
-      context.drawImage(
-        video,
-        0, 0,
-        CAMERA_CONFIG.capture.width,
-        CAMERA_CONFIG.capture.height
-      );
-
-      // Convert to base64 JPEG
-      const imageBase64 = canvas.toDataURL(
-        'image/jpeg',
-        CAMERA_CONFIG.jpegQuality
-      );
-      const base64Only = imageBase64.replace(/^data:image\/jpeg;base64,/, '');
-
-      // Attempt QR detection synchronously using imported jsQR
-      let detectedQrData: string | null = null;
-      try {
-        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height);
-        detectedQrData = code ? code.data : null;
-      } catch (qrErr) {
-        console.warn("QR detection failed:", qrErr);
-      }
-
-      onCapture(base64Only, detectedQrData);
-
-    } catch (error) {
-      console.error('Capture error:', error);
-      onError(t('camera.captureFailed'));
-    } finally {
-      isCapturingRef.current = false;
-    }
-  }, [onCapture, onError, t]);
-
-  /**
    * Cleanup on unmount
    */
   useEffect(() => {
@@ -342,6 +398,11 @@ export function CameraViewfinder({
         aria-label={t('camera.liveFeedAriaLabel')}
       />
       <canvas ref={canvasRef} style={{ display: "none" }} />
+
+      {/* Shutter Flash */}
+      {shutterFlash && (
+        <div className="shutter-flash" aria-hidden="true" />
+      )}
 
       {/* Loading overlay */}
       {(cameraState === 'requesting' || cameraState === 'idle') && (
@@ -430,6 +491,8 @@ export function CameraViewfinder({
               isReady={guidance.state.isReady}
               distance={guidance.state.assessment?.composition.distance ?? 'not-detected'}
               isCentered={guidance.state.assessment?.composition.isCentered ?? true}
+              holdProgress={guidance.state.holdProgress}
+              isHolding={guidance.state.isHolding}
             />
           </div>
 
@@ -455,14 +518,18 @@ export function CameraViewfinder({
       {cameraState === 'active' && (
         <button
           key="stable-capture-btn"
-          className="camera-capture-btn"
+          className={`camera-capture-btn${enableLiveGuidance ? ' secondary' : ''}`}
           onClick={handleCapture}
           type="button"
           aria-label={t('camera.capturePhotoAriaLabel')}
           disabled={!guidance.state.isReady && enableLiveGuidance}
           aria-disabled={!guidance.state.isReady && enableLiveGuidance}
         >
-          <span className="capture-btn-inner" aria-hidden="true" />
+          {enableLiveGuidance ? (
+            <span className="capture-btn-label">{t('camera.captureManually')}</span>
+          ) : (
+            <span className="capture-btn-inner" aria-hidden="true" />
+          )}
         </button>
       )}
     </div>

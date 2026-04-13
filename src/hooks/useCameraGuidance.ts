@@ -440,9 +440,19 @@ export function useCameraGuidance(
       analyzeFrameRef.current();
     });
 
-    // Kick one immediate rAF tick so test-mode / initial state resolves
-    // even when rVFC never fires (e.g. Playwright fake camera has no real frames)
-    requestAnimationFrame(() => analyzeFrameRef.current());
+    // Polling fallback: keep ticking via rAF until the video is ready (readyState >= 2).
+    // Needed when rVFC-only loop stalls because the fake camera (e.g. Playwright canvas
+    // stream) never presents new frames after the initial one, leaving readyState stuck.
+    const pollUntilReady = () => {
+      const v = videoRef.current;
+      if (!v) return; // guidance stopped
+      if (v.readyState >= 2) {
+        analyzeFrameRef.current(); // one analysis tick to pick up isTestMode / isReady
+      } else {
+        requestAnimationFrame(pollUntilReady);
+      }
+    };
+    requestAnimationFrame(pollUntilReady);
   }, [stopGuidance, startFrameLoop]);
   
   /**
