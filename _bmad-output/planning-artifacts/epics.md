@@ -1,17 +1,19 @@
 ---
-stepsCompleted:
-  [step-01-validate-prerequisites, step-02-design-epics, step-03-create-stories]
+stepsCompleted: [step-01-validate-prerequisites, step-02-design-epics, step-03-create-stories]
 inputDocuments:
-  - prd.md
-  - architecture.md
-  - ux-design-specification.md
+  - _bmad-output/planning-artifacts/prd.md
+  - _bmad-output/planning-artifacts/architecture.md
+  - _bmad-output/planning-artifacts/architecture-fill-confirm-screen.md
+  - _bmad-output/planning-artifacts/ux-design-specification.md
+  - _bmad-output/planning-artifacts/epics.md
+  - _bmad-output/planning-artifacts/epics-fill-confirm-screen.md
 ---
 
-# Safi Oil Tracker - Epic Breakdown
+# Safi Oil Tracker - Consolidated Epics & Stories
 
 ## Overview
 
-This document provides the complete epic and story breakdown for Safi Oil Tracker, decomposing the requirements from the PRD, UX Design, and Architecture requirements into implementable stories.
+This document is the single source of truth for Safi Oil Tracker's development. It merges all planning artifacts into a cohesive, actionable backlog.
 
 ## Requirements Inventory
 
@@ -59,839 +61,310 @@ This document provides the complete epic and story breakdown for Safi Oil Tracke
 
 ### Non-Functional Requirements
 
-- NFR1: App shell load — cached (service worker hit) < 1 second
-- NFR2: App shell load — cold (first visit, 4G) < 3 seconds
-- NFR3: Time to camera active after "Start Scan" < 2 seconds
-- NFR4: Photo-to-result round-trip (p95) < 8 seconds
-- NFR5: Image compression (canvas resize + JPEG) < 500ms
-- NFR6: Feedback submission round-trip < 1 second
-- NFR7: JS bundle size (gzipped) < 200KB
-- NFR8: GEMINI_API_KEY and GROQ_API_KEY stored only as Cloudflare Worker secrets
-- NFR9: All Worker endpoints validate request origin against allowlist
-- NFR10: Worker enforces ≤10 requests/IP/minute via KV-backed sliding window rate limiter
-- NFR11: Worker rejects payloads > 4MB
-- NFR12: R2 bucket is not publicly accessible — all access via Worker binding only
-- NFR13: All client-Worker traffic over HTTPS
-- NFR14: No PII collected: no names, emails, phone numbers, or user accounts
-- NFR15: Primary LLM (Gemini) failure triggers automatic Groq fallback with no user action required
-- NFR16: App shell loads from service worker cache when offline; scan page displays "Network required for scanning"
-- NFR17: Worker returns a structured error response within 10 seconds even if all LLM providers fail
-- NFR18: CI/CD pipeline blocks deployment if unit or E2E tests fail
-- NFR19: POC infrastructure stays within free-tier limits: Cloudflare Worker ≤100,000 req/day; R2 ≤10GB / ≤1M write ops/month; Gemini ≤1,500 req/day
-- NFR20: No scaling configuration required at POC scale (< 500 users/month)
-- NFR21: All interactive elements: WCAG 2.1 AA contrast ratio ≥ 4.5:1
-- NFR22: All touch targets: ≥ 44×44px
-- NFR23: All error and status messages conveyed via text (not color or icon alone)
-- NFR24: Result values (fill %, volume, nutrition) rendered as text — screen reader compatible
-- NFR25: Camera permission denied state includes plain-language grant instructions
-- NFR26: iOS Safari 17+ (browser mode): full functionality — camera, fetch, service worker
-- NFR27: Android Chrome 120+: full functionality including PWA install prompt
-- NFR28: Android Firefox 120+: full functionality
-- NFR29: Desktop Chrome/Firefox/Edge: functional for dev and QA
-- NFR30: App detects iOS standalone mode and prompts "Open in Safari" to avoid WebKit camera bug
+- NFR1: Performance: App shell load - cached < 1s
+- NFR2: Performance: App shell load - cold < 3s
+- NFR3: Performance: Time to camera active < 2s
+- NFR4: Performance: Photo-to-result round-trip (p95) < 8s
+- NFR5: Performance: Image compression < 500ms
+- NFR6: Performance: Feedback submission round-trip < 1s
+- NFR7: Performance: JS bundle size (gzipped) < 200KB
+- NFR8: Security: API keys stored as Cloudflare Worker secrets
+- NFR9: Security: Origin validation for Worker endpoints
+- NFR10: Security: Rate limiting (≤10 req/IP/min)
+- NFR11: Security: Payload limit (>4MB rejection)
+- NFR12: Security: R2 bucket access via Worker binding only
+- NFR13: Security: HTTPS enforcement
+- NFR14: Security: No PII collected
+- NFR15: Reliability: Automatic Groq fallback
+- NFR16: Reliability: Offline app shell loading with "Network required" message
+- NFR17: Reliability: Structured error response within 10s
+- NFR18: Reliability: CI/CD test gates
+- NFR19: Scalability: Free-tier alignment (Cloudflare, Gemini)
+- NFR20: Accessibility: WCAG 2.1 AA contrast (≥ 4.5:1)
+- NFR21: Accessibility: Touch targets (≥ 44x44px)
+- NFR22: Accessibility: Text + icon for status/errors
+- NFR23: Compatibility: iOS Safari 17+ (browser mode)
+- NFR24: Compatibility: Android Chrome/Firefox 120+
+- NFR25: Compatibility: iOS standalone detection → "Open in Safari" prompt
+- NFR26: Latency: p95 latency < 10s acceptable for POC validation
+- NFR27: Accuracy: ±15% fill level estimation target
+- NFR28: Data Retention: Retain all scan data in R2 indefinitely
+- NFR29: iOS Camera: Avoid standalone mode to bypass WebKit bug
+- NFR30: Motion: Respect `prefers-reduced-motion`
 
-### Additional Requirements
+### Additional Requirements (Architecture)
 
-**Starter Template & Technology Stack:**
+- AR1: Use Vite + React + vite-plugin-pwa v1 starter template.
+- AR2: Deployment to Cloudflare Pages (frontend) and Cloudflare Worker (proxy).
+- AR3: Cloudflare R2 bucket binding for image and metadata storage.
+- AR4: Multi-provider LLM fallback chain (Gemini 2.5 Flash -> Groq Llama 4 Scout).
+- AR5: 55ml step increments for Fill Confirmation slider (Fail-safe floor of 1 step).
+- AR6: Annotation Rendering via absolutely-positioned SVG overlay (not Canvas).
+- AR7: Vertical Step Slider using `@radix-ui/react-slider`.
+- AR8: Coordinate Mapping via `getBoundingClientRect` + `naturalWidth/Height`.
+- AR9: RTL support via `dir="rtl"` on flex container using CSS logical properties.
+- AR10: No secrets in client-side code; use `wrangler secret put`.
 
-- Vite + React + vite-plugin-pwa v1 for PWA setup
-- Cloudflare Pages for hosting (free tier, unlimited bandwidth)
-- Cloudflare Worker for API proxy (zero cold start, R2 binding)
-- Cloudflare R2 for object storage (S3-compatible, zero egress)
-- Gemini 2.5 Flash as primary LLM (free tier, JSON mode)
-- Groq + Llama 4 Scout as fallback LLM (free tier, OpenAI-compatible)
-- paulmillr/qr library for QR scanning (35KB, zero deps)
-- Bundled USDA JSON for nutrition data (offline, zero latency)
-- Vitest + Playwright for testing (modern, PWA-aware E2E)
-- GitHub Actions for CI/CD (wrangler-action@v3 integration)
+### UX Design Requirements
 
-**Infrastructure & Deployment:**
+- UX-DR1: Implement Olive Green (`#2D6A4F`) design system with food-adjacent warm palette.
+- UX-DR2: Verify WCAG 2.1 AA contrast compliance (≥ 4.5:1) for all text/background pairs.
+- UX-DR3: Ensure all interactive elements have ≥ 44x44px touch targets.
+- UX-DR4: Privacy notice modal overlay for first-time users (localStorage tracked).
+- UX-DR5: Animated bottle filling spinner during API analysis state.
+- UX-DR6: Responsive layout optimized for mobile portrait (375-430px) with centered max-width.
+- UX-DR7: iOS Safari compatibility: must work within browser chrome (no standalone mode).
+- UX-DR8: "Open in Safari" detection and visual prompt for iOS in-app browsers.
+- UX-DR9: Color-coded confidence indicators (Green/Yellow/Orange) and confidence-specific UI states.
+- UX-DR10: 600ms fill gauge animation on result display (respects motion preferences).
+- UX-DR11: Fill Confirmation: "What you see is what you confirm" visual alignment between line and slider.
 
-- All services on Cloudflare free tier ($0/month target)
-- CI/CD: GitHub Actions → Cloudflare Pages + Worker
-- Environment variables: VITE_PROXY_URL, GEMINI_API_KEY, GROQ_API_KEY
-- Worker secrets via wrangler secret put (never in git)
-- R2 bucket binding for image + metadata storage
-
-**Multi-Provider LLM Fallback Chain:**
-
-- Primary: Gemini 2.5 Flash with JSON mode, thinkingBudget: 0
-- Fallback: Groq Llama 4 Scout (activates on Gemini 429/5xx)
-- Local dev: Ollama + Qwen2.5-VL 7B (not deployed to Worker)
-- Structured JSON prompt shared across all providers
-- Confidence threshold handling: high/medium/low with different UI states
-
-**Security Requirements:**
-
-- API keys stored only in Worker secrets (never client-side)
-- Origin validation: whitelist production domain + localhost
-- Rate limiting: 10 requests/minute per IP (KV-backed sliding window)
-- Payload size guard: reject requests > 4MB
-- Method guard: only POST /analyze and POST /feedback accepted
-- Input validation: SKU must exist, image must be valid base64
-- R2 bucket not publicly accessible (Worker binding only)
-
-**Data Collection & Training Pipeline:**
-
-- Every scan stores image to R2: images/{scanId}.jpg
-- Every scan stores metadata to R2: metadata/{scanId}.json
-- Metadata includes: SKU, timestamp, LLM provider, fill estimate, confidence, latency
-- User feedback validation (Layer 1 sanity checks in Worker)
-- Training eligibility criteria: validationStatus === "accepted"
-- Feedback validation flags: too_fast, boundary_value, contradictory, extreme_delta
-
-**PWA Requirements:**
-
-- display: "browser" mode (NOT standalone) for iOS camera compatibility
-- apple-mobile-web-app-capable meta tag must be ABSENT
-- Service worker caching: app shell CacheFirst, API routes NetworkOnly
-- Offline: app shell loads offline, scan page shows "Network required"
-- Responsive design: mobile portrait 375–430px primary viewport
-- Touch targets: ≥ 44×44px minimum
-
-**UX Requirements:**
-
-- Complete scan flow in under 8 seconds from photo capture to result display
-- Feedback submission rate target: ≥30% of scans
-- Camera overlay: bottle-shaped framing guide for precision signal
-- Result as hero moment: bold fill gauge + volume numbers + nutrition panel
-- Feedback as natural flow completion (not an interrupt)
-- Confidence handling: different UI states for high/medium/low
-- iOS browser chrome: must work within Safari viewport (not full screen)
-
-**Bottle Registry & Nutrition Data:**
-
-- 2-3 bottle SKUs registered (clear glass, known geometry)
-- Each SKU: name, oilType, shape (cylinder/frustum), totalVolumeMl, geometry
-- Bundled USDA nutrition data: per-100g values, oil density 0.92 g/ml
-- Volume calculation: cylinder or frustum formulas based on shape
-- Unit conversion: 1 tbsp = 14.7868 ml, 1 cup = 236.588 ml
-
-**Component Architecture:**
-
-- State machine: IDLE → CAMERA_ACTIVE → PHOTO_CAPTURED → API_PENDING → API_SUCCESS/ERROR
-- Components: QrLanding, CameraCapture, CameraGuide, PhotoPreview, ApiStatus, ResultDisplay, FillGauge, VolumeBreakdown, NutritionFacts, FeedbackPrompt, UnknownBottle
-- Hooks: useCamera (rear-facing, 800px width, JPEG 0.78 quality)
-- Utils: volumeCalculator, nutritionCalculator, imageCompressor
-- Data: bottleRegistry, oilNutrition (bundled static)
+## Requirements Coverage Map
 
 ### FR Coverage Map
 
-FR1: Epic 1 - QR code navigation with pre-loaded bottle context
-FR2: Epic 1 - Display bottle name, capacity, oil type
-FR3: Epic 1 - Detect and handle unregistered SKU
-FR4: Epic 1 - Load bottle geometry and nutrition from local data
-FR5: Epic 2 - Activate rear-facing camera in-app
-FR6: Epic 2 - Live viewfinder with framing guide
-FR7: Epic 2 - Capture still photo from viewfinder
-FR8: Epic 2 - Preview captured photo
-FR9: Epic 2 - Retake photo option
-FR10: Epic 2 - Compress image before transmission
-FR11: Epic 2 - Submit photo to AI vision API
-FR12: Epic 2 - Estimate fill level as percentage
-FR13: Epic 2 - Return confidence level with estimate
-FR14: Epic 2 - Automatic fallback to secondary AI provider
-FR15: Epic 2 - Surface image quality issues to user
-FR16: Epic 3 - Calculate remaining volume from fill % and geometry
-FR17: Epic 3 - Calculate consumed volume
-FR18: Epic 3 - Convert volumes to tablespoons and cups
-FR19: Epic 3 - Calculate nutritional values for consumed volume
-FR20: Epic 3 - Display remaining and consumed in all units
-FR21: Epic 3 - View fill percentage with visual gauge
-FR22: Epic 3 - View volumes in three units on single screen
-FR23: Epic 3 - View nutritional facts for consumed amount
-FR24: Epic 3 - See confidence indicator
-FR25: Epic 3 - See retake prompt for low confidence
-FR26: Epic 4 - Indicate estimate accuracy (4 options)
-FR27: Epic 4 - Provide corrected fill percentage via slider
-FR28: Epic 4 - Validate feedback for consistency
-FR29: Epic 4 - Store validated feedback with scan record
-FR30: Epic 4 - Store captured image for training
-FR31: Epic 4 - Store scan metadata
-FR32: Epic 4 - Update scan record with feedback
-FR33: Epic 4 - Mark records as training-eligible
-FR34: Epic 5 - Clear error message with retry option
-FR35: Epic 5 - Network unavailability message
-FR36: Epic 5 - iOS Safari guidance for incompatible browser
-FR37: Epic 5 - Camera permission denied message with instructions
-FR38: Epic 5 - Privacy notice about image storage
-FR39: Epic 5 - Disclaimer about estimate accuracy
+- FR1: Epic 1 - QR code navigation with pre-loaded context
+- FR2: Epic 1 - Display bottle name/capacity
+- FR3: Epic 5 - Detect and handle unregistered SKU
+- FR4: Epic 1 - Load bottle geometry and nutrition from local data
+- FR5: Epic 1 - Activate rear camera in-app
+- FR6: Epic 1 - Live viewfinder with framing guide
+- FR7: Epic 1 - Capture still photo from viewfinder
+- FR8: Epic 1 - Preview captured photo
+- FR9: Epic 1 - Retake photo option
+- FR10: Epic 1 - Compress image before transmission
+- FR11: Epic 1 - Submit photo to AI vision API
+- FR12: Epic 1 - Estimate fill level as percentage
+- FR13: Epic 1 - Return confidence level with estimate
+- FR14: Epic 1 - Automatic fallback to secondary AI provider
+- FR15: Epic 5 - Surface image quality issues to user
+- FR16: Epic 3 - Calculate remaining volume from fill % and geometry
+- FR17: Epic 3 - Calculate consumed volume
+- FR18: Epic 3 - Convert volumes to tablespoons and cups
+- FR19: Epic 3 - Calculate nutritional values for consumed volume
+- FR20: Epic 3 - Display remaining and consumed simultaneously
+- FR21: Epic 2 & 3 - View fill percentage with visual gauge
+- FR22: Epic 3 - View volumes in three units on single screen
+- FR23: Epic 3 - View nutritional facts for consumed amount
+- FR24: Epic 4 - See confidence indicator
+- FR25: Epic 4 - See retake prompt for low confidence
+- FR26: Epic 2 & 4 - Indicate estimate accuracy (4 options)
+- FR27: Epic 2 - Provide corrected fill percentage via slider
+- FR28: Epic 4 - Validate feedback for consistency
+- FR29: Epic 4 - Store validated feedback with scan record
+- FR30: Epic 4 - Store captured image for training
+- FR31: Epic 4 - Store scan metadata
+- FR32: Epic 4 - Update scan record with feedback
+- FR33: Epic 4 - Mark records as training-eligible
+- FR34: Epic 5 - Clear error message with retry option
+- FR35: Epic 5 - Network unavailability message
+- FR36: Epic 5 - iOS Safari guidance for incompatible browser
+- FR37: Epic 1 & 5 - Camera permission denied message with instructions
+- FR38: Epic 1 & 5 - Privacy notice about image storage
+- FR39: Epic 2 - Disclaimer about estimate accuracy
 
 ## Epic List
 
-### Epic 1: Core Scan Experience (End-to-End MVP)
+### Epic 1: Basic Scan Experience (End-to-End MVP)
+Users can scan a physical bottle QR code and receive an immediate AI-powered baseline fill level estimate in a frictionless single-flow interaction.
+**FRs covered:** FR1, FR2, FR4, FR5, FR6, FR7, FR8, FR9, FR10, FR11, FR12, FR13, FR14, FR37, FR38
 
-Users can scan a QR code, photograph their oil bottle, and receive an AI-powered estimate with basic volume measurements in a complete end-to-end flow.
-**FRs covered:** FR1, FR2, FR4, FR5, FR6, FR7, FR8, FR9, FR10, FR11, FR12, FR13, FR14, FR16, FR17, FR18, FR20, FR21, FR22
+### Epic 2: Fill Verification & Accuracy
+Users can visually confirm or adjust the AI's estimation using an annotated photo overlay and a precision slider, ensuring tracking accuracy.
+**FRs covered:** FR21, FR26, FR27, FR39
 
-### Epic 2: Rich Consumption Insights
+### Epic 3: Deep Consumption Insights
+Users receive meaningful dietary data through calculated volume metrics (ml, tbsp, cups) and nutritional facts (calories, fat) for the oil they've consumed.
+**FRs covered:** FR16, FR17, FR18, FR19, FR20, FR21, FR22, FR23
 
-Users see enhanced result displays with visual fill gauges, detailed nutritional information, and confidence indicators that make consumption data more meaningful and actionable.
-**FRs covered:** FR19, FR21 (enhanced), FR22 (enhanced), FR23, FR24, FR39
+### Epic 4: Feedback Loop & Data Quality
+The system captures user corrections and metadata to build a high-quality training dataset for future model improvement while providing confidence indicators to the user.
+**FRs covered:** FR24, FR25, FR26, FR28, FR29, FR30, FR31, FR32, FR33
 
-### Epic 3: Continuous Improvement Loop
+### Epic 5: Resilience, Privacy & Edge Cases
+Users are guided through technical failures, device compatibility issues, and privacy notifications, ensuring a professional and trustworthy experience.
+**FRs covered:** FR3, FR15, FR34, FR35, FR36, FR37, FR38
 
-Users can provide feedback on estimate accuracy to help improve the AI over time, with their input validated and stored for future model training.
-**FRs covered:** FR26, FR27, FR28, FR29, FR30, FR31, FR32, FR33
+---
 
-### Epic 4: Resilience & Edge Cases
-
-Users receive clear, helpful guidance when issues occur (poor image quality, network problems, permission errors) and understand how their data is used.
-**FRs covered:** FR15, FR25, FR34, FR35, FR36, FR37, FR38
-
-### Epic 5: Deployment & Operations
-
-The system handles unknown bottles gracefully and deploys automatically with production-grade CI/CD, ensuring operational excellence.
-**FRs covered:** FR3
-
-## Epic 1: Core Scan Experience (End-to-End MVP)
-
-Users can scan a QR code, photograph their oil bottle, and receive an AI-powered estimate with basic volume measurements in a complete end-to-end flow.
+## Epic 1: Basic Scan Experience (End-to-End MVP)
 
 ### Story 1.1: Project Foundation & PWA Setup
-
-As a developer,
-I want a working PWA foundation with Vite + React + PWA plugin,
-So that I can build the app with fast development and proper PWA capabilities.
-
+As a developer, I want a working PWA foundation with Vite + React + PWA plugin, so that I can build the app with fast development and proper PWA capabilities.
 **Acceptance Criteria:**
-
-**Given** I have initialized the project
-**When** I run `npm run dev`
-**Then** the app loads at localhost:5173 with React working
-**And** the PWA manifest is generated with browser mode (not standalone)
-**And** service worker is configured for app shell caching
-**And** the app loads offline after first visit
+- **Given** I have initialized the project
+- **When** I run `npm run dev`
+- **Then** the app loads at localhost:5173 with React working
+- **And** the PWA manifest is generated with browser mode (not standalone)
+- **And** service worker is configured for app shell caching
+- **And** the app loads offline after first visit
 
 ### Story 1.2: Cloudflare Infrastructure Setup
-
-As a developer,
-I want Cloudflare Pages, Worker, and R2 configured,
-So that I have the hosting, API proxy, and storage infrastructure ready.
-
+As a developer, I want Cloudflare Pages, Worker, and R2 configured, so that I have the hosting, API proxy, and storage infrastructure ready.
 **Acceptance Criteria:**
-
-**Given** I have Cloudflare account credentials
-**When** I deploy the infrastructure
-**Then** Cloudflare Pages project is created and connected to GitHub
-**And** Cloudflare Worker is deployed with R2 bucket binding
-**And** Worker has /health endpoint returning 200 OK
-**And** Worker enforces origin validation and rate limiting (10 req/min per IP)
-**And** API keys (GEMINI_API_KEY, GROQ_API_KEY) are stored as Worker secrets
+- **Given** I have Cloudflare account credentials
+- **When** I deploy the infrastructure
+- **Then** Cloudflare Pages project is created and connected to GitHub
+- **And** Cloudflare Worker is deployed with R2 bucket binding
+- **And** Worker has /health endpoint returning 200 OK
+- **And** Worker enforces origin validation and rate limiting (10 req/min per IP)
+- **And** API keys (GEMINI_API_KEY, GROQ_API_KEY) are stored as Worker secrets
 
 ### Story 1.3: Bottle Registry & Nutrition Data
-
-As a developer,
-I want bottle registry and USDA nutrition data bundled in the app,
-So that bottle information loads instantly without network calls.
-
+As a developer, I want bottle registry and USDA nutrition data bundled in the app, so that bottle information loads instantly without network calls.
 **Acceptance Criteria:**
-
-**Given** I have bottle specifications and USDA nutrition data
-**When** I build the app
-**Then** bottleRegistry.js contains 2-3 SKUs with geometry and oil type
-**And** oilNutrition.js contains per-100g USDA data for each oil type
-**And** each bottle entry includes: sku, name, oilType, shape, totalVolumeMl, geometry
-**And** nutrition data includes: calories, totalFatG, saturatedFatG, densityGPerMl
+- **Given** I have bottle specifications and USDA nutrition data
+- **When** I build the app
+- **Then** bottleRegistry.js contains 2-3 SKUs with geometry and oil type
+- **And** oilNutrition.js contains per-100g USDA data for each oil type
+- **And** each bottle entry includes: sku, name, oilType, shape, totalVolumeMl, geometry
+- **And** nutrition data includes: calories, totalFatG, saturatedFatG, densityGPerMl
 
 ### Story 1.4: QR Landing Page
-
-As a user,
-I want to scan a QR code and see my bottle information instantly,
-So that I can quickly start tracking my oil consumption.
-
+As a user, I want to scan a QR code and see my bottle information instantly, so that I can quickly start tracking my oil consumption.
 **Acceptance Criteria:**
+- **Given** I scan a QR code with ?sku=filippo-berio-500ml parameter
+- **When** the app loads
+- **Then** I see the bottle name, capacity, and oil type displayed
+- **And** I see a "Start Scan" button to begin camera capture
+- **And** the page loads in under 3 seconds on first visit (cold)
+- **And** the page loads in under 1 second on repeat visits (cached)
 
-**Given** I scan a QR code with ?sku=filippo-berio-500ml parameter
-**When** the app loads
-**Then** I see the bottle name, capacity, and oil type displayed
-**And** I see a "Start Scan" button to begin camera capture
-**And** the page loads in under 3 seconds on first visit (cold)
-**And** the page loads in under 1 second on repeat visits (cached)
-
-### Story 1.4: Unknown Bottle Handling
-
-As a user,
-I want clear feedback when my bottle SKU is not recognized,
-So that I understand why the app can't proceed.
-
+### Story 1.5: Camera Activation & Permission Handling
+As a user, I want to activate my phone's rear camera with clear guidance if access is denied, so that I can prepare to photograph my oil bottle.
 **Acceptance Criteria:**
-
-**Given** I scan a QR code with an unregistered SKU parameter
-**When** the app loads
-**Then** I see a message "This bottle is not yet supported"
-**And** I see the SKU that was scanned
-**And** I see a suggestion to contact support or try a different bottle
-
-### Story 1.5: Camera Activation & Viewfinder
-
-As a user,
-I want to activate my phone's rear camera with a live viewfinder,
-So that I can prepare to photograph my oil bottle.
-
-**Acceptance Criteria:**
-
-**Given** I am on the QR landing page and have tapped "Start Scan"
-**When** the camera activation begins
-**Then** the rear-facing camera activates (not front-facing)
-**And** I see a live viewfinder showing the camera feed
-**And** the camera activates in under 2 seconds
-**And** if camera permission is denied, I see Story 5.4 error message
+- **Given** I am on the QR landing page and have tapped "Start Scan"
+- **When** the camera activation begins
+- **Then** the rear-facing camera activates (not front-facing)
+- **And** I see a live viewfinder showing the camera feed
+- **And** the camera activates in under 2 seconds
+- **And** if permission is denied, I see a "Camera access required" message with iOS/Android specific instructions to enable it in settings.
 
 ### Story 1.6: Photo Capture & Preview
-
-As a user,
-I want to capture a still photo from the viewfinder and preview it,
-So that I can verify the image quality before submitting.
-
+As a user, I want to capture a still photo from the viewfinder and preview it, so that I can verify the image quality before submitting.
 **Acceptance Criteria:**
+- **Given** the camera viewfinder is active
+- **When** I tap the capture button
+- **Then** a still photo is captured from the current frame
+- **And** the viewfinder freezes showing the captured image
+- **And** I see "Retake" and "Use Photo" buttons
+- **And** the image is captured at 800px width with JPEG quality 0.78
 
-**Given** the camera viewfinder is active
-**When** I tap the capture button
-**Then** a still photo is captured from the current frame
-**And** the viewfinder freezes showing the captured image
-**And** I see "Retake" and "Use Photo" buttons
-**And** the image is captured at 800px width with JPEG quality 0.78
-
-### Story 1.7: Image Retake Flow
-
-As a user,
-I want to retake the photo if I'm not satisfied with the preview,
-So that I can ensure I submit a clear, well-framed image.
-
+### Story 1.7: Worker API Proxy & AI Integration
+As a developer, I want a Worker /analyze endpoint that integrates Gemini with Groq fallback, so that fill estimates are fast, accurate, and reliable.
 **Acceptance Criteria:**
+- **Given** a valid /analyze request with {sku, imageBase64}
+- **When** processed by the Worker
+- **Then** it validates the SKU and image size (< 4MB)
+- **And** it calls Gemini 2.5 Flash with structured JSON prompt
+- **And** it automatically falls back to Groq Llama 4 Scout if Gemini returns 429/5xx
+- **And** it returns fillPercentage (0-100) and confidence (high/medium/low)
+- **And** the round-trip completes in under 10 seconds (p95)
 
-**Given** I am viewing the photo preview
-**When** I tap "Retake"
-**Then** the preview is discarded
-**And** the live viewfinder reactivates
-**And** I can capture a new photo
-**And** this process can be repeated unlimited times
+---
 
-### Story 1.8: Worker API Proxy - Analyze Endpoint
+## Epic 2: Fill Verification & Accuracy
 
-As a developer,
-I want a Worker /analyze endpoint that proxies AI requests,
-So that API keys stay secure and requests are validated.
-
+### Story 2.1: `fillMlToPixelY` Coordinate Mapping Utility
+As a developer, I want a pure TypeScript utility function that maps water volume to a CSS pixel Y-coordinate, so that the annotation line is correctly positioned over the bottle photo regardless of display size.
 **Acceptance Criteria:**
+- **Given** a loaded <img> element and bottle bounds (Top/Bottom Pct)
+- **When** I call `fillMlToPixelY(waterMl, capacity, imgEl, top, bottom)`
+- **Then** it returns the correct CSS pixel Y-coordinate accounting for `object-fit: contain` letterboxing.
+- **And** it returns 0 if the image is not yet loaded.
 
-**Given** the Worker is deployed with API key secrets
-**When** a POST request is sent to /analyze with {sku, imageBase64}
-**Then** the Worker validates the SKU exists in bottle registry
-**And** the Worker validates the image is valid base64 and under 4MB
-**And** the Worker validates the request origin against allowlist
-**And** the Worker enforces rate limiting (10 req/min per IP)
-**And** the Worker returns 400 for validation failures with clear error messages
-**And** the Worker returns 429 for rate limit violations
-
-### Story 1.9: Gemini Vision Integration
-
-As a developer,
-I want Gemini 2.5 Flash integrated as the primary AI provider,
-So that fill level estimates are fast and accurate.
-
+### Story 2.2: Vertical Step Slider & SVG Overlay
+As a user, I want a vertical slider beside my photo that repositions a dashed line on the bottle, so that I can visually verify and adjust the AI estimate in 55ml steps.
 **Acceptance Criteria:**
+- **Given** I am on the Fill Confirmation screen
+- **When** I drag the vertical slider (Radix-based)
+- **Then** the red dashed SVG line moves in real-time to match the slider value.
+- **And** the slider enforces a minimum of 55ml (cannot set to 0).
+- **And** the layout adapts to RTL by moving the slider to the right side of the image.
 
-**Given** the Worker receives a valid /analyze request
-**When** the Worker calls Gemini API
-**Then** the request uses Gemini 2.5 Flash model
-**And** the request includes the structured JSON prompt for fill estimation
-**And** the request sets thinkingBudget: 0 for speed
-**And** the response is parsed for fillPercentage (0-100) and confidence (high/medium/low)
-**And** the Worker returns the parsed result to the client
-**And** the round-trip completes in under 8 seconds (p95)
-
-### Story 1.10: Groq Fallback Integration
-
-As a developer,
-I want Groq + Llama 4 Scout as automatic fallback,
-So that the app remains functional when Gemini is unavailable.
-
+### Story 2.3: Confirmation Flow Integration
+As a user, I want to be brought to the confirmation screen after analysis and lock in my result, so that my volume data is accurate.
 **Acceptance Criteria:**
+- **Given** AI analysis completes
+- **When** I arrive at the confirmation screen
+- **Then** the slider initializes at the AI estimate snapped to the nearest 55ml.
+- **And** tapping "Confirm" uses the slider value for all downstream nutrition/volume displays.
+- **And** the result screen shows a ±15% accuracy disclaimer.
 
-**Given** the Worker attempts to call Gemini API
-**When** Gemini returns 429 (rate limit) or 5xx (server error)
-**Then** the Worker automatically retries with Groq API
-**And** the Groq request uses Llama 4 Scout model
-**And** the Groq request uses the same structured JSON prompt
-**And** the response is parsed identically to Gemini
-**And** the fallback happens transparently without user action
-**And** the metadata records which provider was used
+---
 
-### Story 1.11: AI Analysis Loading State
+## Epic 3: Deep Consumption Insights
 
-As a developer,
-I want Groq + Llama 4 Scout as automatic fallback,
-So that the app remains functional when Gemini is unavailable.
-
+### Story 3.1: Calculation Engine (Volume & Nutrition)
+As a developer, I want an engine that calculates volumes and nutritional values from the confirmed fill level, so that users see accurate dietary data.
 **Acceptance Criteria:**
+- **Given** a confirmed waterMl value
+- **When** calculations run
+- **Then** it computes remaining/consumed volumes in ml, tbsp, and cups.
+- **And** it calculates Calories, Total Fat, and Saturated Fat using bundled USDA data and 0.92 g/ml oil density.
 
-**Given** the Worker attempts to call Gemini API
-**When** Gemini returns 429 (rate limit) or 5xx (server error)
-**Then** the Worker automatically retries with Groq API
-**And** the Groq request uses Llama 4 Scout model
-**And** the Groq request uses the same structured JSON prompt
-**And** the response is parsed identically to Gemini
-**And** the fallback happens transparently without user action
-**And** the metadata records which provider was used
-
-### Story 2.7: AI Analysis Loading State
-
-As a user,
-I want to see clear feedback while my photo is being analyzed,
-So that I know the app is working and approximately how long to wait.
-
+### Story 3.2: Result Screen Visualization
+As a user, I want to see a bold fill gauge and detailed volume/nutrition panels, so that my scan result feels meaningful.
 **Acceptance Criteria:**
+- **Given** I have confirmed my fill level
+- **When** the result screen renders
+- **Then** I see a bottle-shaped SVG gauge that animates from 0 to the target level over 600ms.
+- **And** I see a breakdown of volumes in 3 units and a distinct "Nutrition Facts" panel.
+- **And** all text/background combinations meet WCAG 2.1 AA contrast ratios.
 
-**Given** I have tapped "Use Photo" on the preview
-**When** the image is being compressed and sent to the API
-**Then** I see a loading indicator with "Analyzing your bottle..."
-**And** the loading state shows for the duration of the API call
-**And** the loading state disappears when results arrive or an error occurs
-**And** image compression completes in under 500ms
+---
 
-### Story 2.8: Confidence Level Handling
+## Epic 4: Feedback Loop & Data Quality
 
-As a user,
-I want to see a confidence indicator with my fill estimate,
-So that I understand how reliable the AI's assessment is.
-
+### Story 4.1: Data Persistence (R2 Storage)
+As a developer, I want every scan and correction stored in R2, so that we can build a training dataset for AI improvement.
 **Acceptance Criteria:**
+- **Given** a scan is processed or feedback is submitted
+- **When** stored by the Worker
+- **Then** the image is saved to `images/{scanId}.jpg`
+- **And** metadata (sku, timestamp, provider, estimates, confidence) is saved to `metadata/{scanId}.json`.
+- **And** user corrections are appended to the metadata record.
 
-**Given** the AI analysis returns successfully
-**When** the result includes a confidence level (high/medium/low)
-**Then** high confidence shows a green indicator with "High confidence"
-**And** medium confidence shows a yellow indicator with "Medium confidence"
-**And** low confidence shows an orange indicator with "Low confidence - consider retaking"
-**And** the confidence indicator is visible alongside the fill percentage
-**And** low confidence triggers the retake prompt (Story 3.10)
-
-### Story 2.9: Image Quality Issue Detection
-
-As a user,
-I want to be notified if my photo has quality issues,
-So that I can retake it and get a better estimate.
-
+### Story 4.2: Confidence & Feedback UI
+As a user, I want to see confidence indicators and provide quick accuracy feedback, so that I can help improve the system.
 **Acceptance Criteria:**
+- **Given** the result screen is displayed
+- **When** I view the results
+- **Then** I see a color-coded confidence badge (Green/Yellow/Orange).
+- **And** I can tap "About right", "Too high", "Too low", or "Way off" to provide quick feedback.
+- **And** "Low confidence" results trigger a specific prompt to retake the photo.
 
-**Given** the AI analysis detects image quality problems
-**When** the response includes quality issues (blur, poor lighting, obstruction)
-**Then** I see a specific message describing the issue
-**And** I see a "Retake Photo" button
-**And** the message uses plain language (e.g., "Image is too blurry - try holding the phone steady")
-**And** tapping "Retake Photo" returns me to the camera viewfinder
-
-## Epic 3: Consumption Insights
-
-Users can see detailed volume measurements and nutritional information for the oil they've consumed.
-
-### Story 3.1: Volume Calculation Engine
-
-As a developer,
-I want a volume calculator that computes remaining and consumed oil,
-So that users see accurate volume measurements based on fill percentage and bottle geometry.
-
+### Story 4.3: Feedback Validation Logic
+As a developer, I want user feedback validated for sanity, so that suspicious responses are flagged.
 **Acceptance Criteria:**
+- **Given** the Worker receives user feedback
+- **When** validation runs
+- **Then** it flags responses that are "too fast" (<3s) or contradictory (e.g., "Too high" but user estimate is lower than AI).
+- **And** records with no flags are marked as `trainingEligible: true`.
 
-**Given** I have a fill percentage and bottle geometry data
-**When** the volume calculator runs
-**Then** it calculates remaining volume using cylinder formula for cylinder bottles
-**And** it calculates remaining volume using frustum formula for tapered bottles
-**And** it calculates consumed volume as (totalVolumeMl - remainingVolumeMl)
-**And** all calculations are accurate to 2 decimal places
-**And** the calculator handles 0% fill (empty) and 100% fill (full) correctly
+---
 
-### Story 3.2: Unit Conversion System
+## Epic 5: Resilience, Privacy & Edge Cases
 
-As a developer,
-I want automatic unit conversion for volumes,
-So that users can view measurements in ml, tablespoons, and cups.
-
+### Story 5.1: Error Handling & Offline Support
+As a user, I want clear guidance when things go wrong, so that I don't feel lost during technical issues.
 **Acceptance Criteria:**
+- **Given** a network failure or AI analysis error
+- **When** the app is active
+- **Then** I see a clear error message with "Retry" and "Retake Photo" options.
+- **And** if I'm offline, the "Start Scan" button is disabled with a "Network connection required" notice.
 
-**Given** I have a volume in milliliters
-**When** the unit converter runs
-**Then** it converts ml to tablespoons using 1 tbsp = 14.7868 ml
-**And** it converts ml to cups using 1 cup = 236.588 ml
-**And** conversions are accurate to 1 decimal place
-**And** the converter handles edge cases (0 ml, very small volumes)
-**And** all three units (ml, tbsp, cups) are available for display
-
-### Story 3.3: Nutrition Calculator
-
-As a developer,
-I want a nutrition calculator that computes consumed nutritional values,
-So that users see accurate calorie and fat information.
-
+### Story 5.2: iOS Compatibility & Privacy
+As a user, I want to be warned about iOS browser issues and informed about my privacy, so that I can use the app safely.
 **Acceptance Criteria:**
+- **Given** I am on iOS in an in-app browser
+- **When** the app loads
+- **Then** I see a visual prompt to "Open in Safari" to ensure camera compatibility.
+- **And** before my first scan, I see a privacy notice explaining that images are stored for AI improvement but no PII is collected.
 
-**Given** I have consumed volume in ml and oil type
-**When** the nutrition calculator runs
-**Then** it converts volume to grams using oil density (0.92 g/ml)
-**And** it calculates calories from per-100g USDA data
-**And** it calculates total fat grams from per-100g USDA data
-**And** it calculates saturated fat grams from per-100g USDA data
-**And** all nutritional values are accurate to 1 decimal place
-**And** the calculator uses the correct USDA data for the bottle's oil type
-
-### Story 3.4: Fill Gauge Visual Component
-
-As a user,
-I want to see a visual fill gauge showing my bottle's fill level,
-So that I can quickly understand how much oil remains.
-
+### Story 5.3: Unknown Bottle Handling
+As a user, I want to know if my bottle is unsupported, so that I understand why the scan cannot proceed.
 **Acceptance Criteria:**
-
-**Given** I receive an AI fill estimate
-**When** the result screen displays
-**Then** I see a bottle-shaped fill gauge
-**And** the gauge fills to the estimated percentage visually
-**And** the fill percentage number is displayed prominently (e.g., "68%")
-**And** the gauge uses color to indicate fill level (green for high, yellow for medium, red for low)
-**And** the gauge is responsive and renders correctly on mobile screens
-
-### Story 3.5: Volume Breakdown Display
-
-As a user,
-I want to see remaining and consumed volumes in multiple units,
-So that I can understand my oil usage in familiar measurements.
-
-**Acceptance Criteria:**
-
-**Given** the volume calculations are complete
-**When** the result screen displays
-**Then** I see "Remaining" section with ml, tablespoons, and cups
-**And** I see "Consumed" section with ml, tablespoons, and cups
-**And** all six values are displayed on a single screen
-**And** values are formatted clearly (e.g., "450 ml", "30.4 tbsp", "1.9 cups")
-**And** the layout is readable on mobile portrait orientation
-
-### Story 3.6: Nutrition Facts Panel
-
-As a user,
-I want to see nutritional information for the oil I've consumed,
-So that I can track my calorie and fat intake.
-
-**Acceptance Criteria:**
-
-**Given** the nutrition calculations are complete
-**When** the result screen displays
-**Then** I see a "Nutrition Facts" panel for consumed oil
-**And** the panel shows calories (e.g., "240 cal")
-**And** the panel shows total fat (e.g., "27.0 g")
-**And** the panel shows saturated fat (e.g., "3.8 g")
-**And** the panel clarifies these are estimates based on USDA data
-**And** the panel is visually distinct and easy to read
-
-### Story 3.7: Result Screen Layout
-
-As a user,
-I want all my consumption insights on one screen,
-So that I can see everything at a glance without scrolling excessively.
-
-**Acceptance Criteria:**
-
-**Given** the AI analysis is complete
-**When** the result screen displays
-**Then** I see the fill gauge at the top (Story 3.4)
-**And** I see the volume breakdown below the gauge (Story 3.5)
-**And** I see the nutrition facts panel below the volumes (Story 3.6)
-**And** I see the confidence indicator (Story 2.8)
-**And** all elements fit within 2 screen heights on mobile portrait
-**And** the layout follows the UX design specification
-
-### Story 3.8: Confidence Indicator Integration
-
-As a user,
-I want the confidence indicator visible on my results,
-So that I know how much to trust the estimate.
-
-**Acceptance Criteria:**
-
-**Given** the result screen displays
-**When** I view my consumption insights
-**Then** I see the confidence level (high/medium/low) near the fill percentage
-**And** the indicator uses color coding (green/yellow/orange)
-**And** the indicator includes text label (not just color)
-**And** the indicator is accessible (WCAG 2.1 AA contrast)
-**And** the indicator is positioned prominently but doesn't obscure key data
-
-### Story 3.9: Estimate Disclaimer
-
-As a user,
-I want to see a disclaimer about estimate accuracy,
-So that I understand these are approximations, not certified measurements.
-
-**Acceptance Criteria:**
-
-**Given** the result screen displays
-**When** I view my consumption insights
-**Then** I see a disclaimer stating "Results are estimates (±15%)"
-**And** the disclaimer clarifies "Not certified nutritional analysis"
-**And** the disclaimer is visible but not intrusive
-**And** the disclaimer uses plain language
-**And** the disclaimer meets accessibility requirements
-
-### Story 3.10: Low Confidence Retake Prompt
-
-As a user,
-I want a clear prompt to retake my photo when confidence is low,
-So that I can get a more accurate estimate.
-
-**Acceptance Criteria:**
-
-**Given** the AI returns low confidence
-**When** the result screen displays
-**Then** I see a prominent message "Low confidence - consider retaking photo"
-**And** I see a "Retake Photo" button
-**And** tapping the button returns me to the camera viewfinder
-**And** the prompt is visually distinct from other UI elements
-**And** the prompt doesn't prevent me from viewing the current results
-
-## Epic 4: Feedback & Continuous Improvement
-
-Users can provide feedback on estimate accuracy to help improve the AI over time, with their input validated and stored for future model training.
-
-### Story 4.1: Feedback Prompt UI
-
-As a user,
-I want to be asked if the AI estimate was accurate,
-So that I can help improve the system.
-
-**Acceptance Criteria:**
-
-**Given** I am viewing my consumption results
-**When** I scroll to the feedback section
-**Then** I see the question "Was this estimate accurate?"
-**And** I see four response options: "About right", "Too high", "Too low", "Way off"
-**And** the options are presented as clear, tappable buttons
-**And** all touch targets are ≥ 44×44px
-**And** the prompt feels like a natural part of the flow, not an interruption
-
-### Story 4.2: Corrected Estimate Slider
-
-As a user,
-I want to provide my own fill percentage estimate when the AI is wrong,
-So that the system learns from my correction.
-
-**Acceptance Criteria:**
-
-**Given** I selected "Too high", "Too low", or "Way off"
-**When** the correction UI appears
-**Then** I see a slider to adjust the fill percentage (0-100%)
-**And** the slider starts at the AI's original estimate
-**And** I see the current slider value displayed as I move it
-**And** I see a "Submit Feedback" button
-**And** the slider is easy to use on mobile touch screens
-**And** I can skip providing a correction and just submit the accuracy rating
-
-### Story 4.3: Feedback Submission Flow
-
-As a user,
-I want my feedback submitted quickly and confirmed,
-So that I know my input was received.
-
-**Acceptance Criteria:**
-
-**Given** I have selected an accuracy rating and optionally adjusted the slider
-**When** I tap "Submit Feedback"
-**Then** my feedback is sent to the Worker /feedback endpoint
-**And** I see a loading indicator during submission
-**And** I see a "Thank you" confirmation message when complete
-**And** the submission completes in under 1 second
-**And** if submission fails, I see an error message with retry option
-
-### Story 4.4: Worker Feedback Endpoint
-
-As a developer,
-I want a Worker /feedback endpoint that receives and validates user feedback,
-So that only quality data is stored for training.
-
-**Acceptance Criteria:**
-
-**Given** the Worker is deployed
-**When** a POST request is sent to /feedback with {scanId, accuracyRating, correctedFillPercentage}
-**Then** the Worker validates the scanId exists
-**And** the Worker validates accuracyRating is one of: "about_right", "too_high", "too_low", "way_off"
-**And** the Worker validates correctedFillPercentage is 0-100 if provided
-**And** the Worker enforces rate limiting (10 req/min per IP)
-**And** the Worker returns 400 for validation failures
-**And** the Worker returns 200 with {feedbackId, validationStatus} on success
-
-### Story 4.5: Feedback Validation Logic
-
-As a developer,
-I want Layer 1 validation checks on user feedback,
-So that suspicious or contradictory responses are flagged.
-
-**Acceptance Criteria:**
-
-**Given** the Worker receives feedback
-**When** validation runs
-**Then** it flags feedback submitted < 3 seconds after result display (too_fast)
-**And** it flags corrected values at exact boundaries 0%, 25%, 50%, 75%, 100% (boundary_value)
-**And** it flags "about_right" with corrected value >10% different from AI (contradictory)
-**And** it flags "way_off" with corrected value <5% different from AI (contradictory)
-**And** it flags corrected values >30% different from AI estimate (extreme_delta)
-**And** validation results are stored in metadata as flags array
-**And** feedback with no flags gets validationStatus: "accepted"
-
-### Story 4.6: Image Storage to R2
-
-As a developer,
-I want captured images stored in R2 for future training,
-So that we can build a dataset for model improvement.
-
-**Acceptance Criteria:**
-
-**Given** a photo is submitted for analysis
-**When** the Worker processes the request
-**Then** the image is stored to R2 at images/{scanId}.jpg
-**And** the image is stored with JPEG compression
-**And** the R2 bucket is not publicly accessible
-**And** the Worker uses R2 binding (not public URL)
-**And** storage completes within the 8-second analysis window
-**And** storage failures don't block the AI analysis response
-
-### Story 4.7: Scan Metadata Storage
-
-As a developer,
-I want scan metadata stored alongside images,
-So that we have complete context for each training sample.
-
-**Acceptance Criteria:**
-
-**Given** an AI analysis completes
-**When** the Worker stores the scan record
-**Then** metadata is stored to R2 at metadata/{scanId}.json
-**And** metadata includes: scanId, sku, timestamp, aiProvider, fillPercentage, confidence, latency
-**And** metadata includes: imageStoragePath, bottleGeometry, oilType
-**And** metadata is stored as valid JSON
-**And** metadata storage completes within the analysis window
-**And** the scanId is returned to the client for feedback linking
-
-### Story 4.8: Feedback Update to Metadata
-
-As a developer,
-I want user feedback appended to existing scan metadata,
-So that training samples include both AI output and user corrections.
-
-**Acceptance Criteria:**
-
-**Given** feedback is submitted for a scanId
-**When** the Worker processes the feedback
-**Then** it retrieves the existing metadata/{scanId}.json from R2
-**And** it appends feedback fields: accuracyRating, correctedFillPercentage, feedbackTimestamp
-**And** it appends validation fields: validationStatus, validationFlags
-**And** it sets trainingEligible: true if validationStatus === "accepted"
-**And** it writes the updated metadata back to R2
-**And** the update completes within 1 second
-**And** if metadata retrieval fails, feedback is still stored separately
-
-## Epic 5: Error Handling & Accessibility
-
-Users receive clear, helpful guidance when issues occur and understand how their data is used, with accessible UI for all users.
-
-### Story 5.1: AI Analysis Failure Handling
-
-As a user,
-I want a clear error message when AI analysis fails,
-So that I understand what went wrong and can try again.
-
-**Acceptance Criteria:**
-
-**Given** the AI analysis request fails (both Gemini and Groq)
-**When** the error response is received
-**Then** I see a message "Unable to analyze image - please try again"
-**And** I see a "Retry" button that resubmits the same photo
-**And** I see a "Retake Photo" button to capture a new image
-**And** the error message is displayed within 10 seconds even if all providers timeout
-**And** the message uses plain language without technical jargon
-**And** the error state is accessible to screen readers
-
-### Story 5.2: Network Unavailability Detection
-
-As a user,
-I want to know when I can't scan due to no internet connection,
-So that I don't waste time trying to capture photos.
-
-**Acceptance Criteria:**
-
-**Given** I am offline (no network connection)
-**When** I navigate to the scan page
-**Then** I see a message "Network connection required for scanning"
-**And** the "Start Scan" button is disabled
-**And** I see guidance to connect to WiFi or cellular data
-**And** the app shell still loads from service worker cache
-**And** when connection is restored, the message disappears automatically
-**And** the offline state is detected before camera activation
-
-### Story 5.3: iOS Browser Compatibility Check
-
-As a user on iOS,
-I want guidance to open the app in Safari if I'm in an incompatible browser,
-So that camera functionality works correctly.
-
-**Acceptance Criteria:**
-
-**Given** I am on iOS in a non-Safari browser (e.g., Instagram in-app browser)
-**When** the app loads
-**Then** I see a message "For best experience, open in Safari"
-**And** I see instructions: "Tap the share icon and select 'Open in Safari'"
-**And** the message includes a visual indicator of the share icon
-**And** the message is dismissible but reappears on next visit
-**And** the detection works for common iOS in-app browsers
-**And** Safari users don't see this message
-
-### Story 5.4: Camera Permission Denied Handling
-
-As a user,
-I want clear instructions when camera access is denied,
-So that I know how to grant permission in my device settings.
-
-**Acceptance Criteria:**
-
-**Given** I denied camera permission or it's blocked in settings
-**When** the app attempts to activate the camera
-**Then** I see a message "Camera access is required to scan bottles"
-**And** I see step-by-step instructions to enable camera in device settings
-**And** the instructions are specific to iOS or Android based on device detection
-**And** I see a "Try Again" button to re-request permission
-**And** the message uses plain language and is accessible
-**And** the error is caught gracefully without app crash
-
-### Story 5.5: Privacy Notice - First Scan
-
-As a user,
-I want to understand how my scan images are used,
-So that I can make an informed decision before scanning.
-
-**Acceptance Criteria:**
-
-**Given** I am about to perform my first scan (detected via localStorage flag)
-**When** I tap "Start Scan"
-**Then** I see a notice: "Scan images are stored to improve AI accuracy"
-**And** the notice clarifies: "No personal information is collected"
-**And** I see "Understand" and "Learn More" buttons
-**And** tapping "Understand" dismisses the notice and proceeds to camera
-**And** tapping "Learn More" shows additional privacy details
-**And** the notice only appears once per device
-**And** the notice is accessible and uses plain language
-
-### Story 5.6: Estimate Accuracy Disclaimer
-
-As a user,
-I want to see a disclaimer about estimate accuracy,
-So that I understand the limitations of the AI analysis.
-
-**Acceptance Criteria:**
-
-**Given** I am viewing my consumption results
-**When** the result screen displays
-**Then** I see a disclaimer "Results are estimates (±15%)"
-**And** the disclaimer states "Not certified nutritional analysis"
-**And** the disclaimer is visible but doesn't dominate the screen
-**And** the disclaimer uses plain language
-**And** the disclaimer meets WCAG 2.1 AA contrast requirements
-**And** the disclaimer is accessible to screen readers
+- **Given** I scan an unregistered SKU
+- **When** the app loads
+- **Then** I see a "Bottle not yet supported" message with the scanned SKU displayed.

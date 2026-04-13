@@ -1,16 +1,17 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5, 6]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7]
 inputDocuments:
   - prd.md
   - architecture.md
+  - architecture-fill-confirm-screen.md
   - product-brief-Safi-Image-Analysis-2026-02-26.md
 ---
 
 # UX Design Specification — Safi Oil Tracker
 
-**Author:** Ahmed
-**Date:** 2026-02-27
-**Status:** Complete — POC v1
+**Author:** Ahmed + Sally (UX Designer Agent)
+**Date:** 2026-04-13
+**Status:** Updated — Includes Auto-Capture and Fill Confirmation Flow
 
 ---
 
@@ -32,11 +33,13 @@ Safi Oil Tracker delivers a single, frictionless interaction: QR scan on a physi
 2. **Trust calibration:** Communicate ±15% accuracy clearly enough to be honest, but not so prominently that it undermines perceived usefulness or suppresses feedback.
 3. **Feedback volume:** Achieve ≥30% feedback submission rate with a UI completable in 1–2 taps for the satisfied-user case.
 4. **iOS browser chrome:** `display: "browser"` means the Safari UI chrome is always visible. Camera viewfinder and result display must work within browser viewport, not full screen.
+5. **Precision vs. automation:** The AI provides the estimate, but the user provides the truth. The fill confirmation step (Screen 5b) must feel like a fast visual verification — not like the user is doing the AI's work.
+6. **Visual semantics:** The red dashed line on Screen 5b communicates precision measurement, not an error state. The `--color-accent-precision` token and supportive microcopy ("Adjust the line to match your oil level") disambiguate it from `--color-danger` error states.
 
 ### Design Opportunities
 
 1. **Result as hero moment:** Bold, immediate fill gauge + volume numbers + nutrition panel can feel genuinely novel — this result display is the entire product.
-2. **Camera overlay as precision signal:** A bottle-shaped framing guide makes capture feel like intentional measurement, not just a photo upload.
+2. **Camera overlay as precision signal:** A color-coded bottle-shaped framing guide that responds to bottle alignment makes capture feel like intentional measurement, not just a photo upload.
 3. **Feedback as natural flow completion:** Positioning feedback as the closing step (not an interrupt) maximizes submission rate while maintaining momentum.
 
 ---
@@ -61,8 +64,9 @@ Safi Oil Tracker delivers a single, frictionless interaction: QR scan on a physi
 | `--color-fill-medium` | `#E9A820` | Fill gauge 25–50% |
 | `--color-fill-low` | `#D64045` | Fill gauge < 25% |
 | `--color-overlay` | `rgba(0, 0, 0, 0.5)` | Camera overlay background |
+| `--color-accent-precision` | `#EF4444` | Functional measurement markers (red dashed line on Fill Confirmation screen — reserved exclusively for the fill level indicator; never used for error states) |
 
-**Rationale:** Olive green primary reflects the oil product category. Warm, food-adjacent palette builds trust for a kitchen-context app. All foreground/background combinations meet WCAG 2.1 AA contrast ratio ≥ 4.5:1.
+**Rationale:** Olive green primary reflects the oil product category. Warm, food-adjacent palette builds trust for a kitchen-context app. All foreground/background combinations meet WCAG 2.1 AA contrast ratio ≥ 4.5:1. `--color-accent-precision` is strictly reserved for the fill confirmation line to prevent conflation with `--color-danger` error states.
 
 ### Typography
 
@@ -193,25 +197,45 @@ All interactive elements: minimum **44 × 44px** tap area (WCAG 2.1 AA). Actual 
 │  │   │  Bottle      │    │  │
 │  │   │  framing     │    │  │
 │  │   │  guide       │    │  │
-│  │   │  (dashed     │    │  │
-│  │   │   border,    │    │  │
-│  │   │   50% white) │    │  │
+│  │   │  (color-     │    │  │
+│  │   │   coded,     │    │  │
+│  │   │   dashed)    │    │  │
 │  │   │              │    │  │
 │  │   └──────────────┘    │  │
 │  │                        │  │
 │  │  "Align bottle in frame" │
 │  │  caption, white text     │
 │  │                        │  │
+│  │  [●●●●●○○○] progress   │  │
+│  │  ring when aligned      │  │
+│  │                        │  │
 │  │      ( O )             │  │
 │  │   Capture button       │  │
 │  │   64px circle, white   │  │
 │  │   border, centered     │  │
+│  │                        │  │
+│  │  [Capture manually]    │  │
+│  │  text button fallback  │  │
 │  └────────────────────────┘  │
 └──────────────────────────────┘
 ```
 
 **Camera feed:** Fills viewport width. Height adapts to aspect ratio (typically 4:3 on mobile).
-**Framing guide:** Dashed rounded rectangle, `2px dashed rgba(255,255,255,0.5)`, centered. Approximately 60% viewport width, 70% viewport height. Bottle-shaped (tall rectangle with slight taper at neck).
+
+**Framing guide:** Color-coded rounded rectangle outline, centered. Approximately 60% viewport width, 70% viewport height. Bottle-shaped (tall rectangle with slight taper at neck). Stroke color changes based on alignment state:
+- **Red** (`--color-danger`): No bottle detected
+- **Amber** (`--color-warning`): Bottle detected but too far, too close, or misaligned
+- **Green** (`--color-success`): Well-aligned — ready for capture
+
+**Auto-capture behavior:**
+- When the overlay turns green and the bottle remains stable, a circular progress ring animates around the capture button (fills over 600ms–1000ms).
+- Auto-capture fires when the progress ring reaches 100%. The user does not need to tap anything.
+- The ring resets to 0% immediately if the bottle moves out of alignment.
+
+**Manual capture fallback:** A "Capture manually" text button (`font-size-caption`, white, centered below the capture button) triggers immediate capture at any time regardless of alignment state.
+
+**Blur detection:** If the captured frame's blur score exceeds the quality threshold, the overlay displays "Photo too blurry — hold the camera steady" and capture is not submitted until the next stable frame passes quality checks.
+
 **Capture button:** Centered bottom, 64px diameter circle, white border `3px solid white`, semi-transparent white fill `rgba(255,255,255,0.3)`. Inner circle `48px solid white` on tap.
 **"Align bottle" text:** White, `font-size-caption`, centered above capture button. Text shadow for readability over camera feed.
 
@@ -272,7 +296,65 @@ Both buttons: 48px height, `radius-sm`.
 **Animation:** A simple bottle silhouette with a fill level that animates up and down (CSS animation, `ease-in-out`, 2s cycle). Uses `--color-primary` for the fill.
 **Layout:** Centered vertically and horizontally.
 
+### Screen 5b: Fill Confirmation Screen
+
+> **Developer note:** This screen is referred to as `FILL_CONFIRM` in the state machine and as "Screen 4b" in architecture supplement documents (`architecture-fill-confirm-screen.md`). It inserts between Screen 5 (Analyzing) and Screen 6 (Result Display) in the sequential user flow.
+
+```
+┌──────────────────────────────┐
+│  Confirm Level               │
+│  (screen title, h1)          │
+│                              │
+│  ┌────────────────────────┐  │
+│  │   Captured image       │  │
+│  │   (object-fit: contain)│  │
+│  │                        │  │
+│  │   - - - - - - - - - -  │  │
+│  │   [RED DASHED LINE]    │  │
+│  │   (#EF4444, 2px dash)  │  │
+│  │   - - - - - - - - - -  │  │
+│  │                        │  │
+│  └────────────────────────┘  │
+│  Image panel                 │
+│  (right side in RTL)         │
+│                              │
+│  [SLIDER]                    │
+│  Vertical Radix Slider       │
+│  (left side in RTL)          │
+│  55ml step increments        │
+│                              │
+│  Adjust the line to match    │
+│  your oil level.             │
+│  caption, text-secondary     │
+│                              │
+│  ┌──────────┐ ┌──────────┐  │
+│  │ Retake   │ │ Confirm  │  │
+│  │ (outline)│ │(success) │  │
+│  └──────────┘ └──────────┘  │
+└──────────────────────────────┘
+```
+
+**Visual marker:** A dashed horizontal line rendered as an absolutely-positioned SVG overlay on the captured image. Stroke color: `--color-accent-precision` (`#EF4444`), `stroke-width="2"`, `stroke-dasharray="8 4"`.
+
+**Interaction:** Dragging the vertical slider repositions the red line synchronously in real-time (0ms — no async calls; CSS/JS only via `fillMlToPixelY` coordinate mapping).
+
+**Slider constraints:**
+- Step: 55ml increments
+- Minimum: 55ml (prevents 0ml confirmation; enforced in both UI and calculation layer)
+- Initializes: AI fill estimate snapped to nearest 55ml step
+- Maximum: bottle total capacity
+
+**RTL layout:** In `dir="rtl"` mode, the image panel appears on the right and the slider on the left of the flex container using CSS logical properties.
+
+**Buttons:**
+- **Retake** (outlined, `--color-primary` border): Returns to CAMERA_ACTIVE. Discards the current captured image.
+- **Confirm** (filled, `--color-success`): Locks the current slider value as `confirmedFillMl` — all downstream volume and nutrition calculations use this value.
+
+**Microcopy:** "Adjust the line to match your oil level." — `font-size-caption`, `--color-text-secondary`.
+
 ### Screen 6: Result Display
+
+> **Visual Alignment:** The Fill Gauge on this screen must reflect the oil level confirmed on Screen 5b — not the raw AI estimate. The `confirmedFillMl` value drives the gauge, volume calculations, and nutrition panel.
 
 ```
 ┌──────────────────────────────┐
@@ -320,15 +402,15 @@ Both buttons: 48px height, `radius-sm`.
 └──────────────────────────────┘
 ```
 
-**Fill Gauge Card:** White card, `radius-md`, `shadow-card`. Contains a bottle-shaped SVG gauge on the left (120px tall) filled to the estimated percentage with color based on level. The hero percentage number (`font-size-hero`, `font-weight-bold`) sits to the right. Confidence badge below as a small pill (colored dot + text).
+**Fill Gauge Card:** White card, `radius-md`, `shadow-card`. Contains a bottle-shaped SVG gauge on the left (120px tall) filled to the confirmed percentage with color based on level. The hero percentage number (`font-size-hero`, `font-weight-bold`) sits to the right. Confidence badge below as a small pill (colored dot + text).
 
 **Volume Card:** Two-column layout. "Remaining" header left, "Consumed" header right. Three rows below each (ml, tbsp, cups). Values in `font-weight-semibold`, units in `text-secondary`.
 
 **Nutrition Card:** Single card with "Nutrition (consumed)" header. Three rows: Calories, Total Fat, Saturated Fat. Label left-aligned, value right-aligned.
 
-**Disclaimer:** Below cards, `font-size-caption`, `text-secondary`.
+**Disclaimer:** Below cards, `font-size-caption`, `text-secondary`. Text: "Results are estimates (±15%). Not certified nutritional analysis."
 
-**Feedback section:** Below disclaimer. "Was this accurate?" as a section header. Four buttons in a 2x2 grid, `gap-sm` between. Each button is outlined style, `radius-sm`, 44px min-height.
+**Feedback section:** Below disclaimer. "Was this accurate?" as a section header. Four buttons in a 2x2 grid, `gap-sm` between. Each button is outlined style, `radius-sm`, 44px min-height. Tapping "Too high", "Too low", or "Way off" reveals the feedback slider (Screen 7).
 
 ### Screen 7: Feedback Slider (Conditional)
 
@@ -461,15 +543,22 @@ QR_LANDING → [Start Scan]
   ├── (first visit) → PRIVACY_NOTICE → [I Understand] → CAMERA_ACTIVE
   └── (repeat visit) → CAMERA_ACTIVE
 
-CAMERA_ACTIVE → [Capture] → PHOTO_PREVIEW
+CAMERA_ACTIVE → (auto-capture or "Capture manually") → PHOTO_PREVIEW
+  └── (alignment lost during progress ring) → stays in CAMERA_ACTIVE (ring resets)
+
+PHOTO_PREVIEW
   ├── [Retake] → CAMERA_ACTIVE
   └── [Use Photo] → ANALYZING
 
 ANALYZING
-  ├── (success) → RESULT_DISPLAY
-  ├── (low confidence) → RESULT_DISPLAY + LOW_CONFIDENCE_BANNER
-  ├── (quality issues) → QUALITY_WARNING
+  ├── (high/medium confidence) → FILL_CONFIRM
+  ├── (low confidence) → FILL_CONFIRM + low-confidence banner
+  ├── (quality issues detected) → QUALITY_WARNING
   └── (error) → ERROR_STATE
+
+FILL_CONFIRM
+  ├── [Retake] → CAMERA_ACTIVE
+  └── [Confirm] → RESULT_DISPLAY
 
 RESULT_DISPLAY → [feedback button]
   ├── [About right] → FEEDBACK_SUBMITTING → FEEDBACK_CONFIRMED
@@ -487,7 +576,7 @@ QUALITY_WARNING
 
 Single-page flow with no back navigation. The app is a linear funnel:
 
-1. Landing → 2. Camera → 3. Preview → 4. Analyzing → 5. Result → 6. Feedback
+1. Landing → 2. Camera → 3. Preview → 4. Analyzing → 4b. Fill Confirmation → 5. Result → 6. Feedback
 
 The user does not navigate "back" through screens. "Retake" returns to camera but conceptually is a "try again" action, not browser back navigation. Browser back from any state returns to the QR landing.
 
@@ -498,7 +587,9 @@ The user does not navigate "back" through screens. "Retake" returns to camera bu
 | Landing → Camera | Slide up | 300ms ease-out |
 | Camera → Preview | Instant (freeze frame) | 0ms |
 | Preview → Analyzing | Cross-fade | 200ms ease-in |
-| Analyzing → Result | Fade in with slide up | 400ms ease-out |
+| Analyzing → Fill Confirm | Cross-fade | 300ms ease-in |
+| Fill Confirm → Result | Fade in with slide up | 400ms ease-out |
+| Slider Change → Line Move | Real-time (sync) | 0ms |
 | Result → Feedback slider | Expand height | 200ms ease-out |
 | Feedback → Confirmation | Cross-fade | 200ms |
 | Any → Error | Fade in | 200ms |
@@ -563,7 +654,7 @@ A rounded rectangle outline centered in the viewfinder, sized to frame a typical
 
 - Width: ~55% of viewfinder width
 - Height: ~65% of viewfinder height
-- Border: `2px dashed rgba(255, 255, 255, 0.5)`
+- Border: `2px dashed` (color varies by alignment state — see Behavior)
 - Corner radius: `16px`
 - Slight taper at top (neck area) achieved with an SVG path or CSS clip
 
@@ -573,9 +664,20 @@ A rounded rectangle outline centered in the viewfinder, sized to frame a typical
 
 ### Behavior
 
-- Guide is purely visual — no detection logic
-- Does not move or track the bottle
-- Disappears instantly on capture (replaced by frozen preview)
+The framing guide is a dynamic overlay that responds to bottle detection state:
+
+| Alignment State | Stroke Color | Token | Meaning |
+|----------------|-------------|-------|---------|
+| No bottle detected | Red | `--color-danger` | Point camera at the bottle |
+| Bottle found but misaligned | Amber | `--color-warning` | Adjust distance or angle |
+| Well-aligned | Green | `--color-success` | Hold still — auto-capture starting |
+
+**Auto-capture progression:**
+- When the guide turns green and the bottle remains stable, a circular progress ring animates around the capture button (fills over 600ms–1000ms).
+- If alignment is lost during the progress animation, the ring resets to 0% and the guide returns to its previous color.
+- Auto-capture fires at 100% ring fill. The guide disappears instantly (replaced by the frozen preview).
+
+**Manual override:** "Capture manually" text button bypasses alignment checks entirely. Triggers immediate frame capture regardless of guide color state.
 
 ---
 
@@ -604,13 +706,14 @@ All text/background combinations verified at WCAG 2.1 AA (4.5:1 for normal text,
 - Result arrival announces "Analysis complete" via `aria-live="assertive"`
 - Error states use `role="alert"`
 - Feedback buttons have descriptive labels: `aria-label="Rate estimate as about right"`
+- Fill Confirmation slider has `aria-label="Adjust fill level"` and announces current value in ml
 
 ### Keyboard Navigation
 
-- Tab order follows visual flow: Landing → Start Scan → (Camera controls) → Retake/Use Photo → Feedback buttons
+- Tab order follows visual flow: Landing → Start Scan → (Camera controls) → Retake/Use Photo → (Fill Confirm slider) → Retake/Confirm → Feedback buttons
 - All buttons are keyboard-focusable
 - Enter/Space activates buttons
-- Slider is operable via arrow keys
+- Sliders are operable via arrow keys
 
 ### Motion
 
@@ -618,6 +721,7 @@ All animations respect `prefers-reduced-motion: reduce`. When enabled:
 - Fill gauge shows immediately at target without animation
 - Screen transitions are instant (no slides or fades)
 - Loading animation is replaced by a static spinner
+- Fill Confirmation progress ring appears immediately at 100% (no ring animation)
 
 ---
 
@@ -626,8 +730,9 @@ All animations respect `prefers-reduced-motion: reduce`. When enabled:
 ### Perceived Speed
 
 1. **Optimistic UI during upload:** Show "Analyzing..." immediately on "Use Photo" tap — don't wait for upload confirmation.
-2. **Fill gauge animation:** The 600ms fill animation on result display makes the result feel deliberate and measured, even though the actual data is already available.
-3. **Time estimate:** Display "This usually takes 3–8 seconds" under the analyzing spinner to set expectations.
+2. **Progressive disclosure during confirmation:** By showing the Fill Confirmation screen immediately after AI analysis returns, the user engages with their own data while the result screen prepares. The confirmation step feels like a feature, not a delay.
+3. **Fill gauge animation:** The 600ms fill animation on result display makes the result feel deliberate and measured, even though the actual data is already available.
+4. **Time estimate:** Display "This usually takes 3–8 seconds" under the analyzing spinner to set expectations.
 
 ### Loading Budget
 
@@ -636,14 +741,16 @@ All animations respect `prefers-reduced-motion: reduce`. When enabled:
 | Image compression | < 500ms | Analyzing state begins |
 | Upload to Worker | 1–2s | Analyzing animation |
 | LLM inference | 3–5s | Analyzing animation + time estimate |
-| Response parse + render | < 500ms | Result with fill animation |
-| **Total** | **5–8s** | Smooth transition to result |
+| Response parse + render | < 500ms | Fill Confirmation screen |
+| User confirmation interaction | variable | Fill Confirmation slider |
+| Result render | < 100ms | Result with fill animation |
+| **Photo-to-result (p95)** | **< 8s** | Smooth transition (per PRD NFR4) |
 
-If total exceeds 8 seconds, the analyzing state remains until response or 10-second timeout. No intermediate "still working" message — the animation and time estimate suffice.
+If the Worker response takes longer than 8 seconds, the analyzing state remains until response or 10-second timeout, at which point a structured error response is shown.
 
 ---
 
-_UX Design Specification produced: 2026-02-27_
-_Based on: PRD, Architecture, Product Brief_
-_Author: Ahmed_
-_Status: POC v1 UX complete — ready for implementation_
+_UX Design Specification produced: 2026-04-13_
+_Based on: PRD, Architecture, Architecture Fill Confirm Supplement, Product Brief_
+_Author: Ahmed + Sally (UX Designer Agent)_
+_Status: POC v1.1 — Integrated Auto-Capture, Fill Confirmation & Full Design System_
