@@ -439,6 +439,10 @@ export function useCameraGuidance(
     frameLoopCleanupRef.current = startFrameLoop(videoElement, () => {
       analyzeFrameRef.current();
     });
+
+    // Kick one immediate rAF tick so test-mode / initial state resolves
+    // even when rVFC never fires (e.g. Playwright fake camera has no real frames)
+    requestAnimationFrame(() => analyzeFrameRef.current());
   }, [stopGuidance, startFrameLoop]);
   
   /**
