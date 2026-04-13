@@ -13,7 +13,7 @@
  */
 
 import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
-import { assessImageQuality, type QualityAssessment } from '../utils/cameraQualityAssessment';
+import { assessImageQuality, detectBlur, type QualityAssessment } from '../utils/cameraQualityAssessment';
 
 /**
  * Camera guidance configuration
@@ -59,6 +59,10 @@ export interface CameraGuidanceState {
   goodFramesCount: number;
   /** Quality trend (improving, stable, declining) */
   qualityTrend: 'improving' | 'stable' | 'declining' | null;
+  /** Progress of the hold timer (0-1) */
+  holdProgress: number;
+  /** True while the hold timer is active */
+  isHolding: boolean;
 }
 
 /**
@@ -218,6 +222,12 @@ function provideFeedback(
 }
 
 /**
+ * Constants for auto-capture
+ */
+const HOLD_DURATION_MS = 1000;
+const GRACE_PERIOD_MS = 150;
+
+/**
  * Main hook implementation
  */
 export function useCameraGuidance(
@@ -230,8 +240,14 @@ export function useCameraGuidance(
   }), [config]);
   
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
+  const frameLoopCleanupRef = useRef<(() => void) | null>(null);
   const lastAnalysisRef = useRef<number>(0);
+  
+  // Refs for auto-capture hold timer
+  const holdStartRef = useRef<number | null>(null);
+  const lastFailRef = useRef<number | null>(null);
+  const frameCountRef = useRef<number>(0);
+  const lastBlurScoreRef = useRef<number>(50);
   
   const [state, setState] = useState<CameraGuidanceState>({
     assessment: null,
@@ -239,34 +255,43 @@ export function useCameraGuidance(
     isActive: false,
     goodFramesCount: 0,
     qualityTrend: null,
+    holdProgress: 0,
+    isHolding: false,
   });
   
   const prevAssessmentRef = useRef<QualityAssessment | null>(null);
   const analyzeFrameRef = useRef<() => void>(() => {});
 
   /**
-   * Analysis loop
+   * Analysis loop implementation
    */
   const analyzeFrame = useCallback(() => {
     const video = videoRef.current;
     if (!video || video.readyState < 2) {
-      // Video not ready
-      animationFrameRef.current = requestAnimationFrame(analyzeFrameRef.current);
+      // Video not ready, loop will continue via rVFC/rAF
       return;
     }
 
-    // Throttle: only run assessImageQuality at guidanceAnalysisInterval, not every rAF (~60fps)
+    // Throttle: only run heavy assessment at mergedConfig.analysisInterval
     const now = performance.now();
     if (now - lastAnalysisRef.current < mergedConfig.analysisInterval) {
-      animationFrameRef.current = requestAnimationFrame(analyzeFrameRef.current);
       return;
     }
     lastAnalysisRef.current = now;
 
-    // Run assessment
+    // Throttle blur detection to every other frame
+    frameCountRef.current++;
+    const shouldComputeBlur = frameCountRef.current % 2 === 0;
+    
+    if (shouldComputeBlur) {
+      lastBlurScoreRef.current = detectBlur(video);
+    }
+    
+    // Run assessment with precomputed blur score
     const assessment = assessImageQuality(video, {
       minBlurScore: mergedConfig.minBlurScore,
       requireGoodLighting: mergedConfig.requireGoodLighting,
+      precomputedBlurScore: lastBlurScoreRef.current,
     });
     
     // Check for test mode bypass
@@ -275,7 +300,43 @@ export function useCameraGuidance(
     // Update state
     setState(prev => {
       const isGood = assessment.isGoodQuality || isTestMode;
-      const goodFramesCount = isGood ? prev.goodFramesCount + 1 : 0;
+      
+      // Auto-capture hold timer logic
+      let holdProgress = 0;
+      let isHolding = false;
+      let shouldFire = false;
+      let currentGoodFramesCount = isGood ? prev.goodFramesCount + 1 : 0;
+
+      if (isGood) {
+        lastFailRef.current = null;
+        if (!holdStartRef.current) {
+          holdStartRef.current = Date.now();
+        }
+        const elapsed = Date.now() - holdStartRef.current;
+        holdProgress = Math.min(1, elapsed / HOLD_DURATION_MS);
+        isHolding = holdProgress < 1;
+        shouldFire = holdProgress >= 1;
+      } else {
+        // Grace period: absorb micro-trembles < 150ms
+        if (!lastFailRef.current) {
+          lastFailRef.current = Date.now();
+        }
+        const failDuration = Date.now() - lastFailRef.current;
+        
+        if (failDuration <= GRACE_PERIOD_MS && holdStartRef.current) {
+          // Keep previous hold values during grace period
+          holdProgress = prev.holdProgress;
+          isHolding = prev.isHolding;
+          currentGoodFramesCount = prev.goodFramesCount;
+        } else {
+          // Sustained failure: reset hold timer
+          holdStartRef.current = null;
+          lastFailRef.current = null;
+          holdProgress = 0;
+          isHolding = false;
+          currentGoodFramesCount = 0;
+        }
+      }
       
       // Determine quality trend
       let qualityTrend: 'improving' | 'stable' | 'declining' | null = null;
@@ -286,8 +347,8 @@ export function useCameraGuidance(
         else qualityTrend = 'stable';
       }
       
-      // Ready when we have 2+ consecutive good frames (or test mode)
-      const isReady = (goodFramesCount >= 2 && isGood) || isTestMode;
+      // Ready when hold timer completes (or test mode)
+      const isReady = shouldFire || isTestMode;
       
       // Haptic "Ready" Click - only on the transition to ready
       if (isReady && !prev.isReady && mergedConfig.enableHaptics && navigator.vibrate) {
@@ -298,8 +359,10 @@ export function useCameraGuidance(
         assessment,
         isReady,
         isActive: true,
-        goodFramesCount,
+        goodFramesCount: currentGoodFramesCount,
         qualityTrend,
+        holdProgress,
+        isHolding,
       };
     });
     
@@ -308,35 +371,63 @@ export function useCameraGuidance(
     
     // Store for next comparison
     prevAssessmentRef.current = assessment;
-    
-    // Continue loop
-    animationFrameRef.current = requestAnimationFrame(analyzeFrameRef.current);
   }, [mergedConfig]);
 
   // Keep ref up to date
   useEffect(() => {
     analyzeFrameRef.current = analyzeFrame;
   }, [analyzeFrame]);
+
+  /**
+   * High-performance frame loop using requestVideoFrameCallback if available
+   */
+  const startFrameLoop = useCallback((videoEl: HTMLVideoElement, cb: () => void) => {
+    if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
+      const loop = () => {
+        cb();
+        videoEl.requestVideoFrameCallback(loop);
+      };
+      // @ts-expect-error - requestVideoFrameCallback is a newer Web API
+      const handle = videoEl.requestVideoFrameCallback(loop);
+      return () => {
+        // rVFC doesn't have an explicit cancel method, it stops when the element is removed
+        // or when we stop calling it in the callback.
+      };
+    } else {
+      // Fallback: throttled requestAnimationFrame
+      let rafId: number;
+      const loop = () => {
+        cb();
+        rafId = requestAnimationFrame(loop);
+      };
+      rafId = requestAnimationFrame(loop);
+      return () => cancelAnimationFrame(rafId);
+    }
+  }, []);
   
   /**
    * Stop guidance analysis
    */
   const stopGuidance = useCallback(() => {
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
+    if (frameLoopCleanupRef.current) {
+      frameLoopCleanupRef.current();
+      frameLoopCleanupRef.current = null;
     }
     
     videoRef.current = null;
+    holdStartRef.current = null;
+    lastFailRef.current = null;
     
     setState(prev => ({
       ...prev,
       isActive: false,
+      holdProgress: 0,
+      isHolding: false,
     }));
   }, []);
 
   /**
-   * Start guidance analysis
+   * Start guidance analysis once camera is active
    */
   const startGuidance = useCallback((videoElement: HTMLVideoElement) => {
     // Stop any existing analysis
@@ -345,8 +436,10 @@ export function useCameraGuidance(
     videoRef.current = videoElement;
     
     // Start analysis loop
-    animationFrameRef.current = requestAnimationFrame(analyzeFrameRef.current);
-  }, [stopGuidance]);
+    frameLoopCleanupRef.current = startFrameLoop(videoElement, () => {
+      analyzeFrameRef.current();
+    });
+  }, [stopGuidance, startFrameLoop]);
   
   /**
    * Manually assess current frame
@@ -373,6 +466,8 @@ export function useCameraGuidance(
       isActive: false,
       goodFramesCount: 0,
       qualityTrend: null,
+      holdProgress: 0,
+      isHolding: false,
     });
     prevAssessmentRef.current = null;
   }, [stopGuidance]);
