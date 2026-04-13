@@ -5,8 +5,8 @@ function normalizeTimestamp(raw: string): string {
   if (!raw) return "";
   // Already ISO 8601 (contains "T") — return as-is
   if (raw.includes("T")) return raw;
-  // Space-separated "YYYY-MM-DD HH:MM:SS" → replace space with "T"
-  return raw.replace(" ", "T");
+  // Space-separated "YYYY-MM-DD HH:MM:SS" → replace first space with "T"
+  return raw.replace(/ /, "T");
 }
 
 export function formatDate(isoString: string): string {

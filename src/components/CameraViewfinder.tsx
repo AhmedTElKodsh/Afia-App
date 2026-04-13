@@ -149,6 +149,7 @@ export function CameraViewfinder({
 
   // Prevent concurrent startCamera calls without depending on cameraState in the callback
   const isStartingRef = useRef(false);
+  const isCapturingRef = useRef(false);
 
   // Stable guidance config — avoids recreating guidance on every render
   const guidanceConfig = useMemo(() => ({
@@ -167,7 +168,8 @@ export function CameraViewfinder({
     setCameraState('requesting');
 
     try {
-      // Clean up existing stream
+      // Clean up existing stream and reset dependent state
+      setTorchOn(false);
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
@@ -187,6 +189,7 @@ export function CameraViewfinder({
       setTorchSupported(hasTorch);
 
       setCameraState('active');
+      isStartingRef.current = false;
     } catch (error) {
       console.error('Camera initialization error:', error);
       isStartingRef.current = false;
@@ -239,6 +242,8 @@ export function CameraViewfinder({
    */
   const handleCapture = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return;
+    if (isCapturingRef.current) return;
+    isCapturingRef.current = true;
 
     try {
       const video = videoRef.current;
@@ -284,6 +289,8 @@ export function CameraViewfinder({
     } catch (error) {
       console.error('Capture error:', error);
       onError(t('camera.captureFailed'));
+    } finally {
+      isCapturingRef.current = false;
     }
   }, [onCapture, onError, t]);
 
@@ -304,8 +311,12 @@ export function CameraViewfinder({
   useEffect(() => {
     if (cameraState === 'active' && enableLiveGuidance && videoRef.current) {
       guidance.startGuidance(videoRef.current);
-      isStartingRef.current = false;
     }
+    return () => {
+      if (cameraState === 'active' && enableLiveGuidance) {
+        guidance.stopGuidance();
+      }
+    };
   }, [cameraState, enableLiveGuidance, guidance]);
 
   /**
@@ -428,7 +439,10 @@ export function CameraViewfinder({
               <span className="guidance-hint-text">
                 {guidance.state.isReady
                   ? t('camera.ready')
-                  : guidance.state.assessment && guidance.state.assessment.overallScore < 60
+                  : guidance.state.assessment && (
+                      guidance.state.assessment.overallScore < 60 ||
+                      guidance.state.assessment.composition.distance === 'not-detected'
+                    )
                     ? t(guidance.state.assessment.guidanceMessage)
                     : t('camera.showFrontLabel')}
               </span>

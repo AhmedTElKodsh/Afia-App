@@ -77,8 +77,8 @@ export function useScanHistory() {
       const toStore = updated.length > MAX_SCANS ? updated.slice(0, MAX_SCANS) : updated;
       
       saveToStorage(toStore);
-      
-      // Notify same-tab listeners
+
+      // Only notify listeners when storage succeeded (saveToStorage returns false on unrecoverable quota error)
       window.dispatchEvent(new CustomEvent("afia:scan-added"));
       return toStore;
     });

@@ -1,18 +1,23 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { StoredScan } from "./useScanHistory";
 import { getBottleBySku } from "../data/bottleRegistry";
 
 const PROXY_URL = import.meta.env.VITE_PROXY_URL || "http://localhost:8787";
 const SESSION_KEY = "afia_admin_session";
 
+const FETCH_CACHE_MS = 30_000; // skip refetch if data is fresh (prevents double-fetch on tab remount)
+
 export function useGlobalScans() {
   const [scans, setScans] = useState<StoredScan[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const lastFetchRef = useRef<number>(0);
 
   const fetchScans = useCallback(async () => {
     const token = sessionStorage.getItem(SESSION_KEY);
     if (!token || !PROXY_URL) return;
+
+    if (Date.now() - lastFetchRef.current < FETCH_CACHE_MS) return;
 
     setIsLoading(true);
     setError(null);
@@ -41,6 +46,10 @@ export function useGlobalScans() {
         }>;
       };
       
+      if (!Array.isArray(data.scans)) {
+        throw new Error('Invalid response: scans is not an array');
+      }
+
       // Map Supabase rows to StoredScan format
       const mappedScans: StoredScan[] = data.scans.map((s) => {
         const bottle = getBottleBySku(s.sku);
@@ -63,6 +72,7 @@ export function useGlobalScans() {
       });
 
       setScans(mappedScans);
+      lastFetchRef.current = Date.now();
     } catch (err) {
       console.error("Global scans fetch error:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch global scans");

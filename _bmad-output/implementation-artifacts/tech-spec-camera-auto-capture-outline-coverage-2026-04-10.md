@@ -633,3 +633,20 @@ Add these fields to the TestLab inspector panel
 - [x] [Review][Defer] W8: `centroidX: 0.5` sentinel on not-detected paths — callers check `bottleDetected` first; acceptable
 - [x] [Review][Defer] W9: `parseLLMResponse` throws generic `Error` for empty-after-fence case — typed error class would improve caller discrimination; nice-to-have
 - [x] [Review][Defer] W10: `.bottle-guide-hint` `bottom: 100%` relies on ancestor `position: relative` — pre-existing CSS architecture; `.bottle-guide-wrapper` already has non-static positioning
+
+---
+
+### Review Findings (Round 3 — 2026-04-13)
+
+3 layers launched: Blind Hunter ✅ · Edge Case Hunter ❌ rate-limited · Acceptance Auditor ❌ rate-limited (manual audit substituted)
+
+#### Patches
+- [x] [Review][Patch] P1: Duplicate `"ready"` key in both translation files — EN has two identical `"ready": "Ready"` entries; AR has stale `"ready": "Ready"` (English value) plus new `"ready": "جاهز"`; JSON is malformed, parsers use last occurrence [`src/i18n/locales/en/translation.json`, `src/i18n/locales/ar/translation.json`]
+- [x] [Review][Patch] P2: `centreBottle` hint shown when bottle is small AND off-centre — spec §4.3 priority 2 = "too-far (small) → moveCloser", priority 4 = "too-far (off-ctr) → centreBottle"; code checks `!isCentered && visibility > 30` first inside `too-far` block, so span 31–54% off-centre gets "Centre bottle" instead of "Move closer"; fix: only return `centreBottle` when `visibility >= 55` [`src/utils/cameraQualityAssessment.ts` — `generateGuidanceMessage()`]
+
+#### Deferred
+- [x] [Review][Defer] W11: `generateGuidanceMessage` has no runtime guard that returned string is a valid i18n key — future callers could write human-readable strings; add JSDoc warning [`src/utils/cameraQualityAssessment.ts`]
+- [x] [Review][Defer] W12: `bottleDetected: true` + `distance: 'not-detected'` is a contradictory API surface — callers may short-circuit on `bottleDetected` alone; add JSDoc clarifying semantics (bottleDetected = colour pixels found, not shape valid) [`src/utils/cameraQualityAssessment.ts`]
+- [x] [Review][Defer] W13: `isReady` vs `distance === 'good'` visual lag — outline colour changes per-frame; `isReady` requires 2 consecutive good frames; moot once spec §5 hold timer implemented — deferred to §5 auto-capture story
+- [x] [Review][Defer] W14: `camera.pointAtBottle` key in spec §8 table does not exist — `alignBottle` repurposed to same text; cosmetic key-name mismatch vs spec table; acceptable
+- [x] [Review][Defer] W15: `bottom: 100%` hint position — duplicate of W10, confirmed pre-existing

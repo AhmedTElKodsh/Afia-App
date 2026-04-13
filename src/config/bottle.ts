@@ -42,9 +42,10 @@ export const FILL_COLORS = {
  * Get fill color based on percentage
  */
 export function getFillColor(percentage: number): string {
-  if (percentage >= BOTTLE_CONFIG.thresholds.HIGH) {
+  const pct = Number.isFinite(percentage) ? Math.max(0, Math.min(100, percentage)) : 0;
+  if (pct >= BOTTLE_CONFIG.thresholds.HIGH) {
     return FILL_COLORS.HIGH;
-  } else if (percentage >= BOTTLE_CONFIG.thresholds.MEDIUM) {
+  } else if (pct >= BOTTLE_CONFIG.thresholds.MEDIUM) {
     return FILL_COLORS.MEDIUM;
   } else {
     return FILL_COLORS.LOW;

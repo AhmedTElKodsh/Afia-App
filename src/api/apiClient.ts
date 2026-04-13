@@ -73,12 +73,12 @@ export async function submitFeedback(
   }>;
 }
 
-export async function reportScanError(
+export function reportScanError(
   sku: string,
   error: string,
   deviceInfo?: string
-): Promise<void> {
-  // Fire and forget error logging to Worker
+): void {
+  // Fire and forget — intentionally not awaited; callers get no completion guarantee
   fetch(`${PROXY_URL}/error`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

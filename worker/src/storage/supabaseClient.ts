@@ -117,7 +117,7 @@ export async function updateScanWithFeedback(
 ): Promise<void> {
   const supabase = getSupabase(env);
 
-  const { error: dbError } = await supabase
+  const { error: dbError, count } = await supabase
     .from("scans")
     .update({
       feedback_id: feedback.feedbackId,
@@ -128,11 +128,14 @@ export async function updateScanWithFeedback(
       validation_flags: feedback.validationFlags,
       confidence_weight: feedback.confidenceWeight,
       training_eligible: feedback.trainingEligible,
-    })
+    }, { count: "exact" })
     .eq("id", scanId);
 
   if (dbError) {
     console.error("Supabase Feedback Update Error:", dbError);
     throw dbError;
+  }
+  if (count === 0) {
+    throw new Error(`Feedback update found no scan with id: ${scanId}`);
   }
 }

@@ -19,6 +19,17 @@ export function validateFeedback(
 ): ValidationResult {
   const flags: string[] = [];
 
+  // Normalise correctedFillPercentage: reject NaN, Infinity, and out-of-range values.
+  // Treat them as if no correction was provided to avoid poisoning training data.
+  const correctedFill =
+    feedback.correctedFillPercentage !== undefined &&
+    Number.isFinite(feedback.correctedFillPercentage) &&
+    feedback.correctedFillPercentage >= 0 &&
+    feedback.correctedFillPercentage <= 100
+      ? feedback.correctedFillPercentage
+      : undefined;
+  feedback = { ...feedback, correctedFillPercentage: correctedFill };
+
   if (feedback.responseTimeMs < 3000) {
     flags.push("too_fast");
   }

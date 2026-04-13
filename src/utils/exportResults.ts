@@ -43,7 +43,7 @@ export function exportToCSV(results: TestResult[]): void {
 
   const csvContent = [
     headers.join(","),
-    ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
+    ...rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(",")),
   ].join("\n");
 
   const blob = new Blob([csvContent], { type: "text/csv" });
@@ -54,8 +54,7 @@ export function exportToPDF(results: TestResult[]): void {
   // Simple PDF generation using browser's print dialog
   const printWindow = window.open("", "_blank");
   if (!printWindow) {
-    console.warn("[exportToPDF] Popup blocked — allow popups to export PDF");
-    return;
+    throw new Error("Popup blocked — allow popups to export PDF");
   }
 
   const html = `
@@ -127,5 +126,6 @@ function downloadBlob(blob: Blob, filename: string): void {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  // Defer revoke: some browsers need a tick to start the download before the URL is released
+  setTimeout(() => URL.revokeObjectURL(url), 100);
 }

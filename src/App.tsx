@@ -109,7 +109,7 @@ export default function App() {
       const msg = err instanceof Error ? err.message : "Analysis failed";
       setError(msg);
       setAppState("API_ERROR");
-      reportScanError(selectedSku, msg, navigator.userAgent).catch(console.error);
+      reportScanError(selectedSku, msg, navigator.userAgent);
     }
   }, [capturedImage, selectedSku, bottle, addScan]);
 

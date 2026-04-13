@@ -16,7 +16,7 @@ const CACHE_TTL_SECONDS = 1800; // 30 minutes
 
 /** SHA-256 hex of imageBase64+sku — used as KV cache key */
 async function buildCacheKey(imageBase64: string, sku: string): Promise<string> {
-  const data = new TextEncoder().encode(imageBase64 + sku);
+  const data = new TextEncoder().encode(imageBase64 + "\x00" + sku);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hex = Array.from(new Uint8Array(hashBuffer))
     .map((b) => b.toString(16).padStart(2, "0"))
@@ -73,27 +73,34 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
         aiProvider: "gemini" | "groq" | "openrouter" | "mistral";
         scanId?: string;
       };
-      const remainingMl = Math.round(calculateRemainingMl(llmResult.fillPercentage, bottle.totalVolumeMl, bottle.geometry));
-      const latencyMs = Date.now() - startTime;
-      await logger.info("Cache hit — returning cached result", {
-        sku,
-        cacheKey,
-        latencyMs,
-      });
-      return c.json({
-        scanId: cachedScanId || crypto.randomUUID(), // Preserve original ID if available
-        fillPercentage: llmResult.fillPercentage,
-        remainingMl,
-        confidence: llmResult.confidence,
-        aiProvider,
-        latencyMs,
-        cacheHit: true,
-        tokensEstimated,
-        imageQualityIssues:
-          llmResult.imageQualityIssues && llmResult.imageQualityIssues.length > 0
-            ? llmResult.imageQualityIssues
-            : undefined,
-      });
+      // Guard: corrupt/stale cache entry — discard and fall through to re-run
+      if (
+        typeof llmResult?.fillPercentage === "number" &&
+        ["high", "medium", "low"].includes(llmResult?.confidence as string)
+      ) {
+        const remainingMl = Math.round(calculateRemainingMl(llmResult.fillPercentage, bottle.totalVolumeMl, bottle.geometry));
+        const latencyMs = Date.now() - startTime;
+        await logger.info("Cache hit — returning cached result", {
+          sku,
+          cacheKey,
+          latencyMs,
+        });
+        return c.json({
+          scanId: cachedScanId || crypto.randomUUID(),
+          fillPercentage: llmResult.fillPercentage,
+          remainingMl,
+          confidence: llmResult.confidence,
+          aiProvider,
+          latencyMs,
+          cacheHit: true,
+          tokensEstimated,
+          imageQualityIssues:
+            llmResult.imageQualityIssues && llmResult.imageQualityIssues.length > 0
+              ? llmResult.imageQualityIssues
+              : undefined,
+        });
+      }
+      await logger.warn("Corrupt cache entry discarded, re-running analysis", { cacheKey, sku });
     }
 
     type ProviderName = "gemini" | "groq" | "openrouter" | "mistral";

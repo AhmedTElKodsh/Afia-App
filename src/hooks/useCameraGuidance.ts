@@ -13,7 +13,7 @@
  */
 
 import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
-import { assessImageQuality, createDebouncedAssessment, type QualityAssessment } from '../utils/cameraQualityAssessment';
+import { assessImageQuality, type QualityAssessment } from '../utils/cameraQualityAssessment';
 
 /**
  * Camera guidance configuration
@@ -231,7 +231,7 @@ export function useCameraGuidance(
   
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const debouncedAssessmentRef = useRef<ReturnType<typeof createDebouncedAssessment> | null>(null);
+  const lastAnalysisRef = useRef<number>(0);
   
   const [state, setState] = useState<CameraGuidanceState>({
     assessment: null,
@@ -254,7 +254,15 @@ export function useCameraGuidance(
       animationFrameRef.current = requestAnimationFrame(analyzeFrameRef.current);
       return;
     }
-    
+
+    // Throttle: only run assessImageQuality at guidanceAnalysisInterval, not every rAF (~60fps)
+    const now = performance.now();
+    if (now - lastAnalysisRef.current < mergedConfig.analysisInterval) {
+      animationFrameRef.current = requestAnimationFrame(analyzeFrameRef.current);
+      return;
+    }
+    lastAnalysisRef.current = now;
+
     // Run assessment
     const assessment = assessImageQuality(video, {
       minBlurScore: mergedConfig.minBlurScore,
@@ -319,11 +327,6 @@ export function useCameraGuidance(
       animationFrameRef.current = null;
     }
     
-    if (debouncedAssessmentRef.current) {
-      debouncedAssessmentRef.current.cancel();
-      debouncedAssessmentRef.current = null;
-    }
-    
     videoRef.current = null;
     
     setState(prev => ({
@@ -341,18 +344,9 @@ export function useCameraGuidance(
     
     videoRef.current = videoElement;
     
-    // Create debounced assessment for callback-based updates
-    debouncedAssessmentRef.current = createDebouncedAssessment(
-      (assessment) => {
-        // This is for additional callbacks if needed
-        console.log('Quality assessment:', assessment);
-      },
-      mergedConfig.analysisInterval
-    );
-    
     // Start analysis loop
     animationFrameRef.current = requestAnimationFrame(analyzeFrameRef.current);
-  }, [stopGuidance, mergedConfig.analysisInterval]);
+  }, [stopGuidance]);
   
   /**
    * Manually assess current frame

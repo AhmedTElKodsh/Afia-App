@@ -31,7 +31,7 @@ export function parseLLMResponse(raw: string): LLMResponse {
     fillPercentage: Math.round(parsed.fillPercentage as number),
     confidence: parsed.confidence as "high" | "medium" | "low",
     imageQualityIssues: Array.isArray(parsed.imageQualityIssues)
-      ? (parsed.imageQualityIssues as string[])
+      ? (parsed.imageQualityIssues as unknown[]).filter((x): x is string => typeof x === "string")
       : [],
     reasoning: typeof parsed.reasoning === "string" ? parsed.reasoning : undefined,
   };

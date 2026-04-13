@@ -523,8 +523,9 @@ function generateGuidanceMessage(
   }
 
   if (composition.distance === 'too-far') {
-    // Spec §4.3: differentiate off-centre from genuinely too far.
-    if (!composition.isCentered && composition.visibility > 30) {
+    // Spec §4.3: only show centreBottle when span is adequate (>=55%) but bottle is off-centre.
+    // If span < 55% the primary fix is distance, not centering — show moveCloser instead.
+    if (!composition.isCentered && composition.visibility >= 55) {
       return { message: 'camera.centreBottle', type: 'warning' };
     }
     return { message: 'camera.moveCloser', type: 'warning' };

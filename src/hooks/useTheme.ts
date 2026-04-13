@@ -14,11 +14,15 @@ function applyTheme(theme: Theme) {
 
 export function useTheme(): [Theme, () => void] {
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem(THEME_KEY) as Theme | null;
-    // Explicit user preference wins
-    if (saved === 'light' || saved === 'dark') return saved;
-    // Fall back to OS/system preference
-    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    try {
+      const saved = localStorage.getItem(THEME_KEY) as Theme | null;
+      // Explicit user preference wins
+      if (saved === 'light' || saved === 'dark') return saved;
+      // Fall back to OS/system preference
+      return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    } catch {
+      return 'dark';
+    }
   });
 
   useEffect(() => {

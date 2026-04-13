@@ -14,3 +14,10 @@
 - W2: `thinkingBudget: 0` (accuracy degradation on ambiguous images) and `v1beta` endpoint stability — need tracking issues
 - W3: Translation keys `moveCloser`/`moveBack`/`centreBottle` etc. missing for locales beyond EN/AR
 - W4: Auto-capture, progress ring (holdProgress/isHolding), shutter flash (Spec 2 §5) — full auto-capture suite is next implementation sprint
+
+## Deferred from: code review Round 3 of tech-spec-camera-auto-capture-outline-coverage-2026-04-10 (2026-04-13)
+
+- W11: `generateGuidanceMessage()` must return valid i18n keys — no runtime guard; future code could write human-readable strings; add JSDoc warning to function
+- W12: `bottleDetected: true` + `distance: 'not-detected'` contradictory API — callers may short-circuit on bottleDetected alone; add JSDoc clarifying semantics
+- W13: `isReady` vs `distance === 'good'` 1-frame visual lag — moot once spec §5 hold timer implemented
+- W14: `camera.pointAtBottle` key in spec §8 table vs `alignBottle` used in code — cosmetic key-name mismatch; acceptable
