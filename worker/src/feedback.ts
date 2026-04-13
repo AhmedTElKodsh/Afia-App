@@ -9,7 +9,6 @@ export async function handleFeedback(c: Context<{ Bindings: Env }>): Promise<Res
     accuracyRating?: unknown;
     correctedFillPercentage?: unknown;
     responseTimeMs?: unknown;
-    llmFillPercentage?: unknown;
   }>();
 
   // Validate required fields
@@ -29,17 +28,28 @@ export async function handleFeedback(c: Context<{ Bindings: Env }>): Promise<Res
     return c.json({ error: "Missing or invalid responseTimeMs", code: "INVALID_REQUEST" }, 400);
   }
 
-  if (typeof body.llmFillPercentage !== "number") {
-    return c.json({ error: "Missing required field: llmFillPercentage", code: "INVALID_REQUEST" }, 400);
+  // --- Security: Retrieve original LLM fill percentage from DB ---
+  // Don't trust the client-provided llmFillPercentage to prevent poisoning validation logic.
+  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+  const { data: scanRecord, error: fetchError } = await supabase
+    .from("scans")
+    .select("fill_percentage")
+    .eq("id", body.scanId)
+    .single();
+
+  if (fetchError || !scanRecord) {
+    console.error(`[${body.scanId}] Feedback scan not found:`, fetchError);
+    return c.json({ error: "Scan record not found", code: "NOT_FOUND" }, 404);
   }
 
+  const llmFillPercentage = scanRecord.fill_percentage;
   const correctedFillPercentage =
     typeof body.correctedFillPercentage === "number"
       ? body.correctedFillPercentage
       : undefined;
 
   // Validate the feedback
-  const validation = validateFeedback(body.llmFillPercentage, {
+  const validation = validateFeedback(llmFillPercentage, {
     accuracyRating: body.accuracyRating as "about_right" | "too_high" | "too_low" | "way_off",
     responseTimeMs: body.responseTimeMs,
     correctedFillPercentage,

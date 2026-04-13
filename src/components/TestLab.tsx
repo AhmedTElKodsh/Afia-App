@@ -86,7 +86,8 @@ export function TestLab({ isAdmin }: TestLabProps) {
   // Manual overlay toggle (AC-6) still works — user can reopen after unchecking.
   useEffect(() => {
     if (scanState === "complete") {
-      setShowAdminTools(showDebugPanel);
+      const timeoutId = setTimeout(() => setShowAdminTools(showDebugPanel), 0);
+      return () => clearTimeout(timeoutId);
     }
   }, [scanState, showDebugPanel]);
 
@@ -113,11 +114,11 @@ export function TestLab({ isAdmin }: TestLabProps) {
     selectedSku ? getBottleBySku(selectedSku) : null
   , [selectedSku]);
 
-  const getLocalizedBottleName = (sku: string, defaultName: string) => {
+  const getLocalizedBottleName = useCallback((sku: string, defaultName: string) => {
     const key = `bottles.${sku}`;
     const localized = t(key);
     return localized === key ? defaultName : localized;
-  };
+  }, [t]);
 
   const getOilEmoji = (oilType: string) => {
     const map: Record<string, string> = {
@@ -137,7 +138,7 @@ export function TestLab({ isAdmin }: TestLabProps) {
     // Track analytics
     analytics.testEntryPointSelected('mock-qr', sku);
     info(`${t('admin.testLab.scanMockQr')}: ${bottle ? getLocalizedBottleName(sku, bottle.name) : ""}`);
-  }, [info, t]);
+  }, [info, t, getLocalizedBottleName]);
 
   // Handle capture complete
   const handleCapture = useCallback((imageBase64: string) => {

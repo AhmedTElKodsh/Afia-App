@@ -10,7 +10,7 @@ export interface StoredScan {
   remainingMl: number;
   consumedMl: number;
   confidence: "high" | "medium" | "low";
-  aiProvider?: "gemini" | "groq";
+  aiProvider?: "gemini" | "groq" | "openrouter" | "mistral";
   latencyMs?: number;
   feedbackRating?: "about_right" | "too_high" | "too_low" | "way_off";
 }
@@ -28,7 +28,6 @@ export function useScanHistory() {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        // Runtime validation: ensure it's an array of objects with required fields
         if (Array.isArray(parsed)) {
           const valid = parsed.filter(
             (s): s is StoredScan =>
@@ -43,30 +42,43 @@ export function useScanHistory() {
       }
     } catch (error) {
       console.error("Failed to load scan history:", error);
+      // If corruption is detected, we could clear it, but for now we just log
     } finally {
       setIsLoading(false);
     }
   }, []);
 
+  // Save helper with quota handling
+  const saveToStorage = (data: StoredScan[]): boolean => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      return true;
+    } catch (e) {
+      if (e instanceof DOMException && e.name === "QuotaExceededError") {
+        console.warn("localStorage quota exceeded, pruning history...");
+        // Prune oldest 20% and retry
+        const pruned = data.slice(0, Math.floor(data.length * 0.8));
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(pruned));
+          setScans(pruned);
+          return true;
+        } catch {
+          return false;
+        }
+      }
+      return false;
+    }
+  };
+
   // Add scan to history
   const addScan = useCallback((scan: StoredScan) => {
     setScans((prev) => {
       const updated = [scan, ...prev];
-
-      // Auto-prune if over limit
       const toStore = updated.length > MAX_SCANS ? updated.slice(0, MAX_SCANS) : updated;
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
-      } catch (e) {
-        if (e instanceof DOMException && e.name === "QuotaExceededError") {
-          // Storage full — prune oldest half and retry
-          const pruned = toStore.slice(0, Math.floor(toStore.length / 2));
-          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(pruned)); } catch { /* silent */ }
-          window.dispatchEvent(new CustomEvent("afia:scan-added"));
-          return pruned;
-        }
-      }
-      // Notify same-tab listeners (storage event doesn't fire for same window)
+      
+      saveToStorage(toStore);
+      
+      // Notify same-tab listeners
       window.dispatchEvent(new CustomEvent("afia:scan-added"));
       return toStore;
     });
@@ -76,7 +88,7 @@ export function useScanHistory() {
   const deleteScan = useCallback((scanId: string) => {
     setScans((prev) => {
       const updated = prev.filter((s) => s.id !== scanId);
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch { /* silent */ }
+      saveToStorage(updated);
       return updated;
     });
   }, []);
@@ -84,7 +96,9 @@ export function useScanHistory() {
   // Clear all history
   const clearHistory = useCallback(() => {
     setScans([]);
-    localStorage.removeItem(STORAGE_KEY);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch { /* ignore */ }
   }, []);
 
   // Get scans filtered by date range

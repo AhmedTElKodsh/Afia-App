@@ -68,9 +68,10 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
     const cacheKey = await buildCacheKey(imageBase64, sku);
     const cached = await c.env.RATE_LIMIT_KV.get(cacheKey);
     if (cached) {
-      const { llmResult, aiProvider } = JSON.parse(cached) as {
+      const { llmResult, aiProvider, scanId: cachedScanId } = JSON.parse(cached) as {
         llmResult: LLMResponse;
         aiProvider: "gemini" | "groq" | "openrouter" | "mistral";
+        scanId?: string;
       };
       const remainingMl = Math.round(calculateRemainingMl(llmResult.fillPercentage, bottle.totalVolumeMl, bottle.geometry));
       const latencyMs = Date.now() - startTime;
@@ -80,7 +81,7 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
         latencyMs,
       });
       return c.json({
-        scanId: crypto.randomUUID(),
+        scanId: cachedScanId || crypto.randomUUID(), // Preserve original ID if available
         fillPercentage: llmResult.fillPercentage,
         remainingMl,
         confidence: llmResult.confidence,
@@ -140,7 +141,11 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
     if (!succeeded) {
       const latencyMs = Date.now() - startTime;
       await logger.error("All AI providers failed", { errors: providerErrors, sku, latencyMs });
-      return c.json({ error: "All AI providers failed", code: "SERVICE_UNAVAILABLE" }, 503);
+      return c.json({ 
+        error: "Image analysis temporarily unavailable. Please try again.", 
+        code: "SERVICE_UNAVAILABLE",
+        requestId: c.get("requestId")
+      }, 503);
     }
 
     const latencyMs = Date.now() - startTime;
@@ -149,7 +154,7 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
     c.executionCtx.waitUntil(
       c.env.RATE_LIMIT_KV.put(
         cacheKey,
-        JSON.stringify({ llmResult, aiProvider }),
+        JSON.stringify({ llmResult, aiProvider, scanId }),
         { expirationTtl: CACHE_TTL_SECONDS }
       ).catch((err) => console.error("Cache store failed:", err))
     );

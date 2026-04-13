@@ -107,7 +107,8 @@ export const ACTIVE_SKU = "afia-corn-1.5l";
 
 /**
  * Subset of bottleRegistry containing only bottles available for user scanning.
- * Retained as a named export for backwards compatibility with call sites that
- * expected a filtered list — now identical to bottleRegistry.
+ * Strictly limited to ACTIVE_SKU for the POC pilot.
  */
-export const activeBottleRegistry: BottleEntry[] = bottleRegistry;
+export const activeBottleRegistry: BottleEntry[] = bottleRegistry.filter(
+  (b) => b.sku === ACTIVE_SKU
+);

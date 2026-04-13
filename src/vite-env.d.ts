@@ -1,10 +1,5 @@
 /// <reference types="vite/client" />
 
-// vConsole type declaration for TypeScript
-interface VConsole {
-  new (): unknown;
-}
-
 declare global {
   interface Window {
     vConsole?: unknown;

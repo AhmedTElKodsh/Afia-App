@@ -56,39 +56,39 @@ test.describe('Premium UI Components - Visual Regression', () => {
     expect(await privacyCard.screenshot()).toMatchSnapshot('privacy-inline-expanded.png');
   });
 
-  test.skip('BottleFillGauge - High Fill (75%)', async ({ page }) => {
+  test.skip('', async () => {
     // TODO: Implement visual test harness with gauge controls
   });
 
-  test.skip('BottleFillGauge - Medium Fill (40%)', async ({ page }) => {
+  test.skip('', async () => {
     // TODO: Implement visual test harness with gauge controls
   });
 
-  test.skip('BottleFillGauge - Low Fill (15%)', async ({ page }) => {
+  test.skip('', async () => {
     // TODO: Implement visual test harness with gauge controls
   });
 
-  test.skip('ConfidenceBadge - High Confidence', async ({ page }) => {
+  test.skip('', async () => {
     // TODO: Implement visual test harness with confidence controls
   });
 
-  test.skip('ConfidenceBadge - Medium Confidence', async ({ page }) => {
+  test.skip('', async () => {
     // TODO: Implement visual test harness with confidence controls
   });
 
-  test.skip('ConfidenceBadge - Low Confidence', async ({ page }) => {
+  test.skip('', async () => {
     // TODO: Implement visual test harness with confidence controls
   });
 
-  test.skip('FeedbackGrid - Default State', async ({ page }) => {
+  test.skip('', async () => {
     // TODO: Implement visual test harness with feedback grid
   });
 
-  test.skip('FeedbackGrid - Button Selected', async ({ page }) => {
+  test.skip('', async () => {
     // TODO: Implement visual test harness with feedback grid
   });
 
-  test.skip('FeedbackGrid - Confirmation State', async ({ page }) => {
+  test.skip('', async () => {
     // TODO: Implement visual test harness with feedback grid
   });
 
@@ -123,7 +123,7 @@ test.describe('Premium UI Components - Visual Regression', () => {
     expect(['rgb(2, 8, 16)', 'rgb(253, 251, 244)']).toContain(bgColor);
   });
 
-  test.skip('Reduced Motion - No Animations', async ({ page }) => {
+  test.skip('', async () => {
     // TODO: Implement visual test harness with gauge controls
   });
 });
@@ -150,3 +150,4 @@ test.describe('Accessibility - Focus States', () => {
     expect(focusableElements).toBeGreaterThanOrEqual(2);
   });
 });
+

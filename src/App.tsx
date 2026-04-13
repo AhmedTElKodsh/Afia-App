@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, lazy, Suspense, useRef } from "react";
+import { useState, useCallback, useEffect, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { Camera, History, LayoutDashboard, FlaskConical } from "lucide-react";
 
@@ -19,7 +19,7 @@ import { IosWarning } from "./components/IosWarning.tsx";
 import { useIosInAppBrowser } from "./hooks/useIosInAppBrowser.ts";
 import { analyzeBottle, reportScanError } from "./api/apiClient.ts";
 import { calculateVolumes } from "./utils/volumeCalculator.ts";
-import { createStoredScan } from "./hooks/useScanHistory.ts";
+import { useScanHistory, createStoredScan } from "./hooks/useScanHistory.ts";
 import { AppControls } from "./components/AppControls.tsx";
 import { AnalyzingOverlay } from "./components/AnalyzingOverlay.tsx";
 import { SkeletonHistory, SkeletonAdmin } from "./components/Skeleton.tsx";
@@ -43,7 +43,7 @@ function hasValidAdminSession(): boolean {
 type CurrentView = "scan" | "history" | "admin";
 
 export default function App() {
-  const isAdminUrlParam = useRef(window.location.search.includes("mode=admin")).current;
+  const [isAdminUrlParam] = useState(() => window.location.search.includes("mode=admin"));
 
   const [currentView, setCurrentView] = useState<CurrentView>(() => {
     return isAdminUrlParam ? "admin" : "scan";
@@ -56,6 +56,8 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     return params.get("sku") || "";
   });
+
+  const { addScan } = useScanHistory();
 
   // Admin mode: URL param AND valid session token required
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(hasValidAdminSession);
@@ -77,7 +79,7 @@ export default function App() {
       const analysisResult = await analyzeBottle(selectedSku, img);
       setResult(analysisResult);
 
-      // Add to scan history
+      // Add to scan history via hook
       const volumes = calculateVolumes(
         analysisResult.fillPercentage,
         bottle.totalVolumeMl,
@@ -91,13 +93,7 @@ export default function App() {
         analysisResult,
         volumes.remaining.ml
       );
-      // Store in localStorage for history
-      const STORAGE_KEY = "afia_scan_history";
-      const stored = localStorage.getItem(STORAGE_KEY);
-      const scans = stored ? JSON.parse(stored) : [];
-      scans.unshift(storedScan);
-      if (scans.length > 500) scans.length = 500;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(scans));
+      addScan(storedScan);
 
       setAppState(
         analysisResult.confidence === "low"
@@ -110,7 +106,7 @@ export default function App() {
       setAppState("API_ERROR");
       reportScanError(selectedSku, msg, navigator.userAgent).catch(console.error);
     }
-  }, [capturedImage, selectedSku, bottle]);
+  }, [capturedImage, selectedSku, bottle, addScan]);
 
   const handleCapture = useCallback((imageBase64: string) => {
     // Trigger haptic feedback for camera capture

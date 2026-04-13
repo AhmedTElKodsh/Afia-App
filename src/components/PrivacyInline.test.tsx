@@ -160,7 +160,6 @@ describe('PrivacyInline', () => {
       
       const checkbox = screen.getByRole('checkbox');
       const learnMoreButton = screen.getByRole('button', { name: /learn more/i });
-      const continueButton = screen.getByRole('button', { name: /ok/i });
       
       // Tab through elements
       checkbox.focus();

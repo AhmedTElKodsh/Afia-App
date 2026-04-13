@@ -25,7 +25,12 @@ export async function callGroq(
           ...buildOpenAIFewShotParts(),
           { type: "text", text: "Now estimate the fill level for THIS bottle:" },
           { type: "text", text: userText },
-          { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}` } },
+          { 
+            type: "image_url", 
+            image_url: { 
+              url: `data:image/jpeg;base64,${imageBase64.replace(/^data:image\/\w+;base64,/, "")}` 
+            } 
+          },
         ],
       },
     ],

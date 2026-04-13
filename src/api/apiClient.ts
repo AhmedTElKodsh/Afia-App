@@ -1,12 +1,31 @@
 import type { AnalysisResult } from "../state/appState.ts";
 
 const PROXY_URL = import.meta.env.VITE_PROXY_URL || "http://localhost:8787";
+const DEFAULT_TIMEOUT_MS = 15000; // 15 seconds
+
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeout = DEFAULT_TIMEOUT_MS
+): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    return response;
+  } finally {
+    clearTimeout(id);
+  }
+}
 
 export async function analyzeBottle(
   sku: string,
   imageBase64: string
 ): Promise<AnalysisResult> {
-  const response = await fetch(`${PROXY_URL}/analyze`, {
+  const response = await fetchWithTimeout(`${PROXY_URL}/analyze`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ sku, imageBase64 }),
@@ -29,7 +48,7 @@ export async function submitFeedback(
   correctedFillPercentage?: number,
   responseTimeMs?: number
 ): Promise<{ feedbackId: string; validationStatus: string }> {
-  const response = await fetch(`${PROXY_URL}/feedback`, {
+  const response = await fetchWithTimeout(`${PROXY_URL}/feedback`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

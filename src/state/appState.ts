@@ -14,7 +14,7 @@ export interface AnalysisResult {
   fillPercentage: number;
   remainingMl: number;
   confidence: "high" | "medium" | "low";
-  aiProvider: "gemini" | "groq";
+  aiProvider: "gemini" | "groq" | "openrouter" | "mistral";
   latencyMs: number;
   imageQualityIssues?: string[];
 }

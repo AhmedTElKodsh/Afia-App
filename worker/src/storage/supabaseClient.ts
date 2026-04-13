@@ -5,7 +5,7 @@ export interface ScanMetadata {
   scanId: string;
   timestamp: string;
   sku: string;
-  bottleGeometry: any;
+  bottleGeometry: { shape: string; calibrationPoints?: unknown[] };
   oilType: string;
   aiProvider: string;
   fillPercentage: number;
@@ -45,16 +45,32 @@ export async function storeScan(
 ): Promise<void> {
   const supabase = getSupabase(env);
 
-  // 1. Convert base64 to binary for storage
-  const base64Data = imageBase64.replace(/^data:image\/[a-z]+;base64,/, "");
-  const binaryData = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+  // 1. Safe base64 to binary conversion with JPEG magic byte check
+  let binaryData: Uint8Array;
+  try {
+    const base64Data = imageBase64.replace(/^data:image\/[a-z]+;base64,/, "");
+    
+    // Quick check for JPEG magic bytes (/9j/)
+    if (!base64Data.startsWith("/9j/")) {
+      throw new Error("Invalid JPEG magic bytes");
+    }
+
+    const binaryString = atob(base64Data);
+    binaryData = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      binaryData[i] = binaryString.charCodeAt(i);
+    }
+  } catch (e) {
+    console.error(`[${scanId}] Base64 decode failed:`, e);
+    throw new Error("Invalid image encoding");
+  }
 
   // 2. Upload Image to 'scans' bucket
   const { error: storageError } = await supabase.storage
     .from("scans")
     .upload(`${scanId}.jpg`, binaryData, {
       contentType: "image/jpeg",
-      upsert: false,
+      upsert: true, // Use upsert: true to prevent orphaned retries from failing
     });
 
   if (storageError) {
@@ -69,7 +85,11 @@ export async function storeScan(
       sku: metadata.sku,
       timestamp: metadata.timestamp,
       oil_type: metadata.oilType,
-      bottle_geometry: metadata.bottleGeometry,
+      // Store a summary or flattened geometry to avoid DB row bloat
+      bottle_geometry: { 
+        shape: metadata.bottleGeometry.shape,
+        pointCount: metadata.bottleGeometry.calibrationPoints?.length ?? 0
+      },
       ai_provider: metadata.aiProvider,
       fill_percentage: metadata.fillPercentage,
       confidence: metadata.confidence,
@@ -81,6 +101,8 @@ export async function storeScan(
 
   if (dbError) {
     console.error("Supabase Database Error:", dbError);
+    // Note: We don't delete the storage object here to avoid complexity in waitUntil,
+    // but the record will be incomplete.
     throw dbError;
   }
 }

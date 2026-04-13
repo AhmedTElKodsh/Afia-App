@@ -27,6 +27,16 @@ export function useCamera(): UseCameraReturn {
   const startCamera = useCallback(async () => {
     setError(null);
 
+    if (!window.isSecureContext) {
+      setError("camera_insecure_context");
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setError("camera_unsupported");
+      return;
+    }
+
     // Stop any existing stream before starting a new one (prevents track leaks)
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
@@ -46,11 +56,13 @@ export function useCamera(): UseCameraReturn {
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        // Ensure video is playing and ready before allowing capture
         await videoRef.current.play();
       }
 
       setIsActive(true);
     } catch (err) {
+      console.error("Camera start error:", err);
       if (err instanceof DOMException) {
         if (
           err.name === "NotAllowedError" ||
@@ -72,32 +84,38 @@ export function useCamera(): UseCameraReturn {
     const video = videoRef.current;
     if (!video || !isActive) return null;
 
-    // Guard: video element may not have decoded any frames yet
-    if (video.videoWidth === 0 || video.videoHeight === 0) return null;
+    // Guard: video element must have decoded frames and valid dimensions
+    if (video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) {
+      return null;
+    }
 
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
+      const ctx = canvas.getContext("2d", { alpha: false });
+      if (!ctx) {
+        setError("canvas_error");
+        return null;
+      }
 
-    ctx.drawImage(video, 0, 0);
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+      ctx.drawImage(video, 0, 0);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
 
-    // Compress to 800px width
-    const compressed = await compressImage(dataUrl);
-    return compressed;
+      // Compress to 800px width
+      return await compressImage(dataUrl);
+    } catch (err) {
+      console.error("Capture/Compression error:", err);
+      setError("capture_error");
+      return null;
+    }
   }, [isActive]);
 
   // Cleanup on unmount
   useEffect(() => {
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, []);
+    return () => stopCamera();
+  }, [stopCamera]);
 
   return { videoRef, isActive, error, startCamera, stopCamera, capturePhoto };
 }

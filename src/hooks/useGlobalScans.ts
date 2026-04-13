@@ -28,7 +28,18 @@ export function useGlobalScans() {
         throw new Error(`Failed to fetch scans: ${response.statusText}`);
       }
 
-      const data = await response.json() as { scans: any[] };
+      const data = await response.json() as {
+        scans: Array<{
+          id: string;
+          timestamp: string;
+          sku: string;
+          fill_percentage: number;
+          confidence: string;
+          ai_provider?: "gemini" | "groq" | "openrouter" | "mistral";
+          latency_ms?: number;
+          accuracy_rating?: "about_right" | "too_high" | "too_low" | "way_off";
+        }>;
+      };
       
       // Map Supabase rows to StoredScan format
       const mappedScans: StoredScan[] = data.scans.map((s) => {

@@ -24,7 +24,6 @@ export function InlineConfirm({
         <button
           className={`btn btn-sm btn-${variant}`}
           onClick={onConfirm}
-          // eslint-disable-next-line
           autoFocus
         >
           {confirmLabel}

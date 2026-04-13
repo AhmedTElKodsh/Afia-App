@@ -11,10 +11,6 @@ function interpolateCalibration(
   fillHeightPct: number,
   points: Array<{ fillHeightPct: number; remainingMl: number }>
 ): number {
-  if (points.some((p, i) => i > 0 && p.fillHeightPct <= points[i - 1].fillHeightPct)) {
-    console.warn("interpolateCalibration: calibrationPoints must be sorted ascending by fillHeightPct");
-  }
-
   if (fillHeightPct <= points[0].fillHeightPct) return points[0].remainingMl;
   const last = points[points.length - 1];
   if (fillHeightPct >= last.fillHeightPct) return last.remainingMl;
@@ -23,7 +19,9 @@ function interpolateCalibration(
     const lo = points[i - 1];
     const hi = points[i];
     if (fillHeightPct <= hi.fillHeightPct) {
-      const t = (fillHeightPct - lo.fillHeightPct) / (hi.fillHeightPct - lo.fillHeightPct);
+      const denom = hi.fillHeightPct - lo.fillHeightPct;
+      if (denom === 0) return lo.remainingMl;
+      const t = (fillHeightPct - lo.fillHeightPct) / denom;
       return lo.remainingMl + t * (hi.remainingMl - lo.remainingMl);
     }
   }

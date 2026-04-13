@@ -14,15 +14,17 @@ app.use("*", async (c, next) => {
     "http://localhost:4173",
   ];
 
-  // Wildcard suffixes: allow all Cloudflare Pages preview deployments
-  // e.g. https://abc123.afia-app.pages.dev as well as the canonical root
-  const allowedSuffixes = [".afia-app.pages.dev", ".afia-oil-tracker.pages.dev"];
-
   const corsMiddleware = cors({
     origin: (origin) => {
+      if (!origin) return null;
       if (allowedOrigins.includes(origin)) return origin;
-      if (allowedSuffixes.some((s) => origin.endsWith(s))) return origin;
-      return null;
+      
+      // Strict suffix check for Cloudflare Pages previews
+      const isPagesPreview = 
+        origin.endsWith(".afia-app.pages.dev") || 
+        origin.endsWith(".afia-oil-tracker.pages.dev");
+      
+      return isPagesPreview ? origin : null;
     },
     allowMethods: ["POST", "OPTIONS"],
     allowHeaders: ["Content-Type"],
@@ -34,25 +36,36 @@ app.use("*", async (c, next) => {
 
 // Rate limiting middleware — 10 req/min per IP, KV-backed sliding window
 app.use("*", async (c, next) => {
+  const requestId = crypto.randomUUID();
+  c.set("requestId", requestId);
+
   const ip =
     c.req.header("CF-Connecting-IP") ??
     c.req.header("X-Forwarded-For") ??
-    "unknown";
+    `unknown-${requestId.slice(0, 8)}`; // Avoid global collision for "unknown" IPs
+  
   const key = `ratelimit:${ip}`;
   const windowMs = 60_000;
   const limit = 10;
   const now = Date.now();
   const windowStart = now - windowMs;
 
-  // Get existing timestamps for this IP
-  const stored = await c.env.RATE_LIMIT_KV.get(key);
-  const timestamps: number[] = stored ? (JSON.parse(stored) as number[]) : [];
+  let timestamps: number[] = [];
+  try {
+    const stored = await c.env.RATE_LIMIT_KV.get(key);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        timestamps = parsed.filter((t) => typeof t === "number" && t > windowStart);
+      }
+    }
+  } catch (e) {
+    console.error(`Rate limit parse error for ${ip}:`, e);
+    timestamps = []; // Reset on corruption
+  }
 
-  // Filter to only requests within the current window
-  const windowTimestamps = timestamps.filter((t) => t > windowStart);
-
-  if (windowTimestamps.length >= limit) {
-    const oldestInWindow = Math.min(...windowTimestamps);
+  if (timestamps.length >= limit) {
+    const oldestInWindow = Math.min(...timestamps);
     const resetAt = Math.ceil((oldestInWindow + windowMs) / 1000);
     const retryAfter = resetAt - Math.floor(now / 1000);
 
@@ -60,6 +73,7 @@ app.use("*", async (c, next) => {
       {
         error: "Rate limit exceeded",
         code: "RATE_LIMIT_EXCEEDED",
+        requestId,
         details: { retryAfter },
       },
       429,
@@ -71,20 +85,15 @@ app.use("*", async (c, next) => {
     );
   }
 
-  // Add current timestamp and persist (TTL = 1 minute)
-  windowTimestamps.push(now);
-  await c.env.RATE_LIMIT_KV.put(key, JSON.stringify(windowTimestamps), {
-    expirationTtl: 60,
+  // Add current timestamp and persist (TTL = 5 minutes to safely outlive window)
+  timestamps.push(now);
+  await c.env.RATE_LIMIT_KV.put(key, JSON.stringify(timestamps), {
+    expirationTtl: 300, 
   });
 
-  c.header("X-RateLimit-Limit", String(limit));
-  c.header("X-RateLimit-Remaining", String(limit - windowTimestamps.length));
-  c.header(
-    "X-RateLimit-Reset",
-    String(Math.ceil((windowTimestamps[0] + windowMs) / 1000))
-  );
-
-  return next();
+  const response = await next();
+  response.headers.set("X-RequestId", requestId);
+  return response;
 });
 
 // Routes
@@ -93,9 +102,27 @@ app.post("/feedback", handleFeedback);
 app.post("/admin/auth", handleAdminAuth);
 
 // Health check
-app.get("/health", (c) => c.json({ status: "ok" }));
+app.get("/health", (c) => c.json({ status: "ok", requestId: c.get("requestId") }));
+
+// Global error handler
+app.onError((err, c) => {
+  const requestId = c.get("requestId");
+  console.error(`[${requestId}] Global error:`, err);
+  
+  return c.json({
+    error: "Internal server error",
+    code: "INTERNAL_SERVER_ERROR",
+    requestId,
+    // Avoid leaking stack traces in production
+    message: c.env.DEBUG_REASONING === "true" ? err.message : undefined,
+  }, 500);
+});
 
 // 404 fallback
-app.all("*", (c) => c.json({ error: "Not found", code: "NOT_FOUND" }, 404));
+app.all("*", (c) => c.json({ 
+  error: "Not found", 
+  code: "NOT_FOUND",
+  requestId: c.get("requestId") 
+}, 404));
 
 export default app;

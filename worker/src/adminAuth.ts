@@ -3,6 +3,22 @@ import type { Env } from "./types.ts";
 
 const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
+async function signToken(payload: string, secret: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const key = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
+  const b64Payload = btoa(payload);
+  const b64Signature = btoa(String.fromCharCode(...new Uint8Array(signature)));
+  return `${b64Payload}.${b64Signature}`;
+}
+
 export async function handleAdminAuth(c: Context<{ Bindings: Env }>): Promise<Response> {
   const body = await c.req.json<{ password?: unknown }>();
 
@@ -19,10 +35,10 @@ export async function handleAdminAuth(c: Context<{ Bindings: Env }>): Promise<Re
     return c.json({ error: "Invalid password", code: "UNAUTHORIZED" }, 401);
   }
 
-  // Issue a time-limited token: base64(expiresAt:randomSecret)
-  // Not cryptographically signed — adequate for a single-admin MVP tool
+  // Issue a time-limited signed token
   const expiresAt = Date.now() + SESSION_TTL_MS;
-  const token = btoa(`${expiresAt}:${crypto.randomUUID()}`);
+  const payload = JSON.stringify({ expiresAt, nonce: crypto.randomUUID() });
+  const token = await signToken(payload, adminPassword);
 
   return c.json({ token, expiresAt });
 }

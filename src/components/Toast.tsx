@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from "react";
 import { X, Check, AlertTriangle, Info } from "lucide-react";
 import "./Toast.css";
