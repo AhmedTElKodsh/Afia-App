@@ -29,7 +29,7 @@ import { exportToCSV, exportToJSON } from "../utils/exportResults";
 import { exportTrainingDataset } from "../utils/trainingExporter";
 import { BottleManager } from "./BottleManager";
 import { QrMockGenerator } from "./QrMockGenerator";
-import { ScanReview, type ScanCorrection } from "./ScanReview";
+import { ScanReview } from "./ScanReview";
 import { AdminUpload } from "./AdminUpload";
 import { getAnalyticsEvents } from "../utils/analytics";
 import type { AdminTabItem } from "./AdminTabNav";
@@ -73,7 +73,7 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
     };
   }, [isMobileNavOpen]);
 
-  const { scans, getStats, updateFeedback, setScans } = useScanHistory();
+  const { scans, getStats } = useScanHistory();
   const stats = getStats();
 
   const currentLang = i18n.language || 'en';
@@ -87,19 +87,6 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
     { id: "upload", label: t('admin.upload.tab', 'Training Upload'), icon: <Upload size={18} /> },
     { id: "export", label: t('admin.tabs.export'), icon: <Download size={18} /> },
   ];
-
-  const handleCorrectionSave = (correction: ScanCorrection) => {
-    // Update local history with ground truth
-    setScans(prev => prev.map(s => 
-      s.id === correction.scanId 
-        ? { ...s, correctedPercentage: correction.actualFillPercentage, feedbackRating: correction.errorCategory === 'none' ? 'about_right' : 'way_off' } 
-        : s
-    ));
-    
-    // In real implementation, this also sends to Supabase
-    console.log("Saving correction to Supabase:", correction);
-    setSelectedScan(null);
-  };
 
   useEffect(() => {
     let mounted = true;
@@ -745,7 +732,7 @@ function ExportTab({ scans, t }: ExportTabProps) {
 }
 // -- Failures Tab -------------------------------------------------------------
 function FailuresTab({ t, isRTL }: { t: TFunction, isRTL: boolean }) {
-  const events = getAnalyticsEvents().filter(e => e.type === "scan_failed");
+  const events = getAnalyticsEvents().filter((e: any) => e.type === "scan_failed");
 
   return (
     <div className="failures-tab">
@@ -778,10 +765,10 @@ function FailuresTab({ t, isRTL }: { t: TFunction, isRTL: boolean }) {
                 <tr key={idx}>
                   <td>{new Date(event.timestamp).toLocaleString(isRTL ? "ar-SA" : "en-US")}</td>
                   <td>
-                    <span className="badge badge-error">{String(event.data.reason).toUpperCase()}</span>
+                    <span className="badge badge-error">{String(event.properties.reason).toUpperCase()}</span>
                   </td>
                   <td className="text-caption">
-                    <pre style={{ margin: 0, fontSize: "10px" }}>{JSON.stringify(event.data, null, 2)}</pre>
+                    <pre style={{ margin: 0, fontSize: "10px" }}>{JSON.stringify(event.properties, null, 2)}</pre>
                   </td>
                 </tr>
               ))}

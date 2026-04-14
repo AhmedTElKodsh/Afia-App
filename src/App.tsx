@@ -18,7 +18,7 @@ import { FillConfirm } from "./components/FillConfirm.tsx";
 import { ResultDisplay } from "./components/ResultDisplay.tsx";
 import { IosWarning } from "./components/IosWarning.tsx";
 import { useIosInAppBrowser } from "./hooks/useIosInAppBrowser.ts";
-import { analyzeBottle, reportScanError } from "./api/apiClient.ts";
+import { reportScanError } from "./api/apiClient.ts";
 import { calculateVolumes } from "./utils/volumeCalculator.ts";
 import { useScanHistory, createStoredScan } from "./hooks/useScanHistory.ts";
 import { useLocalAnalysis } from "./hooks/useLocalAnalysis.ts";
@@ -65,7 +65,7 @@ export default function App() {
   });
 
   const { addScan } = useScanHistory();
-  const { runAnalysis, loadModel, isModelReady } = useLocalAnalysis();
+  const { runAnalysis, loadModel } = useLocalAnalysis();
 
   // Load local model on mount (Stage 2 Prep)
   useEffect(() => {

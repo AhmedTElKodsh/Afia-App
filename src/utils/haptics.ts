@@ -149,6 +149,9 @@ export const hapticFeedback = {
 
   /** Long press activation */
   longPress: () => haptic("heavy"),
+
+  /** Selection/Slider movement */
+  selection: () => haptic("light"),
 } as const;
 
 /**

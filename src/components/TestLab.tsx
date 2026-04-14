@@ -19,7 +19,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Beaker, QrCode, Smartphone, RefreshCcw, AlertTriangle, TestTube, ExternalLink } from "lucide-react";
-import { getBottleBySku, ACTIVE_SKU } from "../data/bottleRegistry.ts";
+import { getBottleBySku, ACTIVE_SKU, activeBottleRegistry } from "../data/bottleRegistry.ts";
 import { CameraViewfinder } from "./CameraViewfinder.tsx";
 import { ResultDisplay } from "./ResultDisplay.tsx";
 import { AdminToolsOverlay } from "./AdminToolsOverlay.tsx";

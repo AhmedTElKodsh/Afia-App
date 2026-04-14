@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { X, Droplets } from "lucide-react";
+import { X } from "lucide-react";
 import type { AnalysisResult } from "../state/appState.ts";
 import type { BottleEntry } from "../data/bottleRegistry.ts";
 import { calculateVolumes } from "../utils/volumeCalculator.ts";

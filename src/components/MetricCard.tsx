@@ -6,9 +6,10 @@ interface MetricCardProps {
   value: string | number;
   label: string;
   period?: string;
+  subValue?: string;
 }
 
-export function MetricCard({ icon, value, label, period }: MetricCardProps) {
+export function MetricCard({ icon, value, label, period, subValue }: MetricCardProps) {
   return (
     <div className="metric-card-glass">
       <div className="metric-card-icon-row">
@@ -17,6 +18,7 @@ export function MetricCard({ icon, value, label, period }: MetricCardProps) {
       </div>
       <div className="metric-card-value">{value}</div>
       <div className="metric-card-label">{label}</div>
+      {subValue && <div className="metric-card-subvalue text-caption">{subValue}</div>}
     </div>
   );
 }

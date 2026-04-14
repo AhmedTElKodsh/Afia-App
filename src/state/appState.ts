@@ -15,7 +15,7 @@ export interface AnalysisResult {
   fillPercentage: number;
   remainingMl: number;
   confidence: "high" | "medium" | "low";
-  aiProvider: "gemini" | "groq" | "openrouter" | "mistral";
+  aiProvider: "gemini" | "groq" | "openrouter" | "mistral" | "local-cnn";
   latencyMs: number;
   imageQualityIssues?: string[];
   isUnsupportedSku?: boolean;

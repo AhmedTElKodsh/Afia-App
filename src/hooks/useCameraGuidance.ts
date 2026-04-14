@@ -73,7 +73,7 @@ export interface UseCameraGuidanceReturn {
   /** Current guidance state */
   state: CameraGuidanceState;
   /** Start guidance analysis */
-  startGuidance: (videoElement: HTMLVideoElement) => void;
+  startGuidance: (element: HTMLVideoElement | HTMLImageElement) => void;
   /** Stop guidance analysis */
   stopGuidance: () => void;
   /** Manually assess current frame */
@@ -153,6 +153,7 @@ export function useCameraGuidance(
     holdProgress: 0,
     isHolding: false,
     brandDetected: false,
+    brandFindings: [],
     angleStatus: 'good',
     orientationPermission: (typeof (DeviceOrientationEvent as any)?.requestPermission === 'function') ? 'prompt' : 'granted',
   });

@@ -146,7 +146,7 @@ export const analytics = {
 };
 
 // Get analytics data
-export const getAnalytics = (): AnalyticsEvent[] => {
+export const getAnalyticsEvents = (): AnalyticsEvent[] => {
   try {
     return JSON.parse(localStorage.getItem('afia_analytics_events') || '[]');
   } catch {
@@ -155,6 +155,7 @@ export const getAnalytics = (): AnalyticsEvent[] => {
 };
 
 // Clear analytics data
+
 export const clearAnalytics = (): void => {
   localStorage.removeItem('afia_analytics_events');
 };

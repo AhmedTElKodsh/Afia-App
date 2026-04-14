@@ -442,6 +442,7 @@ export function analyzeComposition(
       return { isCentered: false, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: false, widthFraction: 0, centroidX: 0.5, isBrandMatch: false };
     }
 
+
     // Centroid X — computed before shape gates so all early returns use the real value.
     // matchCount > 0 guaranteed here: passed matchRatio >= 0.04 (requires ≥ 240 of 6000 px).
     const centroidX  = matchCount > 0 ? totalMatchX / matchCount / W : 0.5;
@@ -509,6 +510,7 @@ export function analyzeComposition(
       bottleDetected: false,
       widthFraction: 0,
       centroidX: 0.5,
+      isBrandMatch: false,
     };
   }
 }

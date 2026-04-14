@@ -10,10 +10,11 @@ export interface StoredScan {
   remainingMl: number;
   consumedMl: number;
   confidence: "high" | "medium" | "low";
-  aiProvider?: "gemini" | "groq" | "openrouter" | "mistral";
+  aiProvider?: "gemini" | "groq" | "openrouter" | "mistral" | "local-cnn";
   latencyMs?: number;
   feedbackRating?: "about_right" | "too_high" | "too_low" | "way_off";
   correctedPercentage?: number; // Ground truth from admin
+  imageUrl?: string;
 }
 
 const STORAGE_KEY = "afia_scan_history";
@@ -189,6 +190,7 @@ export function useScanHistory() {
 
   return {
     scans,
+    setScans,
     isLoading,
     addScan,
     deleteScan,
