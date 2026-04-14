@@ -12,6 +12,7 @@ export interface ScanMetadata {
   confidence: string;
   latencyMs: number;
   imageQualityIssues?: string[];
+  isContribution?: boolean;
 }
 
 export interface FeedbackData {
@@ -96,6 +97,7 @@ export async function storeScan(
       latency_ms: metadata.latencyMs,
       quality_issues: metadata.imageQualityIssues,
       image_path: `${scanId}.jpg`,
+      is_contribution: metadata.isContribution ?? false,
     },
   ]);
 

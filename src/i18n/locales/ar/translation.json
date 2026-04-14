@@ -58,6 +58,10 @@
     "scansCount": "{{count}} مسحة",
     "accuracyNote": "للدقة في التتبع، امسح الزجاجة عندما تكون جديدة.",
     "startSmartScan": "ابدأ المسح الذكي",
+    "helpUsLearn": "ساعدنا في التعرف على هذه الزجاجة",
+    "communityContribution": "مساهمة مجتمعية",
+    "contributionCount": "إجمالي المساهمات: {{count}}",
+    "thankYou": "شكراً لمساهمتك!",
     "skuLabel": "الرمز: {{sku}}",
     "consumedMl": "{{ml}}مل مستهلك",
     "noScanYet": "لا يوجد مسح بعد"

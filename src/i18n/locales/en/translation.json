@@ -58,6 +58,10 @@
     "scansCount": "{{count}} scans",
     "accuracyNote": "For accurate tracking, scan when the bottle is brand new.",
     "startSmartScan": "START SMART SCAN",
+    "helpUsLearn": "Help us learn this bottle",
+    "communityContribution": "Community Contribution",
+    "contributionCount": "Total Contributions: {{count}}",
+    "thankYou": "Thank you for your contribution!",
     "skuLabel": "SKU: {{sku}}",
     "consumedMl": "{{ml}}ml used",
     "noScanYet": "No scan yet"

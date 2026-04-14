@@ -14,6 +14,7 @@ import { QrLanding } from "./components/QrLanding.tsx";
 import { UnknownBottle } from "./components/UnknownBottle.tsx";
 import { CameraViewfinder } from "./components/CameraViewfinder.tsx";
 import { ApiStatus } from "./components/ApiStatus.tsx";
+import { FillConfirm } from "./components/FillConfirm.tsx";
 import { ResultDisplay } from "./components/ResultDisplay.tsx";
 import { IosWarning } from "./components/IosWarning.tsx";
 import { useIosInAppBrowser } from "./hooks/useIosInAppBrowser.ts";
@@ -75,7 +76,7 @@ export default function App() {
 
   const handleAnalyze = useCallback(async (base64Override?: string) => {
     const img = typeof base64Override === "string" ? base64Override : capturedImage;
-    if (!img || !selectedSku || !bottle) return;
+    if (!img || !selectedSku) return;
 
     setAppState("API_PENDING");
     setError(null);
@@ -84,34 +85,55 @@ export default function App() {
       const analysisResult = await analyzeBottle(selectedSku, img);
       setResult(analysisResult);
 
-      // Add to scan history via hook
-      const volumes = calculateVolumes(
-        analysisResult.fillPercentage,
-        bottle.totalVolumeMl,
-        bottle.geometry
-      );
-      const storedScan = createStoredScan(
-        analysisResult.scanId,
-        selectedSku,
-        bottle.name,
-        bottle.totalVolumeMl,
-        analysisResult,
-        volumes.remaining.ml
-      );
-      addScan(storedScan);
+      if (analysisResult.isUnsupportedSku) {
+        // Increment local contribution counter
+        const count = Number(localStorage.getItem('afia_contributions') || '0');
+        localStorage.setItem('afia_contributions', String(count + 1));
+        setAppState("API_SUCCESS");
+        return;
+      }
 
-      setAppState(
-        analysisResult.confidence === "low"
-          ? "API_LOW_CONFIDENCE"
-          : "API_SUCCESS",
-      );
+      setAppState("FILL_CONFIRM");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Analysis failed";
       setError(msg);
       setAppState("API_ERROR");
       reportScanError(selectedSku, msg, navigator.userAgent);
     }
-  }, [capturedImage, selectedSku, bottle, addScan]);
+  }, [capturedImage, selectedSku, bottle]);
+
+  const handleConfirmFill = useCallback((finalPercentage: number) => {
+    if (!result || !bottle) return;
+
+    // Update result with user-confirmed value
+    const confirmedResult = {
+      ...result,
+      fillPercentage: finalPercentage
+    };
+    setResult(confirmedResult);
+
+    // Add to scan history via hook
+    const volumes = calculateVolumes(
+      finalPercentage,
+      bottle.totalVolumeMl,
+      bottle.geometry
+    );
+    const storedScan = createStoredScan(
+      result.scanId,
+      selectedSku,
+      bottle.name,
+      bottle.totalVolumeMl,
+      confirmedResult,
+      volumes.remaining.ml
+    );
+    addScan(storedScan);
+
+    setAppState(
+      result.confidence === "low"
+        ? "API_LOW_CONFIDENCE"
+        : "API_SUCCESS",
+    );
+  }, [result, bottle, selectedSku, addScan]);
 
   const handleCapture = useCallback((imageBase64: string) => {
     // Trigger haptic feedback for camera capture
@@ -261,7 +283,7 @@ export default function App() {
       <div className="app-with-nav">
         <AppControls isAdminMode={isAdminMode} />
         <Navigation currentView={currentView} onViewChange={setCurrentView} isAdminMode={isAdminMode} />
-        <UnknownBottle sku={selectedSku} />
+        <UnknownBottle sku={selectedSku} onStartContribution={handleStartScan} />
       </div>
     );
   }
@@ -312,6 +334,20 @@ export default function App() {
           <AnalyzingOverlay capturedImage={capturedImage} onCancel={handleRetake} />
         </div>
       );
+
+    case "FILL_CONFIRM":
+      return result && capturedImage ? (
+        <div className="app-with-nav">
+          <AppControls isAdminMode={isAdminMode} />
+          <Navigation currentView={currentView} onViewChange={setCurrentView} isAdminMode={isAdminMode} />
+          <FillConfirm
+            capturedImage={capturedImage}
+            result={result}
+            onConfirm={handleConfirmFill}
+            onRetake={handleRetake}
+          />
+        </div>
+      ) : null;
 
     case "API_ERROR":
       return (

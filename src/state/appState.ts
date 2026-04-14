@@ -3,6 +3,7 @@ export type AppState =
   | "CAMERA_ACTIVE"
   | "PHOTO_CAPTURED"
   | "API_PENDING"
+  | "FILL_CONFIRM"
   | "API_SUCCESS"
   | "API_LOW_CONFIDENCE"
   | "API_ERROR"
@@ -17,6 +18,7 @@ export interface AnalysisResult {
   aiProvider: "gemini" | "groq" | "openrouter" | "mistral";
   latencyMs: number;
   imageQualityIssues?: string[];
+  isUnsupportedSku?: boolean;
 }
 
 export interface BottleContext {

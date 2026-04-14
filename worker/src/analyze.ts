@@ -58,9 +58,16 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
     const sku = body.sku;
 
     const bottle = getBottleBySku(sku);
-    if (!bottle) {
-      return c.json({ error: `Unknown SKU: ${sku}`, code: "UNKNOWN_SKU" }, 400);
-    }
+    // Note: Story 5.3 allows "Community Contribution" scans for unknown SKUs.
+    // If bottle is not found, we proceed with a generic "unknown" bottle context
+    // but skip geometry-based volume math later.
+    const effectiveBottle = bottle || {
+      sku: "unknown",
+      name: "Unknown Bottle",
+      oilType: "unknown",
+      totalVolumeMl: 0,
+      geometry: { shape: "unknown" }
+    };
 
     const tokensEstimated = estimateTokens(imageBase64);
 
@@ -78,7 +85,9 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
         typeof llmResult?.fillPercentage === "number" &&
         ["high", "medium", "low"].includes(llmResult?.confidence as string)
       ) {
-        const remainingMl = Math.round(calculateRemainingMl(llmResult.fillPercentage, bottle.totalVolumeMl, bottle.geometry));
+        const remainingMl = bottle 
+          ? Math.round(calculateRemainingMl(llmResult.fillPercentage, bottle.totalVolumeMl, bottle.geometry))
+          : 0;
         const latencyMs = Date.now() - startTime;
         await logger.info("Cache hit — returning cached result", {
           sku,
@@ -98,6 +107,7 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
             llmResult.imageQualityIssues && llmResult.imageQualityIssues.length > 0
               ? llmResult.imageQualityIssues
               : undefined,
+          isUnsupportedSku: !bottle,
         });
       }
       await logger.warn("Corrupt cache entry discarded, re-running analysis", { cacheKey, sku });
@@ -118,10 +128,10 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
       c.env.GEMINI_API_KEY4,
     ].filter((k): k is string => typeof k === "string" && k.length > 0);
     const providers: Provider[] = [
-      { name: "gemini",     key: "gemini_key_1",  call: () => callGemini(imageBase64, bottle, geminiKeys, debugReasoning) },
-      { name: "groq",       key: "groq",          call: () => { if (!c.env.GROQ_API_KEY) throw new Error("No Groq API key configured"); return callGroq(imageBase64, bottle, c.env.GROQ_API_KEY, debugReasoning); } },
-      { name: "openrouter", key: "openrouter",    call: () => { if (!c.env.OPENROUTER_API_KEY) throw new Error("No OpenRouter API key configured"); return callOpenRouter(imageBase64, bottle, c.env.OPENROUTER_API_KEY, debugReasoning); } },
-      { name: "mistral",    key: "mistral",       call: () => { if (!c.env.MISTRAL_API_KEY) throw new Error("No Mistral API key configured"); return callMistral(imageBase64, bottle, c.env.MISTRAL_API_KEY, debugReasoning); } },
+      { name: "gemini",     key: "gemini_key_1",  call: () => callGemini(imageBase64, effectiveBottle, geminiKeys, debugReasoning) },
+      { name: "groq",       key: "groq",          call: () => { if (!c.env.GROQ_API_KEY) throw new Error("No Groq API key configured"); return callGroq(imageBase64, effectiveBottle, c.env.GROQ_API_KEY, debugReasoning); } },
+      { name: "openrouter", key: "openrouter",    call: () => { if (!c.env.OPENROUTER_API_KEY) throw new Error("No OpenRouter API key configured"); return callOpenRouter(imageBase64, effectiveBottle, c.env.OPENROUTER_API_KEY, debugReasoning); } },
+      { name: "mistral",    key: "mistral",       call: () => { if (!c.env.MISTRAL_API_KEY) throw new Error("No Mistral API key configured"); return callMistral(imageBase64, effectiveBottle, c.env.MISTRAL_API_KEY, debugReasoning); } },
     ];
 
     // Fallback chain: Gemini (×4 keys) → Groq → OpenRouter → Mistral
@@ -176,6 +186,7 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
       latencyMs,
       tokensEstimated,
       hasQualityIssues: llmResult.imageQualityIssues && llmResult.imageQualityIssues.length > 0,
+      isUnsupportedSku: !bottle,
     });
 
     // Store scan data to Supabase (non-blocking — don't fail the response if storage fails)
@@ -183,19 +194,22 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
       storeScan(c.env, scanId, imageBase64, {
         scanId,
         timestamp: new Date().toISOString(),
-        sku: bottle.sku,
-        bottleGeometry: bottle.geometry,
-        oilType: bottle.oilType,
+        sku: bottle ? bottle.sku : `unsupported_${sku}`,
+        bottleGeometry: effectiveBottle.geometry,
+        oilType: effectiveBottle.oilType,
         aiProvider,
         fillPercentage: llmResult.fillPercentage,
         confidence: llmResult.confidence,
         latencyMs,
         imageQualityIssues: llmResult.imageQualityIssues,
+        isContribution: !bottle,
       }).catch((err) => console.error("Supabase storage failed:", err))
     );
 
     // Calculate remaining ml from fill percentage and bottle volume
-    const remainingMl = Math.round(calculateRemainingMl(llmResult.fillPercentage, bottle.totalVolumeMl, bottle.geometry));
+    const remainingMl = bottle 
+      ? Math.round(calculateRemainingMl(llmResult.fillPercentage, bottle.totalVolumeMl, bottle.geometry))
+      : 0;
 
     return c.json({
       scanId,
@@ -210,6 +224,7 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
         llmResult.imageQualityIssues && llmResult.imageQualityIssues.length > 0
           ? llmResult.imageQualityIssues
           : undefined,
+      isUnsupportedSku: !bottle,
     });
   } catch (error) {
     const latencyMs = Date.now() - startTime;

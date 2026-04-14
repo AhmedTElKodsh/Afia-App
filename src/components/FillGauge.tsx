@@ -53,6 +53,7 @@ export function FillGauge({ fillPercentage }: FillGaugeProps) {
             strokeWidth="1"
             opacity="0.9"
             clipPath="url(#bodyClip)"
+            className="meniscus-line"
           />
         )}
       </svg>

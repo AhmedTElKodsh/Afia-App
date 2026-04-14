@@ -1,13 +1,21 @@
+import { useState } from "react";
 import { Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import "./UnknownBottle.css";
 
 interface UnknownBottleProps {
   sku: string | null;
+  onStartContribution?: () => void;
 }
 
-export function UnknownBottle({ sku }: UnknownBottleProps) {
+export function UnknownBottle({ sku, onStartContribution }: UnknownBottleProps) {
   const { t } = useTranslation();
+  const [contributionCount] = useState(() => {
+    try {
+      return Number(localStorage.getItem('afia_contributions') || '0');
+    } catch { return 0; }
+  });
+
   return (
     <div className="unknown-bottle">
       <div className="unknown-bottle-content">
@@ -28,6 +36,22 @@ export function UnknownBottle({ sku }: UnknownBottleProps) {
             ? t('landing.futureSupportMessage')
             : t('landing.noBottleMessage')}
         </p>
+
+        {sku && onStartContribution && (
+          <div className="ub-contribution-zone">
+            <button 
+              className="btn btn-primary btn-full"
+              onClick={onStartContribution}
+            >
+              {t('landing.helpUsLearn')}
+            </button>
+            {contributionCount > 0 && (
+              <p className="contribution-count text-caption text-secondary">
+                {t('landing.contributionCount', { count: contributionCount })}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Step-by-step orientation guide */}
         {!sku && (
