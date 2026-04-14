@@ -13,6 +13,8 @@ export interface ScanMetadata {
   latencyMs: number;
   imageQualityIssues?: string[];
   isContribution?: boolean;
+  localModelPrediction?: { percentage: number; confidence: string };
+  reasoning?: string;
 }
 
 export interface FeedbackData {
@@ -24,13 +26,18 @@ export interface FeedbackData {
   validationFlags?: string[];
   confidenceWeight: number;
   trainingEligible: boolean;
+  errorCategory?: "none" | "too_big" | "too_small" | "occlusion" | "lighting";
 }
 
 let supabaseInstance: SupabaseClient | null = null;
 
 function getSupabase(env: Env): SupabaseClient {
   if (!supabaseInstance) {
-    supabaseInstance = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+    // Priority: SERVICE_ROLE_KEY for admin bypass, fallback to ANON
+    const key = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
+    supabaseInstance = createClient(env.SUPABASE_URL, key, {
+      auth: { persistSession: false }
+    });
   }
   return supabaseInstance;
 }
@@ -46,16 +53,10 @@ export async function storeScan(
 ): Promise<void> {
   const supabase = getSupabase(env);
 
-  // 1. Safe base64 to binary conversion with JPEG magic byte check
+  // 1. Convert base64 to binary
   let binaryData: Uint8Array;
   try {
     const base64Data = imageBase64.replace(/^data:image\/[a-z]+;base64,/, "");
-    
-    // Quick check for JPEG magic bytes (/9j/)
-    if (!base64Data.startsWith("/9j/")) {
-      throw new Error("Invalid JPEG magic bytes");
-    }
-
     const binaryString = atob(base64Data);
     binaryData = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
@@ -67,11 +68,12 @@ export async function storeScan(
   }
 
   // 2. Upload Image to 'scans' bucket
+  const imagePath = `raw/${metadata.sku}/${new Date().toISOString().split('T')[0]}/${scanId}.jpg`;
   const { error: storageError } = await supabase.storage
     .from("scans")
-    .upload(`${scanId}.jpg`, binaryData, {
+    .upload(imagePath, binaryData, {
       contentType: "image/jpeg",
-      upsert: true, // Use upsert: true to prevent orphaned retries from failing
+      upsert: true,
     });
 
   if (storageError) {
@@ -79,32 +81,30 @@ export async function storeScan(
     throw storageError;
   }
 
-  // 3. Insert metadata into 'scans' table
+  // 3. Insert metadata into 'scans' table (Revised Directive B Schema)
   const { error: dbError } = await supabase.from("scans").insert([
     {
       id: scanId,
       sku: metadata.sku,
-      timestamp: metadata.timestamp,
-      oil_type: metadata.oilType,
-      // Store a summary or flattened geometry to avoid DB row bloat
-      bottle_geometry: { 
-        shape: metadata.bottleGeometry.shape,
-        pointCount: metadata.bottleGeometry.calibrationPoints?.length ?? 0
+      image_url: imagePath,
+      local_model_prediction: metadata.localModelPrediction || {},
+      llm_fallback_prediction: {
+        percentage: metadata.fillPercentage,
+        confidence: metadata.confidence,
+        provider: metadata.aiProvider,
+        reasoning: metadata.reasoning
       },
-      ai_provider: metadata.aiProvider,
-      fill_percentage: metadata.fillPercentage,
-      confidence: metadata.confidence,
-      latency_ms: metadata.latencyMs,
-      quality_issues: metadata.imageQualityIssues,
-      image_path: `${scanId}.jpg`,
-      is_contribution: metadata.isContribution ?? false,
+      client_metadata: {
+        latency_ms: metadata.latencyMs,
+        image_quality_issues: metadata.imageQualityIssues,
+        is_contribution: metadata.isContribution ?? false,
+        timestamp: metadata.timestamp
+      }
     },
   ]);
 
   if (dbError) {
     console.error("Supabase Database Error:", dbError);
-    // Note: We don't delete the storage object here to avoid complexity in waitUntil,
-    // but the record will be incomplete.
     throw dbError;
   }
 }
@@ -119,25 +119,19 @@ export async function updateScanWithFeedback(
 ): Promise<void> {
   const supabase = getSupabase(env);
 
-  const { error: dbError, count } = await supabase
-    .from("scans")
-    .update({
-      feedback_id: feedback.feedbackId,
-      feedback_timestamp: feedback.feedbackTimestamp,
-      accuracy_rating: feedback.accuracyRating,
-      corrected_fill_percentage: feedback.correctedFillPercentage,
-      validation_status: feedback.validationStatus,
-      validation_flags: feedback.validationFlags,
-      confidence_weight: feedback.confidenceWeight,
-      training_eligible: feedback.trainingEligible,
-    }, { count: "exact" })
-    .eq("id", scanId);
+  // Update correction table (Directive B Schema)
+  const { error: dbError } = await supabase
+    .from("admin_corrections")
+    .upsert({
+      scan_id: scanId,
+      actual_fill_percentage: feedback.correctedFillPercentage,
+      error_category: feedback.errorCategory || 'none',
+      is_training_eligible: feedback.trainingEligible,
+      reviewed_at: feedback.feedbackTimestamp
+    });
 
   if (dbError) {
     console.error("Supabase Feedback Update Error:", dbError);
     throw dbError;
-  }
-  if (count === 0) {
-    throw new Error(`Feedback update found no scan with id: ${scanId}`);
   }
 }

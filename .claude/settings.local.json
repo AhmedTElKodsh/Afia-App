@@ -48,7 +48,13 @@
       "Bash(echo \"TSC_EXIT:$?\")",
       "Bash(grep -v \"^$\")",
       "Bash(bc)",
-      "Bash(git -C \"d:/AI Projects/Freelance/Afia-App\" ls-files .wrangler/)"
+      "Bash(git -C \"d:/AI Projects/Freelance/Afia-App\" ls-files .wrangler/)",
+      "WebFetch(domain:github.com)",
+      "Read(//c/Users/Admin/**)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(grep -n \"checkTorchSupport\" \"d:/AI Projects/Freelance/Afia-App/src/utils/\"*.ts)",
+      "Bash(npm run:*)",
+      "Bash(awk '{print $5, $6, $7, $9}')"
     ]
   }
 }

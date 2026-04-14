@@ -17,7 +17,8 @@ export type AnalyticsEventType =
   | 'admin_onboarding_started'
   | 'admin_onboarding_complete'
   | 'test_mode_changed'
-  | 'bottle_selected';
+  | 'bottle_selected'
+  | 'scan_failed';
 
 export interface AnalyticsEvent {
   eventName: AnalyticsEventType;
@@ -137,6 +138,10 @@ export const analytics = {
 
   bottleSelected: (sku: string, entryPoint: string) => {
     trackEvent('bottle_selected', { sku, entryPoint });
+  },
+
+  scanFailed: (reason: string, details?: Record<string, unknown>) => {
+    trackEvent('scan_failed', { reason, ...details });
   },
 };
 

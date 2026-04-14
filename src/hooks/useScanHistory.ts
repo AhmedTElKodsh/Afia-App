@@ -13,6 +13,7 @@ export interface StoredScan {
   aiProvider?: "gemini" | "groq" | "openrouter" | "mistral";
   latencyMs?: number;
   feedbackRating?: "about_right" | "too_high" | "too_low" | "way_off";
+  correctedPercentage?: number; // Ground truth from admin
 }
 
 const STORAGE_KEY = "afia_scan_history";
@@ -161,6 +162,13 @@ export function useScanHistory() {
       })
     ).size;
 
+    const feedbackCount = scans.filter(s => s.feedbackRating).length;
+    
+    // Calculate Mean Absolute Error (MAE)
+    const reviewedScans = scans.filter(s => typeof s.correctedPercentage === 'number');
+    const totalError = reviewedScans.reduce((sum, s) => sum + Math.abs(s.fillPercentage - (s.correctedPercentage || 0)), 0);
+    const mae = reviewedScans.length > 0 ? (totalError / reviewedScans.length).toFixed(1) : "N/A";
+
     return {
       totalScans: scans.length,
       totalConsumedMl: scans.reduce((sum, s) => sum + (Number(s.consumedMl) || 0), 0),
@@ -173,8 +181,9 @@ export function useScanHistory() {
       scansLast30Days: scans.filter(
         (s) => now - new Date(s.timestamp).getTime() < thirtyDaysMs
       ).length,
-      feedbackCount: scans.filter(s => s.feedbackRating).length,
+      feedbackCount,
       activeUsers: uniqueUserProxy,
+      mae
     };
   }, [scans]);
 

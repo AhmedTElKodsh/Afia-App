@@ -59,8 +59,10 @@ export function TestLab({ isAdmin }: TestLabProps) {
   });
   const [showDebugPanel, setShowDebugPanel] = useState<boolean>(false);
 
-  const selectedSku = ACTIVE_SKU;
+  const [selectedSku, setSelectedSku] = useState<string>(ACTIVE_SKU);
   const [testCount, setTestCount] = useState(0);
+
+  const [testImage, setTestImage] = useState<string | null>(null);
 
   // Scan flow state
   const [scanState, setScanState] = useState<TestLabState>("idle");
@@ -74,6 +76,17 @@ export function TestLab({ isAdmin }: TestLabProps) {
     const hasSeenOnboarding = localStorage.getItem('afia_admin_onboarding_seen');
     return !hasSeenOnboarding && isAdmin;
   });
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setTestImage(event.target?.result as string);
+      setScanState("scanning");
+    };
+    reader.readAsDataURL(file);
+  };
   // Test session tracking
   const [sessionId] = useState<string>(() => `test_session_${crypto.randomUUID()}`);
 
@@ -333,8 +346,20 @@ export function TestLab({ isAdmin }: TestLabProps) {
             <div className="test-lab-section test-lab-section--bottle" style={{ textAlign: 'center' }}>
               <h2 className="test-lab-section-title">{t('admin.testLab.selectBottleScanQr')}</h2>
 
-              {/* Confirmed bottle card — always the single active SKU */}
-              {selectedBottle && (
+              {/* Confirmed bottle card — allow switching if multiple active */}
+              {activeBottleRegistry.length > 1 ? (
+                <div className="test-lab-sku-selector" style={{ marginBottom: 'var(--space-md)', display: 'flex', justifyContent: 'center' }}>
+                  <select 
+                    value={selectedSku} 
+                    onChange={(e) => setSelectedSku(e.target.value)}
+                    style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', width: '100%', maxWidth: '320px', background: 'var(--color-surface)', color: 'var(--color-text)' }}
+                  >
+                    {activeBottleRegistry.map(b => (
+                      <option key={b.sku} value={b.sku}>{getLocalizedBottleName(b.sku, b.name)}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : selectedBottle && (
                 <div className="bottle-confirmed-card">
                   <span className="bottle-confirmed-emoji">{getOilEmoji(selectedBottle.oilType)}</span>
                   <span className="bottle-confirmed-name">{getLocalizedBottleName(selectedSku, selectedBottle.name)}</span>
@@ -343,7 +368,7 @@ export function TestLab({ isAdmin }: TestLabProps) {
               )}
 
               {/* Scan button — always enabled (bottle is pre-selected) */}
-              <div className="entry-point-buttons" style={{ marginTop: 'var(--space-md)', justifyContent: 'center' }}>
+              <div className="entry-point-buttons" style={{ marginTop: 'var(--space-md)', justifyContent: 'center', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
                 <button
                   className="entry-point-button entry-point-button--primary"
                   onClick={() => handleMockQrScan(selectedSku)}
@@ -353,6 +378,25 @@ export function TestLab({ isAdmin }: TestLabProps) {
                   <QrCode size={22} strokeWidth={2} />
                   <span>{t('admin.testLab.scanMockQr')}</span>
                 </button>
+
+                <div style={{ position: 'relative', width: '100%', maxWidth: '320px' }}>
+                  <button
+                    className="entry-point-button entry-point-button--secondary"
+                    type="button"
+                    onClick={() => document.getElementById('geometry-upload')?.click()}
+                    style={{ width: '100%' }}
+                  >
+                    <TestTube size={22} strokeWidth={2} />
+                    <span>Upload Image for Geometry Test</span>
+                  </button>
+                  <input
+                    id="geometry-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    style={{ display: 'none' }}
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -360,11 +404,14 @@ export function TestLab({ isAdmin }: TestLabProps) {
           {/* Scan Flow */}
           {scanState === "scanning" && selectedBottle && (
             <div className="test-lab-section">
-              <h2 className="test-lab-section-title">{t('admin.testLab.capturePhoto')}</h2>
+              <h2 className="test-lab-section-title">{testImage ? 'GEOMETRY OVERLAY TEST' : t('admin.testLab.capturePhoto')}</h2>
               <CameraViewfinder
                 onCapture={handleCapture}
                 onError={handleError}
                 onPermissionDenied={() => handleError(t('camera.permissionDenied'))}
+                testImage={testImage}
+                sku={selectedSku}
+                onCancel={() => { setTestImage(null); setScanState("idle"); }}
               />
             </div>
           )}

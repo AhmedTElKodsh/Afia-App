@@ -28,6 +28,7 @@ export function parseLLMResponse(raw: string): LLMResponse {
   }
 
   return {
+    brand: parsed.brand === "Afia" ? "Afia" : "unknown",
     fillPercentage: Math.round(parsed.fillPercentage as number),
     confidence: parsed.confidence as "high" | "medium" | "low",
     imageQualityIssues: Array.isArray(parsed.imageQualityIssues)

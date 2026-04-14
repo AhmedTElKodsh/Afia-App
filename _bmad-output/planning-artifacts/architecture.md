@@ -61,8 +61,8 @@ A PWA accessible via QR code on each oil bottle. The user photographs their bott
 | FR-11 | User accounts / scan history                                     | Out of scope |
 | FR-12 | Custom starting level (partially used bottle as baseline)        | Out of scope |
 | FR-13 | Multiple brands / dynamic bottle shape detection                 | Out of scope |
-| FR-14 | Admin dashboard for reviewing feedback                           | Out of scope |
-| FR-15 | Model fine-tuning pipeline                                       | Out of scope |
+| FR-14 | Admin dashboard for reviewing feedback                           | In scope (Epic 6) |
+| FR-15 | Model fine-tuning pipeline                                       | In scope (Epic 7) |
 
 ### Non-Functional Requirements
 
@@ -98,6 +98,15 @@ A PWA accessible via QR code on each oil bottle. The user photographs their bott
 ✅ CI/CD pipeline (GitHub Actions → Cloudflare)
 ```
 
+### In Scope (Parallel Development Tracks)
+
+```
+✅ Admin dashboard (Epic 6 — Track C, after Epic 4 complete)
+✅ Local model + training pipeline (Epic 7 — Track B/D, Supabase at launch; CNN at 500 scans)
+✅ Multi-Gemini-key pool rotation (Story 1.7 update)
+✅ Consumption tracking slider + cup visualization (Story 3.3)
+```
+
 ### Out of Scope (Post-POC)
 
 ```
@@ -106,8 +115,6 @@ A PWA accessible via QR code on each oil bottle. The user photographs their bott
 🔲 Dynamic bottle shape detection (unknown bottles)
 🔲 Multiple oil brands / third-party bottle registry
 🔲 Custom starting level (partially used bottle baseline)
-🔲 Admin dashboard for feedback review
-🔲 Model fine-tuning pipeline (data collected now, tuning later)
 🔲 Offline-only scan mode (requires network for LLM API)
 🔲 Multi-language support
 🔲 Push notifications / reminders
@@ -227,6 +234,9 @@ All domain logic (volume calculation, unit conversion, nutrition lookup) runs in
 | **Nutrition data**     | Bundled USDA JSON      | Offline; zero latency; free; authoritative          | USDA API live calls, Nutritionix     |
 | **Testing**            | Vitest + Playwright    | Modern; fast; PWA-aware E2E                         | Jest, Cypress                        |
 | **CI/CD**              | GitHub Actions         | Free; wrangler-action@v3 integration                | GitLab CI, Cloudflare direct         |
+| **Training DB**        | Supabase (Postgres)    | Free tier 500MB; JS client in Worker; row-level SQL | PlanetScale, Firebase Firestore      |
+| **Local model**        | TF.js + MobileNetV3-Small | ~5MB; IndexedDB cache; 10–50ms inference; R2 deploy | ONNX Runtime Web, MediaPipe        |
+| **Admin auth**         | CF Worker secret + localStorage token | Zero extra infra; admin-only use case | Cloudflare Access, Auth0  |
 
 ### Version Pinning (as of 2026-02-26)
 
@@ -380,14 +390,18 @@ API_UNRECOVERABLE       — Bad image, semantic refusal, must retake
   "bottleCapacityMl": 500,
   "imageKey": "images/a1b2c3d4-uuid.jpg",
   "imageSizeBytes": 72340,
-  "llm": {
-    "provider": "gemini-2.5-flash",
-    "model": "gemini-2.5-flash",
-    "fillPercentage": 42,
-    "confidence": "high",
-    "notes": "",
-    "latencyMs": 2340,
-    "tokenCostEstimate": 0.00025
+  "inference": {
+    "localModelResult": null,
+    "localModelConfidence": null,
+    "localModelVersion": null,
+    "llmFallbackUsed": true,
+    "llmProvider": "gemini-2.5-flash",
+    "llmKeyIndex": 2,
+    "llmFillPercentage": 42,
+    "llmConfidence": "high",
+    "llmNotes": "",
+    "llmLatencyMs": 2340,
+    "llmTokenCostEstimate": 0.00025
   },
   "calculatedResult": {
     "remainingMl": 210,
@@ -504,12 +518,22 @@ API_UNRECOVERABLE       — Bad image, semantic refusal, must retake
 ### Multi-Provider Fallback Chain
 
 ```
-Request arrives at Worker
+Request arrives at PWA
     │
-    ├─→ Try Gemini 2.5 Flash
+    ├─→ Try local TF.js model (Epic 7+, if loaded in IndexedDB)
+    │   ├── confidence >= 0.75 → return result (skip Worker entirely)
+    │   └── confidence < 0.75  → fall through to Worker
+    │         (localModelResult + localModelConfidence sent in body)
+    │
+    │   [POC phase: model not yet deployed → always falls through]
+    │
+Worker receives /analyze request
+    │
+    ├─→ Try GEMINI_KEY_1 (round-robin through KEY_N pool)
     │   ├── Success → return result
-    │   ├── 429 (rate limit) → try Groq
-    │   ├── 5xx (server error) → retry once → try Groq
+    │   ├── 429 (rate limit) → advance to next key in pool
+    │   ├── Pool exhausted → fall through to Groq
+    │   ├── 5xx (server error) → retry once → try next key or Groq
     │   └── 400 (bad request) → return error to client (no fallback)
     │
     ├─→ Try Groq Llama 4 Scout (fallback)
@@ -889,13 +913,14 @@ on pull_request:
 🔲 Push notifications — "Time to restock?" based on consumption rate
 ```
 
-### Phase 3: Model Intelligence
+### Phase 3: Model Intelligence (Epic 7 — active from POC launch, CNN gates at 500 scans)
 
 ```
-🔲 Admin dashboard — review flagged feedback, approve/reject training data
-🔲 Prompt refinement from error pattern analysis (50+ scans)
-🔲 Few-shot examples injected into prompt (100+ scans)
-🔲 Fine-tune Qwen2.5-VL on validated training pairs (500+ scans)
+✅ Admin dashboard — Epic 6 (view scans, flag/correct, upload, export)
+✅ Supabase training database — Epic 7.1 (deployed at POC launch)
+✅ Augmentation pipeline — Epic 7.2 (48× multiplier on base images)
+✅ TF.js CNN regressor — Epic 7.3/7.4 (activates at 500 training-eligible scans)
+✅ Model version management — Epic 7.5
 🔲 Fine-tune Gemini Flash via Google AI Studio (1000+ scans)
 🔲 Specialized small model distillation (Moondream-size)
 ```
@@ -922,7 +947,105 @@ on pull_request:
 
 ---
 
+---
+
+## 15. Admin Architecture
+
+### Overview
+
+Admin dashboard is a protected route (`/admin`) within the same Cloudflare Pages PWA. No separate deployment. Authentication via a shared `ADMIN_SECRET` Worker secret — suitable for a single admin (Ahmed) at POC/Phase 2 scale.
+
+### Auth Flow
+
+```
+User navigates to /admin
+    │
+    ├── localStorage token present + not expired (24h)?
+    │   └── YES → render Admin dashboard
+    │
+    └── NO → show password prompt
+        User submits password → POST /admin/auth { secret: "..." }
+        Worker compares against ADMIN_SECRET env var
+        ├── Match → return { token: "<signed JWT or random session token>" }
+        │         → store in localStorage with expiry
+        │         → redirect to /admin
+        └── No match → 401 → show error
+```
+
+### Admin API Endpoints (Worker)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/admin/auth` | Validate ADMIN_SECRET, return session token |
+| GET | `/admin/scans` | Paginated scan list (newest first, filter by status) |
+| GET | `/admin/scans/:scanId` | Full scan detail (image URL, inference, feedback) |
+| POST | `/admin/correct` | Save admin correction to R2 + Supabase |
+| POST | `/admin/rerun-llm` | Re-call LLM on existing scan, store in adminLlmResult |
+| POST | `/admin/upload` | Accept image + metadata, store to R2 + Supabase |
+| GET | `/admin/export` | Return training-eligible scans as CSV |
+| GET | `/model/version` | Current deployed model version from Supabase |
+
+All `/admin/*` routes validate `Authorization: Bearer <token>` header against ADMIN_SECRET.
+
+### Supabase Integration (Worker-side)
+
+```typescript
+// Worker env: SUPABASE_URL, SUPABASE_SERVICE_KEY (service role, not anon)
+// Called on: trainingEligible=true scan completion, admin correction, admin upload
+
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY)
+
+// Insert training sample
+await supabase.from('training_samples').insert({
+  scan_id: scanId,
+  image_url: `${R2_PUBLIC_BASE}/images/${scanId}.jpg`,
+  sku,
+  confirmed_fill_pct: confirmedFillPct,
+  label_source: labelSource,   // "user_feedback"|"admin_correction"|"admin_upload"
+  label_confidence: confidence,
+  augmented: false,
+  split: 'train'               // 80/10/10 split assigned at insert time
+})
+```
+
+### Supabase Schema
+
+```sql
+-- training_samples table
+CREATE TABLE training_samples (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  scan_id TEXT NOT NULL,
+  image_url TEXT NOT NULL,
+  sku TEXT NOT NULL,
+  confirmed_fill_pct FLOAT NOT NULL,
+  label_source TEXT NOT NULL
+    CHECK (label_source IN ('user_feedback','admin_correction','admin_upload','llm_only')),
+  label_confidence FLOAT NOT NULL DEFAULT 0.6,
+  augmented BOOLEAN NOT NULL DEFAULT FALSE,
+  split TEXT NOT NULL DEFAULT 'train'
+    CHECK (split IN ('train','val','test')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- model_versions table
+CREATE TABLE model_versions (
+  version TEXT PRIMARY KEY,
+  mae FLOAT,
+  val_accuracy FLOAT,
+  training_samples_count INT,
+  deployed_at TIMESTAMPTZ DEFAULT NOW(),
+  r2_key TEXT NOT NULL,   -- path to TF.js model files in R2
+  is_active BOOLEAN DEFAULT FALSE
+);
+```
+
+_Section 15 added: 2026-04-14 — Sprint Change Proposal scope expansion_
+
+---
+
 _Architecture document produced: 2026-02-26_
-_Based on: Comprehensive technical research report (800+ lines, 40+ verified sources)_
+_Updated: 2026-04-14 — Admin architecture, local model routing, multi-key pool, Supabase integration_
 _Author: Ahmed + Winston (Architect Agent)_
-_Status: POC scope finalized — ready for implementation_
+_Status: Updated — Epic 6 + Epic 7 scope incorporated_

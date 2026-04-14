@@ -93,6 +93,22 @@ export const bottleRegistry: BottleEntry[] = [
 * Oil visible in neck (clear region at top, oil in narrow cylinder): fillPercentage ~83–93
 * Neck nearly or completely full (tiny or no air gap below cap): fillPercentage 93–97`,
   },
+  {
+    sku: "afia-corn-2.5l",
+    name: "Afia Pure Corn Oil 2.5L",
+    oilType: "corn",
+    totalVolumeMl: 2500,
+    geometry: {
+      shape: "calibrated",
+      heightMm: 270, // Placeholder
+      calibrationPoints: [
+        { fillHeightPct: 0,  remainingMl: 0    },
+        { fillHeightPct: 97, remainingMl: 2500 },
+      ],
+    },
+    imageUrl: "/bottles/afia-corn-1.5l.png", // Placeholder
+    promptAnchors: `* Mock entry for 2.5L - full guidance coming soon.`,
+  },
 ];
 
 export function getBottleBySku(sku: string): BottleEntry | undefined {
@@ -107,8 +123,8 @@ export const ACTIVE_SKU = "afia-corn-1.5l";
 
 /**
  * Subset of bottleRegistry containing only bottles available for user scanning.
- * Strictly limited to ACTIVE_SKU for the POC pilot.
+ * Includes 1.5L (full guidance) and 2.5L (mock/manual).
  */
 export const activeBottleRegistry: BottleEntry[] = bottleRegistry.filter(
-  (b) => b.sku === ACTIVE_SKU
+  (b) => b.sku === "afia-corn-1.5l" || b.sku === "afia-corn-2.5l"
 );

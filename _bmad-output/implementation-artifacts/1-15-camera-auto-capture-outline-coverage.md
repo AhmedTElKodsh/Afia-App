@@ -1,6 +1,6 @@
 # Story 1.15: Camera Auto-Capture + Full-Coverage Outline Detection
 
-Status: ready-for-dev
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 

@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { X } from "lucide-react";
+import { X, Droplets } from "lucide-react";
 import type { AnalysisResult } from "../state/appState.ts";
 import type { BottleEntry } from "../data/bottleRegistry.ts";
 import { calculateVolumes } from "../utils/volumeCalculator.ts";
@@ -28,9 +28,57 @@ const FEEDBACK_RATING_MAP: Record<FeedbackType, StoredScan["feedbackRating"]> = 
   'way-off':  'way_off',
 };
 
+// --- Cup Icon Component ---
+interface CupIconProps {
+  fill: "half" | "full" | "none";
+  size?: number;
+}
+
+function CupIcon({ fill, size = 24 }: CupIconProps) {
+  const isRTL = document.documentElement.dir === 'rtl';
+  
+  return (
+    <svg 
+      width={size} 
+      height={size} 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      xmlns="http://www.w3.org/2000/svg"
+      className="cup-icon"
+    >
+      {/* Cup handle */}
+      <path 
+        d={isRTL ? "M6 8C3.8 8 2 9.8 2 12C2 14.2 3.8 16 6 16" : "M18 8C20.2 8 22 9.8 22 12C22 14.2 20.2 16 18 16"} 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+      />
+      {/* Cup body */}
+      <path 
+        d={isRTL ? "M22 6V16C22 18.2 20.2 20 18 20H10C7.8 20 6 18.2 6 16V6H22Z" : "M2 6V16C2 18.2 3.8 20 6 20H14C16.2 20 18 18.2 18 16V6H2Z"} 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinejoin="round" 
+      />
+      {/* Fill level */}
+      {fill !== "none" && (
+        <path 
+          d={
+            fill === "full" 
+              ? (isRTL ? "M6 8V16C6 18.2 7.8 20 10 20H18C20.2 20 22 18.2 22 16V8H6Z" : "M2 8V16C2 18.2 3.8 20 6 20H14C16.2 20 18 18.2 18 16V8H2Z")
+              : (isRTL ? "M6 14V16C6 18.2 7.8 20 10 20H18C20.2 20 22 18.2 22 16V14H6Z" : "M2 14V16C2 18.2 3.8 20 6 20H14C16.2 20 18 18.2 18 16V14H2Z")
+          } 
+          fill="var(--color-primary)" 
+        />
+      )}
+    </svg>
+  );
+}
+
 export function ResultDisplay({ result, bottle, capturedImage, onRetake }: ResultDisplayProps) {
   const { t } = useTranslation();
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [sliderValue, setSliderValue] = useState(0); // Value in ml to consume
   const { updateFeedback } = useScanHistory();
 
   const handleFeedbackSubmit = useCallback((feedback: FeedbackType) => {
@@ -51,11 +99,21 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
     }
   }, [result.confidence]);
 
-  const volumes = calculateVolumes(
+  const originalVolumes = useMemo(() => calculateVolumes(
     result.fillPercentage,
     bottle.totalVolumeMl,
     bottle.geometry
-  );
+  ), [result.fillPercentage, bottle.totalVolumeMl, bottle.geometry]);
+
+  // Update volumes based on slider (planned consumption)
+  const volumes = useMemo(() => {
+    const adjustedFillPercentage = ((originalVolumes.remaining.ml - sliderValue) / bottle.totalVolumeMl) * 100;
+    return calculateVolumes(
+      Math.max(0, adjustedFillPercentage),
+      bottle.totalVolumeMl,
+      bottle.geometry
+    );
+  }, [originalVolumes.remaining.ml, sliderValue, bottle.totalVolumeMl, bottle.geometry]);
 
   const nutrition = calculateNutrition(volumes.consumed.ml, bottle.oilType);
 
@@ -74,6 +132,19 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
       : result.confidence === "medium"
       ? "var(--color-fill-medium)"
       : "var(--color-fill-low)";
+
+  const maxSliderValue = Math.floor(originalVolumes.remaining.ml / 55) * 55;
+  const cupCount = Math.floor(sliderValue / 55) / 2;
+  const fullCups = Math.floor(cupCount);
+  const hasHalfCup = cupCount % 1 !== 0;
+
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseInt(e.target.value);
+    if (val !== sliderValue) {
+      hapticFeedback.selection();
+      setSliderValue(val);
+    }
+  };
 
   return (
     <div className="result-display" data-confidence={result.confidence} aria-live="assertive">
@@ -117,38 +188,81 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
           <X size={16} strokeWidth={2.5} />
         </button>
 
-        {capturedImage ? (
-          <BottleOverlay
-            capturedImage={capturedImage}
-            fillPercentage={result.fillPercentage}
-            bottleHeightMm={bottle.geometry.heightMm ?? 0}
-            bottleName={bottle.name}
-            totalVolumeMl={bottle.totalVolumeMl}
-          />
-        ) : (
-          <div className="result-hero__info" style={{ padding: 'var(--space-xl)' }}>
-            <h2 className="result-hero__ml">
-              {volumes.remaining.ml}
-              <span className="result-hero__ml-unit"> {t('results.mlLeft')}</span>
-            </h2>
-            <div className="result-hero__confidence"
-            style={{ color: confidenceColor }}
-          >
-            <ConfidenceBadge 
-              level={result.confidence} 
-              size="sm"
-              aria-describedby="confidence-explanation"
-            />
-            <span id="confidence-explanation" className="sr-only">
-              {result.confidence === "high"
-                ? t('results.confidenceHighSr')
-                : result.confidence === "medium"
-                ? t('results.confidenceMediumSr')
-                : t('results.confidenceLowSr')}
-            </span>
+        <div className="result-hero-layout">
+          <div className="result-image-area">
+            {capturedImage ? (
+              <BottleOverlay
+                capturedImage={capturedImage}
+                fillPercentage={((originalVolumes.remaining.ml - sliderValue) / bottle.totalVolumeMl) * 100}
+                bottleHeightMm={bottle.geometry.heightMm ?? 0}
+                bottleName={bottle.name}
+                totalVolumeMl={bottle.totalVolumeMl}
+              />
+            ) : (
+              <div className="result-hero__info" style={{ padding: 'var(--space-xl)' }}>
+                <h2 className="result-hero__ml">
+                  {volumes.remaining.ml}
+                  <span className="result-hero__ml-unit"> {t('results.mlLeft')}</span>
+                </h2>
+                <div className="result-hero__confidence"
+                style={{ color: confidenceColor }}
+              >
+                <ConfidenceBadge 
+                  level={result.confidence} 
+                  size="sm"
+                  aria-describedby="confidence-explanation"
+                />
+                <span id="confidence-explanation" className="sr-only">
+                  {result.confidence === "high"
+                    ? t('results.confidenceHighSr')
+                    : result.confidence === "medium"
+                    ? t('results.confidenceMediumSr')
+                    : t('results.confidenceLowSr')}
+                </span>
+              </div>
+              </div>
+            )}
           </div>
+
+          {/* ── Vertical 55ml Consumption Slider ── */}
+          <div className="consumption-slider-area">
+            <div className="consumption-slider-wrap">
+              <input 
+                type="range" 
+                min="0" 
+                max={maxSliderValue} 
+                step="55" 
+                value={sliderValue} 
+                onChange={handleSliderChange}
+                className="consumption-vertical-slider"
+                aria-label={t('results.plannedConsumption', 'Planned Consumption')}
+              />
+              
+              {/* Floating label that moves with the thumb */}
+              <div 
+                className="thumb-label-float"
+                style={{ 
+                  top: `${15 + (sliderValue / maxSliderValue) * 75}%`,
+                  opacity: sliderValue > 0 ? 1 : 0.6
+                }}
+              >
+                <div className="thumb-cup-indicator">
+                  <CupIcon fill={hasHalfCup ? "half" : sliderValue > 0 ? "full" : "none"} size={18} />
+                  <span className="thumb-count">
+                    {cupCount > 0 ? `${fullCups > 0 ? fullCups : ""}${hasHalfCup ? " ½" : ""}` : "0"}
+                  </span>
+                </div>
+                <div className="thumb-ml-indicator">-{sliderValue}ml</div>
+              </div>
+
+              <div className="consumption-slider-track"></div>
+            </div>
+            
+            <div className="slider-bottom-hint">
+              <span className="cup-label">{t('common.cups')}</span>
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* ── 2-column metrics grid ── */}
@@ -200,8 +314,6 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
           </div>
         </div>
       )}
-
-
 
       {/* ── Disclaimer ── */}
       <p className="result-disclaimer text-caption text-secondary">

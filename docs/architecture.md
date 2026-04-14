@@ -1,34 +1,53 @@
 # Afia App — Architecture Documentation
 
+## Two-Stage AI Strategy
+
+The project is divided into two distinct levels of maturity to balance speed-to-market with long-term cost efficiency and offline capability.
+
+### Stage 1: LLM-Primary (POC/Prototype)
+- **Primary:** Gemini 2.5 Flash via Cloudflare Worker proxy.
+- **Fallback:** Groq Llama 4 Scout.
+- **Mechanism:** Text-based prompts with image-to-text directions and few-shot visual examples (optimized for size/token reduction).
+- **Goal:** Gather "ground truth" data through real-world usage and admin corrections.
+
+### Stage 2: Local-Primary (Production)
+- **Primary:** Lightweight browser-based model (TensorFlow.js or ONNX Runtime Web).
+- **Fallback:** LLM API (Stage 1 mechanism) if local confidence < 85%.
+- **Mechanism:** Model runs directly on the mobile browser, providing sub-second latency and offline support.
+- **Goal:** Cost elimination and maximum privacy.
+
 ## Architecture Pattern
 
-**Client-Server with Serverless Backend** — A React PWA communicates with a Cloudflare Worker over two REST endpoints. The Worker acts as an API proxy that hides AI provider credentials, enforces rate limiting, and persists training data.
+**Hybrid Client-Side Intelligence with Serverless Training Pipeline**
 
 ```
 ┌─────────────────────────┐         ┌──────────────────────────────────┐
 │   Browser (PWA)         │         │   Cloudflare Worker (Hono)       │
 │                         │  HTTPS  │                                  │
 │  React 19 + Vite 7      │────────►│  CORS → Rate Limit → Router     │
-│  Camera → Compress →    │         │    ├── POST /analyze             │
-│  POST /analyze          │         │    │   ├── SKU validation        │
-│                         │◄────────│    │   ├── Gemini 2.5 Flash      │
-│  Fill% → Volume calc    │         │    │   │   └── fallback: Groq    │
-│  → Nutrition calc       │         │    │   └── R2 store (waitUntil)  │
-│  → Display results      │         │    ├── POST /feedback            │
-│                         │────────►│    │   ├── Validate feedback     │
-│  Feedback → POST        │         │    │   └── R2 update (waitUntil) │
-│  /feedback              │◄────────│    └── GET /health               │
+│  Local Model (Primary)  │         │    ├── POST /analyze (Fallback)  │
+│  LLM API (Fallback)     │◄────────│    │   ├── Gemini / Groq         │
+│                         │         │    └── R2 Store (Images)         │
+│  Slider (55ml/Cup)      │         │                                  │
+│  Visual Feedback        │────────►│  POST /feedback (Correction)     │
+│                         │◄────────│    └── Supabase Update           │
 └─────────────────────────┘         └──────────────────────────────────┘
-                                         │              │
-                                         ▼              ▼
-                                    ┌─────────┐   ┌──────────┐
-                                    │ Gemini  │   │ Cloudflare│
-                                    │ API     │   │ R2 + KV   │
-                                    ├─────────┤   └──────────┘
-                                    │ Groq    │
-                                    │ API     │
-                                    └─────────┘
+            │                                    │              │
+            ▼                                    ▼              ▼
+      ┌───────────┐                        ┌───────────┐  ┌───────────┐
+      │  Local    │                        │ Supabase  │  │   R2      │
+      │  Model    │                        │ (Training)│  │ (Images)  │
+      └───────────┘                        └───────────┘  └───────────┘
 ```
+
+## Data Pipeline & Training
+
+1. **Image Storage (R2):** All captured images (real and AI-augmented) are stored in Cloudflare R2.
+2. **Metadata & Labels (Supabase):** 
+    - AI predictions (Local + LLM fallback) are stored in Supabase.
+    - Admin corrections ("Too Big", "Too Small", manual ML entry) provide the "Ground Truth".
+3. **Model Refinement:** The Admin Dashboard allows uploading images + metadata to fine-tune and retrain the local model iteratively.
+
 
 ## Frontend Architecture
 

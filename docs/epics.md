@@ -244,6 +244,83 @@ Users receive clear, helpful guidance when issues occur (poor image quality, net
 The system handles unknown bottles gracefully and deploys automatically with production-grade CI/CD, ensuring operational excellence.
 **FRs covered:** FR3
 
+### Epic 6: Stage 2 - Local Model & Advanced Analysis
+
+Transition the primary analysis to a local lightweight model with LLM fallback, supported by a structured Supabase training pipeline and enhanced Admin tools.
+
+## Epic 6: Stage 2 - Local Model & Advanced Analysis
+
+Transition the primary analysis to a local lightweight model with LLM fallback, supported by a structured Supabase training pipeline and enhanced Admin tools.
+
+### Story 6.1: Supabase Training Database Setup
+
+As a developer,
+I want a structured Supabase database for training data,
+So that I can manage scan records, ground truth labels, and augmentation metadata.
+
+**Acceptance Criteria:**
+- Supabase project initialized with `scans` table.
+- Table schema includes: `scan_id`, `image_url`, `sku`, `ai_estimate`, `admin_correction`, `is_training_eligible`, `augmentation_type`.
+- RLS policies configured for secure Worker access.
+
+### Story 6.2: Admin Dashboard Revision Interface
+
+As an admin,
+I want to review scans and provide manual corrections,
+So that I can build a high-quality training dataset.
+
+**Acceptance Criteria:**
+- Admin can view scan image with AI-predicted "red line" overlay.
+- Buttons for "Too Big" and "Too Small" quick flagging.
+- Slider for precise manual oil level correction.
+- "Submit to Training" button that marks record as training-eligible in Supabase.
+
+### Story 6.3: Image & Metadata Upload Tool
+
+As an admin,
+I want to upload existing images with metadata and oil levels,
+So that I can seed the training database with historical or augmented data.
+
+**Acceptance Criteria:**
+- Drag-and-drop upload for bottle images.
+- Form to input SKU, actual oil level (ml), and metadata.
+- Automated validation of uploaded data before storage.
+
+### Story 6.4: Enhanced 55ml Slider UI
+
+As a user,
+I want to track my consumption using a 55ml-unit slider with visual cup feedback,
+So that I can easily relate oil usage to common kitchen measures.
+
+**Acceptance Criteria:**
+- Slider thumb moves in 55ml increments (1/2 cup).
+- "Half Cup" (55ml) and "Full Cup" (110ml) visual icons appear as the slider moves.
+- Cumulative cup count displayed (e.g., "1.5 Cups consumed").
+- Slider starts at the detected oil level red line.
+
+### Story 6.5: Stage 1 Prompt Refinement (Few-Shot)
+
+As a developer,
+I want to refine the LLM prompt with directions and few-shot examples,
+So that Stage 1 accuracy is maximized for better initial data collection.
+
+**Acceptance Criteria:**
+- Prompt includes precise text directions for bottle geometry.
+- Low-resolution cropped few-shot examples included in payload.
+- Token reduction through image pre-processing (downsampling/cropping).
+
+### Story 6.6: Stage 2 Local Model Integration
+
+As a developer,
+I want a local model running in the browser as the primary analysis route,
+So that the app is faster and cheaper to operate.
+
+**Acceptance Criteria:**
+- Local model (TensorFlow.js/ONNX) performs initial fill estimation.
+- System triggers LLM Fallback (Stage 1) only if local confidence < threshold.
+- Both results are logged in the Admin Dashboard for comparison.
+
+
 ## Epic 1: Core Scan Experience (End-to-End MVP)
 
 Users can scan a QR code, photograph their oil bottle, and receive an AI-powered estimate with basic volume measurements in a complete end-to-end flow.

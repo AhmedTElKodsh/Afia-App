@@ -103,6 +103,14 @@
     "perfect": "ممتاز! أبقِ ثابتاً…",
     "captureManually": "التقاط يدوي",
     "showFrontLabel": "وجّه الملصق الأمامي نحو الكاميرا",
+    "shootFrontside": "قم بتصوير الجهة الأمامية للعبوة",
+    "tiltUp": "أمل الهاتف للأعلى",
+    "tiltDown": "أمل الهاتف للأسفل",
+    "brandVerified": "تم التحقق من علامة عافية",
+    "ensureLogoVisible": "تأكد من ظهور شعار عافية",
+    "enableMotion": "تفعيل توجيه الحركة",
+    "advancedGuidanceSoon": "التوجيه المتقدم قادم قريباً",
+    "captureManuallyPrompt": "يرجى التقاط الصورة يدوياً",
     "deviceSettings": "تعذّر الوصول إلى الكاميرا. يرجى التحقق من إعدادات جهازك.",
     "iosSettingsInstructions": "اذهب إلى الإعدادات ← Safari ← الكاميرا ← السماح",
     "androidSettingsInstructions": "اذهب إلى الإعدادات ← التطبيقات ← المتصفح ← الصلاحيات ← الكاميرا ← السماح"
@@ -144,13 +152,16 @@
     "obstruction": "الزجاجة محجوبة جزئياً - تأكد من رؤية الزجاجة كاملة",
     "reflection": "تم اكتشاف انعكاس قوي - جرب زاوية مختلفة",
     "retake": "إعادة التقاط",
-    "mlLeft": "مل متبقٍ",
+    "mlLeft": "مل متبقية",
     "kcalConsumed": "سعرة حرارية مستهلكة",
     "volume": "الحجم",
     "tablespoons": "ملاعق كبيرة",
     "cups": "أكواب",
     "scanAnother": "مسح زجاجة أخرى",
-    "thankYouTitle": "شكراً!",
+    "plannedConsumption": "الاستهلاك المخطط له",
+    "adjustToMeasure": "قم بالقياس",
+    "thankYouTitle": "شكراً لك!",
+
     "feedbackThanksMessage": "ملاحظاتك تساعد في تحسين التقديرات المستقبلية.",
     "qualityIssuesTitle": "مشاكل في جودة الصورة:",
     "confidenceHighSr": "قراءة دقيقة جداً",
@@ -524,6 +535,7 @@
     "notFound": "الصفحة غير موجودة"
   },
   "bottles": {
-    "afia-corn-1.5l": "زيت الذرة الصافي من عافية ١.٥ لتر"
+    "afia-corn-1.5l": "زيت الذرة الصافي من عافية ١.٥ لتر",
+    "afia-corn-2.5l": "زيت ذرة عافية نقي 2.5 لتر"
   }
 }

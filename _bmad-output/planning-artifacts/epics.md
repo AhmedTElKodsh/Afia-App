@@ -268,9 +268,13 @@ As a developer, I want the Worker to integrate Gemini with Groq fallback, so tha
 **Acceptance Criteria:**
 - **Given** a valid /analyze request payload
 - **When** calling the AI providers
-- **Then** it calls Gemini 2.5 Flash with a structured JSON prompt
-- **And** it automatically falls back to Groq Llama 4 Scout if Gemini returns 429/5xx
+- **Then** it calls Gemini using a round-robin key pool (`GEMINI_KEY_1..GEMINI_KEY_N`, min 2 keys)
+- **And** on 429 it advances to the next key in the pool; pool exhausted → falls to Groq Llama 4 Scout
+- **And** on 5xx it retries once then advances to next key or falls to Groq
+- **And** the LLM prompt includes 2 low-resolution reference images (100% and 25% fill) as few-shot visual anchors stored as Worker environment assets; combined overhead < 15KB
+- **And** it automatically falls back to Groq Llama 4 Scout if entire Gemini key pool fails
 - **And** the response follows the schema: `{"fillPercentage": number, "confidence": "high|medium|low", "imageQualityIssues": string[], "reasoning": string}`
+- **And** the Worker stores `llmKeyIndex` (which key produced the result) in the inference metadata record
 - **And** the total round-trip completes in under 8 seconds (p95)
 
 ---
@@ -335,19 +339,59 @@ As a user, I want to see detailed volume and nutrition panels, so that I underst
 - **And** I see a distinct "Nutrition Facts" panel with Calories and Fat data.
 - **And** all text/background combinations meet WCAG 2.1 AA contrast ratios.
 
+### Story 3.3: Consumption Measurement Slider
+As a user, I want a slider on the result screen that helps me measure how much oil I'm about to use in cooking, so that I can track my portions in familiar cup units.
+**Acceptance Criteria:**
+- **Given** I am on the Result screen and remaining oil >= 55ml
+- **When** the screen renders
+- **Then** a vertical Radix slider appears beside the bottle image, anchored at the confirmed fill level (top = current oil level)
+- **And** the slider moves in 55ml steps; minimum value = 0 (no movement); maximum = remaining oil
+- **And** below the slider, a cup visualization updates at each step:
+  - 55ml → "½ Cup" (half-filled SVG cup icon)
+  - 110ml → "1 Cup" (full SVG cup icon)
+  - 165ml → "1½ Cups" (half-filled + full icons)
+  - pattern: n × 55ml = n/2 Cups; icon alternates half/full per step
+- **And** secondary text shows "Remaining after use: {remainingMl - selectedMl}ml" in real time
+- **And** haptic feedback fires on each 55ml increment (if device supports)
+- **And** the bottle fill line does NOT change (slider is measurement-only, not a new fill confirmation)
+- **Given** remaining oil < 55ml
+- **When** the screen renders
+- **Then** the slider is hidden and replaced with "Less than ½ cup remaining (Nml)"
+- **And** the component uses CSS logical properties for RTL layout support
+- **Dependencies:** Story 2.3 (confirmedFillMl), Story 3.1 (volumeCalculator)
+- **Component:** `<ConsumptionSlider />` (new)
+- **AR:** Radix UI Slider (vertical), consistent with Epic 2 slider
+
 ---
 
 ## Epic 4: Feedback Loop & Data Quality
 
-### Story 4.1: Data Persistence (R2 Storage)
-As a developer, I want every scan and correction stored in R2, so that we can build a training dataset for AI improvement.
+### Story 4.1: Data Persistence (R2 Storage + Supabase)
+As a developer, I want every scan and correction stored in R2 and training-eligible records mirrored to Supabase, so that we can build a training dataset for AI improvement.
 **Acceptance Criteria:**
 - **Given** a scan is processed or feedback is submitted
 - **When** stored by the Worker
 - **Then** the image is saved to `images/{scanId}.jpg`
-- **And** metadata (sku, timestamp, provider, estimates, confidence) is saved to `metadata/{scanId}.json`.
-- **And** user corrections are appended to the metadata record.
-- **And** if R2 write fails, the error is logged but the user still sees their result.
+- **And** metadata is saved to `metadata/{scanId}.json` using the `inference` block schema:
+  ```json
+  {
+    "inference": {
+      "localModelResult": null,
+      "localModelConfidence": null,
+      "localModelVersion": null,
+      "llmFallbackUsed": true,
+      "llmProvider": "gemini-2.5-flash",
+      "llmKeyIndex": 2,
+      "llmFillPercentage": 42,
+      "llmConfidence": "high",
+      "llmLatencyMs": 2340
+    }
+  }
+  ```
+- **And** user corrections are appended to the metadata record
+- **And** when `trainingEligible` becomes `true`, the Worker writes a corresponding row to the Supabase `training_samples` table (async, non-blocking)
+- **And** if R2 write fails, the error is logged but the user still sees their result
+- **And** if Supabase write fails, the error is logged but does not affect user-facing response
 
 ### Story 4.2: Confidence & Feedback UI
 As a user, I want to see confidence indicators and provide quick accuracy feedback, so that I can help improve the system.
@@ -407,3 +451,142 @@ As a developer, I want a GitHub Actions pipeline that runs tests and deploys aut
 - **And** it blocks deployment if any test fails
 - **And** it automatically deploys the frontend to Cloudflare Pages on success
 - **And** it automatically deploys the worker via `wrangler-action@v3` on success
+
+---
+
+## Epic 6: Admin Dashboard
+_Track C — begins after Epic 4 complete (requires real scan data in R2/Supabase)_
+
+### Story 6.1: Admin Authentication
+As Ahmed (admin), I want a password-protected admin area, so that scan data and corrections are only accessible to me.
+**Acceptance Criteria:**
+- **Given** I navigate to `/admin`
+- **When** no valid session token exists in localStorage
+- **Then** I see a password prompt
+- **And** submitting correct password → `POST /admin/auth` → receives session token stored in localStorage with 24h expiry
+- **And** submitting wrong password → 401 error displayed
+- **Given** a valid session token exists
+- **When** I navigate to `/admin`
+- **Then** I am taken directly to the scan list (Story 6.2)
+- **And** all `/admin/*` Worker routes validate `Authorization: Bearer <token>` against `ADMIN_SECRET`
+
+### Story 6.2: Scan Review Dashboard
+As Ahmed, I want to browse all scans with filter and detail view, so that I can identify inaccurate readings efficiently.
+**Acceptance Criteria:**
+- **Given** I am authenticated at `/admin`
+- **When** the dashboard loads
+- **Then** I see a paginated list of scans (20/page, newest first)
+- **And** each row shows: thumbnail (60×60px), SKU, date, LLM fill %, local model result ("—" if null), trainingEligible badge
+- **And** filter tabs: [All] [Training-eligible] [Needs review] [Admin uploads]
+- **Given** I tap a scan row
+- **When** the detail view opens
+- **Then** I see the full image, inference panel (LLM result vs local model side by side), user feedback (if any), and current trainingEligible status
+
+### Story 6.3: Admin Correction Flow
+As Ahmed, I want to flag and correct inaccurate scan readings, so that the training data has reliable ground-truth labels.
+**Acceptance Criteria:**
+- **Given** I am on a scan detail view
+- **When** I tap an accuracy button
+- **Then** [Too Big] [Too Small] [Correct] [Way Off] buttons are shown
+- **And** tapping "Correct" → marks trainingEligible: true with no correction entry
+- **And** tapping any other button → shows "Correct fill %" text input AND [Run LLM Again] button
+- **Given** I enter a manual fill % and tap Save
+- **When** the Worker processes the correction
+- **Then** R2 metadata is updated with `adminCorrection: { correctedFillPct, by: "admin", method: "manual", at: timestamp }`
+- **And** `trainingEligible` is set to `true`
+- **And** a Supabase `training_samples` row is upserted with `label_source: "admin_correction"`, `label_confidence: 1.0`
+- **Given** I tap [Run LLM Again]
+- **When** the Worker re-calls the LLM (using key rotation)
+- **Then** result is stored in `adminLlmResult` field in R2 metadata
+- **And** displayed in the scan detail view alongside original result
+
+### Story 6.4: Admin Image Upload
+As Ahmed, I want to upload labeled images directly, so that I can seed the training dataset with high-quality examples.
+**Acceptance Criteria:**
+- **Given** I am on the admin dashboard
+- **When** I tap "Upload Image"
+- **Then** I see a form: image file picker (JPEG/PNG, max 4MB), SKU dropdown (from bottleRegistry), fill level % slider (0–100, step 1), notes textarea (optional)
+- **Given** I submit the form
+- **When** the Worker processes the upload
+- **Then** image is stored to R2 as `images/admin-{uuid}.jpg`
+- **And** metadata is written with `source: "admin_upload"`, `trainingEligible: true`
+- **And** Supabase row inserted with `label_source: "admin_upload"`, `label_confidence: 1.0`
+- **And** the upload appears in the scan list with "Admin Upload" badge
+
+### Story 6.5: Training Data Export
+As Ahmed, I want to export training-eligible scans as CSV, so that I can feed them into the model training pipeline.
+**Acceptance Criteria:**
+- **Given** I am on the admin dashboard
+- **When** I tap "Export training-eligible scans (CSV)"
+- **Then** a CSV file downloads containing: scanId, imageUrl, confirmedFillPct, labelSource, correctionMethod, sku, timestamp
+- **And** only `trainingEligible: true` records are included
+- **And** the export completes within 5 seconds for up to 10,000 records
+
+---
+
+## Epic 7: Local Model + Training Pipeline
+_Track B/D — Supabase infrastructure (7.1) deploys at POC launch; CNN model (7.3–7.5) gates on 500 training-eligible scans (~Month 4–6)_
+
+### Story 7.1: Supabase Training Database
+As a developer, I want training-eligible scan data mirrored to Supabase, so that we have a queryable, structured dataset for model training.
+**Acceptance Criteria:**
+- **Given** a scan's `trainingEligible` becomes `true`
+- **When** the Worker processes the event (scan completion or admin correction)
+- **Then** a row is inserted/upserted in Supabase `training_samples` table with all required fields (see architecture Section 15)
+- **And** `label_confidence` is set per source: admin_correction/upload → 1.0, user_feedback (validated) → 0.85, llm_only (high conf) → 0.60
+- **And** `split` is assigned at insert time (80% train / 10% val / 10% test)
+- **And** Supabase write is async and non-blocking (does not affect user-facing p95)
+- **And** write failures are logged to Worker console, not surfaced to users
+
+### Story 7.2: Training Data Augmentation Pipeline
+As a developer, I want an augmentation script that multiplies training samples, so that we reach model training threshold faster.
+**Acceptance Criteria:**
+- **Given** base training samples in Supabase where `augmented = false`
+- **When** the augmentation script runs (manual trigger or CI scheduled job)
+- **Then** it generates ~8 variants per image: brightness ±20%, contrast ±15%, horizontal flip, rotation ±5°, JPEG quality variation (0.6–0.95)
+- **And** each variant is written to R2 and a new Supabase row inserted with `augmented: true`
+- **And** the script is idempotent (re-running does not create duplicate variants)
+- **And** training activation threshold is 500 base (non-augmented) training-eligible scans
+
+### Story 7.3: TF.js CNN Regressor — Training & Deployment
+As a developer, I want a trained TF.js fill-level regressor deployed to R2, so that the PWA can run on-device inference.
+**Acceptance Criteria:**
+- **Given** 500+ training-eligible base scans available in Supabase
+- **When** training script runs (Python, Colab or local GPU)
+- **Then** it trains MobileNetV3-Small backbone + single sigmoid regression head using Huber loss
+- **And** achieves validation MAE ≤ 10% on held-out val split
+- **And** exports TF.js LayersModel format: `model.json` + weight shards
+- **And** files are uploaded to R2 at `models/fill-regressor/v{semver}/model.json`
+- **And** a row is inserted into Supabase `model_versions` table with version, MAE, val_accuracy, training_samples_count, r2_key, is_active: true
+
+### Story 7.4: Client-Side Model Integration & Fallback Routing
+As a user, I want the app to use on-device AI for fill estimation when available, so that analysis is faster, cheaper, and works offline.
+**Acceptance Criteria:**
+- **Given** the PWA loads for the first time after model deployment
+- **When** the user initiates analysis
+- **Then** the model is lazy-loaded from R2, cached in IndexedDB
+- **And** subsequent loads use the cached model without re-downloading
+- **Given** the model is loaded and produces a result
+- **When** `localModelConfidence >= 0.75`
+- **Then** the local result is used directly; no Worker /analyze call is made
+- **And** the inference record shows `llmFallbackUsed: false`
+- **Given** `localModelConfidence < 0.75` or model not yet loaded
+- **When** analysis runs
+- **Then** the PWA falls through to Worker /analyze (existing LLM path)
+- **And** the request body includes `localModelResult` and `localModelConfidence` for storage
+- **And** `llmFallbackUsed: true` in metadata
+
+### Story 7.5: Model Version Management
+As a developer, I want the PWA to automatically pick up new model versions, so that improvements deploy without user action.
+**Acceptance Criteria:**
+- **Given** the PWA loads
+- **When** it checks `GET /model/version`
+- **Then** it compares the response version against the cached model version in IndexedDB
+- **And** if a newer version is available, re-downloads the model and updates IndexedDB cache
+- **Given** Ahmed deploys a new model version in Supabase `model_versions`
+- **When** `is_active` is set to `true` for the new version
+- **Then** the next PWA load detects and downloads the update
+- **And** the Admin dashboard (Story 6.2) shows current model version, MAE, and training sample count
+- **Given** a model version causes accuracy regression
+- **When** Ahmed sets the previous version's `is_active` to `true` in Supabase
+- **Then** PWA reverts to the previous model on next load

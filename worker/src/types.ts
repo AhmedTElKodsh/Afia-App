@@ -22,6 +22,7 @@ export interface Env {
 }
 
 export interface LLMResponse {
+  brand: "Afia" | "unknown";
   fillPercentage: number;
   confidence: "high" | "medium" | "low";
   imageQualityIssues?: string[];

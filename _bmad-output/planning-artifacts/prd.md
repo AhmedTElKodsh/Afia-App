@@ -154,7 +154,7 @@ The POC targets a single oil company's bottle lineup (2–3 SKUs, clear glass, k
 | 2–3 registered bottle SKUs (clear glass)  | Minimum to demonstrate the pattern        |
 | CI/CD (GitHub Actions → Cloudflare)       | Maintainable deployment                   |
 
-**Accepted POC constraints:** Starting level = 100% (full bottle); clear glass only; no user accounts; no admin dashboard; privacy notice as inline text.
+**Accepted POC constraints:** Starting level = 100% (full bottle); clear glass only; no user accounts; privacy notice as inline text.
 
 **🚨 CRITICAL POC LIMITATION — Full Bottle Baseline:**
 
@@ -174,13 +174,13 @@ This POC assumes the user's first scan occurs when the bottle is brand new (100%
 - User accounts (email/social login) + scan history timeline
 - Custom starting level ("My bottle is already half used")
 - Push notifications ("Time to restock?")
-- Additional SKUs + admin dashboard for feedback review
+- Additional SKUs
 
-### Phase 3 — Model Intelligence (100+ Scans)
+### Phase 3 — Model Intelligence (~Month 4–6, 500+ Training-Eligible Scans)
 
-- Prompt refinement from error pattern analysis (50+ scans)
-- Few-shot examples in LLM prompt (100+ scans)
-- Fine-tune Qwen2.5-VL 7B on validated pairs (500+ scans)
+- **Epic 7 local model pipeline activates** at 500 training-eligible scans
+- TF.js MobileNetV3-Small CNN regressor deployed as primary inference route (FR45/FR46)
+- Supabase training database + augmentation pipeline (Epic 7.1/7.2) deployed at POC launch to accumulate training data immediately — gated activation at 500 base scans
 - Fine-tune Gemini Flash via Google AI Studio (1,000+ scans)
 - Layer 2 statistical outlier detection on feedback
 
@@ -399,6 +399,27 @@ WCAG 2.1 AA — pragmatic POC implementation:
 - FR38: User can view a brief notice explaining that scan images are stored for AI model improvement before their first scan
 - FR39: The app can display a disclaimer that results are estimates (±15%) and not certified nutritional analysis
 
+### Multi-Provider Key Management
+
+- FR40: The Worker maintains a pool of GEMINI_KEY_1..GEMINI_KEY_N secrets (minimum 2); rotates round-robin per request; on 429 advances to next key; pool exhausted → falls to Groq fallback
+- FR41: The LLM prompt includes 2 low-resolution reference images (100% and 25% fill levels) as few-shot visual anchors; combined overhead < 15KB per request
+
+### Consumption Measurement
+
+- FR42: The result screen displays a vertical consumption tracking slider anchored at the confirmed fill level; steps of 55ml; minimum step 55ml; slider stops at last valid step if remaining < 55ml
+- FR43: The slider drives a cup visualization below it: n × 55ml = n/2 cups displayed as SVG cup icons (half-filled at odd steps, full at even steps); "Remaining after use: Nml" updates in real time
+
+### Training Data Pipeline
+
+- FR44: A Supabase Postgres database stores training-eligible scan records: image URL, confirmed fill %, label source, confidence weight, augmentation flag, train/val/test split
+- FR45: A TF.js MobileNetV3-Small CNN regressor runs client-side; lazy-loaded from Cloudflare R2 (~5MB); cached in IndexedDB; inference target < 50ms; MAE target ≤ 10%
+- FR46: The client routes inference to the local model when confidence ≥ 0.75; falls through to the LLM Worker when below threshold or model not yet loaded
+
+### Admin Dashboard
+
+- FR47: An authenticated admin can view all scans (image + LLM result + local model result), flag accuracy (too big / too small / correct / way off), manually correct fill %, or re-run LLM on any scan; correction written to R2 metadata and Supabase training record
+- FR48: An authenticated admin can upload an image with SKU, fill level annotation, and optional notes; upload auto-marked training-eligible with label_source = admin_upload
+
 ---
 
 ## Non-Functional Requirements
@@ -414,10 +435,14 @@ WCAG 2.1 AA — pragmatic POC implementation:
 | Image compression (canvas resize + JPEG)     | < 500ms     | Client-side, before transmission                              |
 | Feedback submission round-trip               | < 1 second  | POST /feedback → Worker → response                            |
 | JS bundle size (gzipped)                     | < 200KB     | QR lib 35KB + React 45KB + app logic                          |
+| Local model inference (p95)                  | < 50ms      | Client-side TF.js MobileNetV3, after model loaded (NFR-30)    |
+| Local model lazy-load — first time (4G)      | < 8 seconds | ~5MB model from R2 CDN edge (NFR-31)                          |
+| Supabase training record write               | < 500ms     | Async, non-blocking — does not affect user-facing p95 (NFR-32)|
 
 ### Security
 
-- `GEMINI_API_KEY` and `GROQ_API_KEY` stored only as Cloudflare Worker secrets — never in client code, git history, or `wrangler.toml`
+- `GEMINI_KEY_1..GEMINI_KEY_N` and `GROQ_API_KEY` stored only as Cloudflare Worker secrets — never in client code, git history, or `wrangler.toml`
+- `ADMIN_SECRET` stored as Cloudflare Worker secret; validates all `/admin/*` route access
 - All Worker endpoints validate request origin against allowlist (production domain + localhost)
 - Worker enforces ≤10 requests/IP/minute via KV-backed sliding window rate limiter
 - Worker rejects payloads > 4MB

@@ -46,24 +46,56 @@ describe('analyzeComposition', () => {
   }
 
   it('TC1: bottle-shaped region (narrow neck, wide body) → bottleDetected true, distance good', () => {
-    // bbox: x=20–40 (bboxWidth=20), y=10–90 (bboxHeight=80) → aspectRatio=20/80=0.25 ≤ 0.75 ✓
+    // bbox: x=18–42 (bboxWidth=24), y=10–90 (bboxHeight=80) → aspectRatio=24/80=0.30 ≤ 0.75 ✓
     // neck zone = top 25% of bbox = rows 10–30 (neckRows=20); pixels at x=28–32 (4 wide)
-    //   neckTotal = 20×4 = 80; neckDensity = 80/(20×20) = 0.20
-    // body zone = bottom 60% of bbox = rows 42–90 (bodyRows=48); pixels at x=20–40 (20 wide)
-    //   bodyTotal = 48×20 = 960; bodyDensity = 960/(48×20) = 1.0
-    // 0.20 < 0.40×1.0 → neck sparsity gate passes ✓
-    // spanFraction = 80/100 = 0.80 → within 0.55–0.90 → distance 'good' ✓
-    // widthFraction = 20/60 ≈ 0.33 ≥ 0.20 ✓
+    //   neckTotal = 20×4 = 80; neckDensity = 80/(20×24) = 0.166
+    // body zone = bottom 60% of bbox = rows 42–90 (bodyRows=48); pixels at x=18–42 (24 wide)
+    //   bodyTotal = 48×24 = 1152; bodyDensity = 1152/(48×24) = 1.0
+    // 0.166 < 0.40×1.0 → neck sparsity gate passes ✓
+    // spanFraction = 80/100 = 0.80 → within 0.55–0.90 → verticalOk ✓
+    // widthFraction = 24/60 = 0.40 → ≥ 0.35 → horizontalOk ✓
     // centroidX ≈ 0.5 → isCentered ✓
     const pixels = makePixels((x, y) => {
       if (y >= 10 && y < 30 && x >= 28 && x < 32) return GREEN; // narrow neck
-      if (y >= 30 && y < 90 && x >= 20 && x < 40) return AMBER; // wide body
+      if (y >= 30 && y < 90 && x >= 18 && x < 42) return AMBER; // wide body
       return BLACK;
     });
     mockCanvas(pixels);
     const result = analyzeComposition(document.createElement('canvas') as unknown as HTMLVideoElement);
     expect(result.bottleDetected).toBe(true);
     expect(result.distance).toBe('good');
+    expect(result.widthFraction).toBeCloseTo(0.40);
+    expect(result.centroidX).toBeCloseTo(0.5, 1);
+    expect(result.isBrandMatch).toBeDefined();
+  });
+
+  it('TC1b: too narrow bottle → distance too-far', () => {
+    // bboxWidth=18 (18/60 = 0.30) < 0.35 threshold
+    const pixels = makePixels((x, y) => {
+      if (y >= 10 && y < 30 && x >= 28 && x < 32) return GREEN;
+      if (y >= 30 && y < 90 && x >= 21 && x < 39) return AMBER;
+      return BLACK;
+    });
+    mockCanvas(pixels);
+    const result = analyzeComposition(document.createElement('canvas') as unknown as HTMLVideoElement);
+    expect(result.bottleDetected).toBe(true);
+    expect(result.distance).toBe('too-far');
+    expect(result.widthFraction).toBeCloseTo(0.30);
+  });
+
+  it('TC1c: off-centre bottle → distance too-far', () => {
+    // bboxWidth=24, but shifted right: x=30–54
+    // centroidX ≈ 42/60 = 0.70. |0.70 - 0.5| = 0.20 > 0.15 limit.
+    const pixels = makePixels((x, y) => {
+      if (y >= 10 && y < 30 && x >= 40 && x < 44) return GREEN;
+      if (y >= 30 && y < 90 && x >= 30 && x < 54) return AMBER;
+      return BLACK;
+    });
+    mockCanvas(pixels);
+    const result = analyzeComposition(document.createElement('canvas') as unknown as HTMLVideoElement);
+    expect(result.bottleDetected).toBe(true);
+    expect(result.isCentered).toBe(false);
+    expect(result.distance).toBe('too-far');
   });
 
   it('TC2: wide squat shape → not-detected (aspect ratio gate)', () => {

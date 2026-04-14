@@ -305,12 +305,35 @@
   cursor: not-allowed;
 }
 
+.bottle-guide-wrapper.manual-mode {
+  animation: none !important;
+  opacity: 0.4;
+}
+
+.bottle-guide-wrapper.manual-mode .bottle-guide-svg {
+  filter: grayscale(1);
+}
+
 .camera-capture-btn.secondary {
-  width: 64px;
-  height: 64px;
-  border-width: 3px;
-  background: rgba(0, 0, 0, 0.3);
+  width: 140px;
+  height: 44px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   bottom: var(--space-xl);
+  pointer-events: auto;
+}
+
+.camera-capture-btn.secondary:disabled {
+  opacity: 0.3;
+  filter: grayscale(1);
+}
+
+.camera-capture-btn.secondary:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateX(-50%) scale(0.98);
 }
 
 .capture-btn-inner {
@@ -591,6 +614,108 @@
   text-align: center;
   letter-spacing: 0.03em;
   white-space: nowrap;
+}
+
+/* ========================================
+   Enhanced Guidance UI (Task 4)
+   ======================================== */
+
+.onboarding-toast {
+  position: absolute;
+  top: 25%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  z-index: 150;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  animation: toastFadeIn 0.4s ease-out, toastFadeOut 0.4s ease-in 2.6s forwards;
+  pointer-events: none;
+  width: 80%;
+  max-width: 300px;
+}
+
+@keyframes toastFadeIn {
+  from { opacity: 0; transform: translate(-50%, -40%); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+@keyframes toastFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.tilt-guidance-container {
+  position: absolute;
+  top: 110%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: #f59e0b;
+  animation: tiltPulse 1.5s ease-in-out infinite;
+}
+
+.tilt-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+@keyframes tiltPulse {
+  0%, 100% { transform: translateY(0); opacity: 0.8; }
+  50% { transform: translateY(10px); opacity: 1; }
+}
+
+.tilt-arrow.tilt-up {
+  flex-direction: column-reverse;
+  animation: tiltUpMove 1s ease-in-out infinite;
+}
+
+@keyframes tiltUpMove {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.motion-permission-btn {
+  pointer-events: auto;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  margin-bottom: 8px;
+}
+
+.bottle-guide-wrapper.manual-only {
+  opacity: 0.6;
+}
+
+.manual-hint {
+  color: #ffffff;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.generic-guide-frame {
+  width: 130px;
+  height: 210px;
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
 }
 
 /* ========================================

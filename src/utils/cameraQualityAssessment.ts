@@ -68,6 +68,8 @@ export interface CompositionAssessment {
   widthFraction: number;
   /** Horizontal centroid of matched pixels, normalised 0–1 (0 = left, 1 = right); 0.5 when not detected */
   centroidX: number;
+  /** Brand verification status (Stage 0.5) */
+  isBrandMatch: boolean;
 }
 
 /**
@@ -337,7 +339,7 @@ export function analyzeComposition(
     const BBOX_MIN_HEIGHT        = 8;     // minimum bbox height in canvas rows
     const NECK_TOP_FRACTION      = 0.25;  // top 25% of bbox = neck zone
     const NECK_BODY_FRACTION     = 0.60;  // bottom 60% of bbox = body zone
-    const NECK_MAX_DENSITY_RATIO = 0.40;  // neck pixel density < 40% of body density
+    const NECK_MAX_DENSITY_RATIO = 0.50;  // neck pixel density < 50% of body density (was 40%)
     // ── Processing canvas — destination stays fixed ───────────────────────────
     const W = 60;
     const H = 100;
@@ -357,7 +359,7 @@ export function analyzeComposition(
       || H;
     // Video metadata not yet loaded — canvas would contain only black pixels.
     if (srcW === 0 || srcH === 0) {
-      return { isCentered: false, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: false, widthFraction: 0, centroidX: 0.5 };
+      return { isCentered: false, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: false, widthFraction: 0, centroidX: 0.5, isBrandMatch: false };
     }
     const cropX = srcW * CROP_X_START;
     const cropW = srcW * (CROP_X_END - CROP_X_START);
@@ -429,14 +431,15 @@ export function analyzeComposition(
         bottleDetected: false,
         widthFraction: 0,
         centroidX: 0.5,
+        isBrandMatch: false,
       };
     }
 
     // Gate 1b: bounding box too small for reliable shape checks
-    const bboxHeight = maxRow - minRow;
-    const bboxWidth  = maxCol - minCol;
+    const bboxHeight = maxRow - minRow + 1;
+    const bboxWidth  = maxCol - minCol + 1;
     if (bboxHeight < BBOX_MIN_HEIGHT || bboxWidth < 2) {
-      return { isCentered: false, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: false, widthFraction: 0, centroidX: 0.5 };
+      return { isCentered: false, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: false, widthFraction: 0, centroidX: 0.5, isBrandMatch: false };
     }
 
     // Centroid X — computed before shape gates so all early returns use the real value.
@@ -447,7 +450,7 @@ export function analyzeComposition(
     // Gate 2: aspect ratio — bottle must be taller than wide (Afia 1.5L ≈ 0.62)
     const aspectRatio = bboxWidth / bboxHeight;
     if (aspectRatio > BOTTLE_ASPECT_MAX) {
-      return { isCentered, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: true, widthFraction: bboxWidth / W, centroidX };
+      return { isCentered, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: true, widthFraction: bboxWidth / W, centroidX, isBrandMatch: false };
     }
 
     // Gate 3: neck sparsity — top 25% of bbox must be sparser than bottom 60%
@@ -460,28 +463,31 @@ export function analyzeComposition(
     const neckDensity = neckTotal / (neckRows * bboxWidth);
     const bodyDensity = bodyTotal / (bodyRows * bboxWidth);
     if (bodyDensity === 0 || neckDensity >= NECK_MAX_DENSITY_RATIO * bodyDensity) {
-      return { isCentered, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: true, widthFraction: bboxWidth / W, centroidX };
+      return { isCentered, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: true, widthFraction: bboxWidth / W, centroidX, isBrandMatch: false };
     }
 
     const spanFraction  = bboxHeight / H;
     const widthFraction = bboxWidth / W;
 
     // Spec §4.2: matched region too short for confident classification even after shape gates.
-    // TODO: tune widthFraction < 0.20 threshold after device testing (spec §4.1 table uses 0.35).
     if (spanFraction < 0.30) {
-      return { isCentered, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: true, widthFraction, centroidX };
+      return { isCentered, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: true, widthFraction, centroidX, isBrandMatch: false };
     }
 
-    // 'good' requires: vertical 55–90 %, width ≥ 20 %, and centred.
+    // 'good' requires: vertical 55–90 %, width ≥ 35 %, and centred.
     // Any single failure → 'too-far' (amber); span > 90 % → 'too-close'.
     let distance: 'too-close' | 'too-far' | 'good';
     if (spanFraction > 0.90) {
       distance = 'too-close';
-    } else if (spanFraction < 0.55 || widthFraction < 0.20 || !isCentered) {
+    } else if (spanFraction < 0.55 || widthFraction < 0.35 || !isCentered) {
       distance = 'too-far';
     } else {
       distance = 'good';
     }
+
+    // Call brand detection if bottle is detected and at reasonable distance
+    const brandResult = verifyBrandAfia(imageSource);
+    const isBrandMatch = brandResult.isMatch;
 
     return {
       isCentered,
@@ -491,6 +497,7 @@ export function analyzeComposition(
       bottleDetected: true,
       widthFraction,
       centroidX,
+      isBrandMatch,
     };
   } catch (error) {
     console.error('Composition analysis error:', error);
@@ -523,9 +530,9 @@ function generateGuidanceMessage(
   }
 
   if (composition.distance === 'too-far') {
-    // Spec §4.3: only show centreBottle when span is adequate (>=55%) but bottle is off-centre.
-    // If span < 55% the primary fix is distance, not centering — show moveCloser instead.
-    if (!composition.isCentered && composition.visibility >= 55) {
+    // Spec §4.3: only show centreBottle when span is adequate but bottle is off-centre.
+    // We use visibility > 30 as threshold for "adequately visible to be centered".
+    if (!composition.isCentered && composition.visibility > 30) {
       return { message: 'camera.centreBottle', type: 'warning' };
     }
     return { message: 'camera.moveCloser', type: 'warning' };
@@ -546,6 +553,11 @@ function generateGuidanceMessage(
 
   if (lighting.status === 'low-contrast') {
     return { message: 'camera.lowContrast', type: 'warning' };
+  }
+
+  // New specific guidance for Stage 1 rejection
+  if (!lighting.isAcceptable) {
+    return { message: 'camera.enhanceLighting', type: 'error' };
   }
 
   // Blur
@@ -694,3 +706,119 @@ export const _testUtils = {
   calculateContrast,
   generateGuidanceMessage,
 };
+
+/**
+ * Stage 0.5: Brand verification for Afia.
+ * Heuristic-based detection using color segmentation and spatial layout.
+ * 
+ * Logic:
+ * 1. Find Green Label Band (Base)
+ * 2. Find Red Heart Logo (Inside band)
+ * 3. Find High-Contrast Text Region (Arabic/English "Afia")
+ */
+export function verifyBrandAfia(
+  imageSource: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
+): { isMatch: boolean; confidence: number; findings: string[] } {
+  try {
+    const { canvas, ctx } = getProcessingCanvas();
+    const W = 80; // Increased resolution for better text/detail check
+    const H = 80;
+    canvas.width = W;
+    canvas.height = H;
+
+    const srcW = (imageSource as HTMLVideoElement).videoWidth || (imageSource as HTMLImageElement).naturalWidth || W;
+    const srcH = (imageSource as HTMLVideoElement).videoHeight || (imageSource as HTMLImageElement).naturalHeight || H;
+    
+    // ROI: The label area (middle 40% of bottle height, center 60% width)
+    ctx.drawImage(imageSource, srcW * 0.2, srcH * 0.3, srcW * 0.6, srcH * 0.4, 0, 0, W, H);
+    const imageData = ctx.getImageData(0, 0, W, H);
+    const data = imageData.data;
+
+    let greenPixels = 0;
+    let redPixels = 0;
+    let highContrastPixels = 0;
+    const findings: string[] = [];
+
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      
+      // RGB → HSV
+      const rN = r / 255, gN = g / 255, bN = b / 255;
+      const max = Math.max(rN, gN, bN);
+      const min = Math.min(rN, gN, bN);
+      const delta = max - min;
+      const v = max * 100;
+      const s = max > 0 ? (delta / max) * 100 : 0;
+      let h = 0;
+      if (delta > 0) {
+        if (max === rN)      h = ((gN - bN) / delta % 6) * 60;
+        else if (max === gN) h = ((bN - rN) / delta + 2) * 60;
+        else                 h = ((rN - gN) / delta + 4) * 60;
+        if (h < 0) h += 360;
+      }
+
+      // Afia Green: H 90-160, S>30, V>20
+      const isGreen = h >= 90 && h <= 160 && s > 30 && v > 20;
+      // Afia Heart Red: H 0-15 or 330-360, S>45, V>35
+      const isRed = ((h >= 0 && h <= 15) || (h >= 330 && h <= 360)) && s > 45 && v > 35;
+      
+      // Text Check: High brightness variation or white-ish pixels
+      // Afia text is white or very bright yellow
+      const isTextCandidate = v > 80 && s < 25; // Bright white-ish
+
+      if (isGreen) greenPixels++;
+      if (isRed) redPixels++;
+      if (isTextCandidate) highContrastPixels++;
+    }
+
+    const total = W * H;
+    const greenRatio = greenPixels / total;
+    const redRatio = redPixels / total;
+    const textRatio = highContrastPixels / total;
+
+    let confidence = 0;
+    if (greenRatio > 0.10) { confidence += 40; findings.push("green_band"); }
+    if (redRatio > 0.005) { confidence += 30; findings.push("heart_logo"); }
+    if (textRatio > 0.01) { confidence += 30; findings.push("text_contrast"); }
+
+    // Logic: Afia needs both Green + (Red or Text) to be verified
+    const isMatch = greenRatio > 0.08 && (redRatio > 0.003 || textRatio > 0.008);
+
+    return { isMatch, confidence, findings };
+  } catch (error) {
+    console.error("Brand verification error:", error);
+    return { isMatch: false, confidence: 0, findings: [] };
+  }
+}
+
+/**
+ * Legacy wrapper for backward compatibility
+ * @deprecated Use verifyBrandAfia
+ */
+export function detectHeartLogo(
+  imageSource: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
+): boolean {
+  return verifyBrandAfia(imageSource).isMatch;
+}
+
+/**
+ * Device orientation guidance.
+ * Compares current tilt against optimal capture angle.
+ * 
+ * @param beta - Tilt in degrees (front-to-back)
+ * @returns 'good' | 'tilt-up' | 'tilt-down'
+ */
+export function getAngleGuidance(beta: number | null): 'good' | 'tilt-up' | 'tilt-down' {
+  if (beta === null) return 'good';
+  
+  // Optimal angle for bottle scan is typically near vertical (~80-90 deg)
+  // or slightly tilted depending on how the user holds it.
+  // Assuming 90 is vertical.
+  const targetAngle = 90;
+  const tolerance = 10;
+  
+  if (beta < targetAngle - tolerance) return 'tilt-up';
+  if (beta > targetAngle + tolerance) return 'tilt-down';
+  return 'good';
+}
+

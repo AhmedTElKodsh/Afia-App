@@ -3,16 +3,18 @@ import { parseLLMResponse } from './parseLLMResponse';
 
 describe('parseLLMResponse', () => {
   it('should parse valid JSON response', () => {
-    const raw = '{"fillPercentage": 45, "confidence": "high", "reasoning": "Visible line"}';
+    const raw = '{"brand": "Afia", "fillPercentage": 45, "confidence": "high", "reasoning": "Visible line"}';
     const result = parseLLMResponse(raw);
+    expect(result.brand).toBe('Afia');
     expect(result.fillPercentage).toBe(45);
     expect(result.confidence).toBe('high');
     expect(result.reasoning).toBe('Visible line');
   });
 
   it('should parse JSON wrapped in markdown fences', () => {
-    const raw = 'Here is the result:\n```json\n{"fillPercentage": 72, "confidence": "medium", "imageQualityIssues": ["glare"]}\n```';
+    const raw = 'Here is the result:\n```json\n{"brand": "unknown", "fillPercentage": 72, "confidence": "medium", "imageQualityIssues": ["glare"]}\n```';
     const result = parseLLMResponse(raw);
+    expect(result.brand).toBe('unknown');
     expect(result.fillPercentage).toBe(72);
     expect(result.confidence).toBe('medium');
     expect(result.imageQualityIssues).toEqual(['glare']);

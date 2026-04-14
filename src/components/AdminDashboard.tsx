@@ -18,13 +18,20 @@ import {
   X,
   ShieldCheck,
   Shield,
+  Upload,
+  AlertTriangle,
+  History,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { useScanHistory, type StoredScan } from "../hooks/useScanHistory";
 import { exportToCSV, exportToJSON } from "../utils/exportResults";
+import { exportTrainingDataset } from "../utils/trainingExporter";
 import { BottleManager } from "./BottleManager";
 import { QrMockGenerator } from "./QrMockGenerator";
+import { ScanReview, type ScanCorrection } from "./ScanReview";
+import { AdminUpload } from "./AdminUpload";
+import { getAnalyticsEvents } from "../utils/analytics";
 import type { AdminTabItem } from "./AdminTabNav";
 import { MetricCard } from "./MetricCard";
 import { EmptyState } from "./EmptyState";
@@ -35,7 +42,7 @@ const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "";
 const SESSION_KEY = "afia_admin_session";
 const SESSION_EXPIRES_KEY = "afia_admin_session_expires";
 
-type AdminTab = "overview" | "bottles" | "qrmock" | "export";
+type AdminTab = "overview" | "bottles" | "qrmock" | "export" | "upload" | "failures";
 
 interface AdminDashboardProps {
   onAuthSuccess?: () => void;
@@ -51,6 +58,7 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [selectedScan, setSelectedScan] = useState<StoredScan | null>(null);
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -65,7 +73,7 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
     };
   }, [isMobileNavOpen]);
 
-  const { scans, getStats } = useScanHistory();
+  const { scans, getStats, updateFeedback, setScans } = useScanHistory();
   const stats = getStats();
 
   const currentLang = i18n.language || 'en';
@@ -75,8 +83,23 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
     { id: "overview", label: t('admin.tabs.overview'), icon: <LayoutDashboard size={18} /> },
     { id: "bottles", label: t('admin.tabs.bottles'), icon: <Database size={18} /> },
     { id: "qrmock", label: t('admin.tabs.qrmock'), icon: <QrCode size={18} /> },
+    { id: "failures", label: t('admin.tabs.failures', 'Scan Failures'), icon: <AlertTriangle size={18} /> },
+    { id: "upload", label: t('admin.upload.tab', 'Training Upload'), icon: <Upload size={18} /> },
     { id: "export", label: t('admin.tabs.export'), icon: <Download size={18} /> },
   ];
+
+  const handleCorrectionSave = (correction: ScanCorrection) => {
+    // Update local history with ground truth
+    setScans(prev => prev.map(s => 
+      s.id === correction.scanId 
+        ? { ...s, correctedPercentage: correction.actualFillPercentage, feedbackRating: correction.errorCategory === 'none' ? 'about_right' : 'way_off' } 
+        : s
+    ));
+    
+    // In real implementation, this also sends to Supabase
+    console.log("Saving correction to Supabase:", correction);
+    setSelectedScan(null);
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -284,22 +307,45 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
       </header>
 
       <main id="admin-main" className="main">
-        <header className="page-header">
-           <h1 className="page-title">{TABS.find(t => t.id === activeTab)?.label}</h1>
-        </header>
-        <div 
-          className="tab-panel-content" 
-          key={activeTab}
-          role="tabpanel"
-          aria-labelledby={`tab-${activeTab}`}
-        >
-        {activeTab === "overview" && (
-            <OverviewTab stats={stats} scans={scans} onGoToTestLab={() => window.history.back()} t={t} isRTL={isRTL} isLoading={isLoading} />
-          )}
-          {activeTab === "bottles" && <BottleManager />}
-          {activeTab === "qrmock" && <QrMockGenerator />}
-          {activeTab === "export" && <ExportTab scans={scans} t={t} />}
-        </div>
+        {selectedScan ? (
+          <ScanReview 
+            scan={selectedScan} 
+            onBack={() => setSelectedScan(null)} 
+            onSave={(correction) => {
+              console.log("Correction saved:", correction);
+              setSelectedScan(null);
+            }} 
+          />
+        ) : (
+          <>
+            <header className="page-header">
+               <h1 className="page-title">{TABS.find(t => t.id === activeTab)?.label}</h1>
+            </header>
+            <div 
+              className="tab-panel-content" 
+              key={activeTab}
+              role="tabpanel"
+              aria-labelledby={`tab-${activeTab}`}
+            >
+            {activeTab === "overview" && (
+                <OverviewTab 
+                  stats={stats} 
+                  scans={scans} 
+                  onGoToTestLab={() => window.history.back()} 
+                  onReview={(scan) => setSelectedScan(scan)}
+                  t={t} 
+                  isRTL={isRTL} 
+                  isLoading={isLoading} 
+                />
+              )}
+              {activeTab === "bottles" && <BottleManager />}
+              {activeTab === "qrmock" && <QrMockGenerator />}
+              {activeTab === "failures" && <FailuresTab t={t} isRTL={isRTL} />}
+              {activeTab === "export" && <ExportTab scans={scans} t={t} />}
+              {activeTab === "upload" && <AdminUpload />}
+            </div>
+          </>
+        )}
       </main>
     </div>
   );
@@ -354,12 +400,13 @@ interface OverviewTabProps {
   stats: ReturnType<ReturnType<typeof useScanHistory>["getStats"]>;
   scans: ReturnType<typeof useScanHistory>["scans"];
   onGoToTestLab?: () => void;
+  onReview: (scan: StoredScan) => void;
   t: TFunction;
   isRTL: boolean;
   isLoading?: boolean;
 }
 
-function OverviewTab({ stats, scans, onGoToTestLab, t, isRTL, isLoading }: OverviewTabProps) {
+function OverviewTab({ stats, scans, onGoToTestLab, onReview, t, isRTL, isLoading }: OverviewTabProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const maxRecentScans = 50;
@@ -418,6 +465,12 @@ function OverviewTab({ stats, scans, onGoToTestLab, t, isRTL, isLoading }: Overv
           icon={<Droplets size={20} />}
           value={`${stats.totalConsumedMl}${t('common.ml')}`}
           label={t('admin.overview.metrics.totalConsumed')}
+        />
+        <MetricCard
+          icon={<TrendingUp size={20} />}
+          value={stats.mae !== "N/A" ? `${stats.mae}%` : "N/A"}
+          label={t('admin.overview.metrics.mae', 'Model Error (MAE)')}
+          subValue={stats.mae !== "N/A" ? (Number(stats.mae) < 5 ? "Excellent" : "Needs Training") : "Pending Review"}
         />
       </div>
 
@@ -482,6 +535,7 @@ function OverviewTab({ stats, scans, onGoToTestLab, t, isRTL, isLoading }: Overv
                     <th>{t('admin.overview.table.fillPercent')}</th>
                     <th>{t('admin.overview.table.consumed')}</th>
                     <th>{t('admin.overview.table.confidence')}</th>
+                    <th>{t('common.actions', 'Actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -504,6 +558,14 @@ function OverviewTab({ stats, scans, onGoToTestLab, t, isRTL, isLoading }: Overv
                            scan.confidence === 'medium' ? t('results.confidenceMedium') : 
                            t('results.confidenceLow')}
                         </span>
+                      </td>
+                      <td>
+                        <button 
+                          className="btn btn-ghost btn-xs btn-icon-text"
+                          onClick={() => onReview(scan)}
+                        >
+                          <Eye size={14} /> {t('common.edit', 'Review')}
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -657,6 +719,17 @@ function ExportTab({ scans, t }: ExportTabProps) {
             <span className="export-btn-card-sub">{t('admin.export.buttons.subCsv', 'Opens in Excel or Google Sheets')}</span>
           </div>
         </button>
+        <button
+          className="export-btn-card export-btn-card--accent"
+          onClick={() => exportTrainingDataset(scans, "csv")}
+          disabled={scans.length === 0}
+        >
+          <div className="export-btn-card-icon"><Database size={22} /></div>
+          <div className="export-btn-card-body">
+            <span className="export-btn-card-title">{t('admin.export.buttons.exportTraining', 'Training Manifest')}</span>
+            <span className="export-btn-card-sub">{t('admin.export.buttons.subTraining', 'Filtered high-quality labels for model training')}</span>
+          </div>
+        </button>
       </div>
 
       <div className="export-info">
@@ -667,6 +740,55 @@ function ExportTab({ scans, t }: ExportTabProps) {
           ))}
         </ul>
       </div>
+    </div>
+  );
+}
+// -- Failures Tab -------------------------------------------------------------
+function FailuresTab({ t, isRTL }: { t: TFunction, isRTL: boolean }) {
+  const events = getAnalyticsEvents().filter(e => e.type === \"scan_failed\");
+
+  return (
+    <div className=\"failures-tab\">
+      <div className=\"section-header\">
+        <h2>{t(\"admin.failures.title\", \"Camera Guidance Rejections\")}</h2>
+        <span className=\"recent-scans-badge\">{events.length}</span>
+      </div>
+      <p className=\"text-secondary\" style={{ marginBottom: \"var(--space-md)\" }}>
+        {t(\"admin.failures.description\", \"Logs of real-time rejections (blur, low light, wrong brand) to help refine Stage 1/2 logic.\")}
+      </p>
+
+      {events.length === 0 ? (
+        <EmptyState
+          icon={<History size={32} />}
+          title={t(\"admin.failures.emptyTitle\", \"No failures logged\")}
+          description={t(\"admin.failures.emptyDescription\", \"Guidance rejections will appear here once users start scanning.\")}
+        />
+      ) : (
+        <div className=\"table-scroll-wrap\">
+          <table className=\"scans-table\">
+            <thead>
+              <tr>
+                <th>{t(\"admin.overview.table.date\")}</th>
+                <th>{t(\"admin.failures.reason\", \"Reason\")}</th>
+                <th>{t(\"admin.failures.details\", \"Details\")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...events].reverse().map((event, idx) => (
+                <tr key={idx}>
+                  <td>{new Date(event.timestamp).toLocaleString(isRTL ? \"ar-SA\" : \"en-US\")}</td>
+                  <td>
+                    <span className=\"badge badge-error\">{String(event.data.reason).toUpperCase()}</span>
+                  </td>
+                  <td className=\"text-caption\">
+                    <pre style={{ margin: 0, fontSize: \"10px\" }}>{JSON.stringify(event.data, null, 2)}</pre>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

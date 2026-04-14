@@ -9,24 +9,39 @@
  */
 export function buildAnalysisPrompt(debugReasoning: boolean, bottleAnchors?: string): string {
   const schema = debugReasoning
-    ? `{"fillPercentage":<0-100>,"confidence":"<high|medium|low>","imageQualityIssues":[<strings>],"reasoning":"<brief>"}`
-    : `{"fillPercentage":<0-100>,"confidence":"<high|medium|low>","imageQualityIssues":[<strings>]}`;
+    ? `{"brand":"Afia"|"unknown","fillPercentage":<0-100>,"confidence":"<high|medium|low>","imageQualityIssues":[<strings>],"reasoning":"<brief>"}`
+    : `{"brand":"Afia"|"unknown","fillPercentage":<0-100>,"confidence":"<high|medium|low>","imageQualityIssues":[<strings>]}`;
 
   const anchorSection = bottleAnchors
-    ? `\n- Use these visual anchors for THIS bottle:\n${bottleAnchors.split("\n").map(l => `    ${l}`).join("\n")}`
+    ? `\n- Use these visual anchors for THIS bottle to calibrate your estimate:\n${bottleAnchors.split("\n").map(l => `    ${l}`).join("\n")}`
     : "";
 
-  return `You are a CV system estimating cooking oil fill levels from bottle images.
+  return `You are a specialized Computer Vision system for Afia cooking oil level estimation.
 
-Analyze the image and return this JSON:
+Task: Estimate the fillPercentage of the oil bottle in the provided image.
+
+Few-Shot Visual Guidance:
+1. [Visual Token: Full] Oil is in the narrow neck region, touching the cap area. (93-97%)
+2. [Visual Token: Shoulder] Oil line is at the transition between the wide body and narrow neck. (~83%)
+3. [Visual Token: Label-Mid] Oil line bisects the main Afia heart logo. (~38%)
+4. [Visual Token: Base] Only a small pool of oil is visible at the very bottom, below the label. (<12%)
+
+Rules for Estimation:
+- Focus: Find the meniscus (the curved upper surface of the oil).
+- Reference: 0% is the extreme bottom edge of the bottle. 100% is the very top of the cap.
+- Measurement: Measure from bottle base to the oil surface. Excluding the cap itself, a "full" bottle is typically 97%.
+- Spatial Calibration: Use label text and graphics as a ruler. ${anchorSection}
+
+JSON Response Format:
 ${schema}
 
-Rules:
-- fillPercentage: visible oil surface height / total bottle height × 100 (height ratio, not volume ratio). Account for meniscus. Measure from bottle base to oil surface, excluding cap. Clamp 0–100.${anchorSection}
-- confidence: "high"=clear bottle outline+well-lit, "medium"=acceptable, "low"=poor quality
-- imageQualityIssues: only include if the issue would prevent accurate fill estimation:
-    * "blur" ONLY if the bottle outline/shape is indistinct (genuinely soft image, not just a dark background)
-    * "poor_lighting" ONLY if the entire scene is too dark to distinguish the bottle body and oil level (histogram globally dark — not just a dark background with a lit subject)
-    * "obstruction" if bottle body is significantly covered
-    * "reflection" if glare obscures the oil level line`;
+Confidence Scoring:
+- "high": Meniscus is sharp and clearly visible against label or clear plastic.
+- "medium": Lighting is slightly harsh or bottle is at an angle, but level is inferable.
+- "low": Oil level is obscured by glare, hands, or heavy blur.
+
+Image Quality Flags:
+- "blur": Bottle features are indistinct.
+- "poor_lighting": Subject is too dark/bright to distinguish oil from air.
+- "reflection": Glare directly overlaps the estimated oil level.`;
 }

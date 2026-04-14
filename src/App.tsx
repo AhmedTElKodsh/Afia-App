@@ -21,6 +21,7 @@ import { useIosInAppBrowser } from "./hooks/useIosInAppBrowser.ts";
 import { analyzeBottle, reportScanError } from "./api/apiClient.ts";
 import { calculateVolumes } from "./utils/volumeCalculator.ts";
 import { useScanHistory, createStoredScan } from "./hooks/useScanHistory.ts";
+import { useLocalAnalysis } from "./hooks/useLocalAnalysis.ts";
 import { AppControls } from "./components/AppControls.tsx";
 import { AnalyzingOverlay } from "./components/AnalyzingOverlay.tsx";
 import { SkeletonHistory, SkeletonAdmin } from "./components/Skeleton.tsx";
@@ -64,6 +65,12 @@ export default function App() {
   });
 
   const { addScan } = useScanHistory();
+  const { runAnalysis, loadModel, isModelReady } = useLocalAnalysis();
+
+  // Load local model on mount (Stage 2 Prep)
+  useEffect(() => {
+    loadModel();
+  }, [loadModel]);
 
   // Admin mode: URL param AND valid session token required
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(hasValidAdminSession);
@@ -82,7 +89,8 @@ export default function App() {
     setError(null);
 
     try {
-      const analysisResult = await analyzeBottle(selectedSku, img);
+      // Stage 2: Attempt local analysis with LLM fallback
+      const analysisResult = await runAnalysis(img, selectedSku);
       setResult(analysisResult);
 
       if (analysisResult.isUnsupportedSku) {
@@ -318,6 +326,7 @@ export default function App() {
             onError={setError}
             onPermissionDenied={() => setError('Camera permission denied')}
             onCancel={() => setAppState("IDLE")}
+            sku={selectedSku}
           />
         </div>
       );
