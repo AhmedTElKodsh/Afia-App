@@ -532,8 +532,6 @@ function generateGuidanceMessage(
   }
 
   if (composition.distance === 'too-far') {
-    // Spec §4.3: only show centreBottle when span is adequate but bottle is off-centre.
-    // We use visibility > 30 as threshold for "adequately visible to be centered".
     if (!composition.isCentered && composition.visibility > 30) {
       return { message: 'camera.centreBottle', type: 'warning' };
     }
@@ -546,18 +544,17 @@ function generateGuidanceMessage(
 
   // Lighting
   if (lighting.status === 'too-dark') {
-    return { message: 'camera.tooDark', type: 'error' };
+    return { message: 'camera.tooDarkMessage', type: 'error' }; // e.g. "Too dark: turn on a light"
   }
 
   if (lighting.status === 'too-bright') {
-    return { message: 'camera.tooBright', type: 'warning' };
+    return { message: 'camera.tooBrightMessage', type: 'warning' }; // e.g. "Too much glare: move away from window"
   }
 
   if (lighting.status === 'low-contrast') {
     return { message: 'camera.lowContrast', type: 'warning' };
   }
 
-  // New specific guidance for Stage 1 rejection
   if (!lighting.isAcceptable) {
     return { message: 'camera.enhanceLighting', type: 'error' };
   }
@@ -569,6 +566,11 @@ function generateGuidanceMessage(
 
   if (blurScore < 45) {
     return { message: 'camera.holdStill', type: 'warning' };
+  }
+
+  // Brand / Orientation
+  if (!composition.isBrandMatch) {
+    return { message: 'camera.positionHandleRight', type: 'warning' };
   }
 
   return {

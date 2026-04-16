@@ -19,16 +19,26 @@ classification:
   projectType: web_app
   projectSubType: PWA
   domain: consumer_health_tech
-  complexity: medium-high
+  complexity: high
   projectContext: greenfield
 inputDocuments:
   - product-brief-Safi-Image-Analysis-2026-02-26.md
   - research/technical-oil-bottle-ai-app-poc-research-2026-02-26.md
   - architecture.md
+  - sprint-change-proposal-2026-04-14.md
+  - research/technical-browser-vision-apis-bottle-scanning-research-2026-04-16.md
 workflowType: "prd"
 project_name: "Safi Oil Tracker"
 user_name: "Ahmed"
 date: "2026-02-26"
+lastEdited: "2026-04-16"
+editHistory:
+  - date: "2026-04-16"
+    changes: "Incorporate Stage 2 Local AI scope, Admin Dashboard, and enhanced Result screen features (55ml slider)."
+  - date: "2026-04-16"
+    changes: "Stage 2 technical research updates: fix FR45 inference targets (platform-specific WASM/WebGL), add iOS WASM prohibition, add FR49 brand/variant classifier, update FR46 routing, fix NFR performance table, add COOP/COEP security requirement, add 8 technical constraint entries (iOS backend, OpenCV.js, DeviceOrientation permission, distance guidance via bounding box)."
+  - date: "2026-04-16"
+    changes: "PRD validation fixes: FR10 compression target (≤800px/≤85% JPEG), FR21 remove normalization impl detail, FR34 remove 'clear', FR38 notice word limit (≤100 words), FR43 remove SVG impl detail, FR48 remove field name impl detail, NFR Scalability clarify 'structural changes'. Improvements: FR44-FR46 annotated [Phase 3], FR47-FR48 annotated [Sprint CP], FR46 edge case added (no-QR + low-confidence → manual SKU prompt)."
 ---
 
 # Product Requirements Document — Safi Oil Tracker
@@ -57,7 +67,7 @@ date: "2026-02-26"
 
 Safi Oil Tracker is a Progressive Web App (PWA) that enables home cooking oil consumers to measure remaining oil in their bottle using their phone camera and AI vision analysis. Accessed instantly via QR code printed on the bottle — no app store download required — the app photographs the bottle, estimates the fill level using an LLM vision API, and delivers the result in ml, tablespoons, and cups alongside nutritional facts for the estimated consumed amount.
 
-The POC targets a single oil company's bottle lineup (2–3 SKUs, clear glass, known geometry), with the starting level anchored at a full bottle (100%). Volume is calculated client-side using pre-registered bottle geometry (cylinder/frustum math) rather than relying solely on LLM precision — giving ±15% accuracy on clear glass bottles. Every scan captures image + metadata + user feedback for future model fine-tuning. Persistent storage in Cloudflare R2 is deferred to Phase 2 (free tier requires credit card activation) — images are processed but not persisted during POC.
+The POC targets a single oil company's bottle lineup (2–3 SKUs, clear glass, known geometry), with the starting level anchored at a full bottle (100%). Volume is calculated client-side using pre-registered bottle geometry (cylinder/frustum math) rather than relying solely on LLM precision — giving ±15% accuracy on clear glass bottles. Every scan captures image + metadata + user feedback for future model fine-tuning. Persistent storage in Cloudflare R2 and Supabase is integrated immediately to create a continuous data collection engine for Stage 2 local AI models.
 
 **Target users:** Health-conscious home cooks who want passive dietary awareness without manual measuring — particularly those tracking calorie or fat intake. Secondary stakeholder: the oil company, which gains customer engagement data and a direct digital touchpoint.
 
@@ -81,7 +91,7 @@ The POC targets a single oil company's bottle lineup (2–3 SKUs, clear glass, k
 | ------------------- | --------------------------------------------------------------------------------- |
 | **Project Type**    | Web App — Progressive Web App (SPA)                                               |
 | **Domain**          | Consumer Health Tech                                                              |
-| **Complexity**      | Medium-High                                                                       |
+| **Complexity**      | High                                                                              |
 | **Project Context** | Greenfield                                                                        |
 | **POC Scope**       | 2–3 bottle SKUs, clear glass, full-bottle baseline, Cloudflare + Gemini free tier |
 
@@ -227,6 +237,10 @@ This POC assumes the user's first scan occurs when the bottle is brand new (100%
 - **iOS camera:** WebKit bug in standalone PWA mode (iOS 18.0–18.1). Hard constraint: Safari browser mode only. `apple-mobile-web-app-capable` must be absent. "Open in Safari" fallback required.
 - **Network dependency:** Scan requires internet (Gemini API call). App shell loads offline; scan page must handle offline state with clear messaging.
 - **Image storage:** Bottle photos stored in R2 may contain kitchen backgrounds. No PII directly captured, but must be disclosed in the privacy notice.
+- **Local ML backend — iOS prohibition:** ONNX Runtime Web WASM backend must not be used on iOS Safari (active crash bug: CPU stuck at 400%+, memory unbounded, process killed — microsoft/onnxruntime #22086, #22776, #26827). WebGL backend is the mandated iOS fallback for all on-device inference. Implement backend detection at startup: `/iPhone|iPad/i.test(navigator.userAgent)` → force WebGL.
+- **OpenCV.js — Vite bundling:** OpenCV.js WASM must be loaded inside a Web Worker, not imported on the main thread. Direct Vite import causes `Module is not defined` error (vitejs/vite #5259). Web Worker loading is both the workaround and the correct architecture pattern.
+- **DeviceOrientationEvent — iOS permission:** `DeviceOrientationEvent.requestPermission()` is required on iOS 13+. Must be triggered by an explicit user tap with a brief explanation (e.g., "Enable tilt guidance" button). Calling on page load or without user gesture will be silently denied.
+- **Distance guidance — ProximityEvent deprecated:** The W3C Proximity API is non-standard and unsupported outside Firefox legacy. Distance guidance must use bounding-box size heuristics from the detection model output: if detected bottle bounding box occupies < 20% of frame area, surface "Move closer"; if > 80%, surface "Step back."
 
 ### Integration Requirements
 
@@ -347,7 +361,7 @@ WCAG 2.1 AA — pragmatic POC implementation:
 - FR7: User can capture a still photo of the oil bottle from the live viewfinder
 - FR8: User can preview the captured photo before submitting it for analysis
 - FR9: User can retake the photo if the preview is unsatisfactory
-- FR10: The app can compress the captured image to an optimized size before transmission
+- FR10: The app can compress the captured image to ≤ 800px on the longest dimension at ≤ 85% JPEG quality before transmission
 
 ### AI Vision Analysis
 
@@ -367,8 +381,8 @@ WCAG 2.1 AA — pragmatic POC implementation:
 
 ### Result Display
 
-- FR21: User can view the estimated fill percentage alongside a visual fill gauge
-- FR22: User can view remaining and consumed volumes in three units (ml, tablespoons, cups) on a single screen
+- FR21: User can view the estimated fill level via a horizontal line marker positioned at the AI-estimated fill level on the captured image
+- FR22: User can interact with a 55ml-stepped vertical slider to plan consumption and see visual cup equivalents (1/2 cup = 55ml)
 - FR23: User can view nutritional facts (calories, total fat, saturated fat) for the estimated consumed amount
 - FR24: User can see a confidence indicator that communicates the reliability of the estimate
 - FR25: User can see a prompt to retake the photo when the AI returns low confidence
@@ -376,8 +390,8 @@ WCAG 2.1 AA — pragmatic POC implementation:
 ### User Feedback Collection
 
 - FR26: User can indicate whether the AI fill estimate was accurate ("About right", "Too high", "Too low", "Way off")
-- FR27: User can provide a corrected fill percentage estimate via slider when marking the result inaccurate
-- FR28: The system can validate user feedback for consistency and flag contradictory or suspicious responses
+- FR27: User can provide a corrected fill percentage estimate via the 55ml-stepped slider when marking the result inaccurate
+- FR28: The system must enforce that the bottle is captured from the frontside with the handle on the right for valid analysis
 - FR29: The system can store validated feedback alongside the original scan record
 
 ### Data Collection & Storage
@@ -389,14 +403,14 @@ WCAG 2.1 AA — pragmatic POC implementation:
 
 ### Error & Edge Case Handling
 
-- FR34: User can see a clear error message and retry option when the AI analysis fails
+- FR34: User can see an error message with a retry action when the AI analysis fails
 - FR35: User can see a network unavailability message when attempting to scan without internet
 - FR36: User can see guidance to open the app in Safari when accessing from an incompatible iOS browser context
 - FR37: User can see a camera permission denied message with instructions to grant access in device settings
 
 ### Privacy & Transparency
 
-- FR38: User can view a brief notice explaining that scan images are stored for AI model improvement before their first scan
+- FR38: User can view a privacy notice of ≤ 100 words explaining that scan images are stored for AI model improvement before their first scan
 - FR39: The app can display a disclaimer that results are estimates (±15%) and not certified nutritional analysis
 
 ### Multi-Provider Key Management
@@ -407,18 +421,19 @@ WCAG 2.1 AA — pragmatic POC implementation:
 ### Consumption Measurement
 
 - FR42: The result screen displays a vertical consumption tracking slider anchored at the confirmed fill level; steps of 55ml; minimum step 55ml; slider stops at last valid step if remaining < 55ml
-- FR43: The slider drives a cup visualization below it: n × 55ml = n/2 cups displayed as SVG cup icons (half-filled at odd steps, full at even steps); "Remaining after use: Nml" updates in real time
+- FR43: The slider drives a cup visualization below it: n × 55ml = n/2 cups displayed as cup icons (half-filled at odd steps, full at even steps); "Remaining after use: Nml" updates in real time
 
 ### Training Data Pipeline
 
-- FR44: A Supabase Postgres database stores training-eligible scan records: image URL, confirmed fill %, label source, confidence weight, augmentation flag, train/val/test split
-- FR45: A TF.js MobileNetV3-Small CNN regressor runs client-side; lazy-loaded from Cloudflare R2 (~5MB); cached in IndexedDB; inference target < 50ms; MAE target ≤ 10%
-- FR46: The client routes inference to the local model when confidence ≥ 0.75; falls through to the LLM Worker when below threshold or model not yet loaded
+- FR44: [Phase 3] A Supabase Postgres database stores training-eligible scan records: image URL, confirmed fill %, label source, confidence weight, augmentation flag, train/val/test split
+- FR45: [Phase 3] A TF.js MobileNetV3-Small CNN regressor runs client-side; lazy-loaded from Cloudflare R2 (~5MB); cached in IndexedDB; inference target ≤ 150ms WASM (Android) / ≤ 100ms WebGL (iOS); MAE target ≤ 10%; iOS Safari must use WebGL backend — WASM backend is prohibited on iOS due to active crash bug (microsoft/onnxruntime #22086, #26827: CPU 400%+, unbounded memory growth, process kill); WebGPU upgrade path available at Safari 26 stable via feature flag
+- FR46: [Phase 3] The client routes fill-level inference to the local model when confidence ≥ 0.75; falls through to the LLM Worker when below threshold or model not yet loaded; on iOS, if WebGL backend unavailable, falls through to LLM Worker regardless of confidence; brand classification result (FR49) used to pre-populate bottle context if classifier confidence ≥ 0.80, falls back to QR-loaded SKU if below threshold or model unavailable; if brand classifier confidence < 0.80 AND no QR SKU is available, the app prompts the user to manually select a SKU or scan the QR code before proceeding
+- FR49: A TF.js MobileNet-based brand/variant classifier runs client-side as part of the Stage 2 local model pipeline; lazy-loaded (~4MB); cached in IndexedDB alongside FR45 model; identifies the active Afia bottle SKU from the label region; training data sourced from in-house bottle images augmented via Fal.ai Flux Schnell (kitchen background generation, ~$0.003/image); activates at Stage 2 launch gated by local model development readiness; brand/logo identification is explicitly Stage 2 scope and not active in POC v1
 
 ### Admin Dashboard
 
-- FR47: An authenticated admin can view all scans (image + LLM result + local model result), flag accuracy (too big / too small / correct / way off), manually correct fill %, or re-run LLM on any scan; correction written to R2 metadata and Supabase training record
-- FR48: An authenticated admin can upload an image with SKU, fill level annotation, and optional notes; upload auto-marked training-eligible with label_source = admin_upload
+- FR47: [Sprint CP] An authenticated admin can view all scans (image + LLM result + local model result), flag accuracy (too big / too small / correct / way off), manually correct fill %, or re-run LLM on any scan; correction written to R2 metadata and Supabase training record
+- FR48: [Sprint CP] An authenticated admin can upload an image with SKU, fill level annotation, and optional notes; the upload is automatically marked as training-eligible with an admin-upload label source
 
 ---
 
@@ -435,8 +450,9 @@ WCAG 2.1 AA — pragmatic POC implementation:
 | Image compression (canvas resize + JPEG)     | < 500ms     | Client-side, before transmission                              |
 | Feedback submission round-trip               | < 1 second  | POST /feedback → Worker → response                            |
 | JS bundle size (gzipped)                     | < 200KB     | QR lib 35KB + React 45KB + app logic                          |
-| Local model inference (p95)                  | < 50ms      | Client-side TF.js MobileNetV3, after model loaded (NFR-30)    |
-| Local model lazy-load — first time (4G)      | < 8 seconds | ~5MB model from R2 CDN edge (NFR-31)                          |
+| Local model inference (p95) — Android WASM   | ≤ 150ms     | Client-side TF.js MobileNetV3, WASM backend, after model loaded |
+| Local model inference (p95) — iOS WebGL      | ≤ 100ms     | Client-side TF.js MobileNetV3, WebGL backend (WASM prohibited on iOS) |
+| Local model lazy-load — first time (4G)      | < 15 seconds | ~9MB total (fill regressor + brand classifier) from R2 CDN edge; camera preview shown immediately during load |
 | Supabase training record write               | < 500ms     | Async, non-blocking — does not affect user-facing p95 (NFR-32)|
 
 ### Security
@@ -448,6 +464,7 @@ WCAG 2.1 AA — pragmatic POC implementation:
 - Worker rejects payloads > 4MB
 - R2 bucket is not publicly accessible — all access via Worker binding only
 - All client-Worker traffic over HTTPS (enforced by Cloudflare)
+- Cloudflare Worker and Pages responses must include `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` headers to enable `SharedArrayBuffer` for WASM multithreading; absence causes silent fallback to single-threaded WASM (3–5× slower inference)
 - No PII collected: no names, emails, phone numbers, or user accounts
 
 ### Reliability
@@ -461,7 +478,7 @@ WCAG 2.1 AA — pragmatic POC implementation:
 
 - POC infrastructure stays within free-tier limits: Cloudflare Worker ≤100,000 req/day; R2 ≤10GB / ≤1M write ops/month; Gemini ≤1,500 req/day
 - No scaling configuration required at POC scale (< 500 users/month) — serverless handles it inherently
-- Architecture accommodates 10× user growth post-POC without structural changes
+- Architecture accommodates 10× user growth post-POC without adding new infrastructure components or changing the deployment topology
 
 ### Accessibility
 

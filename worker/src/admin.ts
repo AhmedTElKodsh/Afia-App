@@ -1,11 +1,11 @@
 import type { Context } from "hono";
-import type { Env } from "./types.ts";
+import type { Env, Variables } from "./types.ts";
 import { getGlobalScans } from "./storage/supabaseClient.ts";
 
 /**
  * Very simple session verification
  */
-export function verifyAdminSession(c: Context<{ Bindings: Env }>): boolean {
+export function verifyAdminSession(c: Context<{ Bindings: Env; Variables: Variables }>): boolean {
   const authHeader = c.req.header("Authorization");
   if (!authHeader?.startsWith("Bearer ")) return false;
 
@@ -23,7 +23,7 @@ export function verifyAdminSession(c: Context<{ Bindings: Env }>): boolean {
 /**
  * Endpoint to fetch global scan history
  */
-export async function handleGetScans(c: Context<{ Bindings: Env }>): Promise<Response> {
+export async function handleGetScans(c: Context<{ Bindings: Env; Variables: Variables }>): Promise<Response> {
   if (!verifyAdminSession(c)) {
     return c.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, 401);
   }

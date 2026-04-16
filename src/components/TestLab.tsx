@@ -18,7 +18,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Beaker, QrCode, Smartphone, RefreshCcw, AlertTriangle, TestTube, ExternalLink } from "lucide-react";
+import { Beaker, QrCode, Smartphone, RefreshCcw, AlertTriangle, TestTube, ExternalLink, Zap } from "lucide-react";
 import { getBottleBySku, ACTIVE_SKU, activeBottleRegistry } from "../data/bottleRegistry.ts";
 import { CameraViewfinder } from "./CameraViewfinder.tsx";
 import { ResultDisplay } from "./ResultDisplay.tsx";
@@ -26,9 +26,11 @@ import { AdminToolsOverlay } from "./AdminToolsOverlay.tsx";
 import { AdminOnboarding } from "./AdminOnboarding.tsx";
 import { ApiInspector } from "./ApiInspector.tsx";
 import { VisualRegressionHarness } from "./VisualRegressionHarness.tsx";
+import { MockApiPanel } from "./MockApiPanel.tsx";
 import { useToast } from "./Toast.tsx";
 import { analytics } from "../utils/analytics.ts";
 import { useScanHistory } from "../hooks/useScanHistory.ts";
+import { mockAnalyzeBottle, type MockScenario } from "../utils/mockAnalysisApi.ts";
 import "./TestLab.css";
 
 const WORKER_URL = import.meta.env.VITE_WORKER_URL || "";
@@ -39,9 +41,13 @@ export type TestLabState = "idle" | "scanning" | "analyzing" | "complete" | "err
 export interface TestLabProps {
   /** Admin mode flag */
   isAdmin: boolean;
+  /** Current selected SKU from parent */
+  selectedSku?: string;
+  /** Callback when SKU changes */
+  onSkuChange?: (sku: string) => void;
 }
 
-export function TestLab({ isAdmin }: TestLabProps) {
+export function TestLab({ isAdmin, selectedSku: propsSku, onSkuChange }: TestLabProps) {
   const { t, i18n } = useTranslation();
   const { success, error: showError, info } = useToast();
   const { updateFeedback } = useScanHistory();
@@ -59,7 +65,19 @@ export function TestLab({ isAdmin }: TestLabProps) {
   });
   const [showDebugPanel, setShowDebugPanel] = useState<boolean>(false);
 
-  const [selectedSku, setSelectedSku] = useState<string>(ACTIVE_SKU);
+  // Local state for SKU if not provided by parent (fallback)
+  const [internalSku, setInternalSku] = useState<string>(ACTIVE_SKU);
+  
+  // Use prop if available, otherwise internal
+  const selectedSku = propsSku !== undefined ? propsSku : internalSku;
+  const setSelectedSku = useCallback((sku: string) => {
+    if (onSkuChange) {
+      onSkuChange(sku);
+    } else {
+      setInternalSku(sku);
+    }
+  }, [onSkuChange]);
+
   const [testCount, setTestCount] = useState(0);
 
   const [testImage, setTestImage] = useState<string | null>(null);
@@ -72,6 +90,7 @@ export function TestLab({ isAdmin }: TestLabProps) {
 
   // UI state
   const [showAdminTools, setShowAdminTools] = useState(false);
+  const [showMockApiPanel, setShowMockApiPanel] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => {
     const hasSeenOnboarding = localStorage.getItem('afia_admin_onboarding_seen');
     return !hasSeenOnboarding && isAdmin;
@@ -161,18 +180,80 @@ export function TestLab({ isAdmin }: TestLabProps) {
     info(`${t('admin.testLab.scanMockQr')}: ${bottle ? getLocalizedBottleName(sku, bottle.name) : ""}`);
   }, [info, t, getLocalizedBottleName]);
 
-  // Handle capture complete
-  const handleCapture = useCallback((imageBase64: string) => {
-    setCapturedImage(imageBase64);
-    // Analysis happens automatically in parent flow
-  }, []);
-
   // Handle error
   const handleError = useCallback((errorMessage: string) => {
     setError(errorMessage);
     setScanState("error");
     showError(errorMessage);
   }, [showError]);
+
+  // Handle mock API scenario selection
+  const handleMockScenario = useCallback(async (scenario: MockScenario) => {
+    setShowMockApiPanel(false);
+    setScanState("analyzing");
+    setError(null);
+
+    const bottle = selectedBottle;
+    if (!bottle) {
+      handleError("No bottle selected");
+      return;
+    }
+
+    // F2: Create AbortController for cleanup
+    const abortController = new AbortController();
+
+    try {
+      // F7: Generate realistic test image instead of 1x1 placeholder
+      // Create a canvas with bottle-like shape for geometry testing
+      const canvas = document.createElement('canvas');
+      canvas.width = 640;
+      canvas.height = 480;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        // Draw a simple bottle shape for testing
+        ctx.fillStyle = '#f0f0f0';
+        ctx.fillRect(0, 0, 640, 480);
+        ctx.fillStyle = '#4a90e2';
+        ctx.fillRect(250, 100, 140, 300);
+        ctx.fillRect(270, 80, 100, 30);
+      }
+      const mockImageBase64 = canvas.toDataURL('image/png');
+      setCapturedImage(mockImageBase64);
+
+      // Simulate API call with realistic delay and abort support
+      const mockResult = await mockAnalyzeBottle(scenario, bottle.totalVolumeMl, abortController.signal);
+      
+      setResult(mockResult);
+      setScanState("complete");
+      // F15: Indicate this is a mock result
+      success(t('admin.testLab.mockScenarioComplete', {
+        defaultValue: 'Mock scenario complete: {{name}}',
+        name: scenario.name
+      }));
+      
+      // Track analytics
+      analytics.testEntryPointSelected('mock-api', selectedSku);
+    } catch (err) {
+      // F2: Handle abort gracefully
+      if (err instanceof Error && err.message.includes('aborted')) {
+        info(t('admin.testLab.mockScenarioCancelled', 'Mock scenario cancelled'));
+        setScanState("idle");
+      } else {
+        handleError(err instanceof Error ? err.message : "Mock analysis failed");
+      }
+    }
+
+    // Cleanup function
+    return () => {
+      abortController.abort();
+    };
+  }, [selectedBottle, selectedSku, success, handleError, info, t]);
+
+  // Handle capture complete
+  const handleCapture = useCallback((imageBase64: string) => {
+    setCapturedImage(imageBase64);
+    // Analysis happens automatically in parent flow
+  }, []);
 
   // Handle retry
   const handleRetry = useCallback(() => {
@@ -219,6 +300,7 @@ export function TestLab({ isAdmin }: TestLabProps) {
     }
 
     // 2. Post to worker feedback endpoint (non-blocking)
+    // H3 FIX: Show error toast to user if feedback submission fails
     if (result?.scanId && WORKER_URL) {
       fetch(`${WORKER_URL}/feedback`, {
         method: "POST",
@@ -230,7 +312,10 @@ export function TestLab({ isAdmin }: TestLabProps) {
           llmFillPercentage: result.fillPercentage,
           correctedFillPercentage: val.correctedFillPercentage,
         }),
-      }).catch((err) => console.error("Feedback POST failed:", err));
+      }).catch((err) => {
+        console.error("Feedback POST failed:", err);
+        showError(t('admin.testLab.feedbackFailed'));
+      });
     }
 
     success(t('admin.testLab.validationSaved'));
@@ -379,6 +464,16 @@ export function TestLab({ isAdmin }: TestLabProps) {
                   <span>{t('admin.testLab.scanMockQr')}</span>
                 </button>
 
+                <button
+                  className="entry-point-button entry-point-button--secondary"
+                  onClick={() => setShowMockApiPanel(true)}
+                  type="button"
+                  style={{ width: '100%', maxWidth: '320px' }}
+                >
+                  <Zap size={22} strokeWidth={2} />
+                  <span>Mock API Test</span>
+                </button>
+
                 <div style={{ position: 'relative', width: '100%', maxWidth: '320px' }}>
                   <button
                     className="entry-point-button entry-point-button--secondary"
@@ -504,6 +599,14 @@ export function TestLab({ isAdmin }: TestLabProps) {
 
       {/* Visual Regression Tab */}
       {activeTab === "visuals" && <VisualRegressionHarness />}
+
+      {/* Mock API Panel */}
+      {showMockApiPanel && (
+        <MockApiPanel
+          onSelectScenario={handleMockScenario}
+          onClose={() => setShowMockApiPanel(false)}
+        />
+      )}
     </div>
   );
 }

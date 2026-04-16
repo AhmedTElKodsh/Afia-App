@@ -28,6 +28,8 @@ import { testBottles } from './fixtures/testData';
 const ACTIVE_SKU = 'afia-corn-1.5l';
 const ACTIVE_NAME_FRAGMENT = /1\.5[lL]|corn/i;
 
+import { triggerAnalyzeAndConfirm } from './helpers/flow';
+
 // ─── Test Suite 1: QR URL as Entry Point ────────────────────────────────────
 
 test.describe('QR Simulation: URL Entry Point (active SKU)', () => {
@@ -361,17 +363,10 @@ test.describe('QR Simulation: Full scan flow triggered from URL entry point', ()
     await expect(page.locator('.camera-active').first()).toBeVisible({ timeout: 15000 });
     await expect(page.locator('.camera-capture-btn')).toBeEnabled({ timeout: 10000 });
 
-    // 4. Trigger analysis via test hook
-    const analyzePromise = page.waitForResponse(
-      res => res.url().includes('/analyze'),
-      { timeout: 15000 }
-    );
-    await page.evaluate(() => { (window as any).__AFIA_TRIGGER_ANALYZE__?.(); });
-    const response = await analyzePromise;
-    expect(response.status()).toBe(200);
+    // 4. Trigger analysis via shared helper
+    await triggerAnalyzeAndConfirm(page);
 
     // 5. Results displayed
-    await expect(page.locator('.result-display')).toBeVisible({ timeout: 15000 });
     await expect(page.locator('.result-metric__value').first()).toContainText(/ml/i);
 
     // 6. Feedback grid appears

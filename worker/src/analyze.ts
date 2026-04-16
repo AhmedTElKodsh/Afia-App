@@ -1,6 +1,6 @@
 import type { Context } from "hono";
 import type { Env } from "./types.ts";
-import { getBottleBySku } from "./bottleRegistry.ts";
+import { getBottleBySku, type BottleEntry } from "./bottleRegistry.ts";
 import { calculateRemainingMl } from "../../shared/volumeCalculator.ts";
 import { callGemini } from "./providers/gemini.ts";
 import { callGroq } from "./providers/groq.ts";
@@ -9,7 +9,7 @@ import { callMistral } from "./providers/mistral.ts";
 import { storeScan } from "./storage/supabaseClient.ts";
 import { MonitoringLogger } from "./monitoring/logger.ts";
 import { QuotaMonitor } from "./monitoring/quotaMonitor.ts";
-import type { LLMResponse } from "./types.ts";
+import type { LLMResponse, Variables } from "./types.ts";
 
 const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024; // 4MB base64
 const CACHE_TTL_SECONDS = 1800; // 30 minutes
@@ -33,7 +33,7 @@ function estimateTokens(imageBase64: string): number {
   return imageTokens + promptTokens;
 }
 
-export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Response> {
+export async function handleAnalyze(c: Context<{ Bindings: Env; Variables: Variables }>): Promise<Response> {
   const logger = new MonitoringLogger(c.env.BETTERSTACK_TOKEN);
   const quotaMonitor = new QuotaMonitor(logger, c.env.RATE_LIMIT_KV);
   const startTime = Date.now();
@@ -61,12 +61,12 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
     // Note: Story 5.3 allows "Community Contribution" scans for unknown SKUs.
     // If bottle is not found, we proceed with a generic "unknown" bottle context
     // but skip geometry-based volume math later.
-    const effectiveBottle = bottle || {
+    const effectiveBottle: BottleEntry = bottle || {
       sku: "unknown",
       name: "Unknown Bottle",
       oilType: "unknown",
       totalVolumeMl: 0,
-      geometry: { shape: "unknown" }
+      geometry: { shape: "cylinder", heightMm: 0, diameterMm: 0 }
     };
 
     const tokensEstimated = estimateTokens(imageBase64);
@@ -103,6 +103,7 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
           latencyMs,
           cacheHit: true,
           tokensEstimated,
+          red_line_y_normalized: llmResult.red_line_y_normalized,
           imageQualityIssues:
             llmResult.imageQualityIssues && llmResult.imageQualityIssues.length > 0
               ? llmResult.imageQualityIssues
@@ -114,35 +115,87 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
     }
 
     type ProviderName = "gemini" | "groq" | "openrouter" | "mistral";
-    type Provider = { name: ProviderName; key: string; call: () => Promise<LLMResponse> };
+    type ProviderCallResult = { result: LLMResponse; keyName: string };
+    type Provider = { name: ProviderName; call: () => Promise<ProviderCallResult> };
 
     const scanId = crypto.randomUUID();
     let aiProvider: ProviderName = "gemini";
     let keyUsed = "gemini_key_1";
 
-    // Collect all available Gemini API keys for sequential fallback
+    // Collect all available Gemini API keys
     const geminiKeys = [
       c.env.GEMINI_API_KEY,
       c.env.GEMINI_API_KEY2,
       c.env.GEMINI_API_KEY3,
       c.env.GEMINI_API_KEY4,
     ].filter((k): k is string => typeof k === "string" && k.length > 0);
+
+    // --- Round-Robin Selection ---
+    const lastIndexStr = await c.env.RATE_LIMIT_KV.get("gemini_last_index");
+    const startIndex = geminiKeys.length > 0 
+      ? (parseInt(lastIndexStr || "0", 10) + 1) % geminiKeys.length 
+      : 0;
+    
+    // Rotate keys so they start at the next round-robin position
+    const rotatedGeminiKeys = geminiKeys.length > 0
+      ? [...geminiKeys.slice(startIndex), ...geminiKeys.slice(0, startIndex)]
+      : [];
+
+    // Persist new index (non-blocking)
+    if (geminiKeys.length > 0) {
+      c.executionCtx.waitUntil(
+        c.env.RATE_LIMIT_KV.put("gemini_last_index", startIndex.toString())
+          .catch(err => console.error("KV put failed:", err))
+      );
+    }
+
     const providers: Provider[] = [
-      { name: "gemini",     key: "gemini_key_1",  call: () => callGemini(imageBase64, effectiveBottle, geminiKeys, debugReasoning) },
-      { name: "groq",       key: "groq",          call: () => { if (!c.env.GROQ_API_KEY) throw new Error("No Groq API key configured"); return callGroq(imageBase64, effectiveBottle, c.env.GROQ_API_KEY, debugReasoning); } },
-      { name: "openrouter", key: "openrouter",    call: () => { if (!c.env.OPENROUTER_API_KEY) throw new Error("No OpenRouter API key configured"); return callOpenRouter(imageBase64, effectiveBottle, c.env.OPENROUTER_API_KEY, debugReasoning); } },
-      { name: "mistral",    key: "mistral",       call: () => { if (!c.env.MISTRAL_API_KEY) throw new Error("No Mistral API key configured"); return callMistral(imageBase64, effectiveBottle, c.env.MISTRAL_API_KEY, debugReasoning); } },
+      { 
+        name: "gemini", 
+        call: async () => {
+          if (rotatedGeminiKeys.length === 0) throw new Error("No Gemini API keys configured");
+          const { result, keyIndex } = await callGemini(imageBase64, effectiveBottle, rotatedGeminiKeys, debugReasoning);
+          // Map back to original index for accurate quota tracking
+          const actualIndex = (startIndex + keyIndex) % geminiKeys.length;
+          return { result, keyName: `gemini_key_${actualIndex + 1}` };
+        }
+      },
+      { 
+        name: "groq", 
+        call: async () => { 
+          if (!c.env.GROQ_API_KEY) throw new Error("No Groq API key configured"); 
+          const result = await callGroq(imageBase64, effectiveBottle, c.env.GROQ_API_KEY, debugReasoning);
+          return { result, keyName: "groq" };
+        } 
+      },
+      { 
+        name: "openrouter", 
+        call: async () => { 
+          if (!c.env.OPENROUTER_API_KEY) throw new Error("No OpenRouter API key configured"); 
+          const result = await callOpenRouter(imageBase64, effectiveBottle, c.env.OPENROUTER_API_KEY, debugReasoning);
+          return { result, keyName: "openrouter" };
+        } 
+      },
+      { 
+        name: "mistral", 
+        call: async () => { 
+          if (!c.env.MISTRAL_API_KEY) throw new Error("No Mistral API key configured"); 
+          const result = await callMistral(imageBase64, effectiveBottle, c.env.MISTRAL_API_KEY, debugReasoning);
+          return { result, keyName: "mistral" };
+        } 
+      },
     ];
 
-    // Fallback chain: Gemini (×4 keys) → Groq → OpenRouter → Mistral
+    // Fallback chain: Gemini (rotated keys) → Groq → OpenRouter → Mistral
     let llmResult!: LLMResponse;
     const providerErrors: string[] = [];
     let succeeded = false;
     for (const provider of providers) {
       try {
-        llmResult = await provider.call();
+        const providerRes = await provider.call();
+        llmResult = providerRes.result;
         aiProvider = provider.name;
-        keyUsed = provider.key;
+        keyUsed = providerRes.keyName;
         await quotaMonitor.trackRequest(keyUsed);
         succeeded = true;
         break;
@@ -197,6 +250,7 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
         sku: bottle ? bottle.sku : `unsupported_${sku}`,
         bottleGeometry: effectiveBottle.geometry,
         oilType: effectiveBottle.oilType,
+        totalVolumeMl: effectiveBottle.totalVolumeMl,
         aiProvider,
         fillPercentage: llmResult.fillPercentage,
         confidence: llmResult.confidence,
@@ -220,6 +274,7 @@ export async function handleAnalyze(c: Context<{ Bindings: Env }>): Promise<Resp
       latencyMs,
       cacheHit: false,
       tokensEstimated,
+      red_line_y_normalized: llmResult.red_line_y_normalized,
       imageQualityIssues:
         llmResult.imageQualityIssues && llmResult.imageQualityIssues.length > 0
           ? llmResult.imageQualityIssues

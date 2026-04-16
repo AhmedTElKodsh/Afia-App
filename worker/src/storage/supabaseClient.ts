@@ -7,6 +7,7 @@ export interface ScanMetadata {
   sku: string;
   bottleGeometry: { shape: string; calibrationPoints?: unknown[] };
   oilType: string;
+  totalVolumeMl: number;
   aiProvider: string;
   fillPercentage: number;
   confidence: string;
@@ -134,4 +135,43 @@ export async function updateScanWithFeedback(
     console.error("Supabase Feedback Update Error:", dbError);
     throw dbError;
   }
+}
+
+/**
+ * Fetches recent scans for the admin dashboard
+ */
+export async function getGlobalScans(
+  env: Env,
+  limit = 50,
+  offset = 0
+): Promise<ScanMetadata[]> {
+  const supabase = getSupabase(env);
+
+  const { data, error } = await supabase
+    .from("scans")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) {
+    console.error("Supabase Fetch Scans Error:", error);
+    throw error;
+  }
+
+  return (data || []).map((row: any) => ({
+    scanId: row.id,
+    timestamp: row.created_at,
+    sku: row.sku,
+    bottleGeometry: { shape: "unknown" }, // Full geometry not in DB
+    oilType: "unknown",
+    totalVolumeMl: 0, // Not stored in scans table, would need join
+    aiProvider: row.llm_fallback_prediction?.provider || "unknown",
+    fillPercentage: row.llm_fallback_prediction?.percentage || 0,
+    confidence: row.llm_fallback_prediction?.confidence || "unknown",
+    latencyMs: row.client_metadata?.latency_ms || 0,
+    imageQualityIssues: row.client_metadata?.image_quality_issues,
+    isContribution: row.client_metadata?.is_contribution,
+    localModelPrediction: row.local_model_prediction,
+    reasoning: row.llm_fallback_prediction?.reasoning
+  }));
 }

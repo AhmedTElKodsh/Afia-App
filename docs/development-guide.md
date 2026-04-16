@@ -221,9 +221,22 @@ Required GitHub secrets:
 - **State machine** — App flow modeled as finite state in `AppState` union type
 - **Manual sync** — Bottle registry and feedback validator duplicated between frontend/worker (shared package planned for Phase 2)
 
-## Common Development Tasks
+## Stage 2 & Admin Setup
 
-### Adding a New Bottle
+### 1. Supabase Training DB
+- Create a Supabase project.
+- Apply `docs/supabase-schema-migration.sql` (if present) or create `training_samples` and `model_versions` tables.
+- Set `SUPABASE_URL` and `SUPABASE_KEY` (service_role) as Worker secrets.
+
+### 2. Admin Dashboard
+- Access `/admin` in the PWA.
+- Enter `ADMIN_SECRET` when prompted (stored in Worker secrets).
+- Ensure `TRAINING_BUCKET` is bound in `wrangler.toml` for R2 image viewing.
+
+### 3. Local Model Training
+- Run `npm run training:export` to get CSV labels.
+- Use the Jupyter notebook in `models/training/` (planned) to train on exported images.
+- Upload `.json` and `.bin` shards to `models/v1/` in the R2 bucket.
 
 1. Add entry to `src/data/bottleRegistry.ts` with SKU, name, oil type, volume, geometry
 2. Add matching entry to `worker/src/bottleRegistry.ts` (keep in sync)

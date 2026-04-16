@@ -9,15 +9,19 @@ async function fetchWithTimeout(
   timeout = DEFAULT_TIMEOUT_MS
 ): Promise<Response> {
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
+  // M1 FIX: Initialize timeout ID outside try block to prevent clearTimeout(undefined)
+  let id: ReturnType<typeof setTimeout> | undefined;
   try {
+    id = setTimeout(() => controller.abort(), timeout);
     const response = await fetch(url, {
       ...options,
       signal: controller.signal,
     });
     return response;
   } finally {
-    clearTimeout(id);
+    if (id !== undefined) {
+      clearTimeout(id);
+    }
   }
 }
 

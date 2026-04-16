@@ -1,7 +1,7 @@
 import type { BottleGeometry } from "./bottleRegistry.ts";
 
 export const ML_PER_TABLESPOON = 14.7868;
-export const ML_PER_CUP = 236.588;
+export const ML_PER_CUP = 220;
 
 /**
  * Linear interpolation helper for calibration table lookup.

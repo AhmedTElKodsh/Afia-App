@@ -35,5 +35,7 @@ export function parseLLMResponse(raw: string): LLMResponse {
       ? (parsed.imageQualityIssues as unknown[]).filter((x): x is string => typeof x === "string")
       : [],
     reasoning: typeof parsed.reasoning === "string" ? parsed.reasoning : undefined,
+    red_line_y_normalized: typeof parsed.red_line_y_normalized === "number" ? parsed.red_line_y_normalized : undefined,
+    below_55ml_threshold: typeof parsed.below_55ml_threshold === "boolean" ? parsed.below_55ml_threshold : undefined,
   };
 }

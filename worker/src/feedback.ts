@@ -1,10 +1,10 @@
 import type { Context } from "hono";
 import { createClient } from "@supabase/supabase-js";
-import type { Env } from "./types.ts";
+import type { Env, Variables } from "./types.ts";
 import { validateFeedback } from "./validation/feedbackValidator.ts";
 import { updateScanWithFeedback } from "./storage/supabaseClient.ts";
 
-export async function handleFeedback(c: Context<{ Bindings: Env }>): Promise<Response> {
+export async function handleFeedback(c: Context<{ Bindings: Env; Variables: Variables }>): Promise<Response> {
   const body = await c.req.json<{
     scanId?: unknown;
     accuracyRating?: unknown;
@@ -34,7 +34,7 @@ export async function handleFeedback(c: Context<{ Bindings: Env }>): Promise<Res
   const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
   const { data: scanRecord, error: fetchError } = await supabase
     .from("scans")
-    .select("fill_percentage")
+    .select("llm_fallback_prediction")
     .eq("id", body.scanId)
     .single();
 
@@ -43,7 +43,10 @@ export async function handleFeedback(c: Context<{ Bindings: Env }>): Promise<Res
     return c.json({ error: "Scan record not found", code: "NOT_FOUND" }, 404);
   }
 
-  const llmFillPercentage = scanRecord.fill_percentage;
+  const llmFillPercentage = scanRecord.llm_fallback_prediction?.percentage;
+  if (typeof llmFillPercentage !== 'number') {
+     return c.json({ error: "Incomplete scan record", code: "DATA_INCOMPLETE" }, 500);
+  }
   const correctedFillPercentage =
     typeof body.correctedFillPercentage === "number"
       ? body.correctedFillPercentage

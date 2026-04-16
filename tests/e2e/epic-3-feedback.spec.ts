@@ -2,6 +2,8 @@ import { test, expect } from '@playwright/test';
 import { mockCamera, mockAnalyzeSuccess } from './helpers/mockAPI';
 import { testBottles } from './fixtures/testData';
 
+import { triggerAnalyzeAndConfirm } from './helpers/flow';
+
 /**
  * Epic 3: Continuous Improvement Loop - Feedback Tests
  *
@@ -41,12 +43,11 @@ test.describe('Epic 3: Feedback System', () => {
       if (btn) btn.click();
     });
 
-    await expect(page.locator('.camera-active').first()).toBeVisible({ timeout: 15000 });
-    await expect(page.locator('.camera-capture-btn')).toBeEnabled({ timeout: 10000 });
-
-    // Trigger analysis
-    await page.evaluate(() => { (window as any).__AFIA_TRIGGER_ANALYZE__?.(); });
-    await expect(page.locator('.result-display')).toBeVisible({ timeout: 15000 });
+    // We might transition very fast through camera -> pending -> confirm
+    // So we don't strictly wait for .camera-active if we are already at confirm/results
+    
+    // Trigger analysis using shared robust helper which handles the whole chain
+    await triggerAnalyzeAndConfirm(page);
 
     // FeedbackGrid should be visible in result display
     await expect(page.locator('.feedback-grid-container')).toBeVisible({ timeout: 5000 });

@@ -3,45 +3,54 @@
  * Single source of truth — update here, all providers pick it up.
  *
  * @param debugReasoning - When true, includes a "reasoning" field in the schema.
- * @param bottleAnchors  - Optional bottle-specific visual landmark hints (from BottleEntry.promptAnchors).
- *                         Injected into the prompt so the model can calibrate against known label positions.
- *                         Pass undefined for bottles that don't have landmark data.
+ * @param bottleAnchors  - Optional bottle-specific visual landmark hints.
  */
 export function buildAnalysisPrompt(debugReasoning: boolean, bottleAnchors?: string): string {
-  const schema = debugReasoning
-    ? `{"brand":"Afia"|"unknown","fillPercentage":<0-100>,"confidence":"<high|medium|low>","imageQualityIssues":[<strings>],"reasoning":"<brief>"}`
-    : `{"brand":"Afia"|"unknown","fillPercentage":<0-100>,"confidence":"<high|medium|low>","imageQualityIssues":[<strings>]}`;
+  const schema = `{
+    "brand": "Afia" | "unknown",
+    "fillPercentage": <0-100>,
+    "red_line_y_normalized": <0-1000>,
+    "confidence": "high" | "medium" | "low",
+    "imageQualityIssues": ["blur" | "poor_lighting" | "reflection"],
+    "below_55ml_threshold": boolean,
+    ${debugReasoning ? '"reasoning": "string",' : ""}
+    "guidance_needed": "string" | null
+  }`;
 
-  const anchorSection = bottleAnchors
-    ? `\n- Use these visual anchors for THIS bottle to calibrate your estimate:\n${bottleAnchors.split("\n").map(l => `    ${l}`).join("\n")}`
-    : "";
+  const prompt = `**V1.5L AFIA ANALYSIS PROTOCOL**
 
-  return `You are a specialized Computer Vision system for Afia cooking oil level estimation.
+Role: Precision Industrial Vision Analyst specializing in liquid volume estimation.
+Object: 1.5 Liter (1500ml) "Afia" Oil Bottle.
+Orientation: The bottle is captured from the front. The handle MUST be on the right side of the bottle from your perspective.
 
-Task: Estimate the fillPercentage of the oil bottle in the provided image.
+1. **Calibration**: 
+   - Use provided 'Reference_Strip' to calibrate the scale. 
+   - 0 (Bottom) = Empty
+   - 1000 (Full-Mark) = 1500ml
 
-Few-Shot Visual Guidance:
-1. [Visual Token: Full] Oil is in the narrow neck region, touching the cap area. (93-97%)
-2. [Visual Token: Shoulder] Oil line is at the transition between the wide body and narrow neck. (~83%)
-3. [Visual Token: Label-Mid] Oil line bisects the main Afia heart logo. (~38%)
-4. [Visual Token: Base] Only a small pool of oil is visible at the very bottom, below the label. (<12%)
+2. **Meniscus Detection**:
+   - Locate the oil line. 
+   - If the detected line is below the 55ml mark shown in the reference, set 'fillPercentage' to 0 and 'below_55ml_threshold' to true.
+   - Otherwise, calculate volume based on the 1000-point scale.
 
-Rules for Estimation:
-- Focus: Find the meniscus (the curved upper surface of the oil).
-- Reference: 0% is the extreme bottom edge of the bottle. 100% is the very top of the cap.
-- Measurement: Measure from bottle base to the oil surface. Excluding the cap itself, a "full" bottle is typically 97%.
-- Spatial Calibration: Use label text and graphics as a ruler. ${anchorSection}
+3. **Coordinate Mapping & Tilt**:
+   - Identify the Y-coordinate of the meniscus.
+   - **Tilted Bottle Rule**: If the bottle is tilted (check metadata), identify the center point of the diagonal meniscus to estimate volume. The 'red_line_y_normalized' should represent this center point.
+   - Return 'red_line_y_normalized' as an integer between 0 and 1000, where 0 is the very bottom and 1000 is the 1500ml line.
+
+4. **Environmental Check**:
+   - If glare blocks the oil line, set 'guidance_needed' to: "Too much glare: move away from window".
+   - If the image is too dark, set 'guidance_needed' to: "Too dark: turn on a light".
+
+${bottleAnchors ? `**BOTTLE LANDMARKS**:\n${bottleAnchors}\n` : ""}
 
 JSON Response Format:
 ${schema}
 
 Confidence Scoring:
-- "high": Meniscus is sharp and clearly visible against label or clear plastic.
-- "medium": Lighting is slightly harsh or bottle is at an angle, but level is inferable.
-- "low": Oil level is obscured by glare, hands, or heavy blur.
+- "high": Meniscus is sharp and clearly visible.
+- "medium": Lighting is slightly harsh, but level is inferable.
+- "low": Oil level is obscured.`;
 
-Image Quality Flags:
-- "blur": Bottle features are indistinct.
-- "poor_lighting": Subject is too dark/bright to distinguish oil from air.
-- "reflection": Glare directly overlaps the estimated oil level.`;
+  return prompt;
 }

@@ -220,23 +220,35 @@ export function useCameraGuidance(
 
     // Update state
     setState(prev => {
-      // Auto-capture criteria: Quality + Brand + Angle
-      const isGood = (assessment.isGoodQuality && brandDetected && angleStatus === 'good') || isTestMode;
+      // Perfect Match criteria
+      const isPerfect = (assessment.isGoodQuality && brandDetected && angleStatus === 'good') || isTestMode;
+      // Locking criteria (detected but maybe not perfect yet)
+      const isLocking = assessment.composition.bottleDetected || isTestMode;
       
       let holdProgress = 0;
       let isHolding = false;
       let shouldFire = false;
-      let currentGoodFramesCount = isGood ? prev.goodFramesCount + 1 : 0;
+      let currentGoodFramesCount = isPerfect ? prev.goodFramesCount + 1 : 0;
 
-      if (isGood) {
+      if (isLocking) {
         lastFailRef.current = null;
         if (!holdStartRef.current) holdStartRef.current = Date.now();
         const elapsed = Date.now() - holdStartRef.current;
+        
+        // Progress of the "locking" phase
         holdProgress = Math.min(1, elapsed / HOLD_DURATION_MS);
         isHolding = holdProgress < 1;
-        shouldFire = holdProgress >= 1;
+        
+        // Fire logic: 
+        // 1. Immediately fire if it becomes "Perfect" while locking
+        // 2. Fire after timeout if "Locking" and quality is at least decent? 
+        // User said: "auto-capture at any second the outline perfectly matches"
+        if (isPerfect) {
+          shouldFire = true;
+          holdProgress = 1;
+          isHolding = false;
+        }
       } else {
-        // T2.6: Grace period logic
         if (!lastFailRef.current) lastFailRef.current = Date.now();
         const failDuration = Date.now() - lastFailRef.current;
         
@@ -260,8 +272,8 @@ export function useCameraGuidance(
         else qualityTrend = 'stable';
       }
       
-      // T2.5: isReady latches once hold progress reaches 1
-      const isReady = prev.isReady || shouldFire || isTestMode;
+      // isReady latches once shouldFire triggers
+      const isReady = prev.isReady || shouldFire;
       
       if (isReady && !prev.isReady && mergedConfig.enableHaptics && navigator.vibrate) {
         navigator.vibrate(40);
@@ -277,7 +289,7 @@ export function useCameraGuidance(
         holdProgress,
         isHolding,
         brandDetected,
-        brandFindings: assessment.composition.isBrandMatch ? ['verified'] : [], // Simple for now
+        brandFindings: assessment.composition.isBrandMatch ? ['verified'] : [],
         angleStatus,
       };
     });

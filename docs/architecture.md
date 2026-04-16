@@ -136,30 +136,32 @@ Request
 | Google Gemini | `gemini-2.5-flash-latest`                   | Primary  | Google AI REST API |
 | Groq          | `meta-llama/llama-4-scout-17b-16e-instruct` | Fallback | OpenAI-compatible  |
 
-- **Automatic failover**: If Gemini throws, Groq is tried
-- **Key rotation**: Up to 3 Gemini API keys (`GEMINI_API_KEY`, `GEMINI_API_KEY2`, `GEMINI_API_KEY3`) randomly selected per request
-- **Temperature**: 0.1 for both (deterministic output)
-- **Response format**: JSON mode enforced (`responseMimeType` for Gemini, `response_format` for Groq)
-- **Structured output**: Both providers return `{fillPercentage, confidence, imageQualityIssues[], reasoning}`
+- **Automatic failover**: If Gemini throws, Groq is tried.
+- **Round-Robin Rotation**: Worker rotates through `GEMINI_KEY_1..N` (min 3 keys) to bypass free-tier rate limits.
+- **Few-Shot Visuals**: Prompts include 2 visual anchors (100%/25%) to stabilize estimation across SKUs.
+- **Temperature**: 0.1 for both (deterministic output).
+- **Response format**: JSON mode enforced (`responseMimeType` for Gemini, `response_format` for Groq).
+- **Structured output**: Both providers return `{fillPercentage, confidence, imageQualityIssues[], reasoning}`.
 
 ### Rate Limiting
 
-- **Mechanism**: Sliding window, 10 requests per minute per IP
-- **Storage**: Cloudflare KV with 60-second TTL
-- **Headers**: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
-- **IP detection**: `CF-Connecting-IP` → `X-Forwarded-For` → `"unknown"`
+- **Mechanism**: Sliding window, 10 requests per minute per IP.
+- **Storage**: Cloudflare KV with 60-second TTL.
+- **Headers**: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`.
+- **IP detection**: `CF-Connecting-IP` → `X-Forwarded-For` → `"unknown"`.
 
-### Data Storage (R2)
+## Data Storage
 
-R2 storage is **optional** and disabled in the POC (requires Cloudflare credit card):
+### R2 Storage
+- **Status:** ACTIVE (Integrated for POC).
+- **images/**: `{scanId}.jpg` (optimized user uploads).
+- **metadata/**: `{scanId}.json` (AI predictions + user feedback).
+- **models/**: TF.js model shards for client-side inference.
 
-```
-safi-training-data/
-├── images/{scanId}.jpg          # Raw JPEG from user
-└── metadata/{scanId}.json       # ScanMetadata + optional feedback
-```
-
-The `storeScan()` and `updateScanWithFeedback()` functions gracefully no-op when `TRAINING_BUCKET` is undefined.
+### Supabase (Training Moat)
+- **training_samples**: Centralized table for ground truth (Admin/User corrections).
+- **model_versions**: Tracks MAE performance and active shards.
+- **Role**: Backend for Admin Dashboard and source of truth for the augmentation pipeline.
 
 ### Feedback Validation Pipeline
 

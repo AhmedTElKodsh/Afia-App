@@ -18,7 +18,7 @@ export async function callGemini(
   bottle: BottleEntry,
   apiKeys: string[],
   debugReasoning = false
-): Promise<LLMResponse> {
+): Promise<{ result: LLMResponse; keyIndex: number }> {
   const userMessage = `Bottle: ${bottle.name} (${bottle.sku}), ${bottle.totalVolumeMl}ml total. Return JSON fill estimate.`;
 
   const requestBody = {
@@ -77,7 +77,10 @@ export async function callGemini(
         throw new Error("Gemini returned empty response");
       }
 
-      return parseLLMResponse(text);
+      return {
+        result: parseLLMResponse(text),
+        keyIndex: i
+      };
     } catch (error) {
       errors.push(error as Error);
       console.warn(`Gemini key ${i + 1} failed, trying next key...`, error);

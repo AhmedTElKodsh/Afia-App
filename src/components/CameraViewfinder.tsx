@@ -445,8 +445,10 @@ export function CameraViewfinder({
                   ? t('camera.ready')
                   : isManualMode
                     ? t('camera.captureManually')
-                    : guidance.state.assessment?.lighting.status === 'too-dark' || guidance.state.assessment?.lighting.status === 'too-bright'
-                      ? t('camera.enhanceLighting')
+                    : guidance.state.assessment?.lighting.status === 'too-dark'
+                      ? t('camera.tooDark')
+                      : guidance.state.assessment?.lighting.status === 'too-bright'
+                        ? t('camera.tooBright')
                       : !guidance.state.brandDetected && guidance.state.assessment?.composition.bottleDetected
                         ? t('camera.ensureLogoVisible')
                         : guidance.state.assessment?.composition.distance === 'too-far' || guidance.state.assessment?.composition.distance === 'too-close'

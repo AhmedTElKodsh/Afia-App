@@ -95,9 +95,9 @@
     "moveCloser": "Move closer to the bottle",
     "moveBack": "Move camera back slightly",
     "centreBottle": "Centre the bottle in the guide",
-    "tooBright": "Reduce glare — avoid direct light",
+    "tooBright": "Too much glare: move away from window",
     "lowContrast": "Improve lighting contrast",
-    "tooDark": "Move to a brighter location",
+    "tooDark": "Too dark: turn on a light",
     "enhanceLighting": "Enhance lighting for better results",
     "adjustPosition": "Adjust bottle position to match outline",
     "holdSteady": "Hold steady — image is blurry",
@@ -105,7 +105,8 @@
     "perfect": "Perfect! Hold steady…",
     "captureManually": "Capture manually",
     "showFrontLabel": "Position front label facing camera",
-    "shootFrontside": "Shoot the frontside of the bottle",
+    "shootFrontside": "Shoot the frontside with handle on the right",
+    "positionHandleRight": "Position bottle handle on the right",
     "tiltUp": "Tilt phone up",
     "tiltDown": "Tilt phone down",
     "brandVerified": "Afia brand verified",
@@ -392,7 +393,30 @@
       "retrying": "Retrying scan...",
       "readyNewScan": "Ready for new scan",
       "readyNewTest": "Ready for new test",
-      "validationSaved": "Validation saved!"
+      "validationSaved": "Validation saved!",
+      "feedbackFailed": "Failed to submit feedback to server",
+      "mockScenarioComplete": "Mock scenario complete: {{name}}",
+      "mockScenarioCancelled": "Mock scenario cancelled"
+    },
+    "mockApi": {
+      "title": "Mock API Test Scenarios",
+      "description": "Select a scenario to test the Result UI with different fill levels and confidence ratings.",
+      "filterByConfidence": "Filter by confidence level",
+      "filterAll": "All",
+      "filterHigh": "High",
+      "filterMedium": "Medium",
+      "filterLow": "Low",
+      "scenarioLabel": "Run {{name}}: {{description}}",
+      "confidenceLevel": "{{level}} confidence",
+      "confidence": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "fill": "fill",
+      "issue": "issue",
+      "issue_plural": "issues",
+      "runTest": "Run Test"
     },
     "inspector": {
       "title": "API Inspector",

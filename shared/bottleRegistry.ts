@@ -126,5 +126,5 @@ export const ACTIVE_SKU = "afia-corn-1.5l";
  * Includes 1.5L (full guidance) and 2.5L (mock/manual).
  */
 export const activeBottleRegistry: BottleEntry[] = bottleRegistry.filter(
-  (b) => b.sku === "afia-corn-1.5l" || b.sku === "afia-corn-2.5l"
+  (b) => b.sku === "afia-corn-1.5l"
 );

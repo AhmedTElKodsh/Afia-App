@@ -26,7 +26,7 @@ import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { useScanHistory, type StoredScan } from "../hooks/useScanHistory";
 import { exportToCSV, exportToJSON } from "../utils/exportResults";
-import { exportTrainingDataset } from "../utils/trainingExporter";
+import { exportTrainingDataset, mapScansToTrainingRecords } from "../utils/trainingExporter";
 import { BottleManager } from "./BottleManager";
 import { QrMockGenerator } from "./QrMockGenerator";
 import { ScanReview } from "./ScanReview";
@@ -708,7 +708,7 @@ function ExportTab({ scans, t }: ExportTabProps) {
         </button>
         <button
           className="export-btn-card export-btn-card--accent"
-          onClick={() => exportTrainingDataset(scans, "csv")}
+          onClick={() => exportTrainingDataset(mapScansToTrainingRecords(scans), "csv")}
           disabled={scans.length === 0}
         >
           <div className="export-btn-card-icon"><Database size={22} /></div>

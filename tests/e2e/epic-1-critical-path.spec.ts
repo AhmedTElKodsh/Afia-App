@@ -2,6 +2,8 @@ import { test, expect } from '@playwright/test';
 import { mockAnalyzeSuccess, mockAnalyzeLowConfidence, mockCamera } from './helpers/mockAPI';
 import { testBottles } from './fixtures/testData';
 
+import { triggerAnalyzeAndConfirm } from './helpers/flow';
+
 test.describe('Epic 1: Core Scan Experience', () => {
 
   test.beforeEach(async ({ page }) => {
@@ -19,7 +21,7 @@ test.describe('Epic 1: Core Scan Experience', () => {
    * Privacy is pre-accepted via addInitScript so QrLanding renders the enabled button directly.
    */
   async function navigateToCamera(page: import('@playwright/test').Page) {
-    await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
+    await page.goto(`/?sku=${testBottles.afiaCorn15L.sku}`);
 
     const startBtn = page.locator('button:has-text("START SMART SCAN"), button:has-text("Start Scan")').first();
     await expect(startBtn).toBeEnabled({ timeout: 5000 });
@@ -41,23 +43,8 @@ test('Critical Path: QR -> Privacy -> Scan -> Results', async ({ page }) => {
     await mockAnalyzeSuccess(page);
     await navigateToCamera(page);
 
-    // Register response waiter BEFORE triggering analysis
-    const analyzePromise = page.waitForResponse(
-      res => res.url().includes('/analyze'),
-      { timeout: 15000 }
-    );
+    await triggerAnalyzeAndConfirm(page);
 
-    // Use test hook instead of clickCapture to avoid video.readyState race condition:
-    // context.drawImage(video) throws InvalidStateError when readyState < 2 (HTML spec).
-    // The hook calls handleAnalyze(blankJpeg) directly — same code path, real HTTP fetch.
-    await page.evaluate(() => {
-      (window as any).__AFIA_TRIGGER_ANALYZE__?.();
-    });
-
-    const response = await analyzePromise;
-    expect(response.status()).toBe(200);
-
-    await expect(page.locator('.result-display')).toBeVisible({ timeout: 15000 });
     await expect(page.locator('.result-metric__value').first()).toContainText(/ml/i);
   });
 
@@ -90,12 +77,8 @@ test('Critical Path: QR -> Privacy -> Scan -> Results', async ({ page }) => {
     await mockAnalyzeLowConfidence(page);
     await navigateToCamera(page);
 
-    // Use test hook for reliable trigger (page.evaluate dispatch is flaky for this route type)
-    await page.evaluate(() => {
-      (window as any).__AFIA_TRIGGER_ANALYZE__?.();
-    });
+    await triggerAnalyzeAndConfirm(page);
 
-    await expect(page.locator('.result-display')).toBeVisible({ timeout: 15000 });
     // ConfidenceBadge uses BEM modifier: confidence-badge--low
     await expect(page.locator('.confidence-badge--low').first()).toBeVisible();
     await expect(page.locator('button:has-text("Retake")').first()).toBeVisible();

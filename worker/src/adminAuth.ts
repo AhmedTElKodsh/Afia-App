@@ -1,5 +1,5 @@
 import type { Context } from "hono";
-import type { Env } from "./types.ts";
+import type { Env, Variables } from "./types.ts";
 
 const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
@@ -19,7 +19,7 @@ async function signToken(payload: string, secret: string): Promise<string> {
   return `${b64Payload}.${b64Signature}`;
 }
 
-export async function handleAdminAuth(c: Context<{ Bindings: Env }>): Promise<Response> {
+export async function handleAdminAuth(c: Context<{ Bindings: Env; Variables: Variables }>): Promise<Response> {
   const body = await c.req.json<{ password?: unknown }>();
 
   if (typeof body.password !== "string" || !body.password) {

@@ -88,6 +88,21 @@ export function useLocalAnalysis() {
             .catch(err => console.warn("[LocalModel] Cache save failed:", err));
         }
 
+        // H1 FIX: Release existing session before creating new one to prevent memory leak
+        if (sessionRef.current) {
+          try {
+            if ('release' in sessionRef.current && typeof (sessionRef.current as any).release === 'function') {
+              const releaseRes = (sessionRef.current as any).release();
+              if (releaseRes instanceof Promise) {
+                await releaseRes.catch(e => console.warn("[LocalModel] Release failed:", e));
+              }
+            }
+          } catch (e) {
+            console.warn("[LocalModel] Release failed:", e);
+          }
+          sessionRef.current = null;
+        }
+
         const session = await ort.InferenceSession.create(new Uint8Array(buffer), {
           executionProviders: ["wasm"],
           graphOptimizationLevel: "all",
@@ -121,6 +136,13 @@ export function useLocalAnalysis() {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = async () => {
+        // H2 FIX: Check if component unmounted during async operation
+        if (!canvasRef.current || !sessionRef.current) {
+          img.onload = null;
+          img.onerror = null;
+          return reject(new Error("Component unmounted during preprocessing"));
+        }
+
         const size = LOCAL_MODEL_CONFIG.imageSize;
         if (!canvasRef.current) {
           canvasRef.current = document.createElement("canvas");

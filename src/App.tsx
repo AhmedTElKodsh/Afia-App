@@ -90,7 +90,7 @@ export default function App() {
 
     try {
       // Stage 2: Attempt local analysis with LLM fallback
-      const analysisResult = await runAnalysis(img, selectedSku);
+      const analysisResult = await runAnalysis(img, selectedSku, bottle?.totalVolumeMl || 1500);
       setResult(analysisResult);
 
       if (analysisResult.isUnsupportedSku) {

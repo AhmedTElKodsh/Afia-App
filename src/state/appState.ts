@@ -15,10 +15,11 @@ export interface AnalysisResult {
   fillPercentage: number;
   remainingMl: number;
   confidence: "high" | "medium" | "low";
-  aiProvider: "gemini" | "groq" | "openrouter" | "mistral" | "local-cnn";
+  aiProvider: "gemini" | "groq" | "openrouter" | "mistral" | "local-cnn" | "mock-api";
   latencyMs: number;
   imageQualityIssues?: string[];
   isUnsupportedSku?: boolean;
+  red_line_y_normalized?: number;
 }
 
 export interface BottleContext {
