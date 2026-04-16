@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import type { Env } from "./types.ts";
+import type { Env, Variables } from "./types.ts";
 import { handleAnalyze } from "./analyze.ts";
 import { handleFeedback } from "./feedback.ts";
 import { handleAdminAuth } from "./adminAuth.ts";
 
-const app = new Hono<{ Bindings: Env }>();
+const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 // CORS middleware — restrict to known origins
 app.use("*", async (c, next) => {
@@ -92,7 +92,7 @@ app.use("*", async (c, next) => {
   });
 
   const response = await next();
-  response.headers.set("X-RequestId", requestId);
+  c.header("X-RequestId", requestId);
   return response;
 });
 
