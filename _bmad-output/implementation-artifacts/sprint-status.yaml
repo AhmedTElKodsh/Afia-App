@@ -43,7 +43,7 @@ story_location: "_bmad-output/implementation-artifacts"
 development_status:
   # Epic 1: Core Scan Experience (End-to-End MVP)
   epic-1: in-progress
-  1-1-project-foundation-pwa-setup: review
+  1-1-project-foundation-pwa-setup: done
   1-2-cloudflare-infrastructure-setup: backlog
   1-3-bottle-registry-nutrition-data: backlog
   1-4-qr-landing-page: backlog
