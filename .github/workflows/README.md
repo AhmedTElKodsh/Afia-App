@@ -34,13 +34,26 @@ This directory contains CI/CD workflows for the Afia Oil Tracker application's 3
 
 ### GitHub Secrets Required
 
+**⚠️ SECURITY: All secrets must be set before deployment!**
+
 ```
-CLOUDFLARE_API_TOKEN          # Cloudflare API token for deployments
-CLOUDFLARE_ACCOUNT_ID         # Cloudflare account ID
+CLOUDFLARE_API_TOKEN          # Cloudflare API token for deployments (REQUIRED)
+CLOUDFLARE_ACCOUNT_ID         # Cloudflare account ID (REQUIRED)
+VITE_ADMIN_PASSWORD           # Admin panel password (REQUIRED - use strong password!)
 CLOUDFLARE_WORKER_URL         # Stage 1 worker URL (optional, has default)
 CLOUDFLARE_WORKER_URL_STAGE2  # Stage 2 worker URL (optional, has default)
-VITE_ADMIN_PASSWORD           # Admin panel password (optional, has default)
 ```
+
+**How to set secrets:**
+1. Go to: `Settings > Secrets and variables > Actions`
+2. Click "New repository secret"
+3. Add each secret with a strong value
+4. Never use default passwords like '1234'
+
+**Validation:**
+- Workflows now validate that `VITE_ADMIN_PASSWORD` is set
+- Build will fail if required secrets are missing
+- This prevents deploying with weak default passwords
 
 ### Build-time Environment Variables
 
@@ -144,5 +157,34 @@ on:
 ## Related Documentation
 
 - [DEPLOYMENT_STRATEGY.md](../../DEPLOYMENT_STRATEGY.md) - Overall deployment strategy
+- [STAGE2-IMPLEMENTATION-CHECKLIST.md](../../STAGE2-IMPLEMENTATION-CHECKLIST.md) - Stage 2 implementation tasks
+- [SECURITY-INCIDENT-REPORT.md](../../SECURITY-INCIDENT-REPORT.md) - Security best practices
 - [CI_TEST_FIXES.md](../../CI_TEST_FIXES.md) - CI test fixes and troubleshooting
 - [worker/wrangler.toml](../../worker/wrangler.toml) - Wrangler configuration
+
+## Security Notes
+
+### ✅ Security Improvements (2026-04-19)
+
+1. **Removed weak default passwords**
+   - No more `|| '1234'` fallbacks in workflows
+   - `VITE_ADMIN_PASSWORD` is now required
+   - Build fails if secret is not set
+
+2. **Added secret validation**
+   - Workflows validate required secrets before building
+   - Clear error messages if secrets are missing
+   - Prevents accidental deployment with weak credentials
+
+3. **Verified .env protection**
+   - `.env` files are in `.gitignore`
+   - Credentials are never committed to git
+   - All secrets managed via GitHub Secrets / Wrangler CLI
+
+### 🔒 Best Practices
+
+- Use strong, unique passwords (min 16 characters)
+- Rotate secrets every 90 days
+- Never commit secrets to git
+- Use different credentials for Stage 1 and Stage 2
+- Monitor for unauthorized access

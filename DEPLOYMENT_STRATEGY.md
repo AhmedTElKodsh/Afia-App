@@ -17,12 +17,13 @@ This document outlines the deployment strategy for the Afia Oil Tracker applicat
 
 ### Stage 2: Local Model + LLM Fallback (Testing)
 - **Branch**: `local-model`
-- **Status**: 🧪 Testing & Development
+- **Status**: ⏳ **NOT YET IMPLEMENTED** (Planned)
 - **Model**: ONNX local model (primary) + LLM API (fallback)
 - **Purpose**: Test local model maturity while maintaining reliability
 - **Deployment**:
   - Worker: `afia-worker-stage2.savona.workers.dev`
   - Pages: `afia-app-stage2.pages.dev`
+- **Note**: Workflow is configured but local model implementation is pending
 
 ### Stage 3: Local Model Only (Future Production)
 - **Branch**: TBD (will be merged to `master` when ready)
@@ -239,12 +240,113 @@ wrangler secret put GROQ_API_KEY --env stage2
 
 1. ✅ Set up GitHub Actions workflows (DONE)
 2. ✅ Configure wrangler environments (DONE)
-3. ⏳ Create `local-model` branch
-4. ⏳ Implement local model inference
-5. ⏳ Add fallback logic
-6. ⏳ Deploy to Stage 2 environment
-7. ⏳ Monitor and iterate
-8. ⏳ Plan Stage 3 migration
+3. ✅ Add secret validation to workflows (DONE)
+4. ⏳ **Set VITE_ADMIN_PASSWORD secret in GitHub** (REQUIRED)
+5. ⏳ Create `local-model` branch
+6. ⏳ Implement local model inference
+7. ⏳ Add fallback logic
+8. ⏳ Deploy to Stage 2 environment
+9. ⏳ Monitor and iterate
+10. ⏳ Plan Stage 3 migration
+
+---
+
+## Setting Up Secrets
+
+### GitHub Secrets (Required)
+
+Before deploying, you must set these secrets in your GitHub repository:
+
+**Go to:** `Settings > Secrets and variables > Actions > New repository secret`
+
+**Required Secrets:**
+```
+CLOUDFLARE_API_TOKEN       # Get from Cloudflare dashboard
+CLOUDFLARE_ACCOUNT_ID      # Get from Cloudflare dashboard
+VITE_ADMIN_PASSWORD        # Choose a strong password (NOT '1234'!)
+```
+
+**Optional Secrets (have defaults):**
+```
+CLOUDFLARE_WORKER_URL      # Defaults to: https://afia-worker.savona.workers.dev
+CLOUDFLARE_WORKER_URL_STAGE2  # Defaults to: https://afia-worker-stage2.savona.workers.dev
+```
+
+### Wrangler Secrets (Per Environment)
+
+Set these secrets for each Cloudflare Worker environment:
+
+**Stage 1 (Production):**
+```bash
+cd worker
+
+# Set Gemini API keys (3 keys for rotation/fallback)
+wrangler secret put GEMINI_API_KEY --env stage1
+wrangler secret put GEMINI_API_KEY2 --env stage1
+wrangler secret put GEMINI_API_KEY3 --env stage1
+
+# Set Groq API key (fallback)
+wrangler secret put GROQ_API_KEY --env stage1
+
+# Set Supabase credentials
+wrangler secret put SUPABASE_SERVICE_KEY --env stage1
+
+# Verify secrets are set
+wrangler secret list --env stage1
+```
+
+**Stage 2 (Testing):**
+```bash
+# Same keys for Stage 2 (used for fallback)
+wrangler secret put GEMINI_API_KEY --env stage2
+wrangler secret put GEMINI_API_KEY2 --env stage2
+wrangler secret put GEMINI_API_KEY3 --env stage2
+wrangler secret put GROQ_API_KEY --env stage2
+wrangler secret put SUPABASE_SERVICE_KEY --env stage2
+
+# Verify
+wrangler secret list --env stage2
+```
+
+**Stage 3 (Future):**
+```bash
+# Only Supabase needed (no LLM APIs)
+wrangler secret put SUPABASE_SERVICE_KEY --env stage3
+```
+
+### Rotating Secrets
+
+To rotate a secret without downtime:
+
+```bash
+# 1. Add new key as KEY2
+wrangler secret put GEMINI_API_KEY2 --env stage1
+
+# 2. Test that fallback works
+# 3. Update primary key
+wrangler secret put GEMINI_API_KEY --env stage1
+
+# 4. Remove old KEY2 if no longer needed
+wrangler secret delete GEMINI_API_KEY2 --env stage1
+```
+
+---
+
+## Security Best Practices
+
+### ✅ DO
+- Use strong, unique passwords for admin access
+- Rotate API keys regularly (every 90 days)
+- Set all secrets via GitHub Secrets / Wrangler CLI
+- Use different keys for Stage 1 and Stage 2 if possible
+- Monitor API usage for anomalies
+
+### ❌ DON'T
+- Never commit `.env` files to git
+- Never use default passwords like '1234'
+- Never hardcode secrets in code or workflows
+- Never share secrets in chat/email
+- Never reuse passwords across environments
 
 ---
 

@@ -1,5 +1,9 @@
 name: Deploy Stage 2 (Local Model + LLM Fallback)
 
+# ⚠️ WARNING: Stage 2 local model implementation is not yet complete
+# This workflow is configured but will fail until local model code is implemented
+# See: src/services/localModel/README.md for implementation checklist
+
 on:
   push:
     branches: [local-model]
@@ -13,6 +17,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ secrets.VITE_ADMIN_PASSWORD }}" ]; then
+            echo "❌ ERROR: VITE_ADMIN_PASSWORD secret is required but not set"
+            echo "Please set it in repository settings: Settings > Secrets and variables > Actions"
+            exit 1
+          fi
+          echo "✅ Required secrets validated"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -35,7 +48,7 @@ jobs:
         run: npm run build
         env:
           VITE_PROXY_URL: ${{ secrets.CLOUDFLARE_WORKER_URL_STAGE2 || 'https://afia-worker-stage2.savona.workers.dev' }}
-          VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD || '1234' }}
+          VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD }}
           VITE_STAGE: 'stage2'
           VITE_ENABLE_LOCAL_MODEL: 'true'
 
@@ -43,7 +56,7 @@ jobs:
         run: npx playwright test tests/e2e/
         env:
           CI: true
-          VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD || '1234' }}
+          VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD }}
           VITE_STAGE: 'stage2'
           VITE_ENABLE_LOCAL_MODEL: 'true'
 
@@ -103,7 +116,7 @@ jobs:
         run: npm run build
         env:
           VITE_PROXY_URL: ${{ secrets.CLOUDFLARE_WORKER_URL_STAGE2 || 'https://afia-worker-stage2.savona.workers.dev' }}
-          VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD || '1234' }}
+          VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD }}
           VITE_STAGE: 'stage2'
           VITE_ENABLE_LOCAL_MODEL: 'true'
 
