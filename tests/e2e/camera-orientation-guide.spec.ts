@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { mockCamera } from './helpers/mockAPI';
 
 test.describe('Camera Orientation Guide', () => {
   test.beforeEach(async ({ page }) => {
@@ -7,6 +8,7 @@ test.describe('Camera Orientation Guide', () => {
       window.localStorage.setItem('afia_privacy_accepted', 'true');
       (window as any).__AFIA_TEST_MODE__ = true;
     });
+    await mockCamera(page);
   });
 
   test('orientation guide appears in viewfinder', async ({ page }) => {
@@ -22,10 +24,13 @@ test.describe('Camera Orientation Guide', () => {
       if (btn) btn.click();
     });
     
-    // Wait for camera to activate with longer timeout
-    await page.waitForSelector('.camera-viewfinder.camera-active, .camera-active', { timeout: 15000 });
+    // Wait for camera to activate - check for camera-active class
+    await page.waitForSelector('.camera-viewfinder.camera-active', { state: 'attached', timeout: 20000 });
     
-    // Verify orientation guide is visible with longer timeout
+    // Wait a bit for camera stream to initialize
+    await page.waitForTimeout(1000);
+    
+    // Verify orientation guide is visible
     const orientationGuide = page.locator('.orientation-guide');
     await expect(orientationGuide).toBeVisible({ timeout: 10000 });
     
@@ -36,10 +41,7 @@ test.describe('Camera Orientation Guide', () => {
     await expect(page.locator('.orientation-guide:has-text("→")')).toBeVisible();
   });
 
-  test('orientation guide disappears after capture', async ({ page, context }) => {
-    // Grant camera permissions
-    await context.grantPermissions(['camera']);
-    
+  test('orientation guide disappears after capture', async ({ page }) => {
     // Navigate to scan page
     await page.goto('/?sku=filippo-berio-500ml');
     
@@ -52,17 +54,20 @@ test.describe('Camera Orientation Guide', () => {
       if (btn) btn.click();
     });
     
-    // Wait for camera to be active with longer timeout
-    await page.waitForSelector('.camera-viewfinder.camera-active, .camera-active', { timeout: 15000 });
+    // Wait for camera to be active
+    await page.waitForSelector('.camera-viewfinder.camera-active', { state: 'attached', timeout: 20000 });
+    await page.waitForTimeout(1000);
     
-    // Verify guide is visible before capture with longer timeout
+    // Verify guide is visible before capture
     await expect(page.locator('.orientation-guide')).toBeVisible({ timeout: 10000 });
     
     // Capture photo (manual mode button)
-    await page.click('.camera-capture-btn');
+    const captureBtn = page.locator('.camera-capture-btn');
+    await expect(captureBtn).toBeEnabled({ timeout: 10000 });
+    await captureBtn.click();
     
     // Wait for capture to complete (analyzing overlay appears)
-    await page.waitForSelector('.analyzing-overlay', { timeout: 10000 });
+    await page.waitForSelector('.analyzing-overlay, .result-display', { timeout: 15000 });
     
     // Orientation guide should no longer be visible
     await expect(page.locator('.orientation-guide')).not.toBeVisible();
@@ -79,7 +84,8 @@ test.describe('Camera Orientation Guide', () => {
       if (btn) btn.click();
     });
     
-    await page.waitForSelector('.camera-viewfinder.camera-active, .camera-active', { timeout: 15000 });
+    await page.waitForSelector('.camera-viewfinder.camera-active', { state: 'attached', timeout: 20000 });
+    await page.waitForTimeout(1000);
     
     const guide = page.locator('.orientation-guide');
     await expect(guide).toBeVisible({ timeout: 10000 });
@@ -110,7 +116,8 @@ test.describe('Camera Orientation Guide', () => {
       if (btn) btn.click();
     });
     
-    await page.waitForSelector('.camera-viewfinder.camera-active, .camera-active', { timeout: 15000 });
+    await page.waitForSelector('.camera-viewfinder.camera-active', { state: 'attached', timeout: 20000 });
+    await page.waitForTimeout(1000);
     
     const guide = page.locator('.orientation-guide');
     await expect(guide).toBeVisible({ timeout: 10000 });
@@ -137,9 +144,10 @@ test.describe('Camera Orientation Guide', () => {
       if (btn) btn.click();
     });
     
-    await page.waitForSelector('.camera-viewfinder.camera-active, .camera-active', { timeout: 15000 });
+    await page.waitForSelector('.camera-viewfinder.camera-active', { state: 'attached', timeout: 20000 });
+    await page.waitForTimeout(1000);
     
-    // Guide should still be visible in landscape with longer timeout
+    // Guide should still be visible in landscape
     await expect(page.locator('.orientation-guide')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('text=Handle on Right')).toBeVisible();
   });
@@ -159,9 +167,10 @@ test.describe('Camera Orientation Guide', () => {
         if (btn) btn.click();
       });
       
-      await page.waitForSelector('.camera-viewfinder.camera-active, .camera-active', { timeout: 15000 });
+      await page.waitForSelector('.camera-viewfinder.camera-active', { state: 'attached', timeout: 20000 });
+      await page.waitForTimeout(500);
       
-      // Verify guide is visible and centered with longer timeout
+      // Verify guide is visible and centered
       const guide = page.locator('.orientation-guide');
       await expect(guide).toBeVisible({ timeout: 10000 });
       

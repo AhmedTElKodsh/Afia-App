@@ -2,19 +2,19 @@ import { Page } from '@playwright/test';
 
 /**
  * Mock the /analyze API endpoint with a successful response
+ * Returns calibrated values matching the afia-corn-1.5l bottle
  */
 export async function mockAnalyzeSuccess(page: Page) {
   // Mock both relative and absolute proxy URLs
   const analyzePattern = /.*\/analyze/;
   await page.route(analyzePattern, async (route) => {
-    console.log(`MOCK API: /analyze hit [${route.request().url()}]`);
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
         scanId: 'test-scan-e2e-123',
         fillPercentage: 65,
-        remainingMl: 975,
+        remainingMl: 1137, // Calibrated value for 65% fill on afia-corn-1.5l
         confidence: 'high',
         aiProvider: 'gemini',
         latencyMs: 1234,

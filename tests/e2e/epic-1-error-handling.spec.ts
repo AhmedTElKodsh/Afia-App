@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { mockAnalyzeError } from './helpers/mockAPI';
+import { mockAnalyzeError, mockCamera } from './helpers/mockAPI';
 import { testBottles } from './fixtures/testData';
 
 /**
@@ -10,6 +10,11 @@ import { testBottles } from './fixtures/testData';
  */
 
 test.describe('Epic 1: Error Handling', () => {
+  
+  test.beforeEach(async ({ page }) => {
+    // Mock camera for all tests
+    await mockCamera(page);
+  });
   
   test.describe('Unknown Bottle Handling', () => {
     
@@ -37,40 +42,114 @@ test.describe('Epic 1: Error Handling', () => {
   test.describe('API Error Handling', () => {
     
     test('should show error message when API returns 500', async ({ page }) => {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('afia_privacy_accepted', 'true');
+        (window as any).__AFIA_TEST_MODE__ = true;
+      });
+      
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
       await page.waitForLoadState('networkidle');
       
       // Mock API error
       await mockAnalyzeError(page, 500);
       
-      // Try to start scan (we'll test error handling without full flow)
-      // For now, just verify the page loads and can handle errors
-      expect(await page.textContent('body')).toBeTruthy();
+      // Start scan flow
+      await page.evaluate(() => {
+        const btn = document.querySelector('button.qrl-cta') as HTMLButtonElement
+          ?? Array.from(document.querySelectorAll('button')).find(
+            b => b.textContent?.includes('START SMART SCAN') || b.textContent?.includes('Start Scan')
+          ) as HTMLButtonElement;
+        if (btn) btn.click();
+      });
+      
+      // Wait for camera to be active
+      await expect(page.locator('.camera-active').first()).toBeVisible({ timeout: 10000 });
+      
+      // Trigger analyze which will fail
+      await page.evaluate(() => {
+        (window as any).__AFIA_TRIGGER_ANALYZE__?.();
+      });
+      
+      // Should show error message
+      await expect(page.locator('.error-message, .analyzing-error, [class*="error"]').first())
+        .toBeVisible({ timeout: 10000 });
+      
+      const pageContent = await page.textContent('body');
+      expect(pageContent?.toLowerCase()).toMatch(/error|failed|try again|problem/i);
     });
     
     test('should show error message when API returns 429 (rate limit)', async ({ page }) => {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('afia_privacy_accepted', 'true');
+        (window as any).__AFIA_TEST_MODE__ = true;
+      });
+      
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
       await page.waitForLoadState('networkidle');
       
       // Mock rate limit error
       await mockAnalyzeError(page, 429);
       
-      // Verify page can handle rate limit
-      expect(await page.textContent('body')).toBeTruthy();
+      // Start scan flow
+      await page.evaluate(() => {
+        const btn = document.querySelector('button.qrl-cta') as HTMLButtonElement
+          ?? Array.from(document.querySelectorAll('button')).find(
+            b => b.textContent?.includes('START SMART SCAN') || b.textContent?.includes('Start Scan')
+          ) as HTMLButtonElement;
+        if (btn) btn.click();
+      });
+      
+      await expect(page.locator('.camera-active').first()).toBeVisible({ timeout: 10000 });
+      
+      // Trigger analyze
+      await page.evaluate(() => {
+        (window as any).__AFIA_TRIGGER_ANALYZE__?.();
+      });
+      
+      // Should show rate limit message
+      await expect(page.locator('.error-message, .analyzing-error, [class*="error"]').first())
+        .toBeVisible({ timeout: 10000 });
+      
+      const pageContent = await page.textContent('body');
+      expect(pageContent?.toLowerCase()).toMatch(/rate limit|too many|slow down|try again later/i);
     });
     
     test('should offer retry option after API failure', async ({ page }) => {
+      await page.addInitScript(() => {
+        window.localStorage.setItem('afia_privacy_accepted', 'true');
+        (window as any).__AFIA_TEST_MODE__ = true;
+      });
+      
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
       await page.waitForLoadState('networkidle');
       
       // Mock API error
       await mockAnalyzeError(page, 503);
       
-      // Verify page loaded
-      const pageContent = await page.textContent('body');
+      // Start scan flow
+      await page.evaluate(() => {
+        const btn = document.querySelector('button.qrl-cta') as HTMLButtonElement
+          ?? Array.from(document.querySelectorAll('button')).find(
+            b => b.textContent?.includes('START SMART SCAN') || b.textContent?.includes('Start Scan')
+          ) as HTMLButtonElement;
+        if (btn) btn.click();
+      });
       
-      // Should have some interactive element or retry option
-      expect(pageContent.length).toBeGreaterThan(0);
+      await expect(page.locator('.camera-active').first()).toBeVisible({ timeout: 10000 });
+      
+      // Trigger analyze
+      await page.evaluate(() => {
+        (window as any).__AFIA_TRIGGER_ANALYZE__?.();
+      });
+      
+      // Should show error with retry option
+      await expect(page.locator('.error-message, .analyzing-error, [class*="error"]').first())
+        .toBeVisible({ timeout: 10000 });
+      
+      // Should have retry/retake button
+      await expect(
+        page.locator('button:has-text("Retry"), button:has-text("Try Again"), button:has-text("Retake")').first()
+      ).toBeVisible({ timeout: 5000 });
     });
   });
   

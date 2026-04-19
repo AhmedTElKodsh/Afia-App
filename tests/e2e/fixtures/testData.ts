@@ -6,7 +6,22 @@
  * from the registry — keep only the active bottle here.
  */
 
-export const testBottles = {
+export interface TestBottle {
+  sku: string;
+  name: string;
+  volume?: string;
+  oilType?: string;
+}
+
+export interface TestBottles {
+  afiaCorn15L: TestBottle;
+  filippoBerio: TestBottle;
+  bertolli: TestBottle;
+  afia: TestBottle;
+  invalid: TestBottle;
+}
+
+export const testBottles: TestBottles = {
   afiaCorn15L: {
     sku: 'afia-corn-1.5l',
     name: 'Afia Pure Corn Oil 1.5L',
