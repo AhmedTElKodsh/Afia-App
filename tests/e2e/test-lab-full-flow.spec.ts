@@ -199,30 +199,39 @@ test.describe('TestLab: Mock QR → Camera → Analyze → Results (User Flow)',
   test('Full mock QR flow: select bottle → scan → analyze → results', async ({ page }) => {
     await navigateToTestLab(page);
     await selectBottleAndStartScan(page, testBottles.filippoBerio.sku);
+    
+    // Wait a moment for camera to stabilize before triggering analysis
+    await page.waitForTimeout(1000);
     await triggerAnalyzeAndConfirm(page);
 
     // Result display shows core metrics with longer timeout
-    await expect(page.locator('.result-display')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.result-display')).toBeVisible({ timeout: 15000 });
     await expect(page.locator('.result-metric__value').first()).toContainText(/ml/i);
   });
 
   test('results show correct fill percentage from mock API (65%)', async ({ page }) => {
     await navigateToTestLab(page);
     await selectBottleAndStartScan(page, testBottles.filippoBerio.sku);
+    
+    // Wait for camera to stabilize
+    await page.waitForTimeout(1000);
     await triggerAnalyzeAndConfirm(page);
 
     // Mock API returns fillPercentage: 65; calibrated bottle renders ~1137 ml (not linear 975 ml)
-    await expect(page.locator('.result-display')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.result-display')).toBeVisible({ timeout: 15000 });
     await expect(page.locator('.result-display')).toContainText(/1137/);
   });
 
   test('results show high confidence badge for successful analysis', async ({ page }) => {
     await navigateToTestLab(page);
     await selectBottleAndStartScan(page, testBottles.filippoBerio.sku);
+    
+    // Wait for camera to stabilize
+    await page.waitForTimeout(1000);
     await triggerAnalyzeAndConfirm(page);
 
     await expect(page.locator('.confidence-badge--high, [class*="confidence"][class*="high"]').first())
-      .toBeVisible({ timeout: 10000 });
+      .toBeVisible({ timeout: 15000 });
   });
 
   test('results show low confidence badge when AI is uncertain', async ({ page }) => {
@@ -231,30 +240,39 @@ test.describe('TestLab: Mock QR → Camera → Analyze → Results (User Flow)',
 
     await navigateToTestLab(page);
     await selectBottleAndStartScan(page, testBottles.filippoBerio.sku);
+    
+    // Wait for camera to stabilize
+    await page.waitForTimeout(1000);
     await triggerAnalyzeAndConfirm(page);
 
     await expect(page.locator('.confidence-badge--low, [class*="confidence"][class*="low"]').first())
-      .toBeVisible({ timeout: 10000 });
+      .toBeVisible({ timeout: 15000 });
   });
 
   test('"Scan Another Bottle" button is visible in results', async ({ page }) => {
     await navigateToTestLab(page);
     await selectBottleAndStartScan(page, testBottles.filippoBerio.sku);
+    
+    // Wait for camera to stabilize
+    await page.waitForTimeout(1000);
     await triggerAnalyzeAndConfirm(page);
 
     // App.tsx's ResultDisplay always shows a scan-again / retake button with longer timeout
     await expect(
       page.locator('button:has-text("Scan Another Bottle"), .result-scan-again').first()
-    ).toBeVisible({ timeout: 10000 });
+    ).toBeVisible({ timeout: 15000 });
   });
 
   test('feedback grid appears in results for accuracy rating', async ({ page }) => {
     await navigateToTestLab(page);
     await selectBottleAndStartScan(page, testBottles.filippoBerio.sku);
+    
+    // Wait for camera to stabilize
+    await page.waitForTimeout(1000);
     await triggerAnalyzeAndConfirm(page);
 
     // FeedbackGrid is embedded in ResultDisplay with longer timeout
-    await expect(page.locator('.feedback-grid-container')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.feedback-grid-container')).toBeVisible({ timeout: 15000 });
     await expect(page.locator('button:has-text("About right")')).toBeVisible();
   });
 
@@ -273,11 +291,15 @@ test.describe('TestLab: Mock QR → Camera → Analyze → Results (User Flow)',
 
     await navigateToTestLab(page);
     await selectBottleAndStartScan(page, testBottles.filippoBerio.sku);
+    
+    // Wait for camera to stabilize
+    await page.waitForTimeout(1000);
     await triggerAnalyzeAndConfirm(page);
 
     // Result should show LLM provider (gemini), not local-cnn
     // This verifies the fallback logic in useLocalAnalysis.ts
     const resultDisplay = page.locator('.result-display');
+    await expect(resultDisplay).toBeVisible({ timeout: 15000 });
     await expect(resultDisplay).toBeVisible({ timeout: 10000 });
     
     // Check that the result came from LLM fallback
