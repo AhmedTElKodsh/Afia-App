@@ -9,11 +9,11 @@ inputDocuments:
   - _bmad-output/planning-artifacts/epics-fill-confirm-screen.md
 ---
 
-# Safi Oil Tracker - Consolidated Epics & Stories
+# Afia Oil Tracker - Consolidated Epics & Stories
 
 ## Overview
 
-This document is the single source of truth for Safi Oil Tracker's development. It merges all planning artifacts into a cohesive, actionable backlog.
+This document is the single source of truth for Afia Oil Tracker's development. It merges all planning artifacts into a cohesive, actionable backlog.
 
 ## Requirements Inventory
 

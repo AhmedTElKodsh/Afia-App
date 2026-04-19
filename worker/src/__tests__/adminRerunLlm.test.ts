@@ -24,8 +24,8 @@ describe("adminRerunLlm", () => {
     ADMIN_PASSWORD: "test-password",
     SUPABASE_URL: "https://test.supabase.co",
     SUPABASE_SERVICE_KEY: "test-key",
-    GEMINI_API_KEY_1: "gemini-key-1",
-    GEMINI_API_KEY_2: "gemini-key-2",
+    GEMINI_API_KEY: "gemini-key-1",
+    GEMINI_API_KEY2: "gemini-key-2",
     GROQ_API_KEY: "groq-key",
   };
 
@@ -67,7 +67,7 @@ describe("adminRerunLlm", () => {
       // Test AC5: LLM re-call with key rotation
       const mockMetadata = {
         scanId: "scan-123",
-        sku: "afia-1l",
+        sku: "afia-corn-1.5l",
         fillPercentage: 75,
         confidence: "high" as const,
         aiProvider: "gemini" as const,
@@ -113,6 +113,7 @@ describe("adminRerunLlm", () => {
 
       // Verify metadata was updated
       expect(r2Client.putMetadata).toHaveBeenCalledWith(
+        mockEnv,
         "scan-123",
         expect.objectContaining({
           adminLlmResult: expect.objectContaining({
@@ -127,7 +128,7 @@ describe("adminRerunLlm", () => {
       // Test result storage
       const mockMetadata = {
         scanId: "scan-456",
-        sku: "afia-1l",
+        sku: "afia-corn-1.5l",
         fillPercentage: 50,
         confidence: "medium" as const,
         aiProvider: "groq" as const,
@@ -166,7 +167,7 @@ describe("adminRerunLlm", () => {
 
       // Verify adminLlmResult structure
       const putMetadataCall = vi.mocked(r2Client.putMetadata).mock.calls[0];
-      expect(putMetadataCall[1].adminLlmResult).toMatchObject({
+      expect(putMetadataCall[2].adminLlmResult).toMatchObject({
         fillPercentage: 55,
         confidence: "medium",
         provider: expect.any(String),
@@ -178,7 +179,7 @@ describe("adminRerunLlm", () => {
       // Test fallback chain
       const mockMetadata = {
         scanId: "scan-789",
-        sku: "afia-1l",
+        sku: "afia-corn-1.5l",
         fillPercentage: 60,
         confidence: "low" as const,
         aiProvider: "gemini" as const,
@@ -196,6 +197,12 @@ describe("adminRerunLlm", () => {
         .mockResolvedValueOnce({
           ok: false,
           status: 429,
+          text: async () => "Too Many Requests",
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 500,
+          text: async () => "Internal Server Error",
         } as Response)
         // Mock Groq API success
         .mockResolvedValueOnce({
@@ -244,7 +251,7 @@ describe("adminRerunLlm", () => {
     it("returns 404 when image not found", async () => {
       const mockMetadata = {
         scanId: "scan-no-image",
-        sku: "afia-1l",
+        sku: "afia-corn-1.5l",
         fillPercentage: 50,
         confidence: "medium" as const,
         aiProvider: "gemini" as const,
@@ -263,7 +270,7 @@ describe("adminRerunLlm", () => {
     it("returns 500 when all LLM providers fail", async () => {
       const mockMetadata = {
         scanId: "scan-all-fail",
-        sku: "afia-1l",
+        sku: "afia-corn-1.5l",
         fillPercentage: 50,
         confidence: "medium" as const,
         aiProvider: "gemini" as const,
@@ -279,6 +286,7 @@ describe("adminRerunLlm", () => {
       vi.mocked(global.fetch).mockResolvedValue({
         ok: false,
         status: 500,
+        text: async () => "Internal Server Error",
       } as Response);
 
       const request = mockRequest({ scanId: "scan-all-fail" });

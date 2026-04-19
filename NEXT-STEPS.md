@@ -3,7 +3,7 @@
 ## Your Worker URL
 
 ```
-https://safi-worker.savola.workers.dev
+https://Afia-worker.savola.workers.dev
 ```
 
 ## ✅ What's Done
@@ -18,7 +18,7 @@ https://safi-worker.savola.workers.dev
 ### 1. Health Check
 
 ```bash
-curl https://safi-worker.savola.workers.dev/health
+curl https://Afia-worker.savola.workers.dev/health
 ```
 
 Expected response:
@@ -32,7 +32,7 @@ Expected response:
 Run this 11 times quickly to trigger rate limit:
 
 ```bash
-curl -X POST https://safi-worker.savola.workers.dev/analyze \
+curl -X POST https://Afia-worker.savola.workers.dev/analyze \
   -H "Content-Type: application/json" \
   -d '{"sku":"test","imageBase64":"test"}'
 ```
@@ -64,7 +64,7 @@ After the initial deployment completes:
 2. Click **Add variable**
 3. Add:
    - **Variable name**: `VITE_PROXY_URL`
-   - **Value**: `https://safi-worker.savola.workers.dev`
+   - **Value**: `https://Afia-worker.savola.workers.dev`
 4. **Apply to**: Both Production and Preview
 5. Click **Save**
 
@@ -139,7 +139,7 @@ The GitHub Actions workflow will:
 
 Once Pages is deployed:
 
-1. Visit your Pages URL (e.g., `https://safi-oil-tracker.pages.dev`)
+1. Visit your Pages URL (e.g., `https://Afia-oil-tracker.pages.dev`)
 2. Try with test SKU: `?sku=filippo-berio-500ml`
 3. Grant camera permissions
 4. Complete a full scan flow
@@ -147,9 +147,9 @@ Once Pages is deployed:
 
 ### Test URLs
 
-- **Worker Health**: https://safi-worker.savola.workers.dev/health
-- **Pages (after setup)**: https://safi-oil-tracker.pages.dev
-- **Test with SKU**: https://safi-oil-tracker.pages.dev?sku=filippo-berio-500ml
+- **Worker Health**: https://Afia-worker.savola.workers.dev/health
+- **Pages (after setup)**: https://Afia-oil-tracker.pages.dev
+- **Test with SKU**: https://Afia-oil-tracker.pages.dev?sku=filippo-berio-500ml
 
 ---
 
@@ -173,7 +173,7 @@ This shows real-time logs from your Worker.
 ### Check Worker Analytics
 
 1. Go to Cloudflare Dashboard → Workers & Pages
-2. Select `safi-worker`
+2. Select `Afia-worker`
 3. Click **Metrics** tab to see:
    - Request count
    - Error rate

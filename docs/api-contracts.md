@@ -5,7 +5,7 @@
 | Environment | URL |
 |-------------|-----|
 | Local dev | `http://localhost:8787` |
-| Production | `https://safi-worker.<subdomain>.workers.dev` |
+| Production | `https://Afia-worker.<subdomain>.workers.dev` |
 
 Configured via `VITE_PROXY_URL` environment variable on the frontend.
 
@@ -20,7 +20,13 @@ Analyze a bottle image and estimate fill level using AI vision.
 ```json
 {
   "sku": "filippo-berio-500ml",
-  "imageBase64": "<base64-encoded JPEG, max 4MB>"
+  "imageBase64": "<base64-encoded JPEG, max 4MB>",
+  "localModelResult": {
+    "fillPercentage": 65,
+    "confidence": 0.82,
+    "modelVersion": "1.0.0",
+    "inferenceTimeMs": 45
+  }
 }
 ```
 
@@ -28,6 +34,13 @@ Analyze a bottle image and estimate fill level using AI vision.
 |-------|------|----------|-------------|
 | `sku` | string | Yes | Must match a registered bottle SKU |
 | `imageBase64` | string | Yes | Base64 JPEG, max 4,194,304 characters |
+| `localModelResult` | object | No | Local model inference result (Story 7.4) |
+| `localModelResult.fillPercentage` | number | No | Fill percentage from local model (0-100) |
+| `localModelResult.confidence` | number | No | Confidence score from local model (0-1) |
+| `localModelResult.modelVersion` | string | No | Local model version (e.g., "1.0.0") |
+| `localModelResult.inferenceTimeMs` | number | No | Local inference latency in milliseconds |
+
+**Note:** The `localModelResult` field is optional and only sent when the PWA performs local inference but falls back to LLM due to low confidence (< 0.75). When present, this metadata is stored for training data analysis and model improvement.
 
 ### Response — 200 OK
 
@@ -157,7 +170,7 @@ Health check endpoint.
 
 - **Allowed origins**: Configured via `ALLOWED_ORIGINS` env var
 - **Default (dev)**: `http://localhost:5173`, `http://localhost:4173`
-- **Production**: `https://safi-oil-tracker.pages.dev`
+- **Production**: `https://Afia-oil-tracker.pages.dev`
 - **Allowed methods**: `POST`, `OPTIONS`
 - **Allowed headers**: `Content-Type`
 - **Preflight cache**: 86400 seconds (24 hours)
@@ -181,6 +194,14 @@ interface ScanMetadata {
   latencyMs: number;
   imageQualityIssues?: string[];
   imageStoragePath: string;       // "images/{scanId}.jpg"
+  
+  // Local model metadata (Story 7.4)
+  localModelResult?: number;      // Fill percentage from local model (null if not used)
+  localModelConfidence?: number;  // Confidence score from local model (0-1, null if not used)
+  localModelVersion?: string;     // Local model version (e.g., "1.0.0", null if not used)
+  localModelInferenceMs?: number; // Local inference latency (null if not used)
+  llmFallbackUsed: boolean;       // True if LLM was used (either no local model or low confidence)
+  
   feedback?: {
     feedbackId: string;
     feedbackTimestamp: string;     // ISO 8601
@@ -197,7 +218,7 @@ interface ScanMetadata {
 ### R2 Storage Layout
 
 ```
-safi-training-data/
+Afia-training-data/
 ├── images/{scanId}.jpg           # Raw JPEG from user (binary)
 └── metadata/{scanId}.json        # ScanMetadata JSON
 ```
@@ -210,4 +231,4 @@ safi-training-data/
 |-----|--------|----------|--------|----------|
 | `filippo-berio-500ml` | Filippo Berio Extra Virgin Olive Oil | extra_virgin_olive | 500ml | cylinder (220mm × 65mm) |
 | `bertolli-750ml` | Bertolli Classico Olive Oil | pure_olive | 750ml | frustum (280mm, 70mm→85mm) |
-| `safi-sunflower-1l` | Safi Sunflower Oil | sunflower | 1000ml | cylinder (275mm × 80mm) |
+| `Afia-sunflower-1l` | Afia Sunflower Oil | sunflower | 1000ml | cylinder (275mm × 80mm) |

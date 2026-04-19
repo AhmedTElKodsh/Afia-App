@@ -7,11 +7,11 @@ inputDocuments:
   - ux-design-specification.md
 ---
 
-# Safi Oil Tracker - Epic Breakdown
+# Afia Oil Tracker - Epic Breakdown
 
 ## Overview
 
-This document provides the complete epic and story breakdown for Safi Oil Tracker, decomposing the requirements from the PRD, UX Design, and Architecture into implementable stories.
+This document provides the complete epic and story breakdown for Afia Oil Tracker, decomposing the requirements from the PRD, UX Design, and Architecture into implementable stories.
 
 ## Epic 1: Core Scan Experience (End-to-End MVP)
 
@@ -165,5 +165,89 @@ Ensuring a robust experience across devices and networks.
 - **Goal:** Transparent data use.
 - **AC:** First-scan notice about image storage; Explicit opt-out (cancel scan).
 
+## Epic 7: Local Model & Training Pipeline
+
+Client-side CNN model with training data collection and LLM fallback routing.
+
+### Story 7.1: Supabase Training Database
+- **Goal:** Centralized training data management.
+- **AC:** Tables for `training_samples` and `model_versions`; Schema supports image URLs, labels, and provider metadata.
+- **Status:** Completed via Story 4-1-0
+
+### Story 7.2: Training Data Augmentation Pipeline
+- **Goal:** Synthetic dataset expansion.
+- **AC:** Node.js script generates augmented variants (flip, lighting, quality) for each base scan.
+
+### Story 7.3: TF.js CNN Regressor Training & Deployment
+- **Goal:** Primary inference model.
+- **AC:** MobileNetV3 backbone; SIGMOID head; Huber loss; Deployed to R2.
+
+### Story 7.4: Client-Side Model Integration & Fallback Routing
+- **Goal:** Hybrid inference logic.
+- **AC:** PWA runs local model; Confidence-based routing to LLM; Results logged for comparison.
+
+### Story 7.5: Model Version Management
+- **Goal:** Safe updates and rollbacks.
+- **AC:** PWA checks `/model/version`; Auto-downloads new model shards if version increases.
+
+### Story 7.6: LLM Fallback Routing Logic
+- **Goal:** Intelligent routing between local model and LLM.
+- **AC:** Confidence threshold routing; iOS WebGL detection; Network-aware fallback; Telemetry logging.
+- **Added:** 2026-04-17 via Course Correction (FR46)
+
+### Story 7.7: Admin Correction Feedback Loop
+- **Goal:** Admin can correct predictions and trigger retraining.
+- **AC:** Admin correction UI; Re-run LLM endpoint; Training sample updates; Feedback loop complete.
+- **Added:** 2026-04-17 via Course Correction (FR47)
+
+### Story 7.8: Service Worker Smart Upload Filtering
+- **Goal:** Quality checks and sync queue for training uploads.
+- **AC:** Image quality validation; Duplicate detection; Background sync queue; Retry logic.
+- **Added:** 2026-04-17 via Course Correction (FR44-46)
+
+## Epic 8: Multi-Bottle Selection
+
+Support for multiple bottle SKUs in a single household.
+
+### Story 8.1: Multi-Bottle Selection
+- **Goal:** User can select from multiple registered bottles.
+- **AC:** Bottle selection screen; SKU persistence; QR code bypass for returning users.
+
+## Epic 9: Data Export
+
+Export scan history and consumption data.
+
+### Story 9.1: Export Data (CSV/PDF)
+- **Goal:** User can export their scan history.
+- **AC:** CSV export with all scan metadata; PDF summary report option.
+
+## Epic 10: Stage 1 Launch Readiness
+
+Critical pre-launch requirements identified in Epic 7 retrospective.
+
+### Story 10.1: Camera Orientation Guide (FR28)
+- **Goal:** Enforce consistent bottle orientation during capture.
+- **Scope:** Viewfinder overlay indicator showing "Handle on Right" for consistent training data collection.
+- **AC:** 
+  - Overlay visible in viewfinder before capture
+  - Clear visual indicator for handle direction
+  - Does not obstruct bottle view
+  - Works on iOS Safari and Android Chrome
+- **Priority:** CRITICAL — Data quality gate for Stage 2 training
+- **Estimated Effort:** 0.5 weeks
+
+### Story 10.2: Version Management UI (Story 7.5b)
+- **Goal:** Admin can activate/deactivate model versions from admin panel.
+- **Scope:** Admin dashboard section for model version management with toggle controls.
+- **AC:**
+  - Admin can view all model versions
+  - Admin can activate a version (sets `is_active=true`)
+  - Admin can deactivate a version (sets `is_active=false`)
+  - Only one version can be active at a time
+  - Changes reflected in `/model/version` endpoint immediately
+- **Priority:** CRITICAL — Operational requirement before Stage 2 scale
+- **Estimated Effort:** 0.5 weeks
+- **Dependencies:** Story 7.5 (Model Version Management backend — DONE)
+
 ---
-_Epics updated: 2026-04-16 to include Stage 2 Expansion._
+_Epics updated: 2026-04-17 to include Epic 10 (Stage 1 Launch Readiness) and complete Epic 7-9 details._

@@ -1,4 +1,4 @@
-# LLM Prompts — Safi Oil Tracker
+# LLM Prompts — Afia Oil Tracker
 
 **Version:** POC v1
 

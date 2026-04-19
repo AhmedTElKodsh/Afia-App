@@ -499,7 +499,7 @@ files (`en.json`, `ar.json`):
 
 | Key | English | Arabic |
 |---|---|---|
-| `camera.pointAtBottle` | "Point camera at the bottle" | "وجّه الكاميرا نحو الزجاجة" |
+| `camera.alignBottle` | "Point camera at the bottle" | "وجّه الكاميرا نحو الزجاجة" |
 | `camera.moveCloser` | "Move closer to the bottle" | "اقترب من الزجاجة" |
 | `camera.moveBack` | "Move camera back slightly" | "أبعد الكاميرا قليلاً" |
 | `camera.centreBottle` | "Centre the bottle in the guide" | "ضع الزجاجة في منتصف الإطار" |

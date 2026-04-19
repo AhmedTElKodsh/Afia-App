@@ -2,8 +2,9 @@
 story_id: "FC.3"
 story_key: "fill-confirm-3-vertical-step-slider"
 epic: "FC - Fill Confirmation Screen"
-status: ready-for-dev
+status: done
 created: "2026-04-10"
+completed: "2026-04-16"
 author: "Ahmed"
 ---
 
@@ -225,13 +226,22 @@ src/
 ## Dev Agent Record
 
 ### Agent Model Used
-_To be filled_
+Claude Sonnet 4.5
 
 ### Debug Log References
-_None yet_
+- Initial test failures: All tests failing due to missing ResizeObserver mock (Radix Slider uses ResizeObserver internally)
+- Fixed by adding ResizeObserver mock to `src/test/setup.ts`
 
 ### Completion Notes List
-_None yet_
+- ✅ Component created at `src/components/FillConfirmScreen/VerticalStepSlider.tsx`
+- ✅ All 7 acceptance criteria implemented and verified
+- ✅ Uses `@radix-ui/react-slider` (already installed in package.json)
+- ✅ Critical iOS Safari fix applied: `touchAction: "pan-x"` prevents page scroll during vertical drag
+- ✅ Touch target size set to 44x44px for accessibility (NFR22)
+- ✅ Component is fully controlled (no internal state)
+- ✅ Test suite created with 10 tests covering all ACs + edge cases
+- ✅ All tests passing (10/10)
+- ✅ Component follows architecture decisions from FC planning docs
 
 ### File List
 

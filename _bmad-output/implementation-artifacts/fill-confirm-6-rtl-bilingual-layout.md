@@ -2,7 +2,7 @@
 story_id: "FC.6"
 story_key: "fill-confirm-6-rtl-bilingual-layout"
 epic: "FC - Fill Confirmation Screen"
-status: ready-for-dev
+status: done
 created: "2026-04-10"
 author: "Ahmed"
 ---

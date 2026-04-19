@@ -2,14 +2,14 @@
 stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8]
 inputDocuments:
   - technical-oil-bottle-ai-app-poc-research-2026-02-26.md
-  - product-brief-Safi-Image-Analysis-2026-02-26.md
+  - product-brief-Afia-Image-Analysis-2026-02-26.md
 workflowType: "architecture"
-project_name: "Safi Oil Tracker"
+project_name: "Afia Oil Tracker"
 user_name: "Ahmed"
 date: "2026-02-26"
 ---
 
-# Architecture Decision Document — Safi Oil Tracker
+# Architecture Decision Document — Afia Oil Tracker
 
 _A Progressive Web App that uses LLM vision to estimate oil bottle fill levels and display consumption metrics with nutritional facts._
 
@@ -192,7 +192,7 @@ All domain logic (volume calculation, unit conversion, nutrition lookup) runs in
 
 ```
 1. User scans QR code on bottle
-2. Browser navigates to: https://safi-oil-tracker.pages.dev/?sku=filippo-berio-500ml
+2. Browser navigates to: https://Afia-oil-tracker.pages.dev/?sku=filippo-berio-500ml
 3. PWA loads bottle geometry from local bottleRegistry.js
 4. PWA activates rear camera via getUserMedia
 5. User captures still photo → canvas → JPEG @ 800px, quality 0.78 (~70KB)
@@ -685,7 +685,7 @@ Only records meeting ALL criteria enter fine-tuning datasets:
 
 ```
 1. Origin Validation
-   Allow: https://safi-oil-tracker.pages.dev, http://localhost:5173
+   Allow: https://Afia-oil-tracker.pages.dev, http://localhost:5173
    Deny: all other origins
 
 2. Rate Limiting
@@ -717,7 +717,7 @@ Only records meeting ALL criteria enter fine-tuning datasets:
 ## 11. Project Structure
 
 ```
-safi-oil-tracker/
+Afia-oil-tracker/
 │
 ├── src/                                # PWA source (Cloudflare Pages)
 │   ├── main.tsx                        # React entry point
@@ -808,7 +808,7 @@ safi-oil-tracker/
 │                                    │
 │  ┌─────────────────────────────┐   │
 │  │    Cloudflare Pages (CDN)   │   │
-│  │    safi-oil-tracker.pages.dev│   │
+│  │    Afia-oil-tracker.pages.dev│   │
 │  │                             │   │
 │  │    Serves: React PWA        │   │
 │  │    Bandwidth: Unlimited     │   │
@@ -819,7 +819,7 @@ safi-oil-tracker/
 │                                    │
 │  ┌─────────────────────────────┐   │
 │  │    Cloudflare Worker        │   │
-│  │    safi-oil-proxy.workers.dev│   │
+│  │    Afia-oil-proxy.workers.dev│   │
 │  │                             │   │
 │  │    Requests/day: 100,000    │   │
 │  │    CPU/request: 10ms        │   │
@@ -828,7 +828,7 @@ safi-oil-tracker/
 │                                    │
 │  ┌─────────────────────────────┐   │
 │  │    Cloudflare R2 Bucket     │   │
-│  │    safi-scan-data           │   │
+│  │    Afia-scan-data           │   │
 │  │                             │   │
 │  │    Storage: 10 GB free      │   │
 │  │    Writes: 1M ops/month     │   │
@@ -846,7 +846,7 @@ safi-oil-tracker/
 on push to main:
   ├── Job 1: deploy-pages
   │   ├── checkout → setup node → npm ci → npm run build
-  │   └── wrangler pages deploy dist --project-name=safi-oil-tracker
+  │   └── wrangler pages deploy dist --project-name=Afia-oil-tracker
   │
   └── Job 2: deploy-worker
       ├── checkout → setup node → npm ci
@@ -861,7 +861,7 @@ on pull_request:
 
 | Variable                | Location              | Value                                            |
 | ----------------------- | --------------------- | ------------------------------------------------ |
-| `VITE_PROXY_URL`        | Cloudflare Pages env  | `https://safi-oil-proxy.<subdomain>.workers.dev` |
+| `VITE_PROXY_URL`        | Cloudflare Pages env  | `https://Afia-oil-proxy.<subdomain>.workers.dev` |
 | `GEMINI_API_KEY`        | Worker secret         | (via `wrangler secret put`)                      |
 | `GROQ_API_KEY`          | Worker secret         | (via `wrangler secret put`)                      |
 | `CLOUDFLARE_API_TOKEN`  | GitHub Actions secret | (scoped API token)                               |

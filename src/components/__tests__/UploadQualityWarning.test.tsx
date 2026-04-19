@@ -183,7 +183,7 @@ describe('UploadQualityWarning', () => {
     );
 
     const retakeButton = screen.getByText('Retake Photo');
-    expect(retakeButton).toHaveAttribute('autoFocus');
+    expect(retakeButton).toHaveFocus();
   });
 
   it('should render empty reasons list gracefully', () => {

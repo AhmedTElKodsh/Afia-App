@@ -1,4 +1,4 @@
-# 🚀 Quick Deploy - Safi Oil Tracker
+# 🚀 Quick Deploy - Afia Oil Tracker
 
 ## One-Command Deploy (PowerShell)
 
@@ -36,7 +36,7 @@ npx wrangler deploy
 curl https://YOUR-WORKER-URL.workers.dev/health
 
 # Visit PWA
-https://safi-oil-tracker.pages.dev?sku=filippo-berio-500ml
+https://Afia-oil-tracker.pages.dev?sku=filippo-berio-500ml
 ```
 
 ## API Keys Summary

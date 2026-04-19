@@ -1,0 +1,14 @@
+{
+  "name": "afia-image-upload",
+  "version": "1.0.0",
+  "description": "Upload training images to Supabase Storage",
+  "main": "upload-images.js",
+  "scripts": {
+    "upload": "node upload-images.js",
+    "verify": "node verify-upload.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "dotenv": "^16.3.1"
+  }
+}

@@ -2,8 +2,9 @@
 story_id: "FC.2"
 story_key: "fill-confirm-2-annotated-image-panel"
 epic: "FC - Fill Confirmation Screen"
-status: ready-for-dev
+status: done
 created: "2026-04-10"
+completed: "2026-04-16"
 author: "Ahmed"
 ---
 
@@ -226,13 +227,22 @@ src/
 ## Dev Agent Record
 
 ### Agent Model Used
-_To be filled_
+Claude Sonnet 4.5
 
 ### Debug Log References
-_None yet_
+- Initial test failures: Images with empty `alt=""` have role "presentation" not "img" in testing-library
+- Fixed by using `container.querySelector("img")` instead of `screen.getByRole("img")`
+- ResizeObserver mock added to `src/test/setup.ts` to fix component rendering
 
 ### Completion Notes List
-_None yet_
+- ✅ Component created at `src/components/FillConfirmScreen/AnnotatedImagePanel.tsx`
+- ✅ All 8 acceptance criteria implemented and verified
+- ✅ ResizeObserver tracks container size for SVG viewBox
+- ✅ SVG overlay uses `preserveAspectRatio="none"` for 1:1 pixel mapping
+- ✅ `crossOrigin="anonymous"` set for future canvas export compatibility
+- ✅ Test suite created with 7 tests covering all ACs
+- ✅ All tests passing (7/7)
+- ✅ Component follows architecture decisions from FC planning docs
 
 ### File List
 

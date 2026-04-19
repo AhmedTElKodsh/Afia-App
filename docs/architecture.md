@@ -213,10 +213,10 @@ GitHub (main branch)
   │
   ▼
 Cloudflare
-  ├── Pages: safi-oil-tracker.pages.dev (frontend PWA)
-  └── Workers: safi-worker.savola.workers.dev (API)
+  ├── Pages: Afia-oil-tracker.pages.dev (frontend PWA)
+  └── Workers: Afia-worker.savola.workers.dev (API)
       ├── KV: RATE_LIMIT_KV
-      ├── R2: safi-training-data (disabled for POC)
+      ├── R2: Afia-training-data (disabled for POC)
       └── Secrets: GEMINI_API_KEY(s), GROQ_API_KEY
 ```
 

@@ -2,7 +2,7 @@
 story_id: "FC.4"
 story_key: "fill-confirm-4-fill-confirmation-screen"
 epic: "FC - Fill Confirmation Screen"
-status: ready-for-dev
+status: done
 created: "2026-04-10"
 author: "Ahmed"
 ---
@@ -290,18 +290,26 @@ src/
 ## Dev Agent Record
 
 ### Agent Model Used
-_To be filled_
+Claude Sonnet 4.5
 
 ### Debug Log References
-_None yet_
+None
 
 ### Completion Notes List
-_None yet_
+- ✅ Created `FillConfirmScreen.tsx` with all acceptance criteria implemented
+- ✅ Implemented `snapToStep` helper function for 55ml step snapping
+- ✅ Single state management with `waterMl` as only useState
+- ✅ `linePx` implemented as useMemo (derived state, not useState)
+- ✅ ResizeObserver for Safari-safe container size tracking
+- ✅ Image load guard with `imageLoaded` state flag
+- ✅ RTL/LTR support via `dir={document.documentElement.dir}`
+- ✅ Confirm and Retake callbacks implemented
+- ✅ No TypeScript errors
 
 ### File List
 
-**Files to CREATE:**
-- `src/components/FillConfirmScreen/FillConfirmScreen.tsx`
+**Files CREATED:**
+- ✅ `src/components/FillConfirmScreen/FillConfirmScreen.tsx` (130 lines)
 
-**Files to MODIFY:**
-- None (i18n translation keys added in FC.6)
+**Files MODIFIED:**
+- None (i18n translation keys will be added in FC.6)

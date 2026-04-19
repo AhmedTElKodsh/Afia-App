@@ -23,7 +23,7 @@
 ### Before
 
 ```powershell
-Write-Host "🚀 Safi Oil Tracker - Deployment Setup" -ForegroundColor Cyan
+Write-Host "🚀 Afia Oil Tracker - Deployment Setup" -ForegroundColor Cyan
 Write-Host "3. Add environment variable: VITE_PROXY_URL = <worker-url>"
 Write-Host "🎉 Deployment setup complete!" -ForegroundColor Green
 ```
@@ -31,7 +31,7 @@ Write-Host "🎉 Deployment setup complete!" -ForegroundColor Green
 ### After
 
 ```powershell
-Write-Host "Safi Oil Tracker - Deployment Setup" -ForegroundColor Cyan
+Write-Host "Afia Oil Tracker - Deployment Setup" -ForegroundColor Cyan
 Write-Host "3. Add environment variable: VITE_PROXY_URL = YOUR_WORKER_URL"
 Write-Host "Deployment setup complete!" -ForegroundColor Green
 ```

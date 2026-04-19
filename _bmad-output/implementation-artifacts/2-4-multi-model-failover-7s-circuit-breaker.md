@@ -15,7 +15,7 @@ so that the user isn't stuck on an infinite loading screen or met with a generic
 1. **7-Second Circuit Breaker**: The Cloudflare Worker enforces a hard 7-second timeout using `AbortSignal` for the primary Gemini 2.5 Flash call. [Source: architecture.md#1-project-context-analysis] - ✅ DONE
 2. **Automatic Provider Failover**: If the Gemini call times out, returns a 429 (Rate Limit), or a 5xx (Server Error), the system immediately retries using the **Grok xAI (Vision)** fallback. [Source: epics.md#Story 2.4] - ✅ DONE
 3. **Stateless Retry Pattern**: The fallback logic is implemented as a resilient chain in `analyze.ts`, ensuring the same image buffer is passed to the next provider without extra round-trips. [Source: architecture.md#1-project-context-analysis] - ✅ DONE
-4. **Unified JSON Interface**: Both Gemini and Grok providers return data conforming to the same `LLMResponse` interface, including the new `isAfia` and `brandConfidence` fields. [Source: 2-3-reasoning-first-llm-contract-stage-2.md#Acceptance Criteria] - ✅ DONE
+4. **Unified JSON Interface**: Both Gemini and Grok providers return data conforming to the same `LLMResponse` interface, including the new `iAfiaa` and `brandConfidence` fields. [Source: 2-3-reasoning-first-llm-contract-stage-2.md#Acceptance Criteria] - ✅ DONE
 5. **UI Resilience**: The PWA displays a seamless "Still analyzing..." or "Switching providers..." transition if the first model fails but the second is triggered. [Source: ux-design-specification.md#Performance UX] - ✅ DONE
 
 ## Tasks / Subtasks
@@ -27,7 +27,7 @@ so that the user isn't stuck on an infinite loading screen or met with a generic
   - [x] Updated the provider calling loop to catch `AbortError` and proceed to Groq.
   - [x] Ensured sequential failover: Gemini → Groq → OpenRouter/Mistral.
 - [x] Verify Logic Parity (AC: 4)
-  - [x] Audited all 4 vision providers; all now support `brandConfidence` and return `isAfia`.
+  - [x] Audited all 4 vision providers; all now support `brandConfidence` and return `iAfiaa`.
 - [x] UI Feedback Handoff (AC: 5)
   - [x] Updated `AnalyzingOverlay.tsx` with a 7.5s timer to show "Still working... switching to backup model" to the user.
   - [x] Added i18n keys for both English and Arabic.

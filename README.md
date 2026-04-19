@@ -1,4 +1,4 @@
-# Safi Oil Tracker
+# Afia Oil Tracker
 
 A mobile-first PWA that uses AI vision to estimate the fill level of cooking oil bottles from a single photo. Users scan a QR code on their bottle, photograph it, and instantly see how much oil remains — in ml, tablespoons, and cups — along with nutrition facts for the oil consumed.
 
@@ -140,7 +140,7 @@ npx wrangler kv namespace create "RATE_LIMIT_KV"
 # → Copy the id into wrangler.toml [[kv_namespaces]] id field
 
 # Create R2 bucket for training data
-npx wrangler r2 bucket create safi-training-data
+npx wrangler r2 bucket create Afia-training-data
 
 # Start local Worker (runs at localhost:8787)
 npm run dev
@@ -152,7 +152,7 @@ npm run dev
 | -------------------------- | ------------------------------------------ |
 | `?sku=filippo-berio-500ml` | Filippo Berio Extra Virgin Olive Oil 500ml |
 | `?sku=bertolli-750ml`      | Bertolli Classico Olive Oil 750ml          |
-| `?sku=safi-sunflower-1l`   | Safi Pure Sunflower Oil 1L                 |
+| `?sku=Afia-sunflower-1l`   | Afia Pure Sunflower Oil 1L                 |
 
 ## Testing
 
@@ -191,12 +191,12 @@ npm run preview
 ### First-time Cloudflare Setup
 
 1. Create a Cloudflare account and install Wrangler: `npm i -g wrangler && wrangler login`
-2. Create the R2 bucket: `cd worker && npx wrangler r2 bucket create safi-training-data`
+2. Create the R2 bucket: `cd worker && npx wrangler r2 bucket create Afia-training-data`
 3. Create the KV namespace: `npx wrangler kv namespace create RATE_LIMIT_KV`
 4. Update `worker/wrangler.toml` with the real KV namespace IDs
 5. Set secrets: `npx wrangler secret put GEMINI_API_KEY` and `GROQ_API_KEY`
 6. Create a Cloudflare Pages project connected to your GitHub repo
-7. Set `VITE_PROXY_URL=https://safi-worker.<your-subdomain>.workers.dev` in Pages environment variables
+7. Set `VITE_PROXY_URL=https://Afia-worker.<your-subdomain>.workers.dev` in Pages environment variables
 
 ### Manual Deploy
 
@@ -206,7 +206,7 @@ cd worker && npx wrangler deploy
 
 # Deploy PWA (or let CI handle it)
 npm run build
-npx wrangler pages deploy dist --project-name=safi-oil-tracker
+npx wrangler pages deploy dist --project-name=Afia-oil-tracker
 ```
 
 ### CI/CD (GitHub Actions)
@@ -235,7 +235,7 @@ Required GitHub secrets:
 Browser (PWA)
     │ POST /analyze {sku, imageBase64}
     ▼
-Cloudflare Worker (safi-worker.savola.workers.dev)
+Cloudflare Worker (Afia-worker.savola.workers.dev)
     ├── CORS check (allowlist)
     ├── Rate limit (10/min/IP via KV)
     ├── SKU validation

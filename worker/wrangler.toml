@@ -1,4 +1,4 @@
-name = "afia-app"
+name = "afia-worker"
 main = "src/index.ts"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
@@ -23,8 +23,12 @@ id = "9dc0bcc958de473199e5ded5701b932a"
 preview_id = "d6d688f5cfd04d73a42c7c979c1f1791"
 
 # Secrets (set via wrangler CLI — never commit actual values):
-# Supabase Anon Key (for training data storage):
-#   wrangler secret put SUPABASE_ANON_KEY
+
+[[r2_buckets]]
+binding = "AFIA_IMAGES"
+bucket_name = "afia-images"
+preview_bucket_name = "afia-images-preview"
+
 # Gemini API Keys (3 keys for fallback/rotation):
 #   wrangler secret put GEMINI_API_KEY       # Primary key
 #   wrangler secret put GEMINI_API_KEY2      # Fallback key 1

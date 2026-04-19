@@ -43,3 +43,30 @@ test-results/
 
 # Claude Code worktrees (nested git repos, not submodules)
 .claude/worktrees/
+
+# AI Agent directories
+.agent/
+.agents/
+.cline/
+.clinerules/
+.codebuddy/
+.cursor/
+.gemini/
+.iflow/
+.kilocode/
+.kiro/
+.ona/
+.opencode/
+.pi/
+.qwen/
+.roo/
+.trae/
+.windsurf/
+
+# Large data and models
+augmented-output/
+oil-bottle-augmented/
+oil-bottle-frames/
+oil-bottle-videos/
+models/
+playwright-report/

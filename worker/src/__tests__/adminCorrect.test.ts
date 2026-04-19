@@ -86,6 +86,7 @@ describe("adminCorrect", () => {
 
       // Verify metadata was updated with trainingEligible but no adminCorrection
       expect(r2Client.putMetadata).toHaveBeenCalledWith(
+        mockEnv,
         "scan-123",
         expect.objectContaining({
           trainingEligible: true,
@@ -98,10 +99,11 @@ describe("adminCorrect", () => {
 
       // Verify training sample was upserted
       expect(supabaseClient.upsertTrainingSample).toHaveBeenCalledWith(
+        mockEnv,
         expect.objectContaining({
           scanId: "scan-123",
           confirmedFillPct: 75,
-          labelSource: "admin_correction",
+          labelSource: "admin_verified",
           labelConfidence: 1.0,
         })
       );
@@ -137,6 +139,7 @@ describe("adminCorrect", () => {
 
       // Verify metadata includes adminCorrection
       expect(r2Client.putMetadata).toHaveBeenCalledWith(
+        mockEnv,
         "scan-456",
         expect.objectContaining({
           trainingEligible: true,
@@ -150,6 +153,7 @@ describe("adminCorrect", () => {
 
       // Verify training sample uses corrected value
       expect(supabaseClient.upsertTrainingSample).toHaveBeenCalledWith(
+        mockEnv,
         expect.objectContaining({
           scanId: "scan-456",
           confirmedFillPct: 85,
@@ -196,8 +200,8 @@ describe("adminCorrect", () => {
       // Verify upsertTrainingSample was called twice with same scanId
       expect(supabaseClient.upsertTrainingSample).toHaveBeenCalledTimes(2);
       const calls = vi.mocked(supabaseClient.upsertTrainingSample).mock.calls;
-      expect(calls[0][0].scanId).toBe("scan-789");
-      expect(calls[1][0].scanId).toBe("scan-789");
+      expect(calls[0][1].scanId).toBe("scan-789");
+      expect(calls[1][1].scanId).toBe("scan-789");
     });
 
     it("validates correctedFillPct is between 1 and 99", async () => {

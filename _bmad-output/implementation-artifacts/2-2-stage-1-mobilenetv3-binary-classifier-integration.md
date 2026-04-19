@@ -35,7 +35,7 @@ so that I can confirm Afia authenticity with high confidence and zero API cost.
 ## Dev Notes
 
 - **Cascaded Efficiency**: By passing the local ML confidence to the Worker, we now dynamically switch between a "Full Verification" prompt and a "Fill-Only" prompt, saving significant LLM reasoning time.
-- **Failover Safety**: The Worker now enforces a hard `isAfia` check on all LLM responses, ensuring no lookalike brands reach the volume math stage.
+- **Failover Safety**: The Worker now enforces a hard `iAfiaa` check on all LLM responses, ensuring no lookalike brands reach the volume math stage.
 - **Bundle Optimization**: TF.js and the model are only loaded if the user initiates a scan and the initial pixel math clears the noise floor.
 
 ### Project Structure Notes

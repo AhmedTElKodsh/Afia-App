@@ -1,4 +1,4 @@
-# Safi Oil Tracker - Deployment Guide
+# Afia Oil Tracker - Deployment Guide
 
 ## ✅ Pre-Deployment Checklist
 
@@ -14,14 +14,14 @@
 
 ## 🎉 DEPLOYMENT SUCCESS!
 
-Your Worker is now live at: **https://safi-worker.savola.workers.dev**
+Your Worker is now live at: **https://Afia-worker.savola.workers.dev**
 
 ### ✅ Completed Steps
 
 - [x] Worker dependencies installed
 - [x] All 4 API key secrets configured (3 Gemini + 1 Groq)
 - [x] Worker deployed to Cloudflare
-- [x] Worker URL: `https://safi-worker.savola.workers.dev`
+- [x] Worker URL: `https://Afia-worker.savola.workers.dev`
 
 ### 📋 Next Steps
 
@@ -86,7 +86,7 @@ echo "YOUR_GROQ_API_KEY" | npx wrangler secret put GROQ_API_KEY
 npx wrangler deploy
 ```
 
-**Save the Worker URL** from the output (e.g., `https://safi-worker.YOUR_SUBDOMAIN.workers.dev`)
+**Save the Worker URL** from the output (e.g., `https://Afia-worker.YOUR_SUBDOMAIN.workers.dev`)
 
 ### Step 4: Create Cloudflare Pages Project
 
@@ -178,7 +178,7 @@ curl -X POST https://YOUR-WORKER-URL.workers.dev/analyze \
 
 ### Test PWA
 
-1. Visit your Pages URL: `https://safi-oil-tracker.pages.dev`
+1. Visit your Pages URL: `https://Afia-oil-tracker.pages.dev`
 2. Try with test SKU: `?sku=filippo-berio-500ml`
 3. Grant camera permissions
 4. Complete a full scan flow
@@ -331,6 +331,6 @@ If you encounter issues:
 
 ## 🎉 You're Done!
 
-Your Safi Oil Tracker POC is now live and ready for testing!
+Your Afia Oil Tracker POC is now live and ready for testing!
 
 **Next**: Complete comprehensive QA testing of all 38 stories.

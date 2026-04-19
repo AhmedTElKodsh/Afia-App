@@ -2,7 +2,7 @@
 story_id: "FC.5"
 story_key: "fill-confirm-5-app-flow-integration"
 epic: "FC - Fill Confirmation Screen"
-status: ready-for-dev
+status: done
 created: "2026-04-10"
 author: "Ahmed"
 ---
@@ -302,13 +302,31 @@ src/
 ## Dev Agent Record
 
 ### Agent Model Used
-_To be filled_
+Claude Sonnet 4.5
 
 ### Debug Log References
-_None yet_
+None
 
 ### Completion Notes List
-_None yet_
+- ✅ FILL_CONFIRM state already exists in appState.ts
+- ✅ handleAnalyze already transitions to FILL_CONFIRM state (line 105)
+- ✅ handleConfirmFill already exists and updates result with confirmed percentage
+- ✅ Added FillConfirmScreen import to App.tsx
+- ✅ Updated FILL_CONFIRM case to use FillConfirmScreen component
+- ✅ Passed correct props: imageDataUrl, aiEstimatePercent, bottleCapacityMl, bottleTopPct, bottleBottomPct
+- ✅ Converted waterMl to percentage in onConfirm callback
+- ✅ Added bottle null check to FILL_CONFIRM case guard
+- ✅ ResultDisplay already uses result.fillPercentage (updated by handleConfirmFill)
+- ✅ No TypeScript errors
+
+### File List
+
+**Files MODIFIED:**
+- ✅ `src/App.tsx` (added FillConfirmScreen import, updated FILL_CONFIRM case)
+
+**Files NOT MODIFIED (already correct):**
+- `src/state/appState.ts` (FILL_CONFIRM already in AppState union)
+- `src/components/ResultDisplay.tsx` (already uses result.fillPercentage correctly)
 
 ### File List
 

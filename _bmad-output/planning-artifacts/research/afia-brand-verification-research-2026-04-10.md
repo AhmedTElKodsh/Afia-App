@@ -7,7 +7,7 @@
 
 ## Problem Statement
 
-The 1.5 L cooking oil bottle is a commodity form factor. Dozens of brands (Safi, Zuhair, generic sunflower oil, etc.) share nearly identical silhouettes: tall cylindrical body, green label, amber oil window, plastic handle. The existing `analyzeComposition()` function reliably detects "a green-label bottle with oil" but cannot distinguish Afia from any other green-label brand.
+The 1.5 L cooking oil bottle is a commodity form factor. Dozens of brands (Afia, Zuhair, generic sunflower oil, etc.) share nearly identical silhouettes: tall cylindrical body, green label, amber oil window, plastic handle. The existing `analyzeComposition()` function reliably detects "a green-label bottle with oil" but cannot distinguish Afia from any other green-label brand.
 
 **Goal:** Confirm the scanned bottle is specifically Afia before proceeding to fill-level estimation, without introducing unreasonable latency, bundle size, or per-call API cost.
 

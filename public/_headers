@@ -1,6 +1,11 @@
+# connect-src is hardcoded to the production Worker URL. Update here on Worker redeploy.
+# ⚠️ BLOCKING: Confirm Worker URL with Ahmed before deploying this file to production.
+#    Current URL from DEPLOYMENT-GUIDE.md — may be stale. Check worker/wrangler.toml for actual deployed name.
+# TODO(security): script-src 'unsafe-inline' and style-src 'unsafe-inline' are known remaining debt.
+#    Removing requires nonce injection (Pages Functions) or a full inline-code audit. Track separately.
 /*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=self, microphone=(), geolocation=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://*.workers.dev; worker-src 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://Afia-worker.savola.workers.dev; worker-src 'self'; frame-ancestors 'none'; upgrade-insecure-requests

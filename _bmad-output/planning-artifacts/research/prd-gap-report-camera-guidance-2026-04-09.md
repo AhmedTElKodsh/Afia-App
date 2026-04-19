@@ -9,7 +9,7 @@ research_sources:
 status: 'ready-for-prd-edit'
 ---
 
-# PRD Gap Report — Safi Oil Tracker (Camera Guidance Module)
+# PRD Gap Report — Afia Oil Tracker (Camera Guidance Module)
 
 **Review date:** 2026-04-09 | **Reviewer:** John (PM) | **Research vintage:** 2026-04-09
 

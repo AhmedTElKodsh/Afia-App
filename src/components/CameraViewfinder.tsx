@@ -227,7 +227,7 @@ export function CameraViewfinder({
       canvas.height = CAMERA_CONFIG.capture.height;
       context.drawImage(video, 0, 0, CAMERA_CONFIG.capture.width, CAMERA_CONFIG.capture.height);
       const imageBase64 = canvas.toDataURL('image/jpeg', CAMERA_CONFIG.jpegQuality);
-      const base64Only = imageBase64.replace(/^data:image\/jpeg;base64,/, '');
+      const base64Only = (imageBase64 || '').replace(/^data:image\/jpeg;base64,/, '');
       setPhotoCaptured(true);
       setShutterFlash(true);
       setTimeout(() => setShutterFlash(false), 200);

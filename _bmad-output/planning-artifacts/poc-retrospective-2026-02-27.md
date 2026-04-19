@@ -1,4 +1,4 @@
-# Safi Oil Tracker — POC Retrospective
+# Afia Oil Tracker — POC Retrospective
 **Date:** 2026-02-27
 **Sprint:** POC (Single Sprint — All 5 Epics)
 **Participants:** Ahmed (Product Owner), BMad Master (SM), Dev, Architect, PM, QA
@@ -111,7 +111,7 @@ Hooks (`useCamera`, `useOnlineStatus`, `useIosInAppBrowser`) and components (`Pr
 | A3 | Fix registry duplication — shared module | Architect | Medium | Phase 2 |
 | A4 | Add `PrivacyNotice` + `useCamera` + `apiClient` tests | Dev | Medium | Phase 2 |
 | A5 | Create KV namespace + update `worker/wrangler.toml` with real IDs | Ahmed | High | Deployment |
-| A6 | Create R2 bucket `safi-training-data` | Ahmed | High | Deployment |
+| A6 | Create R2 bucket `Afia-training-data` | Ahmed | High | Deployment |
 | A7 | Set `GEMINI_API_KEY` + `GROQ_API_KEY` secrets via `wrangler secret put` | Ahmed | High | Deployment |
 | A8 | Set GitHub secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | Ahmed | High | CI/CD |
 | A9 | Test on real iOS Safari device (camera validation) | Ahmed | High | Phase 2 |
@@ -143,7 +143,7 @@ Hooks (`useCamera`, `useOnlineStatus`, `useIosInAppBrowser`) and components (`Pr
    ```bash
    cd worker
    npx wrangler kv namespace create "RATE_LIMIT_KV"
-   npx wrangler r2 bucket create safi-training-data
+   npx wrangler r2 bucket create Afia-training-data
    ```
 3. **Update `wrangler.toml`** with real KV namespace IDs
 4. **Set secrets:**

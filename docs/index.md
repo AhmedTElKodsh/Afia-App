@@ -4,7 +4,7 @@
 
 ## Project Summary
 
-**Afia App** (formerly Safi Oil Tracker) is a mobile-first PWA that uses AI vision to estimate cooking oil bottle fill levels from a single photo. Multi-part project: React 19 frontend + Cloudflare Worker backend.
+**Afia App** (formerly Afia Oil Tracker) is a mobile-first PWA that uses AI vision to estimate cooking oil bottle fill levels from a single photo. Multi-part project: React 19 frontend + Cloudflare Worker backend.
 
 - **Repository Type**: Multi-part (frontend + worker)
 - **Frontend**: React 19 + TypeScript 5.9 + Vite 7 (PWA)
@@ -42,10 +42,10 @@ cd worker && npm run type-check     # Worker type checking
 ### Deploy
 ```bash
 cd worker && npx wrangler deploy    # Deploy Worker
-npm run build && npx wrangler pages deploy dist --project-name=safi-oil-tracker  # Deploy frontend
+npm run build && npx wrangler pages deploy dist --project-name=Afia-oil-tracker  # Deploy frontend
 ```
 
 ### Test URLs
 - `http://localhost:5173/?sku=filippo-berio-500ml`
 - `http://localhost:5173/?sku=bertolli-750ml`
-- `http://localhost:5173/?sku=safi-sunflower-1l`
+- `http://localhost:5173/?sku=Afia-sunflower-1l`

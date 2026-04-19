@@ -41,7 +41,7 @@ author: "Ahmed"
 
 ### Why This Story Matters
 
-This is the **foundation story** for the entire Safi Oil Tracker application. Every subsequent story depends on this infrastructure being in place. Without a proper PWA setup, we cannot:
+This is the **foundation story** for the entire Afia Oil Tracker application. Every subsequent story depends on this infrastructure being in place. Without a proper PWA setup, we cannot:
 - Serve the app to users via QR code
 - Enable offline functionality
 - Install as a web app on mobile devices

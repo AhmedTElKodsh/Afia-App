@@ -2,7 +2,7 @@
 validationTarget: '_bmad-output/planning-artifacts/prd.md'
 validationDate: '2026-04-09'
 inputDocuments: 
-  - '_bmad-output/planning-artifacts/product-brief-Safi-Image-Analysis-2026-02-26.md'
+  - '_bmad-output/planning-artifacts/product-brief-Afia-Image-Analysis-2026-02-26.md'
   - '_bmad-output/planning-artifacts/research/technical-oil-bottle-ai-app-poc-research-2026-02-26.md'
   - '_bmad-output/planning-artifacts/architecture.md'
   - '_bmad-output/planning-artifacts/research/technical-Afia-Logo-Detection-research-2026-04-09.md'
@@ -19,7 +19,7 @@ overallStatus: 'Pass'
 
 ## Executive Summary of Findings
 
-The PRD for **Safi Oil Tracker** is an exemplary BMAD-standard document. It effectively balances technical innovation (Cascaded Vision Pipeline) with user-centric design and brand protection requirements. The document is 100% complete, highly measurable, and demonstrates a robust traceability chain.
+The PRD for **Afia Oil Tracker** is an exemplary BMAD-standard document. It effectively balances technical innovation (Cascaded Vision Pipeline) with user-centric design and brand protection requirements. The document is 100% complete, highly measurable, and demonstrates a robust traceability chain.
 
 ### Quick Results
 

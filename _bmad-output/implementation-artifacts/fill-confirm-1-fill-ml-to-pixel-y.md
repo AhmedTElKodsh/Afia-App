@@ -2,7 +2,7 @@
 story_id: "FC.1"
 story_key: "fill-confirm-1-fill-ml-to-pixel-y"
 epic: "FC - Fill Confirmation Screen"
-status: ready-for-dev
+status: done
 created: "2026-04-10"
 author: "Ahmed"
 ---
@@ -66,32 +66,32 @@ Then the result is within `[bottleTopPx, bottleBottomPx]` (not above top, not be
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1**: Create `src/utils/fillMlToPixelY.ts` (AC1–AC7)
-  - [ ] 1.1 Implement `fillMlToPixelY` with full parameter signature
-  - [ ] 1.2 Add guard: return 0 if `naturalWidth/Height` is 0
-  - [ ] 1.3 Add guard: return 0 if `rect.width/height` is 0
-  - [ ] 1.4 Compute `scale = Math.min(rect.width / natW, rect.height / natH)` (object-fit: contain)
-  - [ ] 1.5 Compute `renderedH`, `offsetY` (letterbox offset)
-  - [ ] 1.6 Compute `bottleTopPx`, `bottleBottomPx`
-  - [ ] 1.7 Clamp `fillFraction = Math.max(0, Math.min(1, waterMl / bottleCapacityMl))`
-  - [ ] 1.8 Return `bottleBottomPx - fillFraction * (bottleBottomPx - bottleTopPx)`
-  - [ ] 1.9 Export as named function (no default export — matches codebase convention)
+- [x] **Task 1**: Create `src/utils/fillMlToPixelY.ts` (AC1–AC7)
+  - [x] 1.1 Implement `fillMlToPixelY` with full parameter signature
+  - [x] 1.2 Add guard: return 0 if `naturalWidth/Height` is 0
+  - [x] 1.3 Add guard: return 0 if `rect.width/height` is 0
+  - [x] 1.4 Compute `scale = Math.min(rect.width / natW, rect.height / natH)` (object-fit: contain)
+  - [x] 1.5 Compute `renderedH`, `offsetY` (letterbox offset)
+  - [x] 1.6 Compute `bottleTopPx`, `bottleBottomPx`
+  - [x] 1.7 Clamp `fillFraction = Math.max(0, Math.min(1, waterMl / bottleCapacityMl))`
+  - [x] 1.8 Return `bottleBottomPx - fillFraction * (bottleBottomPx - bottleTopPx)`
+  - [x] 1.9 Export as named function (no default export — matches codebase convention)
 
-- [ ] **Task 2**: Create `src/test/fillMlToPixelY.test.ts` (covers all ACs)
-  - [ ] 2.1 Write `describe('fillMlToPixelY', ...)` block
-  - [ ] 2.2 Write helper `makeImg(natW, natH, renderedW, renderedH)` that returns a stubbed `HTMLImageElement`-like object with mocked `naturalWidth`, `naturalHeight`, and `getBoundingClientRect`
-  - [ ] 2.3 Write test for AC1 (basic no-letterbox, 100% fill)
-  - [ ] 2.4 Write test for AC2 (letterbox, 0% fill)
-  - [ ] 2.5 Write test for AC3 (50% midpoint)
-  - [ ] 2.6 Write test for AC4 (naturalWidth=0 → returns 0)
-  - [ ] 2.7 Write test for AC5 (rect.width=0 → returns 0)
-  - [ ] 2.8 Write test for AC6 (clamped at 100%)
-  - [ ] 2.9 Write test for AC7 (55ml minimum stays within bottle bounds)
-  - [ ] 2.10 Run `npm test` and confirm all tests pass
+- [x] **Task 2**: Create `src/test/fillMlToPixelY.test.ts` (covers all ACs)
+  - [x] 2.1 Write `describe('fillMlToPixelY', ...)` block
+  - [x] 2.2 Write helper `makeImg(natW, natH, renderedW, renderedH)` that returns a stubbed `HTMLImageElement`-like object with mocked `naturalWidth`, `naturalHeight`, and `getBoundingClientRect`
+  - [x] 2.3 Write test for AC1 (basic no-letterbox, 100% fill)
+  - [x] 2.4 Write test for AC2 (letterbox, 0% fill)
+  - [x] 2.5 Write test for AC3 (50% midpoint)
+  - [x] 2.6 Write test for AC4 (naturalWidth=0 → returns 0)
+  - [x] 2.7 Write test for AC5 (rect.width=0 → returns 0)
+  - [x] 2.8 Write test for AC6 (clamped at 100%)
+  - [x] 2.9 Write test for AC7 (55ml minimum stays within bottle bounds)
+  - [x] 2.10 Run `npm test` and confirm all tests pass
 
-- [ ] **Task 3**: Verify no existing utility conflicts
-  - [ ] 3.1 `grep -r "fillMlToPixelY\|fillPercentToPixel\|annotationY"` in `src/` — confirm no prior implementation exists
-  - [ ] 3.2 Confirm `shared/` folder should NOT contain this function (it uses `getBoundingClientRect`, a browser DOM API — keep in `src/utils/`, not `shared/`)
+- [x] **Task 3**: Verify no existing utility conflicts
+  - [x] 3.1 `grep -r "fillMlToPixelY\|fillPercentToPixel\|annotationY"` in `src/` — confirm no prior implementation exists
+  - [x] 3.2 Confirm `shared/` folder should NOT contain this function (it uses `getBoundingClientRect`, a browser DOM API — keep in `src/utils/`, not `shared/`)
 
 ## Dev Notes
 
@@ -204,21 +204,68 @@ src/
 
 ### Agent Model Used
 
-_To be filled by dev agent_
+Claude Sonnet 4.5 (via BMad Scrum Master workflow)
 
-### Debug Log References
+### Implementation Date
 
-_None yet_
+2026-04-16
 
 ### Completion Notes List
 
-_None yet_
+✅ **Story FC.1 completed successfully**
+
+**Implementation Summary:**
+- Created `src/utils/fillMlToPixelY.ts` with full coordinate mapping logic
+- Implemented all guards (unloaded image, empty rect)
+- Proper letterbox handling with `object-fit: contain` calculation
+- Fill fraction clamping to [0, 1] range
+- Created comprehensive test suite with 9 test cases (7 ACs + 2 edge cases)
+
+**Test Results:**
+```
+✓ src/test/fillMlToPixelY.test.ts (9 tests) 4ms
+  ✓ fillMlToPixelY (9)
+    ✓ AC1 - Basic mapping, full bottle (no letterbox) 1ms
+    ✓ AC2 - Letterbox (portrait image in landscape container)
+    ✓ AC3 - 50% fill midpoint
+    ✓ AC4 - Unloaded image guard (naturalWidth=0)
+    ✓ AC5 - Empty rect guard (width=0, height=0)
+    ✓ AC6 - Clamped fill fraction (waterMl exceeds capacity)
+    ✓ AC7 - Minimum fill (55ml) stays within bottle bounds
+    ✓ Edge case - Negative waterMl clamped to 0
+    ✓ Edge case - Zero capacity (division by zero guard)
+
+Test Files  1 passed (1)
+     Tests  9 passed (9)
+  Duration  1.17s
+```
+
+**Acceptance Criteria Verification:**
+- ✅ AC1: Basic mapping with no letterbox - PASS
+- ✅ AC2: Letterbox handling (portrait in landscape) - PASS
+- ✅ AC3: 50% fill midpoint calculation - PASS
+- ✅ AC4: Unloaded image guard returns 0 - PASS
+- ✅ AC5: Empty rect guard returns 0 - PASS
+- ✅ AC6: Fill fraction clamped to 1.0 - PASS
+- ✅ AC7: Minimum fill (55ml) stays within bounds - PASS
+
+**Additional Edge Cases Covered:**
+- Negative waterMl values clamped to 0
+- Zero capacity division guard (returns top of bottle)
 
 ### File List
 
-**Files to CREATE:**
-- `src/utils/fillMlToPixelY.ts`
-- `src/test/fillMlToPixelY.test.ts`
+**Files Created:**
+- `src/utils/fillMlToPixelY.ts` - Pure TypeScript coordinate mapping utility
+- `src/test/fillMlToPixelY.test.ts` - Comprehensive test suite (9 tests)
 
-**Files to MODIFY:**
-- None — this is a net-new pure utility; no existing files need changes
+**Files Modified:**
+- None - this is a net-new pure utility with no dependencies
+
+### Performance Notes
+
+- Pure function with no side effects
+- O(1) time complexity
+- No DOM mutations
+- Suitable for real-time use in React render cycles
+- Typical execution time: <1ms per call
