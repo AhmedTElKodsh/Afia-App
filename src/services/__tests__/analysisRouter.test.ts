@@ -3,6 +3,10 @@
  * Story 7.4 - Task 8
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { analyze } from '../analysisRouter';
+import { loadModel, isModelLoaded } from '../modelLoader';
+import { runLocalInference } from '../localInference';
+import { analyzeBottle } from '../../api/apiClient';
 
 vi.mock('../modelLoader');
 vi.mock('../localInference');
@@ -15,6 +19,8 @@ describe('AnalysisRouter - Error Handling', () => {
     vi.clearAllMocks();
     // Save original navigator
     originalNavigator = global.navigator;
+    // Mock as online by default
+    global.navigator = { ...originalNavigator, onLine: true } as Navigator;
   });
 
   afterEach(() => {
@@ -24,12 +30,8 @@ describe('AnalysisRouter - Error Handling', () => {
 
   describe('Graceful LLM Fallback', () => {
     it('should fall back to LLM when model loading fails', async () => {
-      // RED: Should fail - fallback verification needed
-      const { analyze } = await import('../analysisRouter');
-      const { loadModel } = await import('../modelLoader');
-      const { analyzeBottle } = await import('../../api/apiClient');
-      
       (loadModel as any).mockRejectedValue(new Error('Download failed'));
+      (isModelLoaded as any).mockReturnValue(false);
       (analyzeBottle as any).mockResolvedValue({
         scanId: 'llm-123',
         fillPercentage: 75,
@@ -47,11 +49,7 @@ describe('AnalysisRouter - Error Handling', () => {
     });
 
     it('should fall back to LLM when inference fails', async () => {
-      // RED: Should fail - inference error handling not complete
-      const { analyze } = await import('../analysisRouter');
-      const { runLocalInference } = await import('../localInference');
-      const { analyzeBottle } = await import('../../api/apiClient');
-      
+      (isModelLoaded as any).mockReturnValue(true);
       (runLocalInference as any).mockRejectedValue(new Error('Inference failed'));
       (analyzeBottle as any).mockResolvedValue({
         scanId: 'llm-456',
@@ -68,11 +66,7 @@ describe('AnalysisRouter - Error Handling', () => {
     });
 
     it('should throw error when both local and LLM fail', async () => {
-      // RED: Should fail - dual failure handling not implemented
-      const { analyze } = await import('../analysisRouter');
-      const { runLocalInference } = await import('../localInference');
-      const { analyzeBottle } = await import('../../api/apiClient');
-      
+      (isModelLoaded as any).mockReturnValue(true);
       (runLocalInference as any).mockRejectedValue(new Error('Local failed'));
       (analyzeBottle as any).mockRejectedValue(new Error('LLM failed'));
 
@@ -86,9 +80,6 @@ describe('AnalysisRouter - Error Handling', () => {
 
   describe('Offline Error Handling', () => {
     it('should throw clear error when offline without cached model', async () => {
-      const { analyze } = await import('../analysisRouter');
-      const { isModelLoaded } = await import('../modelLoader');
-      
       (isModelLoaded as any).mockReturnValue(false);
       
       // Mock navigator.onLine as offline
@@ -102,12 +93,9 @@ describe('AnalysisRouter - Error Handling', () => {
     });
 
     it('should not attempt LLM fallback when offline', async () => {
-      const { analyze } = await import('../analysisRouter');
-      const { runLocalInference } = await import('../localInference');
-      const { analyzeBottle } = await import('../../api/apiClient');
-      
       // Mock navigator.onLine as offline
       global.navigator = { ...originalNavigator, onLine: false } as Navigator;
+      (isModelLoaded as any).mockReturnValue(true);
       (runLocalInference as any).mockRejectedValue(new Error('Inference failed'));
 
       await expect(analyze({
@@ -122,11 +110,6 @@ describe('AnalysisRouter - Error Handling', () => {
 
   describe('Progress Callback Errors', () => {
     it('should continue if progress callback throws', async () => {
-      const { analyze } = await import('../analysisRouter');
-      const { runLocalInference } = await import('../localInference');
-      const { isModelLoaded } = await import('../modelLoader');
-      const { analyzeBottle } = await import('../../api/apiClient');
-      
       // Mock model as loaded and online
       (isModelLoaded as any).mockReturnValue(true);
       global.navigator = { ...originalNavigator, onLine: true } as Navigator;

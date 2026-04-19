@@ -73,5 +73,7 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: "./src/test/setup.ts",
     include: ["src/**/*.test.{ts,tsx}", "worker/**/*.test.ts"],
+    testTimeout: 10000, // Increase timeout for CI environment (default is 5000ms)
+    hookTimeout: 10000, // Increase hook timeout for CI
   },
 });

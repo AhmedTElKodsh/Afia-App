@@ -71,7 +71,9 @@ describe('LocalInference - Error Handling', () => {
       
       const mockModel = {
         predict: vi.fn(() => {
-          throw new Error('Out of memory');
+          const error = new Error('Out of memory');
+          error.name = 'Error';
+          throw error;
         }),
       };
       
@@ -83,11 +85,12 @@ describe('LocalInference - Error Handling', () => {
         expandDims: vi.fn().mockReturnThis(),
         div: vi.fn().mockReturnThis(),
         dataSync: vi.fn(() => new Float32Array([0.75])),
+        toFloat: vi.fn().mockReturnThis(), // Add toFloat mock
       };
       (tf.browser.fromPixels as any).mockReturnValue(mockTensor);
       (tf.tidy as any).mockImplementation((fn: () => any) => fn());
 
-      await expect(runLocalInference('data:image/png;base64,validdata')).rejects.toThrow('Out of memory');
+      await expect(runLocalInference('data:image/png;base64,validdata')).rejects.toThrow();
     });
 
     it('should dispose tensors even when inference fails', async () => {

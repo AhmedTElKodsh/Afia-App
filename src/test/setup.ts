@@ -72,6 +72,11 @@ HTMLCanvasElement.prototype.getContext = function(type: string, ...args: any[]) 
   return null;
 };
 
+// Mock toDataURL for canvas - required for image capture tests
+HTMLCanvasElement.prototype.toDataURL = vi.fn(function(type = 'image/png', quality?: number) {
+  return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+});
+
 // Mock getUserMedia
 Object.defineProperty(globalThis.navigator, "mediaDevices", {
   value: {

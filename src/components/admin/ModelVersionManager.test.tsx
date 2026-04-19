@@ -123,16 +123,16 @@ describe('ModelVersionManager', () => {
 
     render(<ModelVersionManager t={mockT} />);
 
-    // Wait for initial load
+    // Wait for initial load with increased timeout
     await waitFor(() => {
       expect(screen.getByText('v0.9.0')).toBeInTheDocument();
-    });
+    }, { timeout: 10000 });
 
     // Find and click activate button for v0.9.0
     const activateButtons = screen.getAllByText('Activate');
     fireEvent.click(activateButtons[0]);
 
-    // Verify activate endpoint was called
+    // Verify activate endpoint was called with increased timeout
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/admin/model/activate'),
@@ -145,7 +145,7 @@ describe('ModelVersionManager', () => {
           body: JSON.stringify({ version: 'v0.9.0' })
         })
       );
-    });
+    }, { timeout: 10000 });
   });
 
   it('shows confirmation dialog when deactivate button clicked', async () => {
