@@ -211,10 +211,6 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
   if (!isAuthenticated) {
     return (
       <div className="admin-login" dir={isRTL ? 'rtl' : 'ltr'}>
-        <div className="poc-warning-banner">
-          <AlertTriangle size={16} />
-          <span>{t('admin.security.pocWarning', 'POC SECURITY: This dashboard uses basic session management for pilot testing. Do not use for production data.')}</span>
-        </div>
         <div className="login-card">
           <div className="login-icon-wrap" aria-hidden="true">
             <ShieldCheck size={32} strokeWidth={1.5} />
@@ -259,10 +255,6 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
 
   return (
     <div className="admin-dashboard layout" dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className="poc-warning-banner">
-        <AlertTriangle size={16} />
-        <span>{t('admin.security.pocWarning', 'POC SECURITY: This dashboard uses basic session management for pilot testing. Do not use for production data.')}</span>
-      </div>
       <a href="#admin-main" className="skip-to-main">
         {t('admin.login.skipToContent')}
       </a>
