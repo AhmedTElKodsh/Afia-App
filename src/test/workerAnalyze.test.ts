@@ -36,10 +36,10 @@ import { callGemini } from "../../worker/src/providers/gemini.ts";
 import { callGroq } from "../../worker/src/providers/groq.ts";
 
 const VALID_SKU = "afia-corn-1.5l";
-// 1-byte base64 string well under the 4MB limit
-const SMALL_IMAGE = "dGVzdA==";
-// Just over 4MB in base64 chars
-const LARGE_IMAGE = "x".repeat(4 * 1024 * 1024 + 1);
+// Valid base64, over 100 characters to pass security check
+const SMALL_IMAGE = "a".repeat(200);
+// Over 5.5MB in base64 chars to trigger the IMAGE_TOO_LARGE error (4MB * 4/3 = 5,592,405 chars)
+const LARGE_IMAGE = "x".repeat(6 * 1024 * 1024);
 
 function mockKV(cached: string | null = null) {
   return {
@@ -124,12 +124,19 @@ describe("handleAnalyze — request validation", () => {
     );
   });
 
-  it("returns 400 when SKU is unknown", async () => {
+  it("returns 200 with isUnsupportedSku=true when SKU is unknown", async () => {
     const ctx = createCtx({ sku: "unknown-sku-xyz", imageBase64: SMALL_IMAGE });
+    (callGemini as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      result: {
+        fillPercentage: 50,
+        confidence: "medium",
+        imageQualityIssues: [],
+      },
+      keyIndex: 0,
+    });
     await handleAnalyze(ctx as never);
     expect(ctx.json).toHaveBeenCalledWith(
-      expect.objectContaining({ code: "UNKNOWN_SKU" }),
-      400,
+      expect.objectContaining({ isUnsupportedSku: true }),
     );
   });
 });
@@ -161,9 +168,12 @@ describe("handleAnalyze — successful analysis", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (callGemini as ReturnType<typeof vi.fn>).mockResolvedValue({
-      fillPercentage: 75,
-      confidence: "high",
-      imageQualityIssues: [],
+      result: {
+        fillPercentage: 75,
+        confidence: "high",
+        imageQualityIssues: [],
+      },
+      keyIndex: 0,
     });
   });
 
@@ -215,9 +225,12 @@ describe("handleAnalyze — provider fallback chain", () => {
 
   it("falls back to Groq when Gemini fails and GROQ_API_KEY is configured", async () => {
     (callGroq as ReturnType<typeof vi.fn>).mockResolvedValue({
-      fillPercentage: 50,
-      confidence: "medium",
-      imageQualityIssues: [],
+      result: {
+        fillPercentage: 50,
+        confidence: "medium",
+        imageQualityIssues: [],
+      },
+      keyName: "groq",
     });
     const ctx = createCtx(
       { sku: VALID_SKU, imageBase64: SMALL_IMAGE },

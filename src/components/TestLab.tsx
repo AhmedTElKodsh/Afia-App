@@ -33,7 +33,7 @@ import { useScanHistory } from "../hooks/useScanHistory.ts";
 import { mockAnalyzeBottle, type MockScenario } from "../utils/mockAnalysisApi.ts";
 import "./TestLab.css";
 
-const WORKER_URL = import.meta.env.VITE_WORKER_URL || "";
+const WORKER_URL = import.meta.env.VITE_PROXY_URL || "";
 
 export type EntryPointType = "mock-qr" | "bottle-select" | "manual-sku";
 export type TestLabState = "idle" | "scanning" | "analyzing" | "complete" | "error";

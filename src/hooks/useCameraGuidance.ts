@@ -187,115 +187,125 @@ export function useCameraGuidance(
    * Analysis loop implementation
    */
   const analyzeFrame = useCallback(() => {
-    const video = videoRef.current;
-    if (!video || video.readyState < 2) return;
+    try {
+      const video = videoRef.current;
+      if (!video || video.readyState < 2) return;
 
-    const now = performance.now();
-    if (now - lastAnalysisRef.current < mergedConfig.analysisInterval) return;
-    lastAnalysisRef.current = now;
+      const now = performance.now();
+      if (now - lastAnalysisRef.current < mergedConfig.analysisInterval) return;
+      lastAnalysisRef.current = now;
 
-    frameCountRef.current++;
-    // T1.8: Blur runs every other frame; composition runs every frame
-    const shouldComputeBlur = frameCountRef.current % 2 === 0;
-    if (shouldComputeBlur) {
-      lastBlurScoreRef.current = detectBlur(video);
-    }
-    
-    const assessment = assessImageQuality(video, {
-      minBlurScore: mergedConfig.minBlurScore,
-      requireGoodLighting: mergedConfig.requireGoodLighting,
-      precomputedBlurScore: lastBlurScoreRef.current,
-    });
-    
-    const isTestMode = window.__AFIA_TEST_MODE__ === true;
-    const angleStatus = getAngleGuidance(currentBetaRef.current);
-    
-    // Stable brand detection
-    if (assessment.composition.isBrandMatch) {
-      stableBrandCountRef.current++;
-    } else {
-      stableBrandCountRef.current = 0;
-    }
-    const brandDetected = stableBrandCountRef.current >= BRAND_STABILITY_THRESHOLD;
-
-    // Update state
-    setState(prev => {
-      // Perfect Match criteria
-      const isPerfect = (assessment.isGoodQuality && brandDetected && angleStatus === 'good') || isTestMode;
-      // Locking criteria (detected but maybe not perfect yet)
-      const isLocking = assessment.composition.bottleDetected || isTestMode;
+      frameCountRef.current++;
+      // T1.8: Blur runs every other frame; composition runs every frame
+      const shouldComputeBlur = frameCountRef.current % 2 === 0;
+      if (shouldComputeBlur) {
+        lastBlurScoreRef.current = detectBlur(video);
+      }
       
-      let holdProgress = 0;
-      let isHolding = false;
-      let shouldFire = false;
-      let currentGoodFramesCount = isPerfect ? prev.goodFramesCount + 1 : 0;
-
-      if (isLocking) {
-        lastFailRef.current = null;
-        if (!holdStartRef.current) holdStartRef.current = Date.now();
-        const elapsed = Date.now() - holdStartRef.current;
-        
-        // Progress of the "locking" phase
-        holdProgress = Math.min(1, elapsed / HOLD_DURATION_MS);
-        isHolding = holdProgress < 1;
-        
-        // Fire logic: 
-        // 1. Immediately fire if it becomes "Perfect" while locking
-        // 2. Fire after timeout if "Locking" and quality is at least decent? 
-        // User said: "auto-capture at any second the outline perfectly matches"
-        if (isPerfect) {
-          shouldFire = true;
-          holdProgress = 1;
-          isHolding = false;
-        }
+      const assessment = assessImageQuality(video, {
+        minBlurScore: mergedConfig.minBlurScore,
+        requireGoodLighting: mergedConfig.requireGoodLighting,
+        precomputedBlurScore: lastBlurScoreRef.current,
+      });
+      
+      const isTestMode = window.__AFIA_TEST_MODE__ === true;
+      const angleStatus = getAngleGuidance(currentBetaRef.current);
+      
+      // Stable brand detection
+      if (assessment.composition.isBrandMatch) {
+        stableBrandCountRef.current++;
       } else {
-        if (!lastFailRef.current) lastFailRef.current = Date.now();
-        const failDuration = Date.now() - lastFailRef.current;
+        stableBrandCountRef.current = 0;
+      }
+      const brandDetected = stableBrandCountRef.current >= BRAND_STABILITY_THRESHOLD;
+
+      // Update state
+      setState(prev => {
+        // Perfect Match criteria
+        const isPerfect = (assessment.isGoodQuality && brandDetected && angleStatus === 'good') || isTestMode;
+        // Locking criteria (detected but maybe not perfect yet)
+        const isLocking = assessment.composition.bottleDetected || isTestMode;
         
-        if (failDuration <= GRACE_PERIOD_MS && holdStartRef.current) {
-          holdProgress = prev.holdProgress;
-          isHolding = prev.isHolding;
-          currentGoodFramesCount = prev.goodFramesCount;
+        let holdProgress = 0;
+        let isHolding = false;
+        let shouldFire = false;
+        let currentGoodFramesCount = isPerfect ? prev.goodFramesCount + 1 : 0;
+
+        if (isLocking) {
+          lastFailRef.current = null;
+          if (!holdStartRef.current) holdStartRef.current = Date.now();
+          const elapsed = Date.now() - holdStartRef.current;
+          
+          // Progress of the "locking" phase
+          holdProgress = Math.min(1, elapsed / HOLD_DURATION_MS);
+          isHolding = holdProgress < 1;
+          
+          // Fire logic: 
+          // 1. Immediately fire if it becomes "Perfect" while locking
+          // 2. Fire after timeout if "Locking" and quality is at least decent? 
+          // User said: "auto-capture at any second the outline perfectly matches"
+          if (isPerfect) {
+            shouldFire = true;
+            holdProgress = 1;
+            isHolding = false;
+          }
         } else {
-          holdStartRef.current = null;
-          holdProgress = 0;
-          isHolding = false;
-          currentGoodFramesCount = 0;
+          if (!lastFailRef.current) lastFailRef.current = Date.now();
+          const failDuration = Date.now() - lastFailRef.current;
+          
+          if (failDuration <= GRACE_PERIOD_MS && holdStartRef.current) {
+            holdProgress = prev.holdProgress;
+            isHolding = prev.isHolding;
+            currentGoodFramesCount = prev.goodFramesCount;
+          } else {
+            holdStartRef.current = null;
+            holdProgress = 0;
+            isHolding = false;
+            currentGoodFramesCount = 0;
+          }
         }
-      }
+        
+        let qualityTrend: 'improving' | 'stable' | 'declining' | null = null;
+        if (prev.assessment) {
+          const diff = assessment.overallScore - prev.assessment.overallScore;
+          if (diff > 5) qualityTrend = 'improving';
+          else if (diff < -5) qualityTrend = 'declining';
+          else qualityTrend = 'stable';
+        }
+        
+        // isReady latches once shouldFire triggers.
+        // Note: This addresses W13 (1-frame visual lag between distance === 'good' and isReady).
+        // The latch behavior ensures isReady stays true once triggered, and the hold timer
+        // (holdProgress/isHolding) provides visual feedback during the transition, mitigating
+        // any perceived lag. The lag is inherent to React's state update cycle but is not
+        // noticeable to users due to the progressive hold indicator.
+        const isReady = prev.isReady || shouldFire;
+        
+        if (isReady && !prev.isReady && mergedConfig.enableHaptics && navigator.vibrate) {
+          navigator.vibrate(40);
+        }
+        
+        return {
+          ...prev,
+          assessment,
+          isReady,
+          isActive: true,
+          goodFramesCount: currentGoodFramesCount,
+          qualityTrend,
+          holdProgress,
+          isHolding,
+          brandDetected,
+          brandFindings: assessment.composition.isBrandMatch ? ['verified'] : [],
+          angleStatus,
+        };
+      });
       
-      let qualityTrend: 'improving' | 'stable' | 'declining' | null = null;
-      if (prev.assessment) {
-        const diff = assessment.overallScore - prev.assessment.overallScore;
-        if (diff > 5) qualityTrend = 'improving';
-        else if (diff < -5) qualityTrend = 'declining';
-        else qualityTrend = 'stable';
-      }
-      
-      // isReady latches once shouldFire triggers
-      const isReady = prev.isReady || shouldFire;
-      
-      if (isReady && !prev.isReady && mergedConfig.enableHaptics && navigator.vibrate) {
-        navigator.vibrate(40);
-      }
-      
-      return {
-        ...prev,
-        assessment,
-        isReady,
-        isActive: true,
-        goodFramesCount: currentGoodFramesCount,
-        qualityTrend,
-        holdProgress,
-        isHolding,
-        brandDetected,
-        brandFindings: assessment.composition.isBrandMatch ? ['verified'] : [],
-        angleStatus,
-      };
-    });
-    
-    provideFeedback(assessment, prevAssessmentRef.current, mergedConfig);
-    prevAssessmentRef.current = assessment;
+      provideFeedback(assessment, prevAssessmentRef.current, mergedConfig);
+      prevAssessmentRef.current = assessment;
+    } catch (error) {
+      console.error('[useCameraGuidance] Analysis loop error:', error);
+      // Fail silently to avoid crashing the UI, but log the error
+    }
   }, [mergedConfig]);
 
   useEffect(() => {
@@ -377,16 +387,22 @@ export function useCameraGuidance(
         if (element.complete) {
           analyze();
         } else {
-          element.onload = analyze;
+          element.onload = () => {
+            element.onload = null; // prevent stale re-fire if element reused
+            analyze();
+          };
         }
       };
       
-      // Run analysis repeatedly (simulating live feed) so auto-capture etc still works
-      const rafId = requestAnimationFrame(function loop() {
+      // Run analysis repeatedly (simulating live feed) so auto-capture etc still works.
+      // Track the latest RAF id so cancel() always kills the running loop, not the first frame.
+      let currentRafId: number;
+      const loop = () => {
         analyzeOnce();
-        frameLoopCleanupRef.current = () => cancelAnimationFrame(rafId);
-        requestAnimationFrame(loop);
-      });
+        currentRafId = requestAnimationFrame(loop);
+      };
+      currentRafId = requestAnimationFrame(loop);
+      frameLoopCleanupRef.current = () => cancelAnimationFrame(currentRafId);
     }
   }, [stopGuidance, startFrameLoop]);
   

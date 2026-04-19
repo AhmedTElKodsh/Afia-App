@@ -37,4 +37,5 @@ export interface LLMResponse {
   bottle_top_y_px?: number;
   bottle_bottom_y_px?: number;
   below_55ml_threshold?: boolean;
+  guidanceNeeded?: string | null;
 }

@@ -538,5 +538,13 @@
   "bottles": {
     "afia-corn-1.5l": "زيت الذرة الصافي من عافية ١.٥ لتر",
     "afia-corn-2.5l": "زيت ذرة عافية نقي 2.5 لتر"
+  },
+  "fillConfirm": {
+    "title": "تأكيد مستوى الزيت",
+    "confirmButton": "تأكيد",
+    "retakeButton": "إعادة التصوير",
+    "sliderLabel": "اضبط مستوى الزيت",
+    "mlValue": "{{value}} مل",
+    "confirmed": "تم تأكيد مستوى الزيت"
   }
 }

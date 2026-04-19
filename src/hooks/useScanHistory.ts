@@ -10,7 +10,7 @@ export interface StoredScan {
   remainingMl: number;
   consumedMl: number;
   confidence: "high" | "medium" | "low";
-  aiProvider?: "gemini" | "groq" | "openrouter" | "mistral" | "local-cnn" | "mock-api";
+  aiProvider?: "gemini" | "groq" | "openrouter" | "mistral" | "local-cnn" | "local-tfjs" | "mock-api" | "queued";
   latencyMs?: number;
   feedbackRating?: "about_right" | "too_high" | "too_low" | "way_off";
   correctedPercentage?: number; // Ground truth from admin
@@ -77,10 +77,8 @@ export function useScanHistory() {
     setScans((prev) => {
       const updated = [scan, ...prev];
       const toStore = updated.length > MAX_SCANS ? updated.slice(0, MAX_SCANS) : updated;
-      
+      // saveToStorage is idempotent; double-invocation in dev StrictMode is harmless
       saveToStorage(toStore);
-
-      // Only notify listeners when storage succeeded (saveToStorage returns false on unrecoverable quota error)
       window.dispatchEvent(new CustomEvent("afia:scan-added"));
       return toStore;
     });
@@ -130,7 +128,7 @@ export function useScanHistory() {
       const updated = prev.map((s) =>
         s.id === scanId ? { ...s, feedbackRating } : s
       );
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); } catch { /* silent */ }
+      saveToStorage(updated);
       return updated;
     });
   }, []);

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, lazy, Suspense } from "react";
+import { useState, useRef, useCallback, useEffect, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { Camera, History, LayoutDashboard, FlaskConical } from "lucide-react";
 
@@ -14,18 +14,21 @@ import { QrLanding } from "./components/QrLanding.tsx";
 import { UnknownBottle } from "./components/UnknownBottle.tsx";
 import { CameraViewfinder } from "./components/CameraViewfinder.tsx";
 import { ApiStatus } from "./components/ApiStatus.tsx";
-import { FillConfirm } from "./components/FillConfirm.tsx";
+import { FillConfirmScreen } from "./components/FillConfirmScreen/FillConfirmScreen.tsx";
 import { ResultDisplay } from "./components/ResultDisplay.tsx";
 import { IosWarning } from "./components/IosWarning.tsx";
 import { useIosInAppBrowser } from "./hooks/useIosInAppBrowser.ts";
 import { reportScanError } from "./api/apiClient.ts";
 import { calculateVolumes } from "./utils/volumeCalculator.ts";
 import { useScanHistory, createStoredScan } from "./hooks/useScanHistory.ts";
-import { useLocalAnalysis } from "./hooks/useLocalAnalysis.ts";
+import { analyze as runAnalysis } from "./services/analysisRouter.ts";
+import { loadModel } from "./services/modelLoader.ts";
 import { AppControls } from "./components/AppControls.tsx";
 import { AnalyzingOverlay } from "./components/AnalyzingOverlay.tsx";
 import { SkeletonHistory, SkeletonAdmin } from "./components/Skeleton.tsx";
 import { hapticFeedback } from "./utils/haptics.ts";
+import { UploadQualityWarning } from "./components/UploadQualityWarning.tsx";
+import { processSyncQueue, getQueueLength } from "./services/syncQueue.ts";
 
 // Lazy load non-critical components
 const ScanHistory = lazy(() => import("./components/ScanHistory.tsx").then(m => ({ default: m.ScanHistory })));
@@ -59,18 +62,117 @@ export default function App() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [analysisProgress, setAnalysisProgress] = useState<string>("");
   const [selectedSku, setSelectedSku] = useState<string>(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get("sku") || "";
   });
+  
+  // Story 7.8 - AC2: Quality warning state
+  const [qualityWarning, setQualityWarning] = useState<string[] | null>(null);
+  // Ref instead of state — avoids stale closure / batching issue where resolver
+  // could be replaced by a concurrent re-render before the user responds.
+  const qualityWarningResolverRef = useRef<((value: boolean) => void) | null>(null);
+  
+  // Story 7.8 - AC5: Pending sync queue count
+  const [, setPendingSyncCount] = useState<number>(0);
+  // Prevents concurrent handleAnalyze calls (C2: double-tap guard)
+  const isAnalyzingRef = useRef<boolean>(false);
 
   const { addScan } = useScanHistory();
-  const { runAnalysis, loadModel } = useLocalAnalysis();
 
-  // Load local model on mount (Stage 2 Prep)
+  // Load local model on mount (Story 7.4)
   useEffect(() => {
-    loadModel();
-  }, [loadModel]);
+    loadModel().catch(err => {
+      console.warn('[App] Model preload failed:', err);
+    });
+  }, []);
+
+  // Story 7.5 - Task 2: Check for model updates on app load
+  useEffect(() => {
+    const checkForUpdates = async () => {
+      try {
+        const { checkModelVersion } = await import('./services/modelLoader');
+        const result = await checkModelVersion();
+        
+        if (result.updateAvailable) {
+          console.log('[App] Model update available:', result.latestVersion);
+          // Update is triggered automatically in background
+        }
+      } catch (err) {
+        console.warn('[App] Version check failed:', err);
+      }
+    };
+
+    // Check for updates after service worker is ready
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready
+        .then(() => checkForUpdates())
+        .catch(err => console.warn('[App] SW ready failed:', err));
+    } else {
+      checkForUpdates();
+    }
+  }, []);
+
+  // Story 7.4 - Task 6: Process offline queue when coming back online
+  useEffect(() => {
+    // isProcessingOnline: H1 in-flight guard prevents concurrent queue runs on rapid network flaps
+    let isProcessingOnline = false;
+    const handleOnline = () => {
+      if (isProcessingOnline) return;
+      isProcessingOnline = true;
+      console.log('[App] Network connection restored, processing offline queue');
+      import('./services/analysisRouter')
+        .then(({ processOfflineQueue }) => processOfflineQueue())
+        .catch(err => console.warn('[App] processOfflineQueue failed:', err))
+        .finally(() => { isProcessingOnline = false; });
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, []);
+  
+  // Story 7.8 - AC4, AC5: Process sync queue on mount and update pending count
+  useEffect(() => {
+    let mounted = true;
+
+    const initSyncQueue = async () => {
+      try {
+        const count = await getQueueLength();
+        if (!mounted) return;
+        setPendingSyncCount(count);
+
+        // M2: only process queue if online
+        if (count > 0 && navigator.onLine) {
+          console.log(`[App] Found ${count} pending scans, processing...`);
+          await processSyncQueue();
+          if (!mounted) return;
+          const newCount = await getQueueLength();
+          if (mounted) setPendingSyncCount(newCount);
+        }
+      } catch (error) {
+        console.warn('[App] Failed to process sync queue:', error);
+      }
+    };
+
+    initSyncQueue();
+
+    // H1: sync event listeners use plain functions with try/catch — browser doesn't await async handlers
+    const handleSyncUpdate = () => {
+      getQueueLength()
+        .then(count => { if (mounted) setPendingSyncCount(count); })
+        .catch(err => console.warn('[App] getQueueLength failed:', err));
+    };
+
+    window.addEventListener('sync-success', handleSyncUpdate);
+    window.addEventListener('sync-failed', handleSyncUpdate);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener('sync-success', handleSyncUpdate);
+      window.removeEventListener('sync-failed', handleSyncUpdate);
+    };
+  }, []);
 
   // Admin mode: URL param AND valid session token required
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(hasValidAdminSession);
@@ -84,13 +186,45 @@ export default function App() {
   const handleAnalyze = useCallback(async (base64Override?: string) => {
     const img = typeof base64Override === "string" ? base64Override : capturedImage;
     if (!img || !selectedSku) return;
+    // C2: guard against concurrent invocations (double-tap)
+    if (isAnalyzingRef.current) return;
+    isAnalyzingRef.current = true;
 
     setAppState("API_PENDING");
     setError(null);
+    setAnalysisProgress("Preparing analysis...");
 
     try {
-      // Stage 2: Attempt local analysis with LLM fallback
-      const analysisResult = await runAnalysis(img, selectedSku, bottle?.totalVolumeMl || 1500);
+      // Story 7.8: Use analysisRouter with quality warning callback
+      const analysisResult = await runAnalysis({
+        sku: selectedSku,
+        imageBase64: img,
+        totalVolumeMl: bottle?.totalVolumeMl || 1500,
+        onProgress: (message) => setAnalysisProgress(message),
+        onQualityWarning: async (reasons: string[]) => {
+          return new Promise<boolean>((resolve) => {
+            let settled = false;
+            // Auto-dismiss after 30s — defaults to retake so analysis doesn't hang forever
+            const timeout = window.setTimeout(() => {
+              if (!settled) {
+                settled = true;
+                qualityWarningResolverRef.current = null;
+                setQualityWarning(null);
+                resolve(false);
+              }
+            }, 30_000);
+            qualityWarningResolverRef.current = (value: boolean) => {
+              if (!settled) {
+                settled = true;
+                clearTimeout(timeout);
+                resolve(value);
+              }
+            };
+            setQualityWarning(reasons);
+          });
+        },
+      });
+      
       setResult(analysisResult);
 
       if (analysisResult.isUnsupportedSku) {
@@ -100,13 +234,49 @@ export default function App() {
         setAppState("API_SUCCESS");
         return;
       }
+      
+      // Story 7.8 - AC3: Check if scan was queued for background sync
+      if (analysisResult.queuedForSync && bottle) {
+        const queuedScan = createStoredScan(
+          analysisResult.scanId,
+          selectedSku,
+          bottle.name,
+          bottle.totalVolumeMl,
+          { ...analysisResult, fillPercentage: 0, confidence: 'low' as const },
+          0
+        );
+        addScan(queuedScan);
+        setAppState("API_SUCCESS");
+        // Update pending count
+        try {
+          const count = await getQueueLength();
+          setPendingSyncCount(count);
+        } catch { /* IndexedDB unavailable — non-fatal */ }
+        return;
+      } else if (analysisResult.queuedForSync) {
+        setAppState("API_SUCCESS");
+        return;
+      }
 
       setAppState("FILL_CONFIRM");
     } catch (err) {
+      // M1: clear quality warning overlay if it's stuck after a throw
+      if (qualityWarningResolverRef.current) {
+        qualityWarningResolverRef.current = null;
+        setQualityWarning(null);
+      }
+      // Story 7.8 - AC2: Handle user cancellation
+      if (err instanceof Error && err.message.startsWith('USER_CANCELLED:')) {
+        handleRetake();
+        return;
+      }
+
       const msg = err instanceof Error ? err.message : "Analysis failed";
       setError(msg);
       setAppState("API_ERROR");
       reportScanError(selectedSku, msg, navigator.userAgent);
+    } finally {
+      isAnalyzingRef.current = false;
     }
   }, [capturedImage, selectedSku, bottle]);
 
@@ -195,6 +365,14 @@ export default function App() {
 
   const handleRetake = useCallback(() => {
     setCapturedImage(null);
+    // C1: resolve the pending promise before nulling, so runAnalysis can settle
+    const resolver = qualityWarningResolverRef.current;
+    if (resolver) {
+      qualityWarningResolverRef.current = null;
+      resolver(false);
+    }
+    setQualityWarning(null);
+    isAnalyzingRef.current = false;
     setAppState("CAMERA_ACTIVE");
   }, []);
 
@@ -202,8 +380,28 @@ export default function App() {
     handleAnalyze();
   }, [handleAnalyze]);
 
+  // Story 7.8 - AC2: Quality warning dialog handlers
+  const handleQualityRetake = useCallback(() => {
+    const resolver = qualityWarningResolverRef.current;
+    if (resolver) {
+      qualityWarningResolverRef.current = null;
+      setQualityWarning(null);
+      resolver(false);
+    }
+  }, []);
+
+  const handleQualityContinue = useCallback(() => {
+    const resolver = qualityWarningResolverRef.current;
+    if (resolver) {
+      qualityWarningResolverRef.current = null;
+      setQualityWarning(null);
+      resolver(true);
+    }
+  }, []);
+
   // E2E test hook: allows tests to programmatically trigger analysis without camera capture
   useEffect(() => {
+    if (!import.meta.env.DEV) return;
     if (window.__AFIA_TEST_MODE__) {
       // Minimal 1×1 blank JPEG for test
       const blankJpeg = '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAAFCAABAAEEAQD/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwABgB/9k=';
@@ -285,8 +483,8 @@ export default function App() {
     );
   }
 
-  // Unknown SKU
-  if (!bottle || !bottleContext) {
+  // Unknown SKU — only block in IDLE; camera/analysis states must render their own screens
+  if ((!bottle || !bottleContext) && appState === "IDLE") {
     return (
       <div className="app-with-nav">
         <AppControls isAdminMode={isAdminMode} />
@@ -310,8 +508,7 @@ export default function App() {
             </Suspense>
           ) : (
             <>
-              {isAdminMode && <BottleSelector onBottleChange={setSelectedSku} />}
-              <QrLanding bottle={bottleContext} onStartScan={handleStartScan} />
+              <QrLanding bottle={bottleContext!} onStartScan={handleStartScan} />
             </>
           )}
         </div>
@@ -331,32 +528,58 @@ export default function App() {
         </div>
       );
 
-    case "PHOTO_CAPTURED":
-      // We skip PHOTO_CAPTURED now as we auto-analyze, but keep for fallback
-      return null;
-
     case "API_PENDING":
       return (
         <div className="app-with-nav">
           <AppControls isAdminMode={isAdminMode} />
           <Navigation currentView={currentView} onViewChange={setCurrentView} isAdminMode={isAdminMode} />
-          <AnalyzingOverlay capturedImage={capturedImage} onCancel={handleRetake} />
+          {qualityWarning ? (
+            <UploadQualityWarning
+              reasons={qualityWarning}
+              onRetake={handleQualityRetake}
+              onContinue={handleQualityContinue}
+            />
+          ) : (
+            <AnalyzingOverlay 
+              capturedImage={capturedImage} 
+              onCancel={handleRetake}
+              progressMessage={analysisProgress}
+            />
+          )}
         </div>
       );
 
     case "FILL_CONFIRM":
-      return result && capturedImage ? (
+      if (!result || !capturedImage || !bottle) {
+        return (
+          <div className="app-with-nav">
+            <AppControls isAdminMode={isAdminMode} />
+            <Navigation currentView={currentView} onViewChange={setCurrentView} isAdminMode={isAdminMode} />
+            <ApiStatus state="error" errorMessage="Analysis state lost" onRetry={handleRetake} onRetake={handleRetake} />
+          </div>
+        );
+      }
+      return (
         <div className="app-with-nav">
           <AppControls isAdminMode={isAdminMode} />
           <Navigation currentView={currentView} onViewChange={setCurrentView} isAdminMode={isAdminMode} />
-          <FillConfirm
-            capturedImage={capturedImage}
-            result={result}
-            onConfirm={handleConfirmFill}
+          <FillConfirmScreen
+            imageDataUrl={capturedImage}
+            aiEstimatePercent={result.fillPercentage}
+            bottleCapacityMl={bottle.totalVolumeMl}
+            bottleTopPct={Math.min(bottle.frameTopPct ?? 0.05, (bottle.frameBottomPct ?? 0.95) - 0.01)}
+            bottleBottomPct={Math.max(bottle.frameBottomPct ?? 0.95, (bottle.frameTopPct ?? 0.05) + 0.01)}
+            onConfirm={(waterMl: number) => {
+              // H5: guard against malformed registry entry with totalVolumeMl === 0
+              const finalPercentage = bottle.totalVolumeMl > 0
+                ? Math.min(100, (waterMl / bottle.totalVolumeMl) * 100)
+                : 0;
+              handleConfirmFill(finalPercentage);
+            }}
             onRetake={handleRetake}
           />
         </div>
-      ) : null;
+      );
 
     case "API_ERROR":
       return (
@@ -374,18 +597,27 @@ export default function App() {
 
     case "API_SUCCESS":
     case "API_LOW_CONFIDENCE":
-      return result ? (
+      if (!result) {
+        return (
+          <div className="app-with-nav">
+            <AppControls isAdminMode={isAdminMode} />
+            <Navigation currentView={currentView} onViewChange={setCurrentView} isAdminMode={isAdminMode} />
+            <ApiStatus state="error" errorMessage="Analysis result unavailable" onRetry={handleRetake} onRetake={handleRetake} />
+          </div>
+        );
+      }
+      return (
         <div className="app-with-nav">
           <AppControls isAdminMode={isAdminMode} />
           <Navigation currentView={currentView} onViewChange={setCurrentView} isAdminMode={isAdminMode} />
           <ResultDisplay
             result={result}
-            bottle={bottle}
+            bottle={bottle!}
             capturedImage={capturedImage ?? undefined}
             onRetake={handleRetake}
           />
         </div>
-      ) : null;
+      );
 
     default:
       return null;

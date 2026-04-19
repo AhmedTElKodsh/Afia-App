@@ -26,16 +26,50 @@ vi.mock('react-i18next', async () => {
   };
 });
 
-// Mock canvas for imageCompressor tests (only for specific use cases)
-const originalGetContext = HTMLCanvasElement.prototype.getContext;
-HTMLCanvasElement.prototype.getContext = function(...args) {
-  // Return null only for specific test cases that need it
-  // Otherwise, use the original implementation
-  try {
-    return (originalGetContext as (...args: unknown[]) => RenderingContext | null).apply(this, args);
-  } catch {
-    return null;
+// Mock canvas for image processing tests
+HTMLCanvasElement.prototype.getContext = function(type: string, ...args: any[]) {
+  if (type === '2d') {
+    const canvas = this;
+    return {
+      canvas: canvas,
+      drawImage: vi.fn(),
+      getImageData: vi.fn(function(x = 0, y = 0, w = canvas.width, h = canvas.height) {
+        return {
+          data: new Uint8ClampedArray(w * h * 4),
+          width: w,
+          height: h,
+        };
+      }),
+      putImageData: vi.fn(),
+      createImageData: vi.fn(function(w: number, h: number) {
+        return {
+          data: new Uint8ClampedArray(w * h * 4),
+          width: w,
+          height: h,
+        };
+      }),
+      setTransform: vi.fn(),
+      fill: vi.fn(),
+      fillRect: vi.fn(),
+      stroke: vi.fn(),
+      strokeRect: vi.fn(),
+      beginPath: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      closePath: vi.fn(),
+      scale: vi.fn(),
+      rotate: vi.fn(),
+      translate: vi.fn(),
+      save: vi.fn(),
+      restore: vi.fn(),
+      clearRect: vi.fn(),
+      arc: vi.fn(),
+      measureText: vi.fn(() => ({ width: 0 })),
+      fillText: vi.fn(),
+    } as any;
   }
+  
+  return null;
 };
 
 // Mock getUserMedia
@@ -92,3 +126,11 @@ Object.defineProperty(globalThis, "matchMedia", {
   })),
   writable: true,
 });
+
+// Mock ResizeObserver for components that track container size
+// Used by AnnotatedImagePanel and Radix UI Slider
+globalThis.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};

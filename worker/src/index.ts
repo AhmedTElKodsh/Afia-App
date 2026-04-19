@@ -4,12 +4,22 @@ import type { Env, Variables } from "./types.ts";
 import { handleAnalyze } from "./analyze.ts";
 import { handleFeedback } from "./feedback.ts";
 import { handleAdminAuth } from "./adminAuth.ts";
+import { handleModelVersion } from "./modelVersion.ts";
+import { handleAdminCorrect } from "./adminCorrect.ts";
+import { handleAdminRerunLlm } from "./adminRerunLlm.ts";
+import { verifyAdminSession, handleGetScans } from "./admin.ts";
+import { handleLogScan } from "./logScan.ts";
+import {
+  handleGetVersions,
+  handleActivateVersion,
+  handleDeactivateVersion
+} from "./admin/modelVersions.ts";
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 // CORS middleware — restrict to known origins
 app.use("*", async (c, next) => {
-  const allowedOrigins = c.env.ALLOWED_ORIGINS?.split(",").map((o) => o.trim()) ?? [
+  const allowedOrigins = c.env.ALLOWED_ORIGINS?.split(",").map((o) => o.trim()).filter(Boolean) ?? [
     "http://localhost:5173",
     "http://localhost:4173",
   ];
@@ -26,8 +36,8 @@ app.use("*", async (c, next) => {
       
       return isPagesPreview ? origin : null;
     },
-    allowMethods: ["POST", "OPTIONS"],
-    allowHeaders: ["Content-Type"],
+    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
     maxAge: 86400,
   });
 
@@ -41,8 +51,18 @@ app.use("*", async (c, next) => {
 
   const ip =
     c.req.header("CF-Connecting-IP") ??
-    c.req.header("X-Forwarded-For") ??
-    `unknown-${requestId.slice(0, 8)}`; // Avoid global collision for "unknown" IPs
+    c.req.header("X-Forwarded-For");
+
+  if (!ip) {
+    return c.json(
+      {
+        error: "Missing client identification",
+        code: "BAD_REQUEST",
+        requestId,
+      },
+      400
+    );
+  }
   
   const key = `ratelimit:${ip}`;
   const windowMs = 60_000;
@@ -87,9 +107,14 @@ app.use("*", async (c, next) => {
 
   // Add current timestamp and persist (TTL = 5 minutes to safely outlive window)
   timestamps.push(now);
-  await c.env.RATE_LIMIT_KV.put(key, JSON.stringify(timestamps), {
-    expirationTtl: 300, 
-  });
+  try {
+    await c.env.RATE_LIMIT_KV.put(key, JSON.stringify(timestamps), {
+      expirationTtl: 300,
+    });
+  } catch (e) {
+    // Fail open: log error but allow request to proceed if KV is down
+    console.error(`Rate limit write failed for ${ip}:`, e);
+  }
 
   const response = await next();
   c.header("X-RequestId", requestId);
@@ -99,7 +124,62 @@ app.use("*", async (c, next) => {
 // Routes
 app.post("/analyze", handleAnalyze);
 app.post("/feedback", handleFeedback);
+app.post("/log-scan", handleLogScan);
 app.post("/admin/auth", handleAdminAuth);
+app.post("/admin/correct", handleAdminCorrect);
+app.post("/admin/rerun-llm", handleAdminRerunLlm);
+app.get("/model/version", handleModelVersion);
+
+app.get("/admin/scans", handleGetScans);
+
+// Model version management routes (Story 10-2) - Protected by authentication
+app.get("/admin/model/versions", async (c) => {
+  if (!await verifyAdminSession(c)) {
+    return c.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, 401);
+  }
+  return handleGetVersions(c.env);
+});
+
+app.post("/admin/model/activate", async (c) => {
+  if (!await verifyAdminSession(c)) {
+    return c.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, 401);
+  }
+  return handleActivateVersion(c.req.raw, c.env);
+});
+
+app.post("/admin/model/deactivate", async (c) => {
+  if (!await verifyAdminSession(c)) {
+    return c.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, 401);
+  }
+  return handleDeactivateVersion(c.req.raw, c.env);
+});
+
+// Admin export — not yet implemented
+app.get("/admin/export", async (c) => {
+  if (!await verifyAdminSession(c)) {
+    return c.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, 401);
+  }
+  return c.json({ error: "Not implemented", code: "NOT_IMPLEMENTED" }, 501);
+});
+
+// Admin upload — not yet implemented
+app.post("/admin/upload", async (c) => {
+  if (!await verifyAdminSession(c)) {
+    return c.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, 401);
+  }
+  return c.json({ error: "Not implemented", code: "NOT_IMPLEMENTED" }, 501);
+});
+
+// Error telemetry
+app.post("/error", async (c) => {
+  try {
+    const body = await c.req.json<{ sku?: string; error?: string; timestamp?: string; deviceInfo?: string }>();
+    console.error("[client-error]", JSON.stringify(body));
+  } catch {
+    // Ignore malformed telemetry
+  }
+  return c.json({ ok: true });
+});
 
 // Health check
 app.get("/health", (c) => c.json({ status: "ok", requestId: c.get("requestId") }));
@@ -126,3 +206,4 @@ app.all("*", (c) => c.json({
 }, 404));
 
 export default app;
+

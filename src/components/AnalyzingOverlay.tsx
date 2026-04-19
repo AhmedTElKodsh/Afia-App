@@ -8,6 +8,8 @@ interface AnalyzingOverlayProps {
   capturedImage: string | null;
   /** Called when the user taps Cancel — should reset to CAMERA_ACTIVE */
   onCancel: () => void;
+  /** Progress message to display (Story 7.4) */
+  progressMessage?: string;
 }
 
 /**
@@ -16,8 +18,9 @@ interface AnalyzingOverlayProps {
  * Shown while the API is processing the captured image (API_PENDING state).
  * H1 fix: Removes ~8 hardcoded inline styles from App.tsx.
  * H2 fix: Provides an accessible Cancel ghost button.
+ * Story 7.4: Shows dynamic progress messages during local/cloud analysis.
  */
-export function AnalyzingOverlay({ capturedImage, onCancel }: AnalyzingOverlayProps) {
+export function AnalyzingOverlay({ capturedImage, onCancel, progressMessage }: AnalyzingOverlayProps) {
   const { t } = useTranslation();
   return (
     <div className="analyzing-overlay" role="status" aria-live="polite" aria-label={t('camera.analyzingAriaLabel')}>
@@ -43,7 +46,7 @@ export function AnalyzingOverlay({ capturedImage, onCancel }: AnalyzingOverlayPr
           </div>
         </div>
 
-        <p className="analyzing-title">{t('analysis.analyzing')}</p>
+        <p className="analyzing-title">{progressMessage || t('analysis.analyzing')}</p>
         <p className="analyzing-sub">{t('analysis.timeEstimate')}</p>
 
         {/* H2 fix: Cancel button */}

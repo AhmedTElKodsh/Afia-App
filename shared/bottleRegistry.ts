@@ -33,6 +33,14 @@ export interface BottleEntry {
    * Use plain text, one anchor per line starting with "*".
    */
   promptAnchors?: string;
+  /**
+   * Fraction of image height (0–1) where the bottle top/bottom edges appear
+   * when the user follows the viewfinder framing guidance. Used by
+   * FillConfirmScreen to map ml volumes to pixel Y coordinates.
+   * Defaults: 0.05 (top), 0.95 (bottom).
+   */
+  frameTopPct?: number;
+  frameBottomPct?: number;
 }
 
 /**
@@ -83,6 +91,8 @@ export const bottleRegistry: BottleEntry[] = [
         { fillHeightPct: 97, remainingMl: 1500 },
       ],
     },
+    frameTopPct: 0.05,
+    frameBottomPct: 0.95,
     imageUrl: "/bottles/afia-corn-1.5l.png",
     promptAnchors: `* Oil only covers the base (tiny pool, below label): fillPercentage 0–12
 * Oil at bottom of the green diagonal band on label: fillPercentage ~19
@@ -125,6 +135,4 @@ export const ACTIVE_SKU = "afia-corn-1.5l";
  * Subset of bottleRegistry containing only bottles available for user scanning.
  * Includes 1.5L (full guidance) and 2.5L (mock/manual).
  */
-export const activeBottleRegistry: BottleEntry[] = bottleRegistry.filter(
-  (b) => b.sku === "afia-corn-1.5l"
-);
+export const activeBottleRegistry: BottleEntry[] = [...bottleRegistry];

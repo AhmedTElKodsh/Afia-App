@@ -4,6 +4,12 @@ import { handleFeedback } from "../../worker/src/feedback.ts";
 vi.mock("../../worker/src/storage/supabaseClient.ts", () => ({
   storeScan: vi.fn().mockResolvedValue(undefined),
   updateScanWithFeedback: vi.fn().mockResolvedValue(undefined),
+  getSupabase: vi.fn().mockReturnValue({
+    from: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue({ data: { llm_fallback_prediction: { percentage: 70 } }, error: null }),
+  }),
 }));
 
 vi.mock("@supabase/supabase-js", () => ({
@@ -76,13 +82,11 @@ describe("handleFeedback — request validation", () => {
     );
   });
 
-  it("returns 400 when responseTimeMs is missing", async () => {
+  it("accepts request when responseTimeMs is missing", async () => {
     const ctx = createCtx({ ...VALID_BODY, responseTimeMs: undefined });
     await handleFeedback(ctx as never);
-    expect(ctx.json).toHaveBeenCalledWith(
-      expect.objectContaining({ code: "INVALID_REQUEST" }),
-      400,
-    );
+    const [responseData] = (ctx.json as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(responseData).toHaveProperty("feedbackId");
   });
 
   it("returns 400 when responseTimeMs is negative", async () => {

@@ -14,6 +14,7 @@ import {
   checkTorchSupport,
 } from "../config/camera";
 import { useCameraGuidance } from "../hooks/useCameraGuidance";
+import { OrientationGuide } from "./OrientationGuide";
 import jsQR from "jsqr";
 
 /**
@@ -191,6 +192,7 @@ export function CameraViewfinder({
   const [shutterFlash, setShutterFlash] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [isManualMode, setIsManualMode] = useState(forceManual);
+  const [photoCaptured, setPhotoCaptured] = useState(false);
 
   const isStartingRef = useRef(false);
   const isCapturingRef = useRef(false);
@@ -226,6 +228,7 @@ export function CameraViewfinder({
       context.drawImage(video, 0, 0, CAMERA_CONFIG.capture.width, CAMERA_CONFIG.capture.height);
       const imageBase64 = canvas.toDataURL('image/jpeg', CAMERA_CONFIG.jpegQuality);
       const base64Only = imageBase64.replace(/^data:image\/jpeg;base64,/, '');
+      setPhotoCaptured(true);
       setShutterFlash(true);
       setTimeout(() => setShutterFlash(false), 200);
       let detectedQrData: string | null = null;
@@ -404,6 +407,9 @@ export function CameraViewfinder({
             </div>
           </div>
 
+          {/* Story 10.1: Orientation Guide - Shows "Handle on Right" instruction */}
+          <OrientationGuide visible={cameraState === 'active' && !photoCaptured} />
+
           {showOnboarding && (
             <div className="onboarding-toast frontside-toast">
               {t('camera.shootFrontside')}
@@ -445,13 +451,13 @@ export function CameraViewfinder({
                   ? t('camera.ready')
                   : isManualMode
                     ? t('camera.captureManually')
-                    : guidance.state.assessment?.lighting.status === 'too-dark'
+                    : guidance.state.assessment?.lighting?.status === 'too-dark'
                       ? t('camera.tooDark')
-                      : guidance.state.assessment?.lighting.status === 'too-bright'
+                      : guidance.state.assessment?.lighting?.status === 'too-bright'
                         ? t('camera.tooBright')
-                      : !guidance.state.brandDetected && guidance.state.assessment?.composition.bottleDetected
+                      : !guidance.state.brandDetected && guidance.state.assessment?.composition?.bottleDetected
                         ? t('camera.ensureLogoVisible')
-                        : guidance.state.assessment?.composition.distance === 'too-far' || guidance.state.assessment?.composition.distance === 'too-close'
+                        : guidance.state.assessment?.composition?.distance === 'too-far' || guidance.state.assessment?.composition?.distance === 'too-close'
                           ? t('camera.adjustPosition')
                           : guidance.state.assessment
                             ? t(guidance.state.assessment.guidanceMessage)

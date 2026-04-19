@@ -1,0 +1,276 @@
+/* Mock API Panel Styles */
+
+.mock-api-panel-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  /* F12: Add -webkit- prefix and fallback for backdrop-filter */
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* F19: Document z-index usage */
+  z-index: 1000; /* Above main content, below toasts (z-index: 9999) */
+  padding: var(--space-md);
+}
+
+/* F12: Fallback for browsers without backdrop-filter support */
+@supports not (backdrop-filter: blur(4px)) {
+  .mock-api-panel-overlay {
+    background: rgba(0, 0, 0, 0.8);
+  }
+}
+
+.mock-api-panel {
+  background: var(--color-surface, #ffffff);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.1));
+  max-width: 700px;
+  width: 100%;
+  max-height: 90vh;
+  /* F14: Account for mobile browser chrome */
+  max-height: 90dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mock-api-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mock-api-panel-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.mock-api-panel-icon {
+  color: var(--color-primary);
+}
+
+.mock-api-panel-title {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  margin: 0;
+  color: var(--color-text);
+}
+
+.mock-api-panel-close {
+  background: none;
+  border: none;
+  padding: var(--space-xs, 4px);
+  cursor: pointer;
+  color: var(--color-text-secondary, #6b7280);
+  border-radius: var(--radius-sm, 4px);
+  /* F10: Specify exact properties for efficient transitions */
+  transition: background-color 0.2s ease, color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* F11: Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .mock-api-panel-close,
+  .mock-api-filter-tab,
+  .mock-api-scenario-card {
+    transition: none;
+  }
+}
+
+.mock-api-panel-close:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.mock-api-panel-description {
+  padding: var(--space-md) var(--space-lg);
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mock-api-filter-tabs {
+  display: flex;
+  gap: var(--space-xs);
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+  overflow-x: auto;
+}
+
+.mock-api-filter-tab {
+  padding: var(--space-xs, 4px) var(--space-md, 16px);
+  border: 1px solid var(--color-border, #e5e7eb);
+  background: var(--color-surface, #ffffff);
+  color: var(--color-text-secondary, #6b7280);
+  border-radius: var(--radius-md, 8px);
+  font-size: var(--font-size-sm, 14px);
+  font-weight: 500;
+  cursor: pointer;
+  /* F10: Specify exact properties */
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  white-space: nowrap;
+}
+
+.mock-api-filter-tab:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-primary);
+}
+
+.mock-api-filter-tab.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.mock-api-scenarios {
+  flex: 1;
+  overflow-y: auto;
+  /* F15: Add momentum scrolling for iOS */
+  -webkit-overflow-scrolling: touch;
+  padding: var(--space-lg, 24px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md, 16px);
+}
+
+.mock-api-scenario-card {
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--space-md, 16px);
+  cursor: pointer;
+  /* F10: Specify exact properties */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.mock-api-scenario-card:hover {
+  border-color: var(--color-primary, #3b82f6);
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+  transform: translateY(-2px);
+}
+
+/* F11: Disable transform on reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .mock-api-scenario-card:hover {
+    transform: none;
+  }
+}
+
+.mock-api-scenario-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-xs);
+}
+
+.mock-api-scenario-name {
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: var(--font-size-base);
+}
+
+.confidence-badge {
+  padding: 2px 8px;
+  border-radius: var(--radius-sm, 4px);
+  font-size: var(--font-size-xs, 12px);
+  font-weight: 600;
+  text-transform: uppercase;
+  /* F5: Add icon for non-color accessibility */
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.confidence-badge::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.confidence-badge-high {
+  background: var(--color-fill-high, #10b981);
+  color: white;
+}
+
+.confidence-badge-medium {
+  background: var(--color-fill-medium, #f59e0b);
+  color: white;
+}
+
+.confidence-badge-low {
+  background: var(--color-fill-low, #ef4444);
+  color: white;
+}
+
+.mock-api-scenario-description {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.mock-api-scenario-meta {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-sm);
+}
+
+.mock-api-scenario-fill,
+.mock-api-scenario-latency,
+.mock-api-scenario-issues {
+  font-size: var(--font-size-xs);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-hover);
+  color: var(--color-text-secondary);
+}
+
+.mock-api-scenario-issues {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+.mock-api-scenario-action {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  margin-top: var(--space-xs);
+}
+
+.mock-api-scenario-card:hover .mock-api-scenario-action {
+  gap: var(--space-sm);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .mock-api-panel {
+    max-height: 95vh;
+  }
+
+  .mock-api-panel-header {
+    padding: var(--space-md);
+  }
+
+  .mock-api-scenarios {
+    padding: var(--space-md);
+  }
+}

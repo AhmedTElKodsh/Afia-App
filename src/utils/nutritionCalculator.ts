@@ -13,6 +13,10 @@ export function calculateNutrition(
   const nutrition = getNutritionByOilType(oilType);
   if (!nutrition) return null;
 
+  if (consumedMl < 0) {
+    return { calories: 0, totalFatG: 0, saturatedFatG: 0 };
+  }
+
   const consumedGrams = consumedMl * nutrition.densityGPerMl;
   const scale = consumedGrams / 100;
 

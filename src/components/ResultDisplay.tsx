@@ -33,7 +33,8 @@ interface CupIconProps {
 }
 
 function CupIcon({ fill, size = 24 }: CupIconProps) {
-  const isRTL = document.documentElement.dir === 'rtl';
+  const { i18n } = useTranslation();
+  const isRTL = i18n.dir() === 'rtl';
   
   return (
     <svg 
@@ -169,6 +170,25 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
         <h2 className="result-title">{t('results.title')}</h2>
         <ConfidenceBadge level={result.confidence} />
       </div>
+
+      {/* Story 7.4: Show inference source */}
+      {result.aiProvider === 'local-tfjs' && (
+        <div className="card card-compact result-inference-source">
+          <p className="text-caption">
+            ✨ Analyzed on-device{result.llmFallbackUsed ? ' with cloud verification' : ''}
+            {result.offlineMode && ' (offline mode)'}
+          </p>
+        </div>
+      )}
+      
+      {/* Story 7.4 - Task 6: Offline mode indicator */}
+      {result.offlineMode && (
+        <div className="card card-compact result-offline-notice">
+          <p className="text-caption">
+            📡 You were offline during analysis. This result will be verified when you reconnect.
+          </p>
+        </div>
+      )}
 
       {/* ── Visual Result Card ── */}
       <div className="result-visual-card card">

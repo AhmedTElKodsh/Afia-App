@@ -1,16 +1,15 @@
 import type { Context } from "hono";
-import { createClient } from "@supabase/supabase-js";
 import type { Env, Variables } from "./types.ts";
 import { validateFeedback } from "./validation/feedbackValidator.ts";
-import { updateScanWithFeedback } from "./storage/supabaseClient.ts";
+import { getSupabase, updateScanWithFeedback } from "./storage/supabaseClient.ts";
 
 export async function handleFeedback(c: Context<{ Bindings: Env; Variables: Variables }>): Promise<Response> {
-  const body = await c.req.json<{
-    scanId?: unknown;
-    accuracyRating?: unknown;
-    correctedFillPercentage?: unknown;
-    responseTimeMs?: unknown;
-  }>();
+  let body: { scanId?: unknown; accuracyRating?: unknown; correctedFillPercentage?: unknown; responseTimeMs?: unknown };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON body", code: "INVALID_REQUEST" }, 400);
+  }
 
   // Validate required fields
   if (typeof body.scanId !== "string" || !body.scanId) {
@@ -25,13 +24,15 @@ export async function handleFeedback(c: Context<{ Bindings: Env; Variables: Vari
     return c.json({ error: "Invalid accuracyRating", code: "INVALID_REQUEST" }, 400);
   }
 
-  if (typeof body.responseTimeMs !== "number" || body.responseTimeMs < 0) {
-    return c.json({ error: "Missing or invalid responseTimeMs", code: "INVALID_REQUEST" }, 400);
+  if (typeof body.responseTimeMs === "number" && body.responseTimeMs < 0) {
+    return c.json({ error: "responseTimeMs cannot be negative", code: "INVALID_REQUEST" }, 400);
   }
 
   // --- Security: Retrieve original LLM fill percentage from DB ---
   // Don't trust the client-provided llmFillPercentage to prevent poisoning validation logic.
-  const supabase = createClient(c.env.SUPABASE_URL, c.env.SUPABASE_ANON_KEY);
+  let supabase: ReturnType<typeof getSupabase>;
+  try { supabase = getSupabase(c.env); }
+  catch { return c.json({ error: 'Database not configured', code: 'SERVICE_UNAVAILABLE' }, 503); }
   const { data: scanRecord, error: fetchError } = await supabase
     .from("scans")
     .select("llm_fallback_prediction")
@@ -55,7 +56,7 @@ export async function handleFeedback(c: Context<{ Bindings: Env; Variables: Vari
   // Validate the feedback
   const validation = validateFeedback(llmFillPercentage, {
     accuracyRating: body.accuracyRating as "about_right" | "too_high" | "too_low" | "way_off",
-    responseTimeMs: body.responseTimeMs,
+    responseTimeMs: typeof body.responseTimeMs === "number" && body.responseTimeMs >= 0 ? body.responseTimeMs : undefined,
     correctedFillPercentage,
   });
 

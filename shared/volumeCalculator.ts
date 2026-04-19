@@ -11,13 +11,18 @@ function interpolateCalibration(
   fillHeightPct: number,
   points: Array<{ fillHeightPct: number; remainingMl: number }>
 ): number {
-  if (fillHeightPct <= points[0].fillHeightPct) return points[0].remainingMl;
-  const last = points[points.length - 1];
+  if (points.length === 0) return 0;
+  
+  // Ensure points are sorted by fillHeightPct ascending
+  const sortedPoints = [...points].sort((a, b) => a.fillHeightPct - b.fillHeightPct);
+  
+  if (fillHeightPct <= sortedPoints[0].fillHeightPct) return sortedPoints[0].remainingMl;
+  const last = sortedPoints[sortedPoints.length - 1];
   if (fillHeightPct >= last.fillHeightPct) return last.remainingMl;
 
-  for (let i = 1; i < points.length; i++) {
-    const lo = points[i - 1];
-    const hi = points[i];
+  for (let i = 1; i < sortedPoints.length; i++) {
+    const lo = sortedPoints[i - 1];
+    const hi = sortedPoints[i];
     if (fillHeightPct <= hi.fillHeightPct) {
       const denom = hi.fillHeightPct - lo.fillHeightPct;
       if (denom === 0) return lo.remainingMl;
@@ -51,7 +56,7 @@ export function calculateRemainingMl(
 
   if (geometry.shape === "frustum") {
     const { heightMm, topDiameterMm, bottomDiameterMm } = geometry;
-    if (!topDiameterMm || !bottomDiameterMm || !heightMm) return 0;
+    if (!topDiameterMm || !bottomDiameterMm || !heightMm || heightMm <= 0) return 0;
     const fillHeightMm = (fillPercentage / 100) * heightMm;
     const bottomRadiusMm = bottomDiameterMm / 2;
     const topRadiusMm = topDiameterMm / 2;
@@ -60,7 +65,7 @@ export function calculateRemainingMl(
     const volumeMm3 =
       ((Math.PI * fillHeightMm) / 3) *
       (bottomRadiusMm ** 2 + bottomRadiusMm * fillRadiusMm + fillRadiusMm ** 2);
-    return volumeMm3 / 1000;
+    return Math.min(volumeMm3 / 1000, totalVolumeMl);
   }
 
   return 0;

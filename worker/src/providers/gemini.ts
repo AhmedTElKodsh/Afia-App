@@ -23,7 +23,7 @@ export async function callGemini(
 
   const requestBody = {
     system_instruction: {
-      parts: [{ text: buildAnalysisPrompt(debugReasoning, bottle.promptAnchors) }],
+      parts: [{ text: buildAnalysisPrompt(debugReasoning, bottle.promptAnchors, bottle.totalVolumeMl) }],
     },
     contents: [
       {
@@ -52,12 +52,12 @@ export async function callGemini(
   const errors: Error[] = [];
   for (let i = 0; i < apiKeys.length; i++) {
     const apiKey = apiKeys[i];
-    const url = `${GEMINI_API_BASE}/${MODEL}:generateContent?key=${apiKey}`;
+    const url = `${GEMINI_API_BASE}/${MODEL}:generateContent`;
 
     try {
       const res = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
         body: JSON.stringify(requestBody),
       });
 

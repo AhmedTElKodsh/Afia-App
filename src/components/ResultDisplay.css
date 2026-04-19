@@ -188,3 +188,23 @@
   margin-top: auto;
   padding: 16px;
 }
+
+/* Story 7.4 - Task 6: Offline mode styling */
+.result-inference-source {
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  padding: 12px;
+  text-align: center;
+}
+
+.result-offline-notice {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  padding: 12px;
+  text-align: center;
+}
+
+.result-offline-notice .text-caption {
+  color: #fbbf24;
+  font-weight: 500;
+}

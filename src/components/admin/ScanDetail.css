@@ -1,0 +1,341 @@
+/**
+ * Admin Scan Detail Component Styles
+ * Story 7.7 - Admin Correction Feedback Loop
+ */
+
+.scan-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.scan-detail-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.scan-detail-header h3 {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.scan-detail-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+}
+
+@media (max-width: 768px) {
+  .scan-detail-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Scan Image Container */
+.scan-image-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.scan-image {
+  width: 100%;
+  height: auto;
+  max-height: 500px;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+}
+
+.scan-metadata {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.metadata-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-xs) 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.metadata-row:last-child {
+  border-bottom: none;
+}
+
+.metadata-row .label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.metadata-row .value {
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Accuracy Assessment */
+.accuracy-assessment {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.accuracy-assessment h4 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.accuracy-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+}
+
+@media (max-width: 480px) {
+  .accuracy-buttons {
+    grid-template-columns: 1fr;
+  }
+}
+
+.accuracy-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-lg);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.accuracy-btn:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  background: var(--bg-secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.accuracy-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.accuracy-btn.active {
+  border-color: var(--primary-color);
+  background: var(--primary-color);
+  color: white;
+}
+
+.accuracy-btn--too-big.active {
+  background: #f59e0b;
+  border-color: #f59e0b;
+}
+
+.accuracy-btn--too-small.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.accuracy-btn--correct.active {
+  background: #10b981;
+  border-color: #10b981;
+}
+
+.accuracy-btn--way-off.active {
+  background: #ef4444;
+  border-color: #ef4444;
+}
+
+/* Correction Panel */
+.correction-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.correction-panel h5 {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.correction-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.correction-input-group label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.fill-input {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  width: 100%;
+  max-width: 200px;
+}
+
+.fill-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.correction-actions {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+/* Correction Status */
+.correction-status,
+.llm-rerun-result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.correction-status h5,
+.llm-rerun-result h5 {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.status-details,
+.result-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.status-row,
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-xs) 0;
+}
+
+.status-row .label,
+.result-row .label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.status-row .value,
+.result-row .value {
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* Messages */
+.message {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.message-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.message-success {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+/* Loading Spinner */
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* RTL Support */
+[dir="rtl"] .scan-detail-header {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .metadata-row,
+[dir="rtl"] .status-row,
+[dir="rtl"] .result-row {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .correction-actions {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .message {
+  flex-direction: row-reverse;
+}

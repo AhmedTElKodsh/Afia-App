@@ -1,0 +1,5 @@
+/* Focus ring for Radix Slider thumb - keyboard navigation accessibility */
+[data-radix-slider-thumb][data-focus-visible] {
+  outline: 2px solid #3b82f6; /* blue-500, matching thumb border */
+  outline-offset: 2px;
+}

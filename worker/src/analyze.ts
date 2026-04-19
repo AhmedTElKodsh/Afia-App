@@ -11,7 +11,8 @@ import { MonitoringLogger } from "./monitoring/logger.ts";
 import { QuotaMonitor } from "./monitoring/quotaMonitor.ts";
 import type { LLMResponse, Variables } from "./types.ts";
 
-const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024; // 4MB base64
+// 4MB binary limit — base64 is ~4/3 larger, so max string length is ~5.5M chars
+const MAX_IMAGE_SIZE_BYTES = Math.ceil(4 * 1024 * 1024 * (4 / 3));
 const CACHE_TTL_SECONDS = 1800; // 30 minutes
 
 /** SHA-256 hex of imageBase64+sku — used as KV cache key */
@@ -40,7 +41,12 @@ export async function handleAnalyze(c: Context<{ Bindings: Env; Variables: Varia
   const debugReasoning = c.env.DEBUG_REASONING === "true";
 
   try {
-    const body = await c.req.json<{ sku?: unknown; imageBase64?: unknown }>();
+    let body: { sku?: unknown; imageBase64?: unknown; localModelResult?: unknown; localModelConfidence?: unknown };
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "Invalid JSON body", code: "INVALID_REQUEST" }, 400);
+    }
 
     // Validate request
     if (typeof body.sku !== "string" || !body.sku) {
@@ -52,10 +58,56 @@ export async function handleAnalyze(c: Context<{ Bindings: Env; Variables: Varia
     if (body.imageBase64.length > MAX_IMAGE_SIZE_BYTES) {
       return c.json({ error: "Image too large (max 4MB)", code: "IMAGE_TOO_LARGE" }, 400);
     }
+    // Reject non-image payloads early — strip data URI prefix and line breaks before validating
+    const rawBase64 = body.imageBase64
+      .replace(/^data:image\/[a-z]+;base64,/, "")
+      .replace(/[\r\n]/g, "");
+    if (rawBase64.length < 100 || !/^[A-Za-z0-9+/]+=*$/.test(rawBase64)) {
+      return c.json({ error: "Invalid image data", code: "INVALID_REQUEST" }, 400);
+    }
 
     // Extract as typed consts so TypeScript preserves string narrowing inside closures
     const imageBase64 = body.imageBase64;
     const sku = body.sku;
+    
+    // Story 7.6 - AC5: Extract local model metadata if provided
+    // Support both old format (Story 7.4) and new format (Story 7.6)
+    let localModelResult: {
+      fillPercentage: number;
+      confidence: number;
+      modelVersion: string;
+      inferenceTimeMs: number;
+    } | undefined;
+    
+    let localModelConfidence: number | null = null;
+    
+    // H4: number check must precede object check — they are mutually exclusive types
+    if (typeof body.localModelResult === 'number') {
+      localModelConfidence = body.localModelResult;
+    } else if (
+      body.localModelResult !== null &&
+      typeof body.localModelResult === 'object' &&
+      'fillPercentage' in body.localModelResult &&
+      'confidence' in body.localModelResult &&
+      'modelVersion' in body.localModelResult &&
+      'inferenceTimeMs' in body.localModelResult
+    ) {
+      const obj = body.localModelResult as Record<string, unknown>;
+      if (
+        typeof obj.fillPercentage === 'number' && Number.isFinite(obj.fillPercentage) &&
+        typeof obj.confidence === 'number' && Number.isFinite(obj.confidence) &&
+        typeof obj.modelVersion === 'string' &&
+        typeof obj.inferenceTimeMs === 'number' && Number.isFinite(obj.inferenceTimeMs)
+      ) {
+        localModelResult = obj as unknown as { fillPercentage: number; confidence: number; modelVersion: string; inferenceTimeMs: number };
+        localModelConfidence = localModelResult.confidence;
+      }
+    }
+    
+    // Story 7.6 - AC5: Separate localModelConfidence field only applies when no full result object provided
+    if (typeof body.localModelConfidence === 'number' && Number.isFinite(body.localModelConfidence) && !localModelResult) {
+      localModelConfidence = body.localModelConfidence;
+    }
 
     const bottle = getBottleBySku(sku);
     // Note: Story 5.3 allows "Community Contribution" scans for unknown SKUs.
@@ -85,17 +137,28 @@ export async function handleAnalyze(c: Context<{ Bindings: Env; Variables: Varia
         typeof llmResult?.fillPercentage === "number" &&
         ["high", "medium", "low"].includes(llmResult?.confidence as string)
       ) {
-        const remainingMl = bottle 
+        const remainingMl = bottle
           ? Math.round(calculateRemainingMl(llmResult.fillPercentage, bottle.totalVolumeMl, bottle.geometry))
           : 0;
         const latencyMs = Date.now() - startTime;
+        // If cached entry had no scanId, generate one and persist it so feedback works
+        const resolvedScanId = cachedScanId || crypto.randomUUID();
+        if (!cachedScanId) {
+          c.executionCtx.waitUntil(
+            c.env.RATE_LIMIT_KV.put(
+              cacheKey,
+              JSON.stringify({ llmResult, aiProvider, scanId: resolvedScanId }),
+              { expirationTtl: CACHE_TTL_SECONDS }
+            ).catch((err) => console.error("Cache scanId backfill failed:", err))
+          );
+        }
         await logger.info("Cache hit — returning cached result", {
           sku,
           cacheKey,
           latencyMs,
         });
         return c.json({
-          scanId: cachedScanId || crypto.randomUUID(),
+          scanId: resolvedScanId,
           fillPercentage: llmResult.fillPercentage,
           remainingMl,
           confidence: llmResult.confidence,
@@ -130,24 +193,15 @@ export async function handleAnalyze(c: Context<{ Bindings: Env; Variables: Varia
       c.env.GEMINI_API_KEY4,
     ].filter((k): k is string => typeof k === "string" && k.length > 0);
 
-    // --- Round-Robin Selection ---
-    const lastIndexStr = await c.env.RATE_LIMIT_KV.get("gemini_last_index");
-    const startIndex = geminiKeys.length > 0 
-      ? (parseInt(lastIndexStr || "0", 10) + 1) % geminiKeys.length 
+    // Random key selection — avoids race condition of KV-backed round-robin
+    // under concurrent requests (KV has no atomic increment).
+    // Random distribution is statistically equivalent at scale.
+    const startIndex = geminiKeys.length > 0
+      ? Math.floor(Math.random() * geminiKeys.length)
       : 0;
-    
-    // Rotate keys so they start at the next round-robin position
     const rotatedGeminiKeys = geminiKeys.length > 0
       ? [...geminiKeys.slice(startIndex), ...geminiKeys.slice(0, startIndex)]
       : [];
-
-    // Persist new index (non-blocking)
-    if (geminiKeys.length > 0) {
-      c.executionCtx.waitUntil(
-        c.env.RATE_LIMIT_KV.put("gemini_last_index", startIndex.toString())
-          .catch(err => console.error("KV put failed:", err))
-      );
-    }
 
     const providers: Provider[] = [
       { 
@@ -257,6 +311,15 @@ export async function handleAnalyze(c: Context<{ Bindings: Env; Variables: Varia
         latencyMs,
         imageQualityIssues: llmResult.imageQualityIssues,
         isContribution: !bottle,
+        // Story 7.6 - AC5: Store local model metadata
+        localModelResult: localModelResult ? {
+          fillPercentage: localModelResult.fillPercentage,
+          confidence: localModelResult.confidence,
+          modelVersion: localModelResult.modelVersion,
+          inferenceTimeMs: localModelResult.inferenceTimeMs,
+        } : undefined,
+        localModelConfidence: localModelConfidence, // Story 7.6 - AC5: Store confidence separately
+        llmFallbackUsed: !!(localModelResult || localModelConfidence !== null), // AC5: If local result provided, LLM was fallback
       }).catch((err) => console.error("Supabase storage failed:", err))
     );
 

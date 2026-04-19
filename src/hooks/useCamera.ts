@@ -63,6 +63,11 @@ export function useCamera(): UseCameraReturn {
       setIsActive(true);
     } catch (err) {
       console.error("Camera start error:", err);
+      // Ensure we don't leak hardware resources if play() or state updates fail
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      }
       if (err instanceof DOMException) {
         if (
           err.name === "NotAllowedError" ||

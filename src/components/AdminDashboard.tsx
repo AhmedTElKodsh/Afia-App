@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   LayoutDashboard,
   Database,
@@ -29,20 +29,22 @@ import { exportToCSV, exportToJSON } from "../utils/exportResults";
 import { exportTrainingDataset, mapScansToTrainingRecords } from "../utils/trainingExporter";
 import { BottleManager } from "./BottleManager";
 import { QrMockGenerator } from "./QrMockGenerator";
-import { ScanReview } from "./ScanReview";
+import { ScanDetail } from "./admin/ScanDetail";
 import { AdminUpload } from "./AdminUpload";
 import { getAnalyticsEvents } from "../utils/analytics";
 import type { AdminTabItem } from "./AdminTabNav";
 import { MetricCard } from "./MetricCard";
 import { EmptyState } from "./EmptyState";
+import { ModelVersionPanel } from "./admin/ModelVersionPanel";
+import { ModelVersionManager } from "./admin/ModelVersionManager";
 import "./AdminDashboard.css";
 
-const WORKER_URL = import.meta.env.VITE_WORKER_URL || "";
+const WORKER_URL = import.meta.env.VITE_PROXY_URL || "";
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "";
 const SESSION_KEY = "afia_admin_session";
 const SESSION_EXPIRES_KEY = "afia_admin_session_expires";
 
-type AdminTab = "overview" | "bottles" | "qrmock" | "export" | "upload" | "failures";
+type AdminTab = "overview" | "bottles" | "qrmock" | "export" | "upload" | "failures" | "models";
 
 interface AdminDashboardProps {
   onAuthSuccess?: () => void;
@@ -79,11 +81,30 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
   const currentLang = i18n.language || 'en';
   const isRTL = currentLang === 'ar';
 
+  /**
+   * Story 10-1: Centralized session validation
+   * Checks for token existence and expiration
+   */
+  const validateSession = useCallback(() => {
+    const token = sessionStorage.getItem(SESSION_KEY);
+    const expiresAt = Number(sessionStorage.getItem(SESSION_EXPIRES_KEY) || "0");
+    
+    if (token && expiresAt > Date.now()) {
+      return true;
+    }
+    
+    // Clear invalid/expired session
+    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_EXPIRES_KEY);
+    return false;
+  }, []);
+
   const TABS: AdminTabItem<AdminTab>[] = [
     { id: "overview", label: t('admin.tabs.overview'), icon: <LayoutDashboard size={18} /> },
     { id: "bottles", label: t('admin.tabs.bottles'), icon: <Database size={18} /> },
     { id: "qrmock", label: t('admin.tabs.qrmock'), icon: <QrCode size={18} /> },
     { id: "failures", label: t('admin.tabs.failures', 'Scan Failures'), icon: <AlertTriangle size={18} /> },
+    { id: "models", label: t('admin.tabs.models', 'Model Versions'), icon: <TrendingUp size={18} /> },
     { id: "upload", label: t('admin.upload.tab', 'Training Upload'), icon: <Upload size={18} /> },
     { id: "export", label: t('admin.tabs.export'), icon: <Download size={18} /> },
   ];
@@ -92,16 +113,12 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
     let mounted = true;
 
     const checkSession = () => {
-      const token = sessionStorage.getItem(SESSION_KEY);
-      const expiresAt = Number(sessionStorage.getItem(SESSION_EXPIRES_KEY) || "0");
-      if (token && expiresAt > Date.now()) {
+      if (validateSession()) {
         if (mounted) {
           setIsAuthenticated(true);
           onAuthSuccess?.();
         }
       } else {
-        sessionStorage.removeItem(SESSION_KEY);
-        sessionStorage.removeItem(SESSION_EXPIRES_KEY);
         if (mounted) setIsAuthenticated(false);
       }
     };
@@ -194,6 +211,10 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
   if (!isAuthenticated) {
     return (
       <div className="admin-login" dir={isRTL ? 'rtl' : 'ltr'}>
+        <div className="poc-warning-banner">
+          <AlertTriangle size={16} />
+          <span>{t('admin.security.pocWarning', 'POC SECURITY: This dashboard uses basic session management for pilot testing. Do not use for production data.')}</span>
+        </div>
         <div className="login-card">
           <div className="login-icon-wrap" aria-hidden="true">
             <ShieldCheck size={32} strokeWidth={1.5} />
@@ -238,6 +259,10 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
 
   return (
     <div className="admin-dashboard layout" dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className="poc-warning-banner">
+        <AlertTriangle size={16} />
+        <span>{t('admin.security.pocWarning', 'POC SECURITY: This dashboard uses basic session management for pilot testing. Do not use for production data.')}</span>
+      </div>
       <a href="#admin-main" className="skip-to-main">
         {t('admin.login.skipToContent')}
       </a>
@@ -295,11 +320,11 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
 
       <main id="admin-main" className="main">
         {selectedScan ? (
-          <ScanReview 
+          <ScanDetail 
             scan={selectedScan} 
             onBack={() => setSelectedScan(null)} 
-            onSave={(correction) => {
-              console.log("Correction saved:", correction);
+            onCorrectionSaved={() => {
+              // Refresh scan list or show success message
               setSelectedScan(null);
             }} 
           />
@@ -328,6 +353,7 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
               {activeTab === "bottles" && <BottleManager />}
               {activeTab === "qrmock" && <QrMockGenerator />}
               {activeTab === "failures" && <FailuresTab t={t} isRTL={isRTL} />}
+              {activeTab === "models" && <ModelVersionManager t={t} />}
               {activeTab === "export" && <ExportTab scans={scans} t={t} />}
               {activeTab === "upload" && <AdminUpload />}
             </div>
@@ -430,6 +456,8 @@ function OverviewTab({ stats, scans, onGoToTestLab, onReview, t, isRTL, isLoadin
 
   return (
     <div className="overview-tab">
+      <ModelVersionPanel t={t} />
+      
       <SparklineCard scans={scans} t={t} locale={isRTL ? 'ar-SA' : 'en-US'} />
       
       <div className="metrics-grid">

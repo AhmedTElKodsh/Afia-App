@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { parseLLMResponse } from './parseLLMResponse';
+import { LLMEmptyResponseError, LLMInvalidFormatError } from '../utils/errors';
 
 describe('parseLLMResponse', () => {
   it('should parse valid JSON response', () => {
@@ -20,18 +21,30 @@ describe('parseLLMResponse', () => {
     expect(result.imageQualityIssues).toEqual(['glare']);
   });
 
+  it('should throw LLMEmptyResponseError for empty response after fence stripping', () => {
+    const raw = '```\n\n```';
+    expect(() => parseLLMResponse(raw)).toThrow(LLMEmptyResponseError);
+  });
+
+  it('should throw LLMInvalidFormatError for non-object JSON', () => {
+    const raw = '["not", "an", "object"]';
+    expect(() => parseLLMResponse(raw)).toThrow(LLMInvalidFormatError);
+  });
+
   it('should throw error for invalid JSON', () => {
     const raw = 'Not JSON at all';
     expect(() => parseLLMResponse(raw)).toThrow();
   });
 
-  it('should throw error for missing required fields', () => {
+  it('should throw LLMInvalidFormatError for missing required fields', () => {
     const raw = '{"confidence": "high"}';
+    expect(() => parseLLMResponse(raw)).toThrow(LLMInvalidFormatError);
     expect(() => parseLLMResponse(raw)).toThrow('Invalid fillPercentage in LLM response');
   });
 
-  it('should throw error for invalid confidence values', () => {
+  it('should throw LLMInvalidFormatError for invalid confidence values', () => {
     const raw = '{"fillPercentage": 50, "confidence": "sure"}';
+    expect(() => parseLLMResponse(raw)).toThrow(LLMInvalidFormatError);
     expect(() => parseLLMResponse(raw)).toThrow('Invalid confidence in LLM response');
   });
 

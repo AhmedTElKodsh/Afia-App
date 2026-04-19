@@ -561,5 +561,13 @@
   },
   "bottles": {
     "afia-corn-1.5l": "Afia Pure Corn Oil 1.5L"
+  },
+  "fillConfirm": {
+    "title": "Confirm Fill Level",
+    "confirmButton": "Confirm",
+    "retakeButton": "Retake",
+    "sliderLabel": "Adjust fill level",
+    "mlValue": "{{value}} ml",
+    "confirmed": "Fill level confirmed"
   }
 }

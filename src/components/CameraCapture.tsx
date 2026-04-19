@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle } from "lucide-react";
 import { useCamera } from "../hooks/useCamera.ts";
+import { OrientationGuide } from "./OrientationGuide";
 import "./CameraCapture.css";
 
 interface CameraCaptureProps {
@@ -24,7 +25,10 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
   };
 
   if (error === "camera_denied") {
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    // iPadOS 13+ reports as desktop Safari — detect via maxTouchPoints
+    const isIOS =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     return (
       <div className="camera-error">
         <div className="camera-error-icon" aria-hidden="true">
@@ -73,6 +77,7 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
         {isActive && (
           <>
             <div className="camera-guide" aria-hidden="true" />
+            <OrientationGuide visible={isActive} />
             <p className="guide-text">{t('camera.guideText')}</p>
           </>
         )}

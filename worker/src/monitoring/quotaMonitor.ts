@@ -20,7 +20,8 @@ export class QuotaMonitor {
     const key = `quota:${keyName}:${today}`;
     
     const current = await this.kv.get(key);
-    const count = current ? parseInt(current, 10) + 1 : 1;
+    const parsed = current ? parseInt(current, 10) : 0;
+    const count = Number.isFinite(parsed) && parsed >= 0 ? parsed + 1 : 1;
     await this.kv.put(key, count.toString(), {
       expirationTtl: 86400 * 2,
     });
@@ -55,7 +56,8 @@ export class QuotaMonitor {
     const today = new Date().toISOString().split('T')[0];
     const key = `quota:${keyName}:${today}`;
     const count = await this.kv.get(key);
-    const requestsUsed = count ? parseInt(count, 10) : 0;
+    const requestsUsedRaw = count ? parseInt(count, 10) : 0;
+    const requestsUsed = Number.isFinite(requestsUsedRaw) && requestsUsedRaw >= 0 ? requestsUsedRaw : 0;
 
     return {
       keyName,

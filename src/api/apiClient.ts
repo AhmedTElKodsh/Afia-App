@@ -6,9 +6,16 @@ const DEFAULT_TIMEOUT_MS = 15000; // 15 seconds
 async function fetchWithTimeout(
   url: string,
   options: RequestInit,
-  timeout = DEFAULT_TIMEOUT_MS
+  timeout = DEFAULT_TIMEOUT_MS,
+  signal?: AbortSignal
 ): Promise<Response> {
   const controller = new AbortController();
+  
+  // Link provided signal to our controller
+  if (signal) {
+    signal.addEventListener('abort', () => controller.abort());
+  }
+
   // M1 FIX: Initialize timeout ID outside try block to prevent clearTimeout(undefined)
   let id: ReturnType<typeof setTimeout> | undefined;
   try {
@@ -27,13 +34,24 @@ async function fetchWithTimeout(
 
 export async function analyzeBottle(
   sku: string,
-  imageBase64: string
+  imageBase64: string,
+  localModelResult?: {
+    fillPercentage: number;
+    confidence: number;
+    modelVersion: string;
+    inferenceTimeMs: number;
+  },
+  signal?: AbortSignal
 ): Promise<AnalysisResult> {
   const response = await fetchWithTimeout(`${WORKER_URL}/analyze`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ sku, imageBase64 }),
-  });
+    body: JSON.stringify({ 
+      sku, 
+      imageBase64,
+      localModelResult,
+    }),
+  }, DEFAULT_TIMEOUT_MS, signal);
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -49,13 +67,14 @@ export async function logLocalScan(
   sku: string,
   imageBase64: string,
   localModelPrediction: { percentage: number; confidence: string },
-  latencyMs: number
+  latencyMs: number,
+  signal?: AbortSignal
 ): Promise<{ scanId: string }> {
   const response = await fetchWithTimeout(`${WORKER_URL}/log-scan`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ sku, imageBase64, localModelPrediction, latencyMs }),
-  });
+  }, DEFAULT_TIMEOUT_MS, signal);
 
   if (!response.ok) {
     throw new Error(`Failed to log local scan (${response.status})`);
@@ -69,7 +88,8 @@ export async function submitFeedback(
   accuracyRating: "about_right" | "too_high" | "too_low" | "way_off",
   llmFillPercentage: number,
   correctedFillPercentage?: number,
-  responseTimeMs?: number
+  responseTimeMs?: number,
+  signal?: AbortSignal
 ): Promise<{ feedbackId: string; validationStatus: string }> {
   const response = await fetchWithTimeout(`${WORKER_URL}/feedback`, {
     method: "POST",
@@ -81,7 +101,7 @@ export async function submitFeedback(
       correctedFillPercentage,
       responseTimeMs,
     }),
-  });
+  }, DEFAULT_TIMEOUT_MS, signal);
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -114,10 +134,41 @@ export async function adminLogin(password: string): Promise<{ token: string; exp
   return response.json();
 }
 
+export interface AdminScan {
+  scanId: string;
+  timestamp: string;
+  sku: string;
+  fillPercentage: number;
+  confidence: string;
+  aiProvider: string;
+  latencyMs: number;
+  imageQualityIssues?: string[];
+  isContribution?: boolean;
+  localModelPrediction?: { percentage: number; confidence: string };
+  reasoning?: string;
+  localModelResult?: {
+    fillPercentage: number;
+    confidence: number;
+    modelVersion: string;
+    inferenceTimeMs: number;
+  };
+  llmFallbackUsed?: boolean;
+}
+
+export interface AdminExport {
+  scanId: string;
+  imageUrl: string;
+  sku: string;
+  confirmedFillPct?: number;
+  labelSource?: string;
+  // TODO: tighten fields once /admin/export is implemented (currently 501 Not Implemented)
+  [key: string]: unknown;
+}
+
 /**
  * Admin: Fetch scans from Supabase (via Worker proxy)
  */
-export async function getAdminScans(token: string): Promise<any[]> {
+export async function getAdminScans(token: string): Promise<AdminScan[]> {
   const response = await fetchWithTimeout(`${WORKER_URL}/admin/scans`, {
     headers: { "Authorization": `Bearer ${token}` }
   });
@@ -151,7 +202,7 @@ export async function submitAdminCorrection(
 /**
  * Admin: Export training-eligible scans from Supabase
  */
-export async function getAdminExport(token: string): Promise<any[]> {
+export async function getAdminExport(token: string): Promise<AdminExport[]> {
   const response = await fetchWithTimeout(`${WORKER_URL}/admin/export`, {
     headers: { "Authorization": `Bearer ${token}` }
   });

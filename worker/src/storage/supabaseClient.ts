@@ -16,6 +16,16 @@ export interface ScanMetadata {
   isContribution?: boolean;
   localModelPrediction?: { percentage: number; confidence: string };
   reasoning?: string;
+  // Story 7.4: Local model metadata
+  localModelResult?: {
+    fillPercentage: number;
+    confidence: number;
+    modelVersion: string;
+    inferenceTimeMs: number;
+  };
+  // Story 7.6 - AC5: Separate confidence field for simplified storage
+  localModelConfidence?: number | null;
+  llmFallbackUsed?: boolean;
 }
 
 export interface FeedbackData {
@@ -32,10 +42,11 @@ export interface FeedbackData {
 
 let supabaseInstance: SupabaseClient | null = null;
 
-function getSupabase(env: Env): SupabaseClient {
+export function getSupabase(env: Env): SupabaseClient {
   if (!supabaseInstance) {
-    // Priority: SERVICE_ROLE_KEY for admin bypass, fallback to ANON
     const key = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
+    if (!env.SUPABASE_URL) throw new Error("SUPABASE_URL not configured");
+    if (!key) throw new Error("Supabase API key not configured (SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY required)");
     supabaseInstance = createClient(env.SUPABASE_URL, key, {
       auth: { persistSession: false }
     });
@@ -82,12 +93,19 @@ export async function storeScan(
     throw storageError;
   }
 
-  // 3. Insert metadata into 'scans' table (Revised Directive B Schema)
+  // 3. Insert metadata into 'scans' table (Story 7.4: Updated schema)
   const { error: dbError } = await supabase.from("scans").insert([
     {
       id: scanId,
       sku: metadata.sku,
       image_url: imagePath,
+      // Story 7.4: New local model fields
+      local_model_result: metadata.localModelResult?.fillPercentage ?? null,
+      local_model_confidence: metadata.localModelResult?.confidence ?? null,
+      local_model_version: metadata.localModelResult?.modelVersion ?? null,
+      local_model_inference_ms: metadata.localModelResult?.inferenceTimeMs ?? null,
+      llm_fallback_used: metadata.llmFallbackUsed ?? false,
+      // Legacy field for backward compatibility
       local_model_prediction: metadata.localModelPrediction || {},
       llm_fallback_prediction: {
         percentage: metadata.fillPercentage,
@@ -172,6 +190,62 @@ export async function getGlobalScans(
     imageQualityIssues: row.client_metadata?.image_quality_issues,
     isContribution: row.client_metadata?.is_contribution,
     localModelPrediction: row.local_model_prediction,
-    reasoning: row.llm_fallback_prediction?.reasoning
+    reasoning: row.llm_fallback_prediction?.reasoning,
+    // Story 7.4: New local model fields
+    localModelResult: row.local_model_result !== null && row.local_model_confidence !== null ? {
+      fillPercentage: row.local_model_result,
+      confidence: row.local_model_confidence,
+      modelVersion: row.local_model_version ?? "unknown",
+      inferenceTimeMs: row.local_model_inference_ms ?? 0,
+    } : undefined,
+    llmFallbackUsed: row.llm_fallback_used
   }));
+}
+
+/**
+ * Story 7.7: Upsert training sample with admin correction
+ */
+export interface TrainingSampleData {
+  scanId: string;
+  imageUrl: string;
+  sku: string;
+  confirmedFillPct: number;
+  labelSource: "admin_correction" | "admin_verified" | "user_feedback";
+  labelConfidence: number;
+  augmented: boolean;
+  split: "train" | "val" | "test";
+}
+
+export async function upsertTrainingSample(
+  env: Env,
+  data: TrainingSampleData
+): Promise<void> {
+  if (data.confirmedFillPct < 0 || data.confirmedFillPct > 100) {
+    throw new Error("confirmedFillPct must be between 0 and 100");
+  }
+  if (!Number.isFinite(data.labelConfidence) || data.labelConfidence < 0 || data.labelConfidence > 1) {
+    throw new Error("labelConfidence must be a finite number between 0 and 1");
+  }
+  const supabase = getSupabase(env);
+
+  const { error } = await supabase
+    .from("training_samples")
+    .upsert(
+      {
+        scan_id: data.scanId,
+        image_url: data.imageUrl,
+        sku: data.sku,
+        confirmed_fill_pct: data.confirmedFillPct,
+        label_source: data.labelSource,
+        label_confidence: data.labelConfidence,
+        augmented: data.augmented,
+        split: data.split,
+      },
+      { onConflict: "scan_id" }
+    );
+
+  if (error) {
+    console.error("Supabase Training Sample Upsert Error:", error);
+    throw error;
+  }
 }

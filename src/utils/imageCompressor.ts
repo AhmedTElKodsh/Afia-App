@@ -5,9 +5,14 @@ export async function compressImage(imageDataUrl: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
+      if (!img.width || !img.height) {
+        reject(new Error("Invalid image dimensions"));
+        return;
+      }
       const canvas = document.createElement("canvas");
-      const scale = TARGET_WIDTH / img.width;
-      canvas.width = TARGET_WIDTH;
+      // Only downscale — never upscale (would increase size without quality gain)
+      const scale = Math.min(1, TARGET_WIDTH / img.width);
+      canvas.width = Math.round(img.width * scale);
       canvas.height = Math.round(img.height * scale);
 
       const ctx = canvas.getContext("2d");

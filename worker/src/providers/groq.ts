@@ -18,7 +18,7 @@ export async function callGroq(
   const requestBody = {
     model: MODEL,
     messages: [
-      { role: "system", content: buildAnalysisPrompt(debugReasoning, bottle.promptAnchors) },
+      { role: "system", content: buildAnalysisPrompt(debugReasoning, bottle.promptAnchors, bottle.totalVolumeMl) },
       {
         role: "user",
         content: [
