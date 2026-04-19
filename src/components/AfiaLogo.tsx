@@ -8,7 +8,7 @@ interface AfiaLogoProps {
 
 export const AfiaLogo = memo(({ className, height = 40 }: AfiaLogoProps) => (
   <img
-    src="/afia-logo.png"
+    src="/icons/afia-logo.png"
     alt="Afia"
     height={height}
     className={`afia-logo-img${className ? ` ${className}` : ""}`}

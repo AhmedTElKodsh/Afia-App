@@ -159,7 +159,7 @@ export function QrMockGenerator() {
                   level="H"
                   includeMargin={true}
                   imageSettings={{
-                    src: '/afia-logo.png',
+                    src: '/icons/afia-logo.png',
                     x: undefined,
                     y: undefined,
                     height: 40,
