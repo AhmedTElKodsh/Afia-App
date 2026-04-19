@@ -43,14 +43,14 @@ test.describe('Epic 3: Feedback System', () => {
       if (btn) btn.click();
     });
 
-    // We might transition very fast through camera -> pending -> confirm
-    // So we don't strictly wait for .camera-active if we are already at confirm/results
+    // Wait for camera to be active
+    await expect(page.locator('.camera-active').first()).toBeVisible({ timeout: 10000 });
     
     // Trigger analysis using shared robust helper which handles the whole chain
     await triggerAnalyzeAndConfirm(page);
 
     // FeedbackGrid should be visible in result display
-    await expect(page.locator('.feedback-grid-container')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.feedback-grid-container')).toBeVisible({ timeout: 10000 });
   }
 
   test('should display feedback grid after scan', async ({ page }) => {

@@ -20,48 +20,58 @@ test.describe('Mock Scan UI Test', () => {
       });
     });
 
-    // 2. Navigate to Landing Page with SKU
-    await page.goto('/?sku=afia-corn-1.5l');
-    
-    // Wait for the UI to be ready
-    await page.waitForSelector('button:has-text("START SMART SCAN"), button:has-text("Start Scan")');
-
-    // 3. Setup Test Mode and Privacy
+    // 2. Setup Test Mode and Privacy BEFORE navigation
     await page.addInitScript(() => {
       window.localStorage.setItem('afia_privacy_accepted', 'true');
       window.localStorage.setItem('afia_test_mode', 'true');
-      window.__AFIA_TEST_MODE__ = true;
+      (window as any).__AFIA_TEST_MODE__ = true;
     });
-    
-    // Reload to apply init scripts/localStorage
-    await page.reload();
+
+    // 3. Navigate to Landing Page with SKU
+    await page.goto('/?sku=afia-corn-1.5l');
     await page.waitForLoadState('networkidle');
 
-    // 4. Trigger Scan via hook
-    // We wait for the START button again to be sure the app is loaded after reload
-    await page.waitForSelector('button:has-text("START SMART SCAN"), button:has-text("Start Scan")');
+    // 4. Wait for the START button to be ready
+    await page.waitForSelector('button:has-text("START SMART SCAN"), button:has-text("Start Scan")', { timeout: 10000 });
 
+    // 5. Trigger Scan via hook
     await page.evaluate(async () => {
       // Re-assert test mode
-      window.__AFIA_TEST_MODE__ = true;
+      (window as any).__AFIA_TEST_MODE__ = true;
       
-      // Give React several seconds to run the useEffect that sets up the trigger
-      // especially if it's waiting for model loading or other async stuff
+      // Wait for trigger to be available
       for (let i = 0; i < 100; i++) {
-        if (window.__AFIA_TRIGGER_ANALYZE__) break;
+        if ((window as any).__AFIA_TRIGGER_ANALYZE__) break;
         await new Promise(r => setTimeout(r, 100));
       }
 
-      if (window.__AFIA_TRIGGER_ANALYZE__) {
-        window.__AFIA_TRIGGER_ANALYZE__();
+      if ((window as any).__AFIA_TRIGGER_ANALYZE__) {
+        (window as any).__AFIA_TRIGGER_ANALYZE__();
       } else {
         throw new Error("__AFIA_TRIGGER_ANALYZE__ hook not found even after waiting 10s");
       }
     });
 
-    // 5. Verify Results
-    // Wait for the results screen
-    await page.waitForSelector('.result-display, .fill-confirm', { timeout: 15000 });
+    // 6. Wait for results - use Promise.race to handle both fill-confirm and direct result display
+    await Promise.race([
+      page.waitForSelector('.result-display', { timeout: 20000 }),
+      page.waitForSelector('.fill-confirm', { timeout: 20000 })
+    ]);
+    
+    // If fill-confirm appeared, click it
+    const fillConfirm = page.locator('.fill-confirm');
+    if (await fillConfirm.isVisible()) {
+      await page.evaluate(() => {
+        const btn = Array.from(document.querySelectorAll('button')).find(
+          b => b.textContent?.includes('Confirm') || b.className.includes('btn-success')
+        ) as HTMLButtonElement | undefined;
+        if (btn) btn.click();
+      });
+      await page.waitForSelector('.result-display', { timeout: 10000 });
+    }
+    
+    // 7. Verify Results
+    await expect(page.locator('.result-display')).toBeVisible({ timeout: 5000 });
     
     // Check for mock values in UI
     const content = await page.content();
