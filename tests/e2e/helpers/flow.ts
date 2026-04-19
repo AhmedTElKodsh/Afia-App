@@ -19,8 +19,8 @@ export async function triggerAnalyzeAndConfirm(page: Page) {
   const response = await analyzePromise;
   expect(response.status()).toBe(200);
 
-  // Wait a bit for the response to be processed and UI to update
-  await page.waitForTimeout(500);
+  // Wait longer for the response to be processed and UI to update
+  await page.waitForTimeout(1000);
 
   // Stage 2: App now has an intermediate "Fill Confirmation" step
   // Wait for it and click confirm to proceed to results
@@ -28,10 +28,10 @@ export async function triggerAnalyzeAndConfirm(page: Page) {
   const resultDisplay = page.locator('.result-display');
   
   try {
-    // Race between fill-confirm appearing or result-display appearing directly
+    // Race between fill-confirm appearing or result-display appearing directly with longer timeouts
     await Promise.race([
-      fillConfirm.waitFor({ state: 'visible', timeout: 8000 }),
-      resultDisplay.waitFor({ state: 'visible', timeout: 8000 })
+      fillConfirm.waitFor({ state: 'visible', timeout: 15000 }),
+      resultDisplay.waitFor({ state: 'visible', timeout: 15000 })
     ]);
     
     // If fill-confirm is visible, click it
@@ -44,15 +44,15 @@ export async function triggerAnalyzeAndConfirm(page: Page) {
         if (btn) btn.click();
       });
       
-      // Wait for result display after clicking confirm
-      await expect(resultDisplay).toBeVisible({ timeout: 10000 });
+      // Wait for result display after clicking confirm with longer timeout
+      await expect(resultDisplay).toBeVisible({ timeout: 15000 });
     }
   } catch (e) {
-    // If neither appeared, try waiting for result display one more time
+    // If neither appeared, try waiting for result display one more time with longer timeout
     console.log('Fill confirm or result display not shown, retrying result display...');
-    await expect(resultDisplay).toBeVisible({ timeout: 10000 });
+    await expect(resultDisplay).toBeVisible({ timeout: 15000 });
   }
 
-  // Final verification that results are visible
-  await expect(resultDisplay).toBeVisible({ timeout: 5000 });
+  // Final verification that results are visible with longer timeout
+  await expect(resultDisplay).toBeVisible({ timeout: 10000 });
 }

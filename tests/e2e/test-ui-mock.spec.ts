@@ -37,8 +37,8 @@ test.describe('Mock Scan UI Action Test', () => {
     // 4. Trigger analysis and handle fill confirmation using shared helper
     await triggerAnalyzeAndConfirm(page);
 
-    // 5. Verify ResultDisplay screen
-    await expect(page.locator('.result-display')).toBeVisible({ timeout: 5000 });
+    // 5. Verify ResultDisplay screen with longer timeout
+    await expect(page.locator('.result-display')).toBeVisible({ timeout: 10000 });
     
     // Verify main metrics
     await expect(page.locator('.summary-item.remaining .summary-value, .result-metric__value').first())

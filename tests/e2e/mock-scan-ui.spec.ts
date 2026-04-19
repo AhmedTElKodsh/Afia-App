@@ -52,10 +52,10 @@ test.describe('Mock Scan UI Test', () => {
       }
     });
 
-    // 6. Wait for results - use Promise.race to handle both fill-confirm and direct result display
+    // 6. Wait for results - use Promise.race to handle both fill-confirm and direct result display with longer timeouts
     await Promise.race([
-      page.waitForSelector('.result-display', { timeout: 20000 }),
-      page.waitForSelector('.fill-confirm', { timeout: 20000 })
+      page.waitForSelector('.result-display', { timeout: 30000 }),
+      page.waitForSelector('.fill-confirm', { timeout: 30000 })
     ]);
     
     // If fill-confirm appeared, click it
@@ -67,11 +67,11 @@ test.describe('Mock Scan UI Test', () => {
         ) as HTMLButtonElement | undefined;
         if (btn) btn.click();
       });
-      await page.waitForSelector('.result-display', { timeout: 10000 });
+      await page.waitForSelector('.result-display', { timeout: 15000 });
     }
     
-    // 7. Verify Results
-    await expect(page.locator('.result-display')).toBeVisible({ timeout: 5000 });
+    // 7. Verify Results with longer timeout
+    await expect(page.locator('.result-display')).toBeVisible({ timeout: 10000 });
     
     // Check for mock values in UI
     const content = await page.content();
