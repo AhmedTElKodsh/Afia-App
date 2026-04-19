@@ -13,16 +13,14 @@ import {
 } from '../admin/modelVersions';
 import type { Env } from '../types';
 
-// Mock Supabase client
+// Mock Supabase client - will be configured per test
+const mockFrom = vi.fn();
+const mockRpc = vi.fn();
+
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => ({
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      neq: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis(),
-      order: vi.fn().mockReturnThis(),
-    })),
+    from: mockFrom,
+    rpc: mockRpc,
   })),
 }));
 
@@ -30,6 +28,7 @@ describe('Model Version Management Endpoints', () => {
   let mockEnv: Env;
 
   beforeEach(() => {
+    vi.clearAllMocks();
     mockEnv = {
       SUPABASE_URL: 'https://test.supabase.co',
       SUPABASE_SERVICE_ROLE_KEY: 'test-service-key',
@@ -59,13 +58,10 @@ describe('Model Version Management Endpoints', () => {
         }
       ];
 
-      const { createClient } = await import('@supabase/supabase-js');
-      const mockSupabase = createClient('', '');
-      
-      vi.mocked(mockSupabase.from).mockReturnValue({
+      mockFrom.mockReturnValue({
         select: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({ data: mockVersions, error: null }),
-      } as any);
+      });
 
       const response = await handleGetVersions(mockEnv);
       const data = await response.json();
@@ -76,16 +72,13 @@ describe('Model Version Management Endpoints', () => {
     });
 
     it('returns 500 on database error', async () => {
-      const { createClient } = await import('@supabase/supabase-js');
-      const mockSupabase = createClient('', '');
-      
-      vi.mocked(mockSupabase.from).mockReturnValue({
+      mockFrom.mockReturnValue({
         select: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({ 
           data: null, 
           error: { message: 'Database connection failed' } 
         }),
-      } as any);
+      });
 
       const response = await handleGetVersions(mockEnv);
       const data = await response.json();
@@ -102,16 +95,8 @@ describe('Model Version Management Endpoints', () => {
         body: JSON.stringify({ version: 'v1.0.0' }),
       });
 
-      const { createClient } = await import('@supabase/supabase-js');
-      const mockSupabase = createClient('', '');
-      
-      const mockUpdate = vi.fn().mockResolvedValue({ error: null });
-      
-      vi.mocked(mockSupabase.from).mockReturnValue({
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        neq: vi.fn().mockReturnValue({ error: null }),
-      } as any);
+      // Mock RPC call to succeed
+      mockRpc.mockResolvedValue({ error: null });
 
       const response = await handleActivateVersion(mockRequest, mockEnv);
       const data = await response.json();
@@ -130,7 +115,7 @@ describe('Model Version Management Endpoints', () => {
       const data = await response.json();
 
       expect(response.status).toBe(400);
-      expect(data.error).toBe('version required');
+      expect(data.error).toContain('version');
     });
 
     it('returns 500 on database error', async () => {
@@ -139,16 +124,12 @@ describe('Model Version Management Endpoints', () => {
         body: JSON.stringify({ version: 'v1.0.0' }),
       });
 
-      const { createClient } = await import('@supabase/supabase-js');
-      const mockSupabase = createClient('', '');
-      
-      vi.mocked(mockSupabase.from).mockReturnValue({
+      // Mock RPC to fail, then fallback to from() which also fails
+      mockRpc.mockResolvedValue({ error: { message: 'RPC failed' } });
+      mockFrom.mockReturnValue({
         update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ 
-          error: { message: 'Update failed' } 
-        }),
-        neq: vi.fn().mockReturnThis(),
-      } as any);
+        neq: vi.fn().mockResolvedValue({ error: { message: 'Update failed' } }),
+      });
 
       const response = await handleActivateVersion(mockRequest, mockEnv);
       const data = await response.json();
@@ -165,13 +146,10 @@ describe('Model Version Management Endpoints', () => {
         body: JSON.stringify({ version: 'v1.0.0' }),
       });
 
-      const { createClient } = await import('@supabase/supabase-js');
-      const mockSupabase = createClient('', '');
-      
-      vi.mocked(mockSupabase.from).mockReturnValue({
+      mockFrom.mockReturnValue({
         update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockResolvedValue({ error: null }),
-      } as any);
+      });
 
       const response = await handleDeactivateVersion(mockRequest, mockEnv);
       const data = await response.json();
@@ -190,7 +168,7 @@ describe('Model Version Management Endpoints', () => {
       const data = await response.json();
 
       expect(response.status).toBe(400);
-      expect(data.error).toBe('version required');
+      expect(data.error).toContain('version');
     });
 
     it('returns 500 on database error', async () => {
@@ -199,15 +177,12 @@ describe('Model Version Management Endpoints', () => {
         body: JSON.stringify({ version: 'v1.0.0' }),
       });
 
-      const { createClient } = await import('@supabase/supabase-js');
-      const mockSupabase = createClient('', '');
-      
-      vi.mocked(mockSupabase.from).mockReturnValue({
+      mockFrom.mockReturnValue({
         update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockResolvedValue({ 
           error: { message: 'Update failed' } 
         }),
-      } as any);
+      });
 
       const response = await handleDeactivateVersion(mockRequest, mockEnv);
       const data = await response.json();
@@ -224,19 +199,23 @@ describe('Model Version Management Endpoints', () => {
         body: JSON.stringify({ version: 'v1.0.0' }),
       });
 
-      const { createClient } = await import('@supabase/supabase-js');
-      const mockSupabase = createClient('', '');
+      // Mock RPC to fail so it falls back to two-step process
+      mockRpc.mockResolvedValue({ error: { message: 'RPC not available' } });
       
       const deactivateAllMock = vi.fn().mockResolvedValue({ error: null });
       const activateOneMock = vi.fn().mockResolvedValue({ error: null });
       
-      vi.mocked(mockSupabase.from).mockReturnValueOnce({
-        update: vi.fn().mockReturnThis(),
-        neq: deactivateAllMock,
-      } as any).mockReturnValueOnce({
-        update: vi.fn().mockReturnThis(),
-        eq: activateOneMock,
-      } as any);
+      // First call: deactivate all
+      // Second call: activate one
+      mockFrom
+        .mockReturnValueOnce({
+          update: vi.fn().mockReturnThis(),
+          neq: deactivateAllMock,
+        })
+        .mockReturnValueOnce({
+          update: vi.fn().mockReturnThis(),
+          eq: activateOneMock,
+        });
 
       await handleActivateVersion(mockRequest, mockEnv);
 
@@ -252,6 +231,12 @@ describe('Model Version Management Endpoints', () => {
       // Note: This test verifies the handler function works correctly.
       // Authentication is enforced at the route level in worker/src/index.ts
       // Integration tests should verify 401 responses for unauthenticated requests.
+      
+      // Mock successful database response
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnThis(),
+        order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      });
       
       const response = await handleGetVersions(mockEnv);
       

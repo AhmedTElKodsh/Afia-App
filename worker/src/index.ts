@@ -29,10 +29,10 @@ app.use("*", async (c, next) => {
       if (!origin) return null;
       if (allowedOrigins.includes(origin)) return origin;
       
-      // Strict suffix check for Cloudflare Pages previews
+      // Strict regex check for Cloudflare Pages previews - prevents subdomain attacks
       const isPagesPreview = 
-        origin.endsWith(".afia-app.pages.dev") || 
-        origin.endsWith(".afia-oil-tracker.pages.dev");
+        /^https:\/\/[a-z0-9-]+\.afia-app\.pages\.dev$/.test(origin) || 
+        /^https:\/\/[a-z0-9-]+\.afia-oil-tracker\.pages\.dev$/.test(origin);
       
       return isPagesPreview ? origin : null;
     },
@@ -44,7 +44,7 @@ app.use("*", async (c, next) => {
   return corsMiddleware(c, next);
 });
 
-// Rate limiting middleware — 10 req/min per IP, KV-backed sliding window
+// Rate limiting middleware — 30 req/min per IP (3 req/min for admin auth), KV-backed sliding window
 app.use("*", async (c, next) => {
   const requestId = crypto.randomUUID();
   c.set("requestId", requestId);
@@ -64,9 +64,11 @@ app.use("*", async (c, next) => {
     );
   }
   
-  const key = `ratelimit:${ip}`;
+  // Stricter rate limiting for admin auth endpoint (3 attempts per minute)
+  const isAdminAuth = c.req.path === "/admin/auth";
+  const key = isAdminAuth ? `ratelimit:admin:${ip}` : `ratelimit:${ip}`;
   const windowMs = 60_000;
-  const limit = 10;
+  const limit = isAdminAuth ? 3 : 30;
   const now = Date.now();
   const windowStart = now - windowMs;
 
@@ -91,7 +93,7 @@ app.use("*", async (c, next) => {
 
     return c.json(
       {
-        error: "Rate limit exceeded",
+        error: isAdminAuth ? "Too many authentication attempts. Please try again later." : "Rate limit exceeded",
         code: "RATE_LIMIT_EXCEEDED",
         requestId,
         details: { retryAfter },

@@ -17,7 +17,8 @@ import type { Env } from "../types";
  */
 function getSupabaseClient(env: Env) {
   const key = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
-  if (!env.SUPABASE_URL) throw new Error("SUPABASE_URL not configured");\n  if (!key) throw new Error("Supabase key not configured");
+  if (!env.SUPABASE_URL) throw new Error("SUPABASE_URL not configured");
+  if (!key) throw new Error("Supabase key not configured");
   return createClient(env.SUPABASE_URL, key, { auth: { persistSession: false } });
 }
 

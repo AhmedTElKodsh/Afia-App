@@ -179,7 +179,8 @@ describe("VerticalStepSlider", () => {
       />
     );
 
-    const slider = screen.getByRole("slider", { name: /fill level slider/i });
+    // Component uses default aria-label "Adjust fill level"
+    const slider = screen.getByRole("slider", { name: /adjust fill level/i });
     expect(slider).toBeInTheDocument();
   });
 });

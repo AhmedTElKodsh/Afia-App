@@ -224,13 +224,11 @@ describe("handleAnalyze — provider fallback chain", () => {
   });
 
   it("falls back to Groq when Gemini fails and GROQ_API_KEY is configured", async () => {
+    // Mock Groq to return proper structure matching Provider type
     (callGroq as ReturnType<typeof vi.fn>).mockResolvedValue({
-      result: {
-        fillPercentage: 50,
-        confidence: "medium",
-        imageQualityIssues: [],
-      },
-      keyName: "groq",
+      fillPercentage: 50,
+      confidence: "medium",
+      imageQualityIssues: [],
     });
     const ctx = createCtx(
       { sku: VALID_SKU, imageBase64: SMALL_IMAGE },

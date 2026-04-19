@@ -272,7 +272,16 @@ function queueForLaterVerification(
   _localResult: LocalModelMetadata
 ): void {
   enqueueAnalyzeRequest({ sku, imageBase64 }).catch(error => {
-    console.warn('[AnalysisRouter] Failed to queue scan for later verification:', error);
+    console.error('[AnalysisRouter] Failed to queue scan for later verification:', error);
+    // Log to error telemetry for monitoring
+    import('./errorTelemetry').then(({ logError }) => {
+      logError('queue_failure', error as Error, {
+        sku,
+        operation: 'queueForLaterVerification',
+      });
+    }).catch(() => {
+      // Telemetry failed - non-blocking
+    });
   });
 }
 

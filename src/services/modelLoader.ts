@@ -517,12 +517,17 @@ async function updateModelInBackground(serverVersion: {
     loadedModelVersion = serverVersion.version;
 
     const deferDispose = (m: tf.LayersModel, attempts = 0) => {
-      const MAX_ATTEMPTS = 200; // 10 seconds total
+      const MAX_ATTEMPTS = 100; // 5 seconds total (reduced from 10s to prevent memory buildup)
       if (activeInferenceCount > 0 && attempts < MAX_ATTEMPTS) {
         setTimeout(() => deferDispose(m, attempts + 1), 50);
       } else {
         if (attempts >= MAX_ATTEMPTS) {
-          console.warn('[ModelLoader] Forced model disposal after reaching max wait time for active inference');
+          console.warn('[ModelLoader] Forced model disposal after 5s - active inference may be stuck');
+          // Log telemetry for stuck inference
+          logError('model_disposal', new Error('Forced disposal - inference timeout'), {
+            activeInferenceCount,
+            modelVersion: serverVersion.version,
+          });
         }
         m.dispose();
         console.log('[ModelLoader] Old model instance disposed after inference drained');
