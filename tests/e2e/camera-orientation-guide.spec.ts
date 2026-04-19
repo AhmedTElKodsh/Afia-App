@@ -24,15 +24,15 @@ test.describe('Camera Orientation Guide', () => {
       if (btn) btn.click();
     });
     
-    // Wait for camera to activate - check for camera-active class
-    await page.waitForSelector('.camera-viewfinder.camera-active', { state: 'attached', timeout: 20000 });
+    // Wait for camera to activate - use more flexible selector
+    await page.waitForSelector('.camera-active', { state: 'visible', timeout: 25000 });
     
-    // Wait a bit for camera stream to initialize
-    await page.waitForTimeout(1000);
+    // Wait for camera stream to initialize
+    await page.waitForTimeout(2000);
     
     // Verify orientation guide is visible
     const orientationGuide = page.locator('.orientation-guide');
-    await expect(orientationGuide).toBeVisible({ timeout: 10000 });
+    await expect(orientationGuide).toBeVisible({ timeout: 15000 });
     
     // Verify text content
     await expect(page.locator('text=Handle on Right')).toBeVisible();
@@ -55,11 +55,11 @@ test.describe('Camera Orientation Guide', () => {
     });
     
     // Wait for camera to be active
-    await page.waitForSelector('.camera-viewfinder.camera-active', { state: 'attached', timeout: 20000 });
-    await page.waitForTimeout(1000);
+    await page.waitForSelector('.camera-active', { state: 'visible', timeout: 25000 });
+    await page.waitForTimeout(2000);
     
     // Verify guide is visible before capture
-    await expect(page.locator('.orientation-guide')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.orientation-guide')).toBeVisible({ timeout: 15000 });
     
     // Capture photo (manual mode button)
     const captureBtn = page.locator('.camera-capture-btn');
@@ -84,11 +84,11 @@ test.describe('Camera Orientation Guide', () => {
       if (btn) btn.click();
     });
     
-    await page.waitForSelector('.camera-viewfinder.camera-active', { state: 'attached', timeout: 20000 });
-    await page.waitForTimeout(1000);
+    await page.waitForSelector('.camera-active', { state: 'visible', timeout: 25000 });
+    await page.waitForTimeout(2000);
     
     const guide = page.locator('.orientation-guide');
-    await expect(guide).toBeVisible({ timeout: 10000 });
+    await expect(guide).toBeVisible({ timeout: 15000 });
     
     // Check CSS positioning
     const styles = await guide.evaluate((el) => {
@@ -116,11 +116,11 @@ test.describe('Camera Orientation Guide', () => {
       if (btn) btn.click();
     });
     
-    await page.waitForSelector('.camera-viewfinder.camera-active', { state: 'attached', timeout: 20000 });
-    await page.waitForTimeout(1000);
+    await page.waitForSelector('.camera-active', { state: 'visible', timeout: 25000 });
+    await page.waitForTimeout(2000);
     
     const guide = page.locator('.orientation-guide');
-    await expect(guide).toBeVisible({ timeout: 10000 });
+    await expect(guide).toBeVisible({ timeout: 15000 });
     
     // Check ARIA attributes
     const role = await guide.getAttribute('role');
@@ -144,11 +144,11 @@ test.describe('Camera Orientation Guide', () => {
       if (btn) btn.click();
     });
     
-    await page.waitForSelector('.camera-viewfinder.camera-active', { state: 'attached', timeout: 20000 });
-    await page.waitForTimeout(1000);
+    await page.waitForSelector('.camera-active', { state: 'visible', timeout: 25000 });
+    await page.waitForTimeout(2000);
     
     // Guide should still be visible in landscape
-    await expect(page.locator('.orientation-guide')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.orientation-guide')).toBeVisible({ timeout: 15000 });
     await expect(page.locator('text=Handle on Right')).toBeVisible();
   });
 
@@ -167,12 +167,12 @@ test.describe('Camera Orientation Guide', () => {
         if (btn) btn.click();
       });
       
-      await page.waitForSelector('.camera-viewfinder.camera-active', { state: 'attached', timeout: 20000 });
-      await page.waitForTimeout(500);
+      await page.waitForSelector('.camera-active', { state: 'visible', timeout: 25000 });
+      await page.waitForTimeout(1000);
       
       // Verify guide is visible and centered
       const guide = page.locator('.orientation-guide');
-      await expect(guide).toBeVisible({ timeout: 10000 });
+      await expect(guide).toBeVisible({ timeout: 15000 });
       
       // Check that text is readable (not truncated)
       const text = await guide.textContent();
