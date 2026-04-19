@@ -168,10 +168,17 @@ test.describe('Epic 7: Single-SKU Restriction (1.5L only)', () => {
       });
       await page.goto('/?mode=admin');
       await page.waitForLoadState('networkidle');
-      await page.locator('button[aria-label="Test Lab"]').click();
+      
+      // Wait for Test Lab button and click it
+      const testLabBtn = page.locator('button[aria-label="Test Lab"]');
+      await expect(testLabBtn).toBeVisible({ timeout: 10000 });
+      await testLabBtn.click();
+
+      // Wait for Test Lab to load
+      await expect(page.locator('.test-lab, .test-lab-container').first()).toBeVisible({ timeout: 10000 });
 
       // No dropdown — single confirmed bottle card is shown
-      await expect(page.locator('.bottle-confirmed-card')).toBeVisible({ timeout: 3000 });
+      await expect(page.locator('.bottle-confirmed-card')).toBeVisible({ timeout: 5000 });
       await expect(page.locator('.bottle-confirmed-name')).toContainText(/1\.5[lL]|corn/i);
 
       // Exactly one confirmed card — the single-SKU restriction

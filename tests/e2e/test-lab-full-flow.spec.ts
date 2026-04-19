@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { mockAnalyzeSuccess, mockAnalyzeLowConfidence, mockCamera } from './helpers/mockAPI';
 import { testBottles } from './fixtures/testData';
+import { triggerAnalyzeAndConfirm } from './helpers/flow';
 
 /**
  * TestLab Full Flow — Mock QR Simulation
@@ -20,8 +21,6 @@ import { testBottles } from './fixtures/testData';
  * are injected before the first byte is loaded. Admin session bypass is used
  * throughout — actual password login is covered in epic-5-6-features.spec.ts.
  */
-
-import { triggerAnalyzeAndConfirm } from './helpers/flow';
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
 
@@ -70,14 +69,6 @@ async function selectBottleAndStartScan(
 
   // Camera viewfinder should appear
   await expect(page.locator('.camera-active, .camera-viewfinder, video').first()).toBeVisible({ timeout: 15000 });
-}
-
-/**
- * Trigger AI analysis using the window test hook (same pattern as epic-1 tests).
- * Now uses the shared flow helper to handle Fill Confirmation.
- */
-async function triggerAnalyzeAndWaitForResult(page: import('@playwright/test').Page) {
-  await triggerAnalyzeAndConfirm(page);
 }
 
 // ─── Test Suite ───────────────────────────────────────────────────────────────
@@ -208,7 +199,7 @@ test.describe('TestLab: Mock QR → Camera → Analyze → Results (User Flow)',
   test('Full mock QR flow: select bottle → scan → analyze → results', async ({ page }) => {
     await navigateToTestLab(page);
     await selectBottleAndStartScan(page, testBottles.filippoBerio.sku);
-    await triggerAnalyzeAndWaitForResult(page);
+    await triggerAnalyzeAndConfirm(page);
 
     // Result display shows core metrics
     await expect(page.locator('.result-display')).toBeVisible();
@@ -218,7 +209,7 @@ test.describe('TestLab: Mock QR → Camera → Analyze → Results (User Flow)',
   test('results show correct fill percentage from mock API (65%)', async ({ page }) => {
     await navigateToTestLab(page);
     await selectBottleAndStartScan(page, testBottles.filippoBerio.sku);
-    await triggerAnalyzeAndWaitForResult(page);
+    await triggerAnalyzeAndConfirm(page);
 
     // Mock API returns fillPercentage: 65; calibrated bottle renders ~1137 ml (not linear 975 ml)
     await expect(page.locator('.result-display')).toContainText(/1137/);
@@ -227,7 +218,7 @@ test.describe('TestLab: Mock QR → Camera → Analyze → Results (User Flow)',
   test('results show high confidence badge for successful analysis', async ({ page }) => {
     await navigateToTestLab(page);
     await selectBottleAndStartScan(page, testBottles.filippoBerio.sku);
-    await triggerAnalyzeAndWaitForResult(page);
+    await triggerAnalyzeAndConfirm(page);
 
     await expect(page.locator('.confidence-badge--high, [class*="confidence"][class*="high"]').first())
       .toBeVisible({ timeout: 5000 });
@@ -239,7 +230,7 @@ test.describe('TestLab: Mock QR → Camera → Analyze → Results (User Flow)',
 
     await navigateToTestLab(page);
     await selectBottleAndStartScan(page, testBottles.filippoBerio.sku);
-    await triggerAnalyzeAndWaitForResult(page);
+    await triggerAnalyzeAndConfirm(page);
 
     await expect(page.locator('.confidence-badge--low, [class*="confidence"][class*="low"]').first())
       .toBeVisible({ timeout: 5000 });
@@ -248,7 +239,7 @@ test.describe('TestLab: Mock QR → Camera → Analyze → Results (User Flow)',
   test('"Scan Another Bottle" button is visible in results', async ({ page }) => {
     await navigateToTestLab(page);
     await selectBottleAndStartScan(page, testBottles.filippoBerio.sku);
-    await triggerAnalyzeAndWaitForResult(page);
+    await triggerAnalyzeAndConfirm(page);
 
     // App.tsx's ResultDisplay always shows a scan-again / retake button
     await expect(
@@ -259,7 +250,7 @@ test.describe('TestLab: Mock QR → Camera → Analyze → Results (User Flow)',
   test('feedback grid appears in results for accuracy rating', async ({ page }) => {
     await navigateToTestLab(page);
     await selectBottleAndStartScan(page, testBottles.filippoBerio.sku);
-    await triggerAnalyzeAndWaitForResult(page);
+    await triggerAnalyzeAndConfirm(page);
 
     // FeedbackGrid is embedded in ResultDisplay
     await expect(page.locator('.feedback-grid-container')).toBeVisible({ timeout: 5000 });
@@ -281,7 +272,7 @@ test.describe('TestLab: Mock QR → Camera → Analyze → Results (User Flow)',
 
     await navigateToTestLab(page);
     await selectBottleAndStartScan(page, testBottles.filippoBerio.sku);
-    await triggerAnalyzeAndWaitForResult(page);
+    await triggerAnalyzeAndConfirm(page);
 
     // Result should show LLM provider (gemini), not local-cnn
     // This verifies the fallback logic in useLocalAnalysis.ts
@@ -371,7 +362,7 @@ test.describe('TestLab: Post-Analysis Navigation', () => {
   test('"Scan Another Bottle" returns to camera viewfinder', async ({ page }) => {
     await navigateToTestLab(page);
     await selectBottleAndStartScan(page, testBottles.filippoBerio.sku);
-    await triggerAnalyzeAndWaitForResult(page);
+    await triggerAnalyzeAndConfirm(page);
 
     // Click "Scan Another Bottle" (App.tsx's ResultDisplay always shows this)
     await page.evaluate(() => {
