@@ -55,6 +55,9 @@ export async function analyzeBottle(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
+    if (response.status === 429) {
+      throw new Error('Rate limit exceeded. Please try again later.');
+    }
     throw new Error(
       (errorData as { error?: string }).error || `Analysis failed (${response.status})`
     );

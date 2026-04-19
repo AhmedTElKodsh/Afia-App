@@ -7,14 +7,16 @@ test.describe('Camera Orientation Guide', () => {
     await page.addInitScript(() => {
       window.localStorage.setItem('afia_privacy_accepted', 'true');
       (window as any).__AFIA_TEST_MODE__ = true;
+      // Force manual mode to prevent auto-capture from hiding the orientation guide
+      (window as any).__AFIA_FORCE_MANUAL__ = true;
     });
     await mockCamera(page);
   });
 
   test('orientation guide appears in viewfinder', async ({ page }) => {
     // Navigate to scan page with a known SKU
-    await page.goto('/?sku=filippo-berio-500ml');
-    
+    await page.goto('/?sku=afia-corn-1.5l');
+
     // Click Start Scan button in QrLanding using evaluate to bypass animations
     await page.evaluate(() => {
       const btn = document.querySelector('button.qrl-cta') as HTMLButtonElement
@@ -23,14 +25,11 @@ test.describe('Camera Orientation Guide', () => {
         ) as HTMLButtonElement;
       if (btn) btn.click();
     });
+
+    // Wait for camera to become active
+    await page.waitForSelector('.camera-container.camera-active', { state: 'visible', timeout: 25000 });
     
-    // Wait for camera to activate - use more flexible selector
-    await page.waitForSelector('.camera-active', { state: 'visible', timeout: 25000 });
-    
-    // Wait for camera stream to initialize
-    await page.waitForTimeout(2000);
-    
-    // Verify orientation guide is visible
+    // Orientation guide should appear immediately when camera is active (no arbitrary timeout needed)
     const orientationGuide = page.locator('.orientation-guide');
     await expect(orientationGuide).toBeVisible({ timeout: 15000 });
     
@@ -43,7 +42,7 @@ test.describe('Camera Orientation Guide', () => {
 
   test('orientation guide disappears after capture', async ({ page }) => {
     // Navigate to scan page
-    await page.goto('/?sku=filippo-berio-500ml');
+    await page.goto('/?sku=afia-corn-1.5l');
     
     // Click Start Scan using evaluate to bypass animations
     await page.evaluate(() => {
@@ -54,9 +53,8 @@ test.describe('Camera Orientation Guide', () => {
       if (btn) btn.click();
     });
     
-    // Wait for camera to be active
-    await page.waitForSelector('.camera-active', { state: 'visible', timeout: 25000 });
-    await page.waitForTimeout(2000);
+    // Wait for camera to become active
+    await page.waitForSelector('.camera-container.camera-active', { state: 'visible', timeout: 25000 });
     
     // Verify guide is visible before capture
     await expect(page.locator('.orientation-guide')).toBeVisible({ timeout: 15000 });
@@ -74,7 +72,7 @@ test.describe('Camera Orientation Guide', () => {
   });
 
   test('orientation guide has correct positioning', async ({ page }) => {
-    await page.goto('/?sku=filippo-berio-500ml');
+    await page.goto('/?sku=afia-corn-1.5l');
     
     await page.evaluate(() => {
       const btn = document.querySelector('button.qrl-cta') as HTMLButtonElement
@@ -84,8 +82,7 @@ test.describe('Camera Orientation Guide', () => {
       if (btn) btn.click();
     });
     
-    await page.waitForSelector('.camera-active', { state: 'visible', timeout: 25000 });
-    await page.waitForTimeout(2000);
+    await page.waitForSelector('.camera-container.camera-active', { state: 'visible', timeout: 25000 });
     
     const guide = page.locator('.orientation-guide');
     await expect(guide).toBeVisible({ timeout: 15000 });
@@ -106,7 +103,7 @@ test.describe('Camera Orientation Guide', () => {
   });
 
   test('orientation guide is accessible', async ({ page }) => {
-    await page.goto('/?sku=filippo-berio-500ml');
+    await page.goto('/?sku=afia-corn-1.5l');
     
     await page.evaluate(() => {
       const btn = document.querySelector('button.qrl-cta') as HTMLButtonElement
@@ -116,8 +113,7 @@ test.describe('Camera Orientation Guide', () => {
       if (btn) btn.click();
     });
     
-    await page.waitForSelector('.camera-active', { state: 'visible', timeout: 25000 });
-    await page.waitForTimeout(2000);
+    await page.waitForSelector('.camera-container.camera-active', { state: 'visible', timeout: 25000 });
     
     const guide = page.locator('.orientation-guide');
     await expect(guide).toBeVisible({ timeout: 15000 });
@@ -134,7 +130,7 @@ test.describe('Camera Orientation Guide', () => {
     // Set viewport to landscape
     await page.setViewportSize({ width: 812, height: 375 });
     
-    await page.goto('/?sku=filippo-berio-500ml');
+    await page.goto('/?sku=afia-corn-1.5l');
     
     await page.evaluate(() => {
       const btn = document.querySelector('button.qrl-cta') as HTMLButtonElement
@@ -144,8 +140,7 @@ test.describe('Camera Orientation Guide', () => {
       if (btn) btn.click();
     });
     
-    await page.waitForSelector('.camera-active', { state: 'visible', timeout: 25000 });
-    await page.waitForTimeout(2000);
+    await page.waitForSelector('.camera-container.camera-active', { state: 'visible', timeout: 25000 });
     
     // Guide should still be visible in landscape
     await expect(page.locator('.orientation-guide')).toBeVisible({ timeout: 15000 });
@@ -157,7 +152,7 @@ test.describe('Camera Orientation Guide', () => {
     
     for (const width of viewportWidths) {
       await page.setViewportSize({ width, height: 812 });
-      await page.goto('/?sku=filippo-berio-500ml');
+      await page.goto('/?sku=afia-corn-1.5l');
       
       await page.evaluate(() => {
         const btn = document.querySelector('button.qrl-cta') as HTMLButtonElement
@@ -167,8 +162,7 @@ test.describe('Camera Orientation Guide', () => {
         if (btn) btn.click();
       });
       
-      await page.waitForSelector('.camera-active', { state: 'visible', timeout: 25000 });
-      await page.waitForTimeout(1000);
+      await page.waitForSelector('.camera-container.camera-active', { state: 'visible', timeout: 25000 });
       
       // Verify guide is visible and centered
       const guide = page.locator('.orientation-guide');

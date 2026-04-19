@@ -78,7 +78,7 @@ export function FillConfirmScreen({
   }, [onConfirm, waterMl, t]);
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="fill-confirm flex flex-col h-full bg-white">
       {/* Image + slider row */}
       <div
         className="flex flex-row flex-1 items-stretch gap-3 p-3"

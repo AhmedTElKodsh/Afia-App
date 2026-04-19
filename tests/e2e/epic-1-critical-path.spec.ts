@@ -81,7 +81,8 @@ test('Critical Path: QR -> Privacy -> Scan -> Results', async ({ page }) => {
 
     // ConfidenceBadge uses BEM modifier: confidence-badge--low
     await expect(page.locator('.confidence-badge--low').first()).toBeVisible();
-    await expect(page.locator('button:has-text("Retake")').first()).toBeVisible();
+    // Low confidence results show "Scan Another Bottle" button, not a separate "Retake" button
+    await expect(page.locator('button:has-text("Scan Another Bottle"), .result-scan-again').first()).toBeVisible();
   });
 
   test('Error Handling: should show unknown bottle message for invalid SKU', async ({ page }) => {

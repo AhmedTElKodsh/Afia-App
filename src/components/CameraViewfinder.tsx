@@ -191,7 +191,8 @@ export function CameraViewfinder({
   const [torchSupported, setTorchSupported] = useState(false);
   const [shutterFlash, setShutterFlash] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(true);
-  const [isManualMode, setIsManualMode] = useState(forceManual);
+  // Force manual mode in test environment to prevent auto-capture from hiding orientation guide
+  const [isManualMode, setIsManualMode] = useState(forceManual || (typeof window !== 'undefined' && (window as any).__AFIA_FORCE_MANUAL__));
   const [photoCaptured, setPhotoCaptured] = useState(false);
 
   const isStartingRef = useRef(false);

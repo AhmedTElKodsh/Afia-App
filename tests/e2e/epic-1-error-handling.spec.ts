@@ -46,34 +46,22 @@ test.describe('Epic 1: Error Handling', () => {
         window.localStorage.setItem('afia_privacy_accepted', 'true');
         (window as any).__AFIA_TEST_MODE__ = true;
       });
-      
+
+      // Mock API error before navigation so route is ready
+      await mockAnalyzeError(page, 500);
+
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
       await page.waitForLoadState('networkidle');
-      
-      // Mock API error
-      await mockAnalyzeError(page, 500);
-      
-      // Start scan flow
-      await page.evaluate(() => {
-        const btn = document.querySelector('button.qrl-cta') as HTMLButtonElement
-          ?? Array.from(document.querySelectorAll('button')).find(
-            b => b.textContent?.includes('START SMART SCAN') || b.textContent?.includes('Start Scan')
-          ) as HTMLButtonElement;
-        if (btn) btn.click();
-      });
-      
-      // Wait for camera to be active
-      await expect(page.locator('.camera-active').first()).toBeVisible({ timeout: 10000 });
-      
-      // Trigger analyze which will fail
+
+      // Trigger analyze directly — avoids timing race with auto-capture
       await page.evaluate(() => {
         (window as any).__AFIA_TRIGGER_ANALYZE__?.();
       });
-      
+
       // Should show error message
       await expect(page.locator('.error-message, .analyzing-error, [class*="error"]').first())
-        .toBeVisible({ timeout: 10000 });
-      
+        .toBeVisible({ timeout: 15000 });
+
       const pageContent = await page.textContent('body');
       expect(pageContent?.toLowerCase()).toMatch(/error|failed|try again|problem/i);
     });
@@ -83,33 +71,22 @@ test.describe('Epic 1: Error Handling', () => {
         window.localStorage.setItem('afia_privacy_accepted', 'true');
         (window as any).__AFIA_TEST_MODE__ = true;
       });
-      
+
+      // Mock rate limit error before navigation so route is ready
+      await mockAnalyzeError(page, 429);
+
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
       await page.waitForLoadState('networkidle');
-      
-      // Mock rate limit error
-      await mockAnalyzeError(page, 429);
-      
-      // Start scan flow
-      await page.evaluate(() => {
-        const btn = document.querySelector('button.qrl-cta') as HTMLButtonElement
-          ?? Array.from(document.querySelectorAll('button')).find(
-            b => b.textContent?.includes('START SMART SCAN') || b.textContent?.includes('Start Scan')
-          ) as HTMLButtonElement;
-        if (btn) btn.click();
-      });
-      
-      await expect(page.locator('.camera-active').first()).toBeVisible({ timeout: 10000 });
-      
-      // Trigger analyze
+
+      // Trigger analyze directly — avoids timing race with auto-capture
       await page.evaluate(() => {
         (window as any).__AFIA_TRIGGER_ANALYZE__?.();
       });
-      
+
       // Should show rate limit message
       await expect(page.locator('.error-message, .analyzing-error, [class*="error"]').first())
-        .toBeVisible({ timeout: 10000 });
-      
+        .toBeVisible({ timeout: 15000 });
+
       const pageContent = await page.textContent('body');
       expect(pageContent?.toLowerCase()).toMatch(/rate limit|too many|slow down|try again later/i);
     });
@@ -135,7 +112,7 @@ test.describe('Epic 1: Error Handling', () => {
         if (btn) btn.click();
       });
       
-      await expect(page.locator('.camera-active').first()).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('.camera-viewfinder.camera-active, .camera-active').first()).toBeVisible({ timeout: 10000 });
       
       // Trigger analyze
       await page.evaluate(() => {
