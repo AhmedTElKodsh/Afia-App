@@ -7,6 +7,22 @@ compatibility_flags = ["nodejs_compat"]
 ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173"
 SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co"
 DEBUG_REASONING = "false"
+STAGE = "stage1"
+
+# Stage 1 environment (LLM API only - production)
+[env.stage1]
+name = "afia-worker"
+vars = { STAGE = "stage1", ENABLE_LOCAL_MODEL = "false" }
+
+# Stage 2 environment (Local Model + LLM fallback - testing)
+[env.stage2]
+name = "afia-worker-stage2"
+vars = { STAGE = "stage2", ENABLE_LOCAL_MODEL = "true", LLM_FALLBACK_ENABLED = "true" }
+
+# Stage 3 environment (Local Model only - future production)
+[env.stage3]
+name = "afia-worker-stage3"
+vars = { STAGE = "stage3", ENABLE_LOCAL_MODEL = "true", LLM_FALLBACK_ENABLED = "false" }
 
 # Backblaze B2 (Object Storage) — set actual values in .dev.vars for local dev,
 # or via wrangler secret put / Cloudflare dashboard for production.

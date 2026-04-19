@@ -167,6 +167,8 @@ npm run test:watch
 cd worker && npx tsc --noEmit
 ```
 
+**Note:** Test and hook timeouts are set to 10 seconds (increased from the default 5 seconds) to accommodate CI environment performance variations.
+
 ### Test Coverage
 
 | File                     | Tests | Coverage                                            |

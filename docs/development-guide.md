@@ -126,6 +126,11 @@ cd worker && npm run type-check
 - `HTMLCanvasElement.prototype.getContext` → returns `null`
 - `navigator.mediaDevices.getUserMedia` → resolves with mock stream
 
+**Test Configuration:**
+- Test timeout: 10 seconds (increased from default 5s for CI stability)
+- Hook timeout: 10 seconds (setup/teardown operations)
+- Environment: jsdom (browser API simulation)
+
 ### Writing New Tests
 
 - Place tests in `src/test/` with `.test.ts` suffix
