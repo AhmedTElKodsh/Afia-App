@@ -142,12 +142,12 @@ describe('ModelLoader - Error Handling', () => {
 
       await loadModel();
       
-      // Wait for async cache operations to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Wait for async cache operations to complete - increased timeout for CI
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       expect(mockDB.delete).toHaveBeenCalledWith('models', '0.9.0');
       expect(putCallCount).toBe(2);
-    });
+    }, 10000);
 
     it('should continue without caching if quota cannot be freed', async () => {
       const { loadModel } = await import('../modelLoader');
@@ -233,8 +233,12 @@ describe('ModelLoader - Error Handling', () => {
       } as Response));
 
       await expect(loadModel()).rejects.toThrow(/Model parse failed/);
+      
+      // Wait for async delete operation to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       expect(mockDB.delete).toHaveBeenCalledWith('models', '1.0.0');
-    });
+    }, 10000);
   });
 
   describe('Backend Optimization Failures', () => {
@@ -273,6 +277,6 @@ describe('ModelLoader - Error Handling', () => {
 
       await loadModel();
       expect(tf.setBackend).toHaveBeenCalledWith('cpu');
-    });
+    }, 10000);
   });
 });

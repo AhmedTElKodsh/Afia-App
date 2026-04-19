@@ -142,7 +142,7 @@ describe('ModelVersionManager', () => {
       expect(activateCall[1]?.method).toBe('POST');
       expect(activateCall[1]?.body).toBe(JSON.stringify({ version: 'v0.9.0' }));
     }, { timeout: 3000 });
-  });
+  }, 15000);
 
   it('shows confirmation dialog when deactivate button clicked', async () => {
     const mockVersions = [

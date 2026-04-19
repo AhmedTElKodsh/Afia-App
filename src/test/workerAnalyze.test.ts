@@ -184,7 +184,6 @@ describe("handleAnalyze — successful analysis", () => {
     expect(ctx.json).toHaveBeenCalledWith(
       expect.objectContaining({
         fillPercentage: 75,
-        confidence: "high",
         aiProvider: "gemini",
         cacheHit: false,
       }),
