@@ -12,17 +12,47 @@ STAGE = "stage1"
 # Stage 1 environment (LLM API only - production)
 [env.stage1]
 name = "afia-worker"
-vars = { STAGE = "stage1", ENABLE_LOCAL_MODEL = "false" }
+vars = { STAGE = "stage1", ENABLE_LOCAL_MODEL = "false", ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173", SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co", DEBUG_REASONING = "false" }
+
+[[env.stage1.kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "9dc0bcc958de473199e5ded5701b932a"
+preview_id = "d6d688f5cfd04d73a42c7c979c1f1791"
+
+# [[env.stage1.r2_buckets]]
+# binding = "AFIA_IMAGES"
+# bucket_name = "afia-images"
+# preview_bucket_name = "afia-images-preview"
 
 # Stage 2 environment (Local Model + LLM fallback - testing)
 [env.stage2]
 name = "afia-worker-stage2"
-vars = { STAGE = "stage2", ENABLE_LOCAL_MODEL = "true", LLM_FALLBACK_ENABLED = "true" }
+vars = { STAGE = "stage2", ENABLE_LOCAL_MODEL = "true", LLM_FALLBACK_ENABLED = "true", ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173", SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co", DEBUG_REASONING = "false" }
+
+[[env.stage2.kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "9dc0bcc958de473199e5ded5701b932a"
+preview_id = "d6d688f5cfd04d73a42c7c979c1f1791"
+
+# [[env.stage2.r2_buckets]]
+# binding = "AFIA_IMAGES"
+# bucket_name = "afia-images"
+# preview_bucket_name = "afia-images-preview"
 
 # Stage 3 environment (Local Model only - future production)
 [env.stage3]
 name = "afia-worker-stage3"
-vars = { STAGE = "stage3", ENABLE_LOCAL_MODEL = "true", LLM_FALLBACK_ENABLED = "false" }
+vars = { STAGE = "stage3", ENABLE_LOCAL_MODEL = "true", LLM_FALLBACK_ENABLED = "false", ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173", SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co", DEBUG_REASONING = "false" }
+
+[[env.stage3.kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "9dc0bcc958de473199e5ded5701b932a"
+preview_id = "d6d688f5cfd04d73a42c7c979c1f1791"
+
+# [[env.stage3.r2_buckets]]
+# binding = "AFIA_IMAGES"
+# bucket_name = "afia-images"
+# preview_bucket_name = "afia-images-preview"
 
 # Backblaze B2 (Object Storage) — set actual values in .dev.vars for local dev,
 # or via wrangler secret put / Cloudflare dashboard for production.
@@ -40,10 +70,11 @@ preview_id = "d6d688f5cfd04d73a42c7c979c1f1791"
 
 # Secrets (set via wrangler CLI — never commit actual values):
 
-[[r2_buckets]]
-binding = "AFIA_IMAGES"
-bucket_name = "afia-images"
-preview_bucket_name = "afia-images-preview"
+# R2 Storage - Enable R2 in Cloudflare Dashboard first
+# [[r2_buckets]]
+# binding = "AFIA_IMAGES"
+# bucket_name = "afia-images"
+# preview_bucket_name = "afia-images-preview"
 
 # Gemini API Keys (3 keys for fallback/rotation):
 #   wrangler secret put GEMINI_API_KEY       # Primary key
