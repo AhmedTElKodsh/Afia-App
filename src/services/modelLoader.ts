@@ -524,7 +524,7 @@ async function updateModelInBackground(serverVersion: {
         if (attempts >= MAX_ATTEMPTS) {
           console.warn('[ModelLoader] Forced model disposal after 5s - active inference may be stuck');
           // Log telemetry for stuck inference
-          logError('model_disposal', new Error('Forced disposal - inference timeout'), {
+          logError('model_loading', new Error('Forced disposal - inference timeout'), {
             activeInferenceCount,
             modelVersion: serverVersion.version,
           });

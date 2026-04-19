@@ -275,7 +275,7 @@ function queueForLaterVerification(
     console.error('[AnalysisRouter] Failed to queue scan for later verification:', error);
     // Log to error telemetry for monitoring
     import('./errorTelemetry').then(({ logError }) => {
-      logError('queue_failure', error as Error, {
+      logError('storage', error as Error, {
         sku,
         operation: 'queueForLaterVerification',
       });
