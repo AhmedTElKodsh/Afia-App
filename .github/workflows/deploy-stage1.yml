@@ -83,7 +83,13 @@ jobs:
         run: cd worker && npm ci
 
       - name: Deploy Worker (Stage 1)
-        run: cd worker && npx wrangler deploy --env stage1
+        uses: nick-fields/retry-action@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 5
+          retry_wait_seconds: 30
+          exponential_backoff: true
+          command: cd worker && npx wrangler deploy --env stage1
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -117,7 +123,13 @@ jobs:
         run: rm -f dist/wrangler.json && rm -rf .wrangler/
 
       - name: Deploy to Cloudflare Pages (Stage 1)
-        run: npx wrangler pages deploy dist --project-name=afia-app --branch=master
+        uses: nick-fields/retry-action@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 5
+          retry_wait_seconds: 30
+          exponential_backoff: true
+          command: npx wrangler pages deploy dist --project-name=afia-app --branch=master
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
