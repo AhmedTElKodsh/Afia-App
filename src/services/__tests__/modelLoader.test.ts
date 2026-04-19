@@ -252,16 +252,17 @@ describe('ModelLoader - Error Handling', () => {
       };
       (openDB as any).mockResolvedValue(mockDB);
       
-      let setBackendCallCount = 0;
+      // Mock getBackend to return something other than 'webgl' initially
+      (tf.getBackend as any).mockReturnValue('cpu');
+      
+      // Mock setBackend to fail for webgl, succeed for cpu
       (tf.setBackend as any).mockImplementation((backend: string) => {
-        setBackendCallCount++;
-        if (backend === 'webgl' && setBackendCallCount === 1) {
+        if (backend === 'webgl') {
           return Promise.reject(new Error('WebGL not supported'));
         }
         return Promise.resolve();
       });
       (tf.ready as any).mockResolvedValue(undefined);
-      (tf.getBackend as any).mockReturnValue('cpu');
       
       // Mock successful model download
       global.fetch = vi.fn(() => Promise.resolve({
@@ -276,6 +277,9 @@ describe('ModelLoader - Error Handling', () => {
       (tf.loadLayersModel as any).mockResolvedValue({ predict: vi.fn(), dispose: vi.fn() });
 
       await loadModel();
+      
+      // Should have tried webgl first, then fallen back to cpu
+      expect(tf.setBackend).toHaveBeenCalledWith('webgl');
       expect(tf.setBackend).toHaveBeenCalledWith('cpu');
     }, 10000);
   });
