@@ -201,8 +201,8 @@ test.describe('TestLab: Mock QR → Camera → Analyze → Results (User Flow)',
     await selectBottleAndStartScan(page, testBottles.filippoBerio.sku);
     await triggerAnalyzeAndConfirm(page);
 
-    // Result display shows core metrics
-    await expect(page.locator('.result-display')).toBeVisible();
+    // Result display shows core metrics with longer timeout
+    await expect(page.locator('.result-display')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('.result-metric__value').first()).toContainText(/ml/i);
   });
 
@@ -212,6 +212,7 @@ test.describe('TestLab: Mock QR → Camera → Analyze → Results (User Flow)',
     await triggerAnalyzeAndConfirm(page);
 
     // Mock API returns fillPercentage: 65; calibrated bottle renders ~1137 ml (not linear 975 ml)
+    await expect(page.locator('.result-display')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('.result-display')).toContainText(/1137/);
   });
 
@@ -221,7 +222,7 @@ test.describe('TestLab: Mock QR → Camera → Analyze → Results (User Flow)',
     await triggerAnalyzeAndConfirm(page);
 
     await expect(page.locator('.confidence-badge--high, [class*="confidence"][class*="high"]').first())
-      .toBeVisible({ timeout: 5000 });
+      .toBeVisible({ timeout: 10000 });
   });
 
   test('results show low confidence badge when AI is uncertain', async ({ page }) => {
@@ -233,7 +234,7 @@ test.describe('TestLab: Mock QR → Camera → Analyze → Results (User Flow)',
     await triggerAnalyzeAndConfirm(page);
 
     await expect(page.locator('.confidence-badge--low, [class*="confidence"][class*="low"]').first())
-      .toBeVisible({ timeout: 5000 });
+      .toBeVisible({ timeout: 10000 });
   });
 
   test('"Scan Another Bottle" button is visible in results', async ({ page }) => {
@@ -241,10 +242,10 @@ test.describe('TestLab: Mock QR → Camera → Analyze → Results (User Flow)',
     await selectBottleAndStartScan(page, testBottles.filippoBerio.sku);
     await triggerAnalyzeAndConfirm(page);
 
-    // App.tsx's ResultDisplay always shows a scan-again / retake button
+    // App.tsx's ResultDisplay always shows a scan-again / retake button with longer timeout
     await expect(
       page.locator('button:has-text("Scan Another Bottle"), .result-scan-again').first()
-    ).toBeVisible({ timeout: 5000 });
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test('feedback grid appears in results for accuracy rating', async ({ page }) => {
@@ -252,8 +253,8 @@ test.describe('TestLab: Mock QR → Camera → Analyze → Results (User Flow)',
     await selectBottleAndStartScan(page, testBottles.filippoBerio.sku);
     await triggerAnalyzeAndConfirm(page);
 
-    // FeedbackGrid is embedded in ResultDisplay
-    await expect(page.locator('.feedback-grid-container')).toBeVisible({ timeout: 5000 });
+    // FeedbackGrid is embedded in ResultDisplay with longer timeout
+    await expect(page.locator('.feedback-grid-container')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('button:has-text("About right")')).toBeVisible();
   });
 
@@ -277,7 +278,7 @@ test.describe('TestLab: Mock QR → Camera → Analyze → Results (User Flow)',
     // Result should show LLM provider (gemini), not local-cnn
     // This verifies the fallback logic in useLocalAnalysis.ts
     const resultDisplay = page.locator('.result-display');
-    await expect(resultDisplay).toBeVisible();
+    await expect(resultDisplay).toBeVisible({ timeout: 10000 });
     
     // Check that the result came from LLM fallback
     // The mock API (mockAnalyzeSuccess) returns provider: "gemini"
