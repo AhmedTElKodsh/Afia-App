@@ -20,10 +20,12 @@ export interface Env {
   // Vars
   ALLOWED_ORIGINS: string;
   DEBUG_REASONING?: string; // Set to "true" to include reasoning field in LLM output
+  ENABLE_MOCK_LLM?: string; // Set to "true" to use mock LLM responses for local testing
 }
 
 export interface Variables {
   requestId: string;
+  skipRateLimit?: boolean;
 }
 
 export interface LLMResponse {
