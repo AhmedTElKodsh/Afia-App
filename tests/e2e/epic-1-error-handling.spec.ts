@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { mockAnalyzeError, mockCamera } from './helpers/mockAPI';
 import { testBottles } from './fixtures/testData';
+import { waitForCameraReady } from './helpers/cameraHelpers';
+import { TIMEOUTS } from './constants';
 
 /**
  * Epic 1: Core Scan Experience - Error Handling Tests
@@ -60,7 +62,7 @@ test.describe('Epic 1: Error Handling', () => {
 
       // Should show error message
       await expect(page.locator('.error-message, .analyzing-error, [class*="error"]').first())
-        .toBeVisible({ timeout: 15000 });
+        .toBeVisible({ timeout: TIMEOUTS.API_RESPONSE });
 
       const pageContent = await page.textContent('body');
       expect(pageContent?.toLowerCase()).toMatch(/error|failed|try again|problem/i);
@@ -85,20 +87,24 @@ test.describe('Epic 1: Error Handling', () => {
 
       // Should show rate limit message
       await expect(page.locator('.error-message, .analyzing-error, [class*="error"]').first())
-        .toBeVisible({ timeout: 15000 });
+        .toBeVisible({ timeout: TIMEOUTS.API_RESPONSE });
 
       const pageContent = await page.textContent('body');
       expect(pageContent?.toLowerCase()).toMatch(/rate limit|too many|slow down|try again later/i);
     });
     
     test('should offer retry option after API failure', async ({ page }) => {
+      // Apply camera mock FIRST before any init scripts
+      await mockCamera(page);
+      
       await page.addInitScript(() => {
         window.localStorage.setItem('afia_privacy_accepted', 'true');
         (window as any).__AFIA_TEST_MODE__ = true;
       });
       
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
+      await page.waitForTimeout(300);
       
       // Mock API error
       await mockAnalyzeError(page, 503);
@@ -112,7 +118,8 @@ test.describe('Epic 1: Error Handling', () => {
         if (btn) btn.click();
       });
       
-      await expect(page.locator('.camera-viewfinder.camera-active, .camera-active').first()).toBeVisible({ timeout: 10000 });
+      // Wait for camera to be ready using centralized helper
+      await waitForCameraReady(page);
       
       // Trigger analyze
       await page.evaluate(() => {
@@ -121,12 +128,12 @@ test.describe('Epic 1: Error Handling', () => {
       
       // Should show error with retry option
       await expect(page.locator('.error-message, .analyzing-error, [class*="error"]').first())
-        .toBeVisible({ timeout: 10000 });
+        .toBeVisible({ timeout: TIMEOUTS.VIDEO_READY });
       
       // Should have retry/retake button
       await expect(
         page.locator('button:has-text("Retry"), button:has-text("Try Again"), button:has-text("Retake")').first()
-      ).toBeVisible({ timeout: 5000 });
+      ).toBeVisible({ timeout: TIMEOUTS.ELEMENT_VISIBLE });
     });
   });
   
@@ -219,7 +226,7 @@ test.describe('Epic 1: Error Handling', () => {
       });
 
       // Wait for camera error element (more reliable than fixed timeout)
-      await expect(page.locator('.camera-error')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('.camera-error')).toBeVisible({ timeout: TIMEOUTS.VIDEO_READY });
     }
 
     test('should show permission denied message', async ({ page }) => {

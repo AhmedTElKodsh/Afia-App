@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { mockAnalyzeSuccess, mockAnalyzeLowConfidence, mockCamera } from './helpers/mockAPI';
 import { testBottles } from './fixtures/testData';
+import { waitForVideoReady } from './helpers/cameraHelpers';
+import { TIMEOUTS } from './constants';
 
 import { triggerAnalyzeAndConfirm } from './helpers/flow';
 
@@ -17,14 +19,17 @@ test.describe('Epic 1: Core Scan Experience', () => {
   });
 
   /**
-   * Navigate to the app, click START SMART SCAN, and wait for camera + capture button.
+   * Navigate to the app, click START SMART SCAN, and wait for camera to initialize.
    * Privacy is pre-accepted via addInitScript so QrLanding renders the enabled button directly.
+   * 
+   * The mock camera draws a realistic bottle with Afia brand markers (green band, heart logo)
+   * that should trigger auto-capture when the guidance system detects good quality.
    */
   async function navigateToCamera(page: import('@playwright/test').Page) {
     await page.goto(`/?sku=${testBottles.afiaCorn15L.sku}`);
 
     const startBtn = page.locator('button:has-text("START SMART SCAN"), button:has-text("Start Scan")').first();
-    await expect(startBtn).toBeEnabled({ timeout: 5000 });
+    await expect(startBtn).toBeEnabled({ timeout: TIMEOUTS.ELEMENT_VISIBLE });
 
     // Use evaluate to bypass Playwright's stability check on animated buttons
     await page.evaluate(() => {
@@ -35,14 +40,19 @@ test.describe('Epic 1: Core Scan Experience', () => {
       if (btn) btn.click();
     });
 
-    await expect(page.locator('.camera-active').first()).toBeVisible({ timeout: 15000 });
-    await expect(page.locator('.camera-capture-btn')).toBeEnabled({ timeout: 10000 });
+    // Wait for camera to be active
+    await expect(page.locator('.camera-active').first()).toBeVisible({ timeout: TIMEOUTS.CAMERA_INIT });
+    
+    // Wait for video to be ready (has dimensions)
+    await waitForVideoReady(page);
   }
 
 test('Critical Path: QR -> Privacy -> Scan -> Results', async ({ page }) => {
     await mockAnalyzeSuccess(page);
     await navigateToCamera(page);
 
+    // Auto-capture should trigger within a few seconds when guidance detects good quality
+    // The mock camera draws a realistic bottle with Afia brand markers
     await triggerAnalyzeAndConfirm(page);
 
     await expect(page.locator('.result-metric__value').first()).toContainText(/ml/i);
