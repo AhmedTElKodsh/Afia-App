@@ -62,7 +62,8 @@ export async function handleAnalyze(c: Context<{ Bindings: Env; Variables: Varia
     const rawBase64 = body.imageBase64
       .replace(/^data:image\/[a-z]+;base64,/, "")
       .replace(/[\r\n]/g, "");
-    if (rawBase64.length < 100 || !/^[A-Za-z0-9+/]+=*$/.test(rawBase64)) {
+    // Threshold of 50 chars catches empty/garbage inputs; smallest valid PNG header is ~52 base64 chars
+    if (rawBase64.length < 50 || !/^[A-Za-z0-9+/]+=*$/.test(rawBase64)) {
       return c.json({ error: "Invalid image data", code: "INVALID_REQUEST" }, 400);
     }
 
@@ -185,6 +186,12 @@ export async function handleAnalyze(c: Context<{ Bindings: Env; Variables: Varia
     let aiProvider: ProviderName = "gemini";
     let keyUsed = "gemini_key_1";
 
+    // Check if mock mode is enabled via context variable (set by X-Mock-Mode header)
+    const enableMockLLM = c.get('enableMockLLM') === true || c.env.ENABLE_MOCK_LLM === 'true';
+    if (enableMockLLM) {
+      console.log('[Mock Mode] Mock LLM enabled - using mock LLM responses');
+    }
+
     // Collect all available Gemini API keys
     const geminiKeys = [
       c.env.GEMINI_API_KEY,
@@ -207,8 +214,8 @@ export async function handleAnalyze(c: Context<{ Bindings: Env; Variables: Varia
       { 
         name: "gemini", 
         call: async () => {
-          if (rotatedGeminiKeys.length === 0) throw new Error("No Gemini API keys configured");
-          const { result, keyIndex } = await callGemini(imageBase64, effectiveBottle, rotatedGeminiKeys, debugReasoning);
+          if (!enableMockLLM && rotatedGeminiKeys.length === 0) throw new Error("No Gemini API keys configured");
+          const { result, keyIndex } = await callGemini(imageBase64, effectiveBottle, rotatedGeminiKeys, debugReasoning, enableMockLLM);
           // Map back to original index for accurate quota tracking
           const actualIndex = (startIndex + keyIndex) % geminiKeys.length;
           return { result, keyName: `gemini_key_${actualIndex + 1}` };
@@ -217,24 +224,24 @@ export async function handleAnalyze(c: Context<{ Bindings: Env; Variables: Varia
       { 
         name: "groq", 
         call: async () => { 
-          if (!c.env.GROQ_API_KEY) throw new Error("No Groq API key configured"); 
-          const result = await callGroq(imageBase64, effectiveBottle, c.env.GROQ_API_KEY, debugReasoning);
+          if (!enableMockLLM && !c.env.GROQ_API_KEY) throw new Error("No Groq API key configured"); 
+          const result = await callGroq(imageBase64, effectiveBottle, c.env.GROQ_API_KEY || '', debugReasoning, enableMockLLM);
           return { result, keyName: "groq" };
         } 
       },
       { 
         name: "openrouter", 
         call: async () => { 
-          if (!c.env.OPENROUTER_API_KEY) throw new Error("No OpenRouter API key configured"); 
-          const result = await callOpenRouter(imageBase64, effectiveBottle, c.env.OPENROUTER_API_KEY, debugReasoning);
+          if (!enableMockLLM && !c.env.OPENROUTER_API_KEY) throw new Error("No OpenRouter API key configured"); 
+          const result = await callOpenRouter(imageBase64, effectiveBottle, c.env.OPENROUTER_API_KEY || '', debugReasoning, enableMockLLM);
           return { result, keyName: "openrouter" };
         } 
       },
       { 
         name: "mistral", 
         call: async () => { 
-          if (!c.env.MISTRAL_API_KEY) throw new Error("No Mistral API key configured"); 
-          const result = await callMistral(imageBase64, effectiveBottle, c.env.MISTRAL_API_KEY, debugReasoning);
+          if (!enableMockLLM && !c.env.MISTRAL_API_KEY) throw new Error("No Mistral API key configured"); 
+          const result = await callMistral(imageBase64, effectiveBottle, c.env.MISTRAL_API_KEY || '', debugReasoning, enableMockLLM);
           return { result, keyName: "mistral" };
         } 
       },

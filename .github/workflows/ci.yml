@@ -1,0 +1,140 @@
+name: CI
+
+on:
+  push:
+    branches: [master, local-model]
+  pull_request:
+    branches: [master, local-model]
+
+# NOTE: Cloudflare deployment is intentionally NOT in this workflow.
+# Deploy via: .github/workflows/deploy-manual-trigger.yml.template (copy → .yml, then use GitHub Actions UI)
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test
+
+      - name: Upload unit test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: test-results/
+          retention-days: 7
+
+  integration-tests:
+    name: Integration Tests (Real LLM APIs)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Install worker dependencies
+        run: cd worker && npm ci
+
+      - name: Create worker dev vars with real API keys
+        run: |
+          cat > worker/.dev.vars << 'EOF'
+          ADMIN_PASSWORD=${{ secrets.VITE_ADMIN_PASSWORD }}
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY2=${{ secrets.GEMINI_API_KEY2 }}
+          GEMINI_API_KEY3=${{ secrets.GEMINI_API_KEY3 }}
+          GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
+          EOF
+
+      - name: Start worker in background
+        run: cd worker && npx wrangler dev --port 8787 --local &
+
+      - name: Wait for worker to be ready
+        run: |
+          echo "Waiting for worker at 127.0.0.1:8787..."
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8787/health > /dev/null 2>&1; then
+              echo "Worker ready."
+              exit 0
+            fi
+            echo "Attempt $i/30 — retrying in 2s..."
+            sleep 2
+          done
+          echo "Worker failed to start in 60s"
+          exit 1
+
+      - name: Run integration tests
+        run: npm run test:integration
+        env:
+          ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD }}
+
+      - name: Upload integration test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: test-results/
+          retention-days: 7
+
+  e2e-tests:
+    name: E2E Tests (Stage 1)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build for E2E (Stage 1 — LLM API Only)
+        run: npm run build
+        env:
+          VITE_PROXY_URL: ${{ secrets.CLOUDFLARE_WORKER_URL || 'https://afia-worker.savona.workers.dev' }}
+          VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD }}
+          VITE_STAGE: 'stage1'
+          VITE_ENABLE_LOCAL_MODEL: 'false'
+
+      - name: Run E2E tests
+        run: npx playwright test tests/e2e/
+        env:
+          CI: true
+          VITE_STAGE: 'stage1'
+
+      - name: Upload E2E test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
