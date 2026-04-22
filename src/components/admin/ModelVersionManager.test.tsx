@@ -69,7 +69,7 @@ describe('ModelVersionManager', () => {
     expect(screen.getByText('v1.0.0')).toBeInTheDocument();
     expect(screen.getByText('v0.9.0')).toBeInTheDocument();
     expect(screen.getByText('5.20')).toBeInTheDocument(); // MAE as percentage
-    expect(screen.getByText('85.0%')).toBeInTheDocument(); // Val accuracy
+    expect(screen.getByText('85%')).toBeInTheDocument(); // Val accuracy (maximumFractionDigits: 1)
     expect(screen.getByText('500')).toBeInTheDocument(); // Training samples
     
     // Verify active/inactive badges

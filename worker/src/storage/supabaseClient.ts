@@ -1,5 +1,6 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { SupabaseClient } from "@supabase/supabase-js";
 import type { Env } from "../types";
+import { getSupabaseClient } from "../db/supabase";
 
 export interface ScanMetadata {
   scanId: string;
@@ -40,18 +41,37 @@ export interface FeedbackData {
   errorCategory?: "none" | "too_big" | "too_small" | "occlusion" | "lighting";
 }
 
-let supabaseInstance: SupabaseClient | null = null;
-
 export function getSupabase(env: Env): SupabaseClient {
-  if (!supabaseInstance) {
-    const key = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
-    if (!env.SUPABASE_URL) throw new Error("SUPABASE_URL not configured");
-    if (!key) throw new Error("Supabase API key not configured (SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY required)");
-    supabaseInstance = createClient(env.SUPABASE_URL, key, {
-      auth: { persistSession: false }
-    });
+  return getSupabaseClient(env);
+}
+
+/**
+ * Retry helper with exponential backoff and jitter
+ */
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  maxRetries = 3,
+  baseDelayMs = 500
+): Promise<T> {
+  let lastError: any;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      // Add timeout to prevent hanging requests
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Supabase operation timed out")), 5000)
+      );
+      return await Promise.race([operation(), timeoutPromise]) as T;
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxRetries) {
+        // Exponential backoff: 500ms, 1000ms, 2000ms... with ±20% jitter
+        const delay = baseDelayMs * Math.pow(2, attempt) * (0.8 + Math.random() * 0.4);
+        console.warn(`[Supabase] Operation failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${Math.round(delay)}ms...`, error);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
   }
-  return supabaseInstance;
+  throw lastError;
 }
 
 /**
@@ -81,51 +101,50 @@ export async function storeScan(
 
   // 2. Upload Image to 'scans' bucket
   const imagePath = `raw/${metadata.sku}/${new Date().toISOString().split('T')[0]}/${scanId}.jpg`;
-  const { error: storageError } = await supabase.storage
-    .from("scans")
-    .upload(imagePath, binaryData, {
-      contentType: "image/jpeg",
-      upsert: true,
-    });
+  
+  await withRetry(async () => {
+    const { error: storageError } = await supabase.storage
+      .from("scans")
+      .upload(imagePath, binaryData, {
+        contentType: "image/jpeg",
+        upsert: true,
+      });
 
-  if (storageError) {
-    console.error("Supabase Storage Error:", storageError);
-    throw storageError;
-  }
+    if (storageError) throw storageError;
+  });
 
   // 3. Insert metadata into 'scans' table (Story 7.4: Updated schema)
-  const { error: dbError } = await supabase.from("scans").insert([
-    {
-      id: scanId,
-      sku: metadata.sku,
-      image_url: imagePath,
-      // Story 7.4: New local model fields
-      local_model_result: metadata.localModelResult?.fillPercentage ?? null,
-      local_model_confidence: metadata.localModelResult?.confidence ?? null,
-      local_model_version: metadata.localModelResult?.modelVersion ?? null,
-      local_model_inference_ms: metadata.localModelResult?.inferenceTimeMs ?? null,
-      llm_fallback_used: metadata.llmFallbackUsed ?? false,
-      // Legacy field for backward compatibility
-      local_model_prediction: metadata.localModelPrediction || {},
-      llm_fallback_prediction: {
-        percentage: metadata.fillPercentage,
-        confidence: metadata.confidence,
-        provider: metadata.aiProvider,
-        reasoning: metadata.reasoning
+  await withRetry(async () => {
+    const { error: dbError } = await supabase.from("scans").insert([
+      {
+        id: scanId,
+        sku: metadata.sku,
+        image_url: imagePath,
+        // Story 7.4: New local model fields
+        local_model_result: metadata.localModelResult?.fillPercentage ?? null,
+        local_model_confidence: metadata.localModelResult?.confidence ?? null,
+        local_model_version: metadata.localModelResult?.modelVersion ?? null,
+        local_model_inference_ms: metadata.localModelResult?.inferenceTimeMs ?? null,
+        llm_fallback_used: metadata.llmFallbackUsed ?? false,
+        // Legacy field for backward compatibility
+        local_model_prediction: metadata.localModelPrediction || {},
+        llm_fallback_prediction: {
+          percentage: metadata.fillPercentage,
+          confidence: metadata.confidence,
+          provider: metadata.aiProvider,
+          reasoning: metadata.reasoning
+        },
+        client_metadata: {
+          latency_ms: metadata.latencyMs,
+          image_quality_issues: metadata.imageQualityIssues,
+          is_contribution: metadata.isContribution ?? false,
+          timestamp: metadata.timestamp
+        }
       },
-      client_metadata: {
-        latency_ms: metadata.latencyMs,
-        image_quality_issues: metadata.imageQualityIssues,
-        is_contribution: metadata.isContribution ?? false,
-        timestamp: metadata.timestamp
-      }
-    },
-  ]);
+    ]);
 
-  if (dbError) {
-    console.error("Supabase Database Error:", dbError);
-    throw dbError;
-  }
+    if (dbError) throw dbError;
+  });
 }
 
 /**
@@ -138,21 +157,20 @@ export async function updateScanWithFeedback(
 ): Promise<void> {
   const supabase = getSupabase(env);
 
-  // Update correction table (Directive B Schema)
-  const { error: dbError } = await supabase
-    .from("admin_corrections")
-    .upsert({
-      scan_id: scanId,
-      actual_fill_percentage: feedback.correctedFillPercentage,
-      error_category: feedback.errorCategory || 'none',
-      is_training_eligible: feedback.trainingEligible,
-      reviewed_at: feedback.feedbackTimestamp
-    });
+  await withRetry(async () => {
+    // Update correction table (Directive B Schema)
+    const { error: dbError } = await supabase
+      .from("admin_corrections")
+      .upsert({
+        scan_id: scanId,
+        actual_fill_percentage: feedback.correctedFillPercentage,
+        error_category: feedback.errorCategory || 'none',
+        is_training_eligible: feedback.trainingEligible,
+        reviewed_at: feedback.feedbackTimestamp
+      });
 
-  if (dbError) {
-    console.error("Supabase Feedback Update Error:", dbError);
-    throw dbError;
-  }
+    if (dbError) throw dbError;
+  });
 }
 
 /**
@@ -165,16 +183,18 @@ export async function getGlobalScans(
 ): Promise<ScanMetadata[]> {
   const supabase = getSupabase(env);
 
-  const { data, error } = await supabase
-    .from("scans")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .range(offset, offset + limit - 1);
+  // We don't necessarily need to retry GET requests for the dashboard as much as state-changing ones,
+  // but let's add one retry for reliability.
+  const data = await withRetry(async () => {
+    const { data, error } = await supabase
+      .from("scans")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
 
-  if (error) {
-    console.error("Supabase Fetch Scans Error:", error);
-    throw error;
-  }
+    if (error) throw error;
+    return data;
+  }, 1);
 
   return (data || []).map((row: any) => ({
     scanId: row.id,
@@ -228,24 +248,23 @@ export async function upsertTrainingSample(
   }
   const supabase = getSupabase(env);
 
-  const { error } = await supabase
-    .from("training_samples")
-    .upsert(
-      {
-        scan_id: data.scanId,
-        image_url: data.imageUrl,
-        sku: data.sku,
-        confirmed_fill_pct: data.confirmedFillPct,
-        label_source: data.labelSource,
-        label_confidence: data.labelConfidence,
-        augmented: data.augmented,
-        split: data.split,
-      },
-      { onConflict: "scan_id" }
-    );
+  await withRetry(async () => {
+    const { error } = await supabase
+      .from("training_samples")
+      .upsert(
+        {
+          scan_id: data.scanId,
+          image_url: data.imageUrl,
+          sku: data.sku,
+          confirmed_fill_pct: data.confirmedFillPct,
+          label_source: data.labelSource,
+          label_confidence: data.labelConfidence,
+          augmented: data.augmented,
+          split: data.split,
+        },
+        { onConflict: "scan_id" }
+      );
 
-  if (error) {
-    console.error("Supabase Training Sample Upsert Error:", error);
-    throw error;
-  }
+    if (error) throw error;
+  });
 }

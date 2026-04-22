@@ -3,6 +3,7 @@ import type { BottleEntry } from "../bottleRegistry.ts";
 import { parseLLMResponse } from "./parseLLMResponse.ts";
 import { buildOpenAIFewShotParts } from "../referenceFrames.ts";
 import { buildAnalysisPrompt } from "./buildAnalysisPrompt.ts";
+import { mockMistralResponse } from "../mocks/llmMock.ts";
 
 const MISTRAL_URL = "https://api.mistral.ai/v1/chat/completions";
 // pixtral-12b-2409 is Mistral's vision-capable model
@@ -12,8 +13,14 @@ export async function callMistral(
   imageBase64: string,
   bottle: BottleEntry,
   apiKey: string,
-  debugReasoning = false
+  debugReasoning = false,
+  enableMock = false
 ): Promise<LLMResponse> {
+  // Check for mock mode
+  if (enableMock) {
+    console.log('[Mock Mode] Using mock Mistral response');
+    return mockMistralResponse(imageBase64, bottle.sku);
+  }
   const userText = `Bottle: ${bottle.name} (${bottle.sku}), ${bottle.totalVolumeMl}ml total. Return JSON fill estimate.`;
 
   const requestBody = {

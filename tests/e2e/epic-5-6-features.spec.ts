@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { testBottles } from './fixtures/testData';
+import { mockWorkerUtils } from './helpers/mockAPI';
 
 /**
  * Epics 5 & 6: Admin Dashboard & Scan History
@@ -10,6 +11,7 @@ import { testBottles } from './fixtures/testData';
 test.describe('Epic 5 & 6: Admin & History Features', () => {
 
   test.beforeEach(async ({ page }) => {
+    await mockWorkerUtils(page);
     // Ensure we are in a desktop-like viewport to avoid mobile menu issues
     await page.setViewportSize({ width: 1280, height: 800 });
   });
@@ -46,12 +48,27 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
       // Ensure we are NOT logged in
       await page.evaluate(() => window.sessionStorage.removeItem('afia_admin_session'));
       
+      // Mock 401 Unauthorized for the auth endpoint
+      await page.route(/.*\/admin\/auth/, async (route) => {
+        await route.fulfill({
+          status: 401,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: 'Invalid password' })
+        });
+      });
+      
       await page.fill('input[type="password"]', 'definitely-wrong-password-12345');
+      
+      // Wait for the auth request to complete
+      const responsePromise = page.waitForResponse(response => 
+        response.url().includes('/admin/auth') && response.status() === 401
+      );
       await page.click('button[type="submit"]');
+      await responsePromise;
       
       // Check for error message or alert
       const errorMsg = page.locator('.error-message, [role="alert"]');
-      await expect(errorMsg.first()).toBeVisible();
+      await expect(errorMsg.first()).toBeVisible({ timeout: 5000 });
     });
   });
 

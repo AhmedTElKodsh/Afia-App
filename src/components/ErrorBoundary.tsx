@@ -1,4 +1,5 @@
 import { Component, type ReactNode, type ErrorInfo } from "react";
+import { withTranslation, type WithTranslation } from "react-i18next";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import "./ErrorBoundary.css";
 
@@ -7,16 +8,9 @@ import "./ErrorBoundary.css";
  *
  * Catches JavaScript errors anywhere in the component tree,
  * logs those errors, and displays fallback UI instead of crashing.
- *
- * Features:
- * - Graceful error handling
- * - Error logging to console
- * - User-friendly fallback UI
- * - Retry mechanism
- * - Premium glassmorphic design
  */
 
-interface Props {
+interface Props extends WithTranslation {
   children: ReactNode;
   fallback?: ReactNode;
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
@@ -28,7 +22,7 @@ interface State {
   errorInfo: ErrorInfo | null;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
+class ErrorBoundaryClass extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -43,12 +37,8 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error to console (in production, send to error tracking service)
     console.error("ErrorBoundary caught an error:", error, errorInfo);
-
-    // Call custom error handler if provided
     this.props.onError?.(error, errorInfo);
-
     this.setState({ errorInfo });
   }
 
@@ -61,29 +51,30 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   render() {
+    const { t, i18n } = this.props;
+    const isRTL = i18n.language === 'ar';
+
     if (this.state.hasError) {
-      // Use custom fallback if provided
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
-      // Default error UI
       return (
-        <div className="error-boundary-root">
+        <div className="error-boundary-root" dir={isRTL ? 'rtl' : 'ltr'}>
           <div className="error-boundary-card card card-compact">
             <div className="error-boundary-icon">
               <AlertTriangle size={48} strokeWidth={1.5} />
             </div>
 
-            <h2 className="error-boundary-title">Something went wrong</h2>
+            <h2 className="error-boundary-title">{t('errorBoundary.title')}</h2>
 
             <p className="error-boundary-description">
-              We encountered an unexpected error. Don't worry, your data is safe.
+              {t('errorBoundary.description')}
             </p>
 
             {import.meta.env.DEV && this.state.error && (
               <details className="error-boundary-details">
-                <summary>Error Details (Development)</summary>
+                <summary>{t('errorBoundary.details')}</summary>
                 <pre className="error-boundary-stack">
                   {this.state.error.toString()}
                   {this.state.errorInfo?.componentStack}
@@ -97,7 +88,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 onClick={this.handleRetry}
               >
                 <RefreshCw size={18} strokeWidth={2} />
-                Try Again
+                {t('errorBoundary.retry')}
               </button>
             </div>
           </div>
@@ -108,3 +99,6 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+
+export const ErrorBoundary = withTranslation()(ErrorBoundaryClass);
+

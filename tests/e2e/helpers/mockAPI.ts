@@ -6,7 +6,7 @@ import { Page } from '@playwright/test';
  */
 export async function mockAnalyzeSuccess(page: Page) {
   // Mock both relative and absolute proxy URLs
-  const analyzePattern = /.*\/analyze/;
+  const analyzePattern = /:8787\/analyze$/;
   await page.route(analyzePattern, async (route) => {
     await route.fulfill({
       status: 200,
@@ -27,7 +27,7 @@ export async function mockAnalyzeSuccess(page: Page) {
  * Mock the /analyze API endpoint with low confidence response
  */
 export async function mockAnalyzeLowConfidence(page: Page) {
-  await page.route(/.*\/analyze/, async (route) => {
+  await page.route(/:8787\/analyze$/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -48,7 +48,7 @@ export async function mockAnalyzeLowConfidence(page: Page) {
  * Mock the /analyze API endpoint with error response
  */
 export async function mockAnalyzeError(page: Page, statusCode = 500) {
-  await page.route(/.*\/analyze/, async (route) => {
+  await page.route(/:8787\/analyze$/, async (route) => {
     await route.fulfill({
       status: statusCode,
       contentType: 'application/json',
@@ -66,8 +66,8 @@ export async function mockAnalyzeError(page: Page, statusCode = 500) {
  * Vite dev-server module requests like src/config/feedback.ts (port 5173).
  */
 export async function mockFeedbackSuccess(page: Page) {
-  // Match only the Worker API server URL, not Vite dev-server module URLs
-  await page.route(/localhost:8787\/feedback/, async (route) => {
+  // Match any origin's /feedback endpoint
+  await page.route(/:8787\/feedback$/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -77,6 +77,109 @@ export async function mockFeedbackSuccess(page: Page) {
       }),
     });
   });
+}
+
+/**
+ * Mock common Worker utility endpoints
+ */
+export async function mockWorkerUtils(page: Page) {
+  // Mock health check
+  await page.route(/:8787\/health$/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: {
+        'x-requestid': 'test-request-id-12345',
+      },
+      body: JSON.stringify({ status: 'ok', version: '0.1.0' }),
+    });
+  });
+
+  // Mock admin auth
+  await page.route(/:8787\/admin\/auth$/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, token: 'fake-admin-token' }),
+    });
+  });
+
+  // Mock generic 404 for unknown worker endpoints
+  await page.route(/localhost:8787\/(?!analyze|feedback|health|admin).*/, async (route) => {
+    await route.fulfill({
+      status: 404,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'Not found' }),
+    });
+  });
+
+  // Mock model loading from R2
+  await page.route(/.*pub-models.afia.app\/models\/.*/, async (route) => {
+    const url = route.request().url();
+    if (url.endsWith('model.json')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          modelTopology: {
+            class_name: 'Sequential',
+            config: {
+              name: 'sequential',
+              layers: [
+                {
+                  class_name: 'Dense',
+                  config: {
+                    units: 1,
+                    activation: 'linear',
+                    use_bias: true,
+                    kernel_initializer: { class_name: 'GlorotUniform', config: { seed: null } },
+                    bias_initializer: { class_name: 'Zeros', config: {} },
+                    name: 'dense',
+                    trainable: true,
+                    batch_input_shape: [null, 10]
+                  }
+                }
+              ]
+            },
+            keras_version: '2.4.0',
+            backend: 'tensorflow'
+          },
+          format: 'layers-model',
+          generatedBy: 'keras-v2.4.0',
+          convertedBy: 'TensorFlow.js converter v3.6.0',
+          weightsManifest: [
+            {
+              paths: ['weights.bin'],
+              weights: [
+                { name: 'dense/kernel', shape: [10, 1], dtype: 'float32' },
+                { name: 'dense/bias', shape: [1], dtype: 'float32' }
+              ]
+            }
+          ]
+        }),
+      });
+    } else if (url.endsWith('.bin')) {
+      // 10*4 + 1*4 = 44 bytes for float32 weights
+      const buffer = Buffer.alloc(44);
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/octet-stream',
+        body: buffer,
+      });
+    } else {
+      await route.continue();
+    }
+  });
+}
+
+/**
+ * Combined helper to setup all default mocks for a standard scan test
+ */
+export async function setupDefaultMocks(page: Page) {
+  await mockCamera(page);
+  await mockAnalyzeSuccess(page);
+  await mockFeedbackSuccess(page);
+  await mockWorkerUtils(page);
 }
 
 /**

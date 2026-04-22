@@ -539,9 +539,32 @@
   50% { opacity: 0.60; }
 }
 
-/* Glow when ready */
+/* Smooth color transitions for outline */
+.bottle-guide-svg path,
+.bottle-guide-svg rect,
+.bottle-guide-svg line,
+.bottle-guide-svg circle {
+  transition: stroke 0.4s ease-in-out, stroke-width 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+/* Glow when ready - GREEN state */
 .bottle-guide-wrapper.ready .bottle-guide-svg {
-  filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.55));
+  filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.7)) drop-shadow(0 0 20px rgba(16, 185, 129, 0.4));
+  animation: bottleGuideReadyPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes bottleGuideReadyPulse {
+  0%, 100% { 
+    filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.7)) drop-shadow(0 0 20px rgba(16, 185, 129, 0.4));
+  }
+  50% { 
+    filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.9)) drop-shadow(0 0 28px rgba(16, 185, 129, 0.6));
+  }
+}
+
+/* Additional pulse animation class for ready state */
+.bottle-guide-wrapper.bottle-guide-pulse .bottle-guide-svg {
+  animation: bottleGuideReadyPulse 1.5s ease-in-out infinite;
 }
 
 /* Distance hint text inside the guide wrapper.
@@ -550,14 +573,48 @@
 .bottle-guide-hint {
   position: absolute;
   bottom: 100%;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  color: #f59e0b;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
   white-space: nowrap;
+  padding: 4px 12px;
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  transition: all 0.3s ease-in-out;
+}
+
+/* Hint color states */
+.bottle-guide-hint.hint-align {
+  color: #ef4444; /* RED - not detected */
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.bottle-guide-hint.hint-move-closer,
+.bottle-guide-hint.hint-move-back {
+  color: #f59e0b; /* YELLOW - adjust distance */
+  background: rgba(245, 158, 11, 0.15);
+}
+
+.bottle-guide-hint.hint-ready {
+  color: #10b981; /* GREEN - ready */
+  background: rgba(16, 185, 129, 0.2);
+  font-weight: 700;
+  animation: hintReadyPulse 1s ease-in-out infinite;
+}
+
+@keyframes hintReadyPulse {
+  0%, 100% { 
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
+  50% { 
+    transform: translateX(-50%) scale(1.05);
+    opacity: 0.9;
+  }
+}
   letter-spacing: 0.06em;
   text-transform: uppercase;
   pointer-events: none;

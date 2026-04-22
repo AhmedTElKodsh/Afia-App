@@ -29,6 +29,30 @@ export function mockGeminiResponse(imageBase64: string, sku: string): MockLLMRes
       reasoning: 'Mock: Detected Afia corn oil 1.5L bottle at 75% fill level',
       red_line_y_normalized: 0.25,
     },
+    'afia-corn-oil-1.8l': {
+      fillPercentage: 75,
+      confidence: 'high',
+      reasoning: 'Mock: Detected Afia corn oil bottle at 75% fill level',
+      red_line_y_normalized: 0.25,
+    },
+    'afia-sunflower-oil-1.8l': {
+      fillPercentage: 50,
+      confidence: 'high',
+      reasoning: 'Mock: Detected Afia sunflower oil bottle at 50% fill level',
+      red_line_y_normalized: 0.50,
+    },
+    'afia-vegetable-oil-1.8l': {
+      fillPercentage: 90,
+      confidence: 'high',
+      reasoning: 'Mock: Detected Afia vegetable oil bottle at 90% fill level',
+      red_line_y_normalized: 0.10,
+    },
+    'afia-corn-oil-750ml': {
+      fillPercentage: 30,
+      confidence: 'medium',
+      reasoning: 'Mock: Detected Afia corn oil 750ml bottle at 30% fill level',
+      red_line_y_normalized: 0.70,
+    },
     'afia-corn-2.5l': {
       fillPercentage: 50,
       confidence: 'high',

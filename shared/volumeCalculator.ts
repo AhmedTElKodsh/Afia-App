@@ -12,10 +12,12 @@ function interpolateCalibration(
   points: Array<{ fillHeightPct: number; remainingMl: number }>
 ): number {
   if (points.length === 0) return 0;
+  if (points.length === 1) return points[0].remainingMl;
   
-  // Ensure points are sorted by fillHeightPct ascending
+  // M7: Ensure points are sorted by fillHeightPct ascending without mutating original
   const sortedPoints = [...points].sort((a, b) => a.fillHeightPct - b.fillHeightPct);
   
+  // Boundary checks
   if (fillHeightPct <= sortedPoints[0].fillHeightPct) return sortedPoints[0].remainingMl;
   const last = sortedPoints[sortedPoints.length - 1];
   if (fillHeightPct >= last.fillHeightPct) return last.remainingMl;
@@ -25,7 +27,8 @@ function interpolateCalibration(
     const hi = sortedPoints[i];
     if (fillHeightPct <= hi.fillHeightPct) {
       const denom = hi.fillHeightPct - lo.fillHeightPct;
-      if (denom === 0) return lo.remainingMl;
+      // M8: Guard against divide by zero (redundant due to boundary check + sort, but safe)
+      if (denom <= 0) return lo.remainingMl;
       const t = (fillHeightPct - lo.fillHeightPct) / denom;
       return lo.remainingMl + t * (hi.remainingMl - lo.remainingMl);
     }

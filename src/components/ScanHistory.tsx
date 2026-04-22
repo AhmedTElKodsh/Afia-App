@@ -68,14 +68,14 @@ function VirtualizedScanRow({ index, style, scans, onScanClick }: VirtualizedSca
         }
       }}
       tabIndex={0}
-      aria-label={`${scan.bottleName}, ${formatDate(scan.timestamp)}, ${t('history.fillRemainingSr', { percent: scan.fillPercentage })}`}
+      aria-label={`${t(`bottles.${scan.sku}`, { defaultValue: scan.bottleName })}, ${formatDate(scan.timestamp)}, ${t('history.fillRemainingSr', { percent: scan.fillPercentage })}`}
     >
       <div className="scan-history-item">
         <div className="scan-history-item__icon">
           <History size={20} />
         </div>
         <div className="scan-history-item__content">
-          <p className="scan-history-item__title">{scan.bottleName}</p>
+          <p className="scan-history-item__title">{t(`bottles.${scan.sku}`, { defaultValue: scan.bottleName })}</p>
           <p className="scan-history-item__meta">
             {t('history.fillLevelMeta', { date: formatDate(scan.timestamp), percent: scan.fillPercentage })}
           </p>
@@ -369,7 +369,7 @@ function ScanDetailModal({ scan, onClose, onDelete }: ScanDetailModalProps) {
         <div className="modal-body">
           <div className="detail-section">
             <h4>{t('history.bottle')}</h4>
-            <p className="detail-value">{scan.bottleName}</p>
+            <p className="detail-value">{t(`bottles.${scan.sku}`, { defaultValue: scan.bottleName })}</p>
             <p className="detail-meta">{t('history.skuLabel', { sku: scan.sku })}</p>
           </div>
 

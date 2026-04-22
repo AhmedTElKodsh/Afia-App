@@ -8,6 +8,7 @@
 
 import { useState, useEffect } from 'react';
 import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 interface ModelVersion {
   version: string;
@@ -24,11 +25,13 @@ interface ModelVersionManagerProps {
 }
 
 export function ModelVersionManager({ t }: ModelVersionManagerProps) {
+  const { i18n } = useTranslation();
   const [versions, setVersions] = useState<ModelVersion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const apiUrl = import.meta.env.VITE_API_URL || 'https://api.afia.app';
+  const locale = i18n.language === 'ar' ? 'ar-SA' : 'en-US';
 
   const getAdminToken = (): string => {
     return sessionStorage.getItem('afia_admin_session') || '';
@@ -44,7 +47,7 @@ export function ModelVersionManager({ t }: ModelVersionManagerProps) {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch versions: ${response.status}`);
+        throw new Error(t('admin.modelVersion.fetchError', { defaultValue: `Failed to fetch versions: ${response.status}`, status: response.status }));
       }
 
       const data = await response.json();
@@ -52,7 +55,7 @@ export function ModelVersionManager({ t }: ModelVersionManagerProps) {
       setError(null);
     } catch (err) {
       console.error('[ModelVersionManager] Failed to fetch versions:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load model versions');
+      setError(err instanceof Error ? err.message : t('admin.modelVersion.loadError', { defaultValue: 'Failed to load model versions' }));
     } finally {
       setLoading(false);
     }
@@ -74,7 +77,7 @@ export function ModelVersionManager({ t }: ModelVersionManagerProps) {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to activate version: ${response.status}`);
+        throw new Error(t('admin.modelVersion.activateErrorStatus', { defaultValue: `Failed to activate version: ${response.status}`, status: response.status }));
       }
 
       // Refresh the version list
@@ -108,7 +111,7 @@ export function ModelVersionManager({ t }: ModelVersionManagerProps) {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to deactivate version: ${response.status}`);
+        throw new Error(t('admin.modelVersion.deactivateErrorStatus', { defaultValue: `Failed to deactivate version: ${response.status}`, status: response.status }));
       }
 
       // Refresh the version list
@@ -142,7 +145,7 @@ export function ModelVersionManager({ t }: ModelVersionManagerProps) {
   }
 
   return (
-    <div className="model-version-manager">
+    <div className="model-version-manager" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
       <h2>{t('admin.modelVersion.managerTitle', 'Model Versions')}</h2>
       <table className="model-version-table">
         <thead>
@@ -160,10 +163,10 @@ export function ModelVersionManager({ t }: ModelVersionManagerProps) {
           {versions.map((v) => (
             <tr key={v.version}>
               <td>{v.version}</td>
-              <td>{(v.mae * 100).toFixed(2)}</td>
-              <td>{(v.val_accuracy * 100).toFixed(1)}%</td>
-              <td>{v.training_samples_count}</td>
-              <td>{new Date(v.deployed_at).toLocaleDateString()}</td>
+              <td>{(v.mae * 100).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              <td>{(v.val_accuracy * 100).toLocaleString(locale, { maximumFractionDigits: 1 })}%</td>
+              <td>{v.training_samples_count.toLocaleString(locale)}</td>
+              <td>{new Date(v.deployed_at).toLocaleDateString(locale)}</td>
               <td>
                 {v.is_active ? (
                   <span className="badge badge-success">

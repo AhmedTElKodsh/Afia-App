@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { AnnotatedImagePanel } from "./AnnotatedImagePanel.tsx";
 import { VerticalStepSlider } from "./VerticalStepSlider.tsx";
+import { CupVisualization } from "./CupVisualization.tsx";
 import { fillMlToPixelY } from "../../utils/fillMlToPixelY.ts";
 import "./FillConfirmScreen.css";
 
@@ -84,16 +85,19 @@ export function FillConfirmScreen({
         className="flex flex-row flex-1 items-stretch gap-3 p-3"
         dir={document.documentElement.dir}  // Inherits RTL/LTR from global i18n config
       >
-        <VerticalStepSlider
-          waterMl={waterMl}
-          min={55}
-          step={55}
-          max={bottleCapacityMl}
-          height={containerH || 280}
-          onChange={setWaterMl}
-          ariaLabel={t("fillConfirm.sliderLabel", "Adjust fill level")}
-          ariaUnitLabel={t("common.ml", "ml")}
-        />
+        <div className="flex flex-col items-center gap-2">
+          <VerticalStepSlider
+            waterMl={waterMl}
+            min={55}
+            step={55}
+            max={bottleCapacityMl}
+            height={containerH || 280}
+            onChange={setWaterMl}
+            ariaLabel={t("fillConfirm.sliderLabel", "Adjust fill level")}
+            ariaUnitLabel={t("common.ml", "ml")}
+          />
+          <CupVisualization waterMl={waterMl} />
+        </div>
         <div ref={containerRef} className="flex-1">
           <AnnotatedImagePanel
             imgSrc={imageDataUrl}

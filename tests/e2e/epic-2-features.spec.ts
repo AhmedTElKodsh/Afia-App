@@ -15,7 +15,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     
     test('should show remaining volume in ml', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API with specific remaining ml
       await page.route('**/analyze', async (route) => {
@@ -39,7 +39,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     
     test('should show volume in tablespoons', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API
       await mockAnalyzeSuccess(page);
@@ -50,7 +50,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     
     test('should show volume in cups', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API
       await mockAnalyzeSuccess(page);
@@ -61,7 +61,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     
     test('should display consumed volume alongside remaining', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API with both values
       await page.route('**/analyze', async (route) => {
@@ -88,7 +88,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     
     test('should show calories for consumed amount', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API
       await mockAnalyzeSuccess(page);
@@ -99,7 +99,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     
     test('should show total fat content', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API
       await mockAnalyzeSuccess(page);
@@ -110,7 +110,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     
     test('should show saturated fat content', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API
       await mockAnalyzeSuccess(page);
@@ -122,7 +122,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     test('should calculate nutrition based on oil type', async ({ page }) => {
       // Test with different bottle (different oil type)
       await page.goto(`/?sku=${testBottles.afia.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API
       await mockAnalyzeSuccess(page);
@@ -136,7 +136,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     
     test('should display visual fill gauge', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API with 75% fill
       await page.route('**/analyze', async (route) => {
@@ -160,7 +160,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     
     test('should show accurate fill level visualization', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API with specific percentage
       await page.route('**/analyze', async (route) => {
@@ -184,7 +184,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     
     test('should handle empty bottle (0% fill)', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API with 0% fill
       await page.route('**/analyze', async (route) => {
@@ -208,7 +208,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     
     test('should handle full bottle (100% fill)', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API with 100% fill
       await page.route('**/analyze', async (route) => {
@@ -235,7 +235,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     
     test('should display high confidence indicator', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API with high confidence
       await page.route('**/analyze', async (route) => {
@@ -259,7 +259,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     
     test('should display medium confidence indicator', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API with medium confidence
       await page.route('**/analyze', async (route) => {
@@ -283,7 +283,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     
     test('should display low confidence with retake suggestion', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API with low confidence
       await page.route('**/analyze', async (route) => {
@@ -310,7 +310,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     
     test('should display all result elements together', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock complete API response
       await page.route('**/analyze', async (route) => {
@@ -334,7 +334,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     
     test('should show AI provider information', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API
       await mockAnalyzeSuccess(page);
@@ -345,7 +345,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     
     test('should show scan latency', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API
       await mockAnalyzeSuccess(page);
@@ -359,7 +359,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     
     test('should show estimate disclaimer', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API
       await mockAnalyzeSuccess(page);
@@ -370,7 +370,7 @@ test.describe('Epic 2: Rich Consumption Insights', () => {
     
     test('should show accuracy disclaimer (±15%)', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API
       await mockAnalyzeSuccess(page);

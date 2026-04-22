@@ -42,35 +42,40 @@ export async function handleAdminAuth(c: Context<{ Bindings: Env; Variables: Var
     return c.json({ error: "Admin authentication not configured", code: "NOT_CONFIGURED" }, 503);
   }
 
-  // Step 3: Read IP. The 'unknown' fallback is technically unreachable — the global rate-limit
-  // middleware returns 400 for missing IP before this handler runs. Kept as a defensive safety net.
-  const ip = c.req.header("CF-Connecting-IP") ?? "unknown";
+  // Step 3: Read IP. Support local development by checking multiple headers.
+  const ip = 
+    c.req.header("CF-Connecting-IP") ?? 
+    c.req.header("X-Forwarded-For") ?? 
+    "127.0.0.1"; // Fallback for local development
   const lockoutKey = `auth_lockout:${ip}`;
   const now = Date.now();
   const windowStart = now - LOCKOUT_WINDOW_MS;
 
   // Step 4: Read and filter lockout timestamps (KV timestamp-list pattern)
+  // Skip lockout check if KV is not available (local development)
   let timestamps: number[] = [];
-  try {
-    const stored = await c.env.RATE_LIMIT_KV.get(lockoutKey);
-    if (stored) {
-      const parsed: unknown = JSON.parse(stored);
-      if (Array.isArray(parsed)) {
-        timestamps = parsed.filter((t): t is number => typeof t === "number" && t > windowStart);
+  if (c.env.RATE_LIMIT_KV) {
+    try {
+      const stored = await c.env.RATE_LIMIT_KV.get(lockoutKey);
+      if (stored) {
+        const parsed: unknown = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          timestamps = parsed.filter((t): t is number => typeof t === "number" && t > windowStart);
+        }
       }
+    } catch {
+      timestamps = [];
     }
-  } catch {
-    timestamps = [];
-  }
 
-  // Step 5: If locked out, extend window and return 401 — same message as wrong password, no hint.
-  // Extending the window prevents boundary-timing attacks (attacker can't brute-force by waiting exactly 15 min).
-  if (timestamps.length >= LOCKOUT_LIMIT) {
-    timestamps.push(now);
-    await c.env.RATE_LIMIT_KV.put(lockoutKey, JSON.stringify(timestamps), {
-      expirationTtl: LOCKOUT_TTL_S,
-    }).catch(() => { /* non-fatal */ });
-    return c.json({ error: "Invalid password", code: "UNAUTHORIZED" }, 401);
+    // Step 5: If locked out, extend window and return 401 — same message as wrong password, no hint.
+    // Extending the window prevents boundary-timing attacks (attacker can't brute-force by waiting exactly 15 min).
+    if (timestamps.length >= LOCKOUT_LIMIT) {
+      timestamps.push(now);
+      await c.env.RATE_LIMIT_KV.put(lockoutKey, JSON.stringify(timestamps), {
+        expirationTtl: LOCKOUT_TTL_S,
+      }).catch(() => { /* non-fatal */ });
+      return c.json({ error: "Invalid password", code: "UNAUTHORIZED" }, 401);
+    }
   }
 
   // Step 6: Timing-safe HMAC comparison.
@@ -85,20 +90,26 @@ export async function handleAdminAuth(c: Context<{ Bindings: Env; Variables: Var
   const passwordMatch = await crypto.subtle.verify("HMAC", keyMaterial, candidateSig, encoder.encode(adminPassword));
 
   if (!passwordMatch) {
-    // Step 7: Record failure and extend window
-    timestamps.push(now);
-    await c.env.RATE_LIMIT_KV.put(lockoutKey, JSON.stringify(timestamps), {
-      expirationTtl: LOCKOUT_TTL_S,
-    }).catch(() => { /* non-fatal */ });
+    // Step 7: Record failure and extend window (only if KV is available)
+    if (c.env.RATE_LIMIT_KV) {
+      timestamps.push(now);
+      await c.env.RATE_LIMIT_KV.put(lockoutKey, JSON.stringify(timestamps), {
+        expirationTtl: LOCKOUT_TTL_S,
+      }).catch(() => { /* non-fatal */ });
+    }
     return c.json({ error: "Invalid password", code: "UNAUTHORIZED" }, 401);
   }
 
   // Step 8: Success — clear lockout and issue a time-limited signed token
-  await c.env.RATE_LIMIT_KV.delete(lockoutKey).catch(() => { /* non-fatal */ });
+  if (c.env.RATE_LIMIT_KV) {
+    await c.env.RATE_LIMIT_KV.delete(lockoutKey).catch(() => { /* non-fatal */ });
+  }
 
   const expiresAt = Date.now() + SESSION_TTL_MS;
   const payload = JSON.stringify({ expiresAt, nonce: crypto.randomUUID() });
-  const token = await signToken(payload, adminPassword);
+  // Use dedicated JWT secret if set — keeps signing key separate from the login password
+  const signingKey = c.env.ADMIN_JWT_SECRET || adminPassword;
+  const token = await signToken(payload, signingKey);
 
   return c.json({ token, expiresAt });
 }

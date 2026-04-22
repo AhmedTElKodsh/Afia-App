@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import "./PrivacyNotice.css";
 
 const STORAGE_KEY = "afia_privacy_accepted";
@@ -13,7 +14,9 @@ interface PrivacyNoticeProps {
 }
 
 export function PrivacyNotice({ onAccepted }: PrivacyNoticeProps) {
+  const { t, i18n } = useTranslation();
   const [expanded, setExpanded] = useState(false);
+  const isRTL = i18n.language === 'ar';
 
   const handleAccept = () => {
     localStorage.setItem(STORAGE_KEY, "true");
@@ -21,26 +24,26 @@ export function PrivacyNotice({ onAccepted }: PrivacyNoticeProps) {
   };
 
   return (
-    <div className="privacy-overlay" role="dialog" aria-modal="true" aria-labelledby="privacy-title">
+    <div className="privacy-overlay" role="dialog" aria-modal="true" aria-labelledby="privacy-title" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="privacy-card card">
-        <h2 id="privacy-title" className="privacy-title">Before Your First Scan</h2>
+        <h2 id="privacy-title" className="privacy-title">{t('privacy.beforeFirstScan')}</h2>
 
         <p className="privacy-body">
-          Scan images are stored to improve AI accuracy.
+          {t('privacy.storageNote')}
         </p>
         <p className="privacy-body">
-          No personal information is collected.
+          {t('privacy.noPersonalNote')}
         </p>
 
         {expanded && (
           <div className="privacy-details">
-            <p>When you photograph your oil bottle:</p>
+            <p>{t('privacy.message')}</p>
             <ul>
-              <li>The image is sent to our AI analysis server</li>
-              <li>It is stored alongside the AI estimate for model training</li>
-              <li>Your optional feedback rating is stored with the image</li>
-              <li>Images are not linked to any personal identity</li>
-              <li>Images may be reviewed to improve AI accuracy over time</li>
+              <li>{t('privacy.details.camera')}</li>
+              <li>{t('privacy.details.database')}</li>
+              <li>{t('privacy.details.star')}</li>
+              <li>{t('privacy.details.lock')}</li>
+              <li>{t('privacy.details.search')}</li>
             </ul>
           </div>
         )}
@@ -50,11 +53,11 @@ export function PrivacyNotice({ onAccepted }: PrivacyNoticeProps) {
           onClick={() => setExpanded((e) => !e)}
           aria-expanded={expanded}
         >
-          {expanded ? "Show less" : "Learn more"}
+          {expanded ? t('privacy.showLess') : t('privacy.learnMore')}
         </button>
 
         <button className="btn btn-primary btn-full privacy-accept" onClick={handleAccept}>
-          I Understand
+          {t('privacy.understand')}
         </button>
       </div>
     </div>

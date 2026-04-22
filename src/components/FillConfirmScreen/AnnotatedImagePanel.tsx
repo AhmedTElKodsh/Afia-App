@@ -48,7 +48,7 @@ export function AnnotatedImagePanel({
     >
       <img
         ref={imgRef}
-        src={imgSrc}
+        src={imgSrc.startsWith('data:') ? imgSrc : `data:image/jpeg;base64,${imgSrc}`}
         crossOrigin="anonymous"
         onLoad={onLoad}
         alt=""

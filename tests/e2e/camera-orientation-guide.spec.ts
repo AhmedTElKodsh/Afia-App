@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { mockCamera } from './helpers/mockAPI';
+import { setupDefaultMocks } from './helpers/mockAPI';
 
 test.describe('Camera Orientation Guide', () => {
   test.beforeEach(async ({ page }) => {
+    await setupDefaultMocks(page);
+
     // Pre-accept privacy to avoid gate
     await page.addInitScript(() => {
       window.localStorage.setItem('afia_privacy_accepted', 'true');
@@ -10,7 +12,6 @@ test.describe('Camera Orientation Guide', () => {
       // Force manual mode to prevent auto-capture from hiding the orientation guide
       (window as any).__AFIA_FORCE_MANUAL__ = true;
     });
-    await mockCamera(page);
   });
 
   test('orientation guide appears in viewfinder', async ({ page }) => {
@@ -33,8 +34,8 @@ test.describe('Camera Orientation Guide', () => {
     const orientationGuide = page.locator('.orientation-guide');
     await expect(orientationGuide).toBeVisible({ timeout: 15000 });
     
-    // Verify text content
-    await expect(page.locator('text=Handle on Right')).toBeVisible();
+    // Verify text content - unique selector to comply with strict mode
+    await expect(page.locator('.orientation-guide:has-text("handle on the right")')).toBeVisible();
     
     // Verify arrow is present
     await expect(page.locator('.orientation-guide:has-text("→")')).toBeVisible();
@@ -144,7 +145,7 @@ test.describe('Camera Orientation Guide', () => {
     
     // Guide should still be visible in landscape
     await expect(page.locator('.orientation-guide')).toBeVisible({ timeout: 15000 });
-    await expect(page.locator('text=Handle on Right')).toBeVisible();
+    await expect(page.locator('.orientation-guide:has-text("handle on the right")')).toBeVisible();
   });
 
   test('orientation guide works across different viewport widths', async ({ page }) => {
@@ -170,7 +171,7 @@ test.describe('Camera Orientation Guide', () => {
       
       // Check that text is readable (not truncated)
       const text = await guide.textContent();
-      expect(text).toContain('Handle on Right');
+      expect(text?.toLowerCase()).toContain('handle on the right');
     }
   });
 });

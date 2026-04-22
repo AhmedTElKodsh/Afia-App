@@ -27,7 +27,7 @@ export function AnalyzingOverlay({ capturedImage, onCancel, progressMessage }: A
       {/* Dimmed captured image as background */}
       {capturedImage && (
         <img
-          src={`data:image/jpeg;base64,${capturedImage}`}
+          src={capturedImage.startsWith('data:') ? capturedImage : `data:image/jpeg;base64,${capturedImage}`}
           alt=""
           className="analyzing-bg-image"
           aria-hidden="true"

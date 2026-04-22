@@ -32,7 +32,7 @@ test.describe('Mock Scan UI Action Test', () => {
     // 3. Navigate to Landing Page with SKU
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/?sku=afia-corn-1.5l');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 4. Trigger analysis and handle fill confirmation using shared helper
     await triggerAnalyzeAndConfirm(page);

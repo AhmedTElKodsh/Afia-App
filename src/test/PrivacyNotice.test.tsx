@@ -28,7 +28,7 @@ describe("PrivacyNotice", () => {
     const onAccepted = vi.fn();
     render(<PrivacyNotice onAccepted={onAccepted} />);
 
-    const learnMoreButton = screen.getByText("Learn more");
+    const learnMoreButton = screen.getByText(/Learn more/);
     expect(learnMoreButton).toBeInTheDocument();
   });
 
@@ -36,14 +36,14 @@ describe("PrivacyNotice", () => {
     const onAccepted = vi.fn();
     render(<PrivacyNotice onAccepted={onAccepted} />);
 
-    const learnMoreButton = screen.getByText("Learn more");
+    const learnMoreButton = screen.getByText(/Learn more/);
     fireEvent.click(learnMoreButton);
 
     expect(
-      screen.getByText(/When you photograph your oil bottle:/),
+      screen.getByText(/Images sent to AI analysis server/),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/The image is sent to our AI analysis server/),
+      screen.getByText(/Stored with AI estimate for training/),
     ).toBeInTheDocument();
     expect(screen.getByText("Show less")).toBeInTheDocument();
   });
@@ -53,16 +53,16 @@ describe("PrivacyNotice", () => {
     render(<PrivacyNotice onAccepted={onAccepted} />);
 
     // Expand first
-    const learnMoreButton = screen.getByText("Learn more");
+    const learnMoreButton = screen.getByText(/Learn more/);
     fireEvent.click(learnMoreButton);
     expect(screen.getByText("Show less")).toBeInTheDocument();
 
     // Collapse
     const showLessButton = screen.getByText("Show less");
     fireEvent.click(showLessButton);
-    expect(screen.getByText("Learn more")).toBeInTheDocument();
+    expect(screen.getByText(/Learn more/)).toBeInTheDocument();
     expect(
-      screen.queryByText(/When you photograph your oil bottle:/),
+      screen.queryByText(/Images sent to AI analysis server/),
     ).not.toBeInTheDocument();
   });
 
@@ -85,7 +85,7 @@ describe("PrivacyNotice", () => {
     expect(dialog).toHaveAttribute("aria-modal", "true");
     expect(dialog).toHaveAttribute("aria-labelledby", "privacy-title");
 
-    const learnMoreButton = screen.getByText("Learn more");
+    const learnMoreButton = screen.getByText(/Learn more/);
     expect(learnMoreButton).toHaveAttribute("aria-expanded", "false");
 
     fireEvent.click(learnMoreButton);

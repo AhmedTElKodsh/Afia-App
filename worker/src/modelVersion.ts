@@ -8,7 +8,7 @@
 
 import type { Context } from "hono";
 import type { Env, Variables } from "./types";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseClient } from "./db/supabase";
 
 export interface ModelVersionResponse {
   version: string;           // e.g., "1.2.0"
@@ -31,11 +31,7 @@ export async function handleModelVersion(
 
   try {
     // Query Supabase for active model version
-    const supabase = createClient(
-      c.env.SUPABASE_URL,
-      c.env.SUPABASE_SERVICE_ROLE_KEY || c.env.SUPABASE_ANON_KEY,
-      { auth: { persistSession: false } }
-    );
+    const supabase = getSupabaseClient(c.env);
 
     const { data, error } = await supabase
       .from("model_versions")

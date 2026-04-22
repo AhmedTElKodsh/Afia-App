@@ -23,7 +23,7 @@ test.describe('Admin Test Lab', () => {
 
     // Navigate to the test lab
     await page.goto('/?mode=admin');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should display test lab banner', async ({ page }) => {
@@ -54,7 +54,7 @@ test.describe('Admin Test Lab', () => {
 
     // Navigate with a valid SKU — required for TestLab to render (needs bottle context)
     await page.goto(`/?mode=admin&sku=${testBottles.filippoBerio.sku}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Currently shows AdminDashboard (currentView="admin")
     // Click the "Test Lab" nav button to switch currentView to "scan"

@@ -1,29 +1,41 @@
 # Afia App — Project Documentation Index
 
-> Generated: 2026-03-01 | Scan Level: Exhaustive | Mode: Initial Scan
+> Generated: 2026-04-20 | Scan Level: Quick | Mode: Full Rescan | **Three-Stage Architecture Documented**
 
 ## Project Summary
 
-**Afia App** (formerly Afia Oil Tracker) is a mobile-first PWA that uses AI vision to estimate cooking oil bottle fill levels from a single photo. Multi-part project: React 19 frontend + Cloudflare Worker backend.
+**Afia Oil Tracker** is a mobile-first PWA that uses AI vision to estimate cooking oil bottle fill levels from a single photo. Multi-part project: React 19 frontend + Cloudflare Worker backend.
 
 - **Repository Type**: Multi-part (frontend + worker)
 - **Frontend**: React 19 + TypeScript 5.9 + Vite 7 (PWA)
 - **Backend**: Cloudflare Workers + Hono 4.7
-- **AI**: Gemini 2.5 Flash (primary) + Groq Llama 4 Scout (fallback)
-- **Status**: POC complete (5 epics, 38 stories)
+- **AI Strategy**: Three-stage evolution (LLM Only → Local + LLM Fallback → Local Only)
+- **Current Stage**: Stage 1 (LLM Only) deployed, Stage 2 (Hybrid) in progress
+- **Status**: POC complete (5 epics, 54 stories)
+
+## Three-Stage Architecture Vision
+
+The project is designed to evolve through three distinct stages:
+
+1. **Stage 1: LLM Only** (Current) - Cloud-based Gemini/Groq for rapid POC
+2. **Stage 2: Local Model + LLM Fallback** (In Progress) - ONNX model in browser with cloud fallback
+3. **Stage 3: Local Model Only** (Future) - 100% offline-capable with no cloud dependency
+
+**See [Architecture](./architecture.md) for complete diagrams of all three stages.**
 
 ## Documentation
 
-| Document | Description |
-|----------|-------------|
-| [Project Overview](./project-overview.md) | What the app does, problem/solution, tech stack, project status |
-| [Source Tree Analysis](./source-tree-analysis.md) | Complete directory structure, critical directories, entry points, integration points |
-| [Architecture](./architecture.md) | System architecture, state machine, component hierarchy, data flow, security, deployment |
-| [Component Inventory](./component-inventory.md) | All components, hooks, utilities, data modules, worker modules with props and behavior |
-| [API Contracts](./api-contracts.md) | REST endpoints (POST /analyze, POST /feedback, GET /health), request/response schemas, error codes |
-| [Data Models](./data-models.md) | All TypeScript interfaces, static data registries, data flow diagram, local storage |
-| [Development Guide](./development-guide.md) | Setup instructions, npm scripts, testing, building, deployment, environment variables, conventions |
-| [Known Issues](./known-issues.md) | Code duplication, R2 disabled, naming inconsistency, missing test coverage, security notes |
+| Document | Description | Status |
+|----------|-------------|--------|
+| [Project Overview](./project-overview.md) | Executive summary, three-stage vision, tech stack, local-first philosophy | ✅ Complete |
+| [Architecture](./architecture.md) | **THREE comprehensive Mermaid diagrams** (one per stage), data flow, components | ✅ Complete |
+| [Local Development Guide](./LOCAL-DEVELOPMENT.md) | Local-first development workflow, testing strategies | ✅ Complete |
+| [Source Tree Analysis](./source-tree-analysis.md) | Directory structure, critical folders, entry points | ✅ Existing |
+| [Component Inventory](./component-inventory.md) | All components, hooks, utilities, data modules | ✅ Complete |
+| [API Contracts](./api-contracts.md) | REST endpoints, request/response schemas, error codes | ✅ Complete |
+| [Data Models](./data-models.md) | TypeScript interfaces, static data registries, data flow | ✅ Complete |
+| [Development Guide](./development-guide.md) | Setup, npm scripts, testing, building, deployment | ⏳ To be generated |
+| [Known Issues](./known-issues.md) | Code duplication, R2 disabled, naming inconsistency | ✅ Existing |
 
 ## Quick Reference
 

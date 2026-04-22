@@ -46,7 +46,7 @@ interface AdminLlmResult {
 const WORKER_URL = import.meta.env.VITE_PROXY_URL || "";
 
 export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [selectedAccuracy, setSelectedAccuracy] = useState<AccuracyButton | null>(null);
   const [correctedFillPct, setCorrectedFillPct] = useState<number>(50);
   const [isSaving, setIsSaving] = useState(false);
@@ -101,7 +101,7 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to save correction");
+        throw new Error(errorData.error || t('errors.generic', 'Failed to save correction'));
       }
 
       const data = await response.json();
@@ -126,7 +126,7 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
         onCorrectionSaved();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(err instanceof Error ? err.message : t('errors.generic', "Unknown error"));
     } finally {
       setIsSaving(false);
     }
@@ -149,7 +149,7 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to re-run LLM");
+        throw new Error(errorData.error || t('errors.generic', "Failed to re-run LLM"));
       }
 
       const data = await response.json();
@@ -157,11 +157,11 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
       setSuccess(
         t(
           "admin.scanDetail.llmRerunSuccess",
-          `LLM re-run complete: ${data.adminLlmResult.fillPercentage}% (${data.adminLlmResult.provider})`
+          { value: data.adminLlmResult.fillPercentage, provider: data.adminLlmResult.provider, defaultValue: `LLM re-run complete: ${data.adminLlmResult.fillPercentage}% (${data.adminLlmResult.provider})` }
         )
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(err instanceof Error ? err.message : t('errors.generic', "Unknown error"));
     } finally {
       setIsRerunning(false);
     }
@@ -173,8 +173,10 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
     }
   };
 
+  const locale = i18n.language === 'ar' ? 'ar-SA' : 'en-US';
+
   return (
-    <div className="scan-detail">
+    <div className="scan-detail" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
       <header className="scan-detail-header">
         <button className="btn btn-link btn-icon-text" onClick={onBack}>
           <ChevronLeft size={18} /> {t("common.back")}
@@ -187,12 +189,12 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
         <div className="scan-image-container card">
           <img
             src={scan.imageUrl || "/test-bottle.jpg"}
-            alt="Scan"
+            alt={t('camera.preview')}
             className="scan-image"
           />
           <div className="scan-metadata">
             <div className="metadata-row">
-              <span className="label">{t("admin.scanDetail.sku", "SKU")}:</span>
+              <span className="label">{t("admin.scanDetail.sku", "SKU Code")}:</span>
               <span className="value">{scan.sku}</span>
             </div>
             <div className="metadata-row">
@@ -201,11 +203,11 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
             </div>
             <div className="metadata-row">
               <span className="label">{t("admin.scanDetail.confidence", "Confidence")}:</span>
-              <span className="value">{scan.confidence}</span>
+              <span className="value">{t(`history.confidenceLevels.${scan.confidence}`, { defaultValue: scan.confidence })}</span>
             </div>
             <div className="metadata-row">
               <span className="label">{t("admin.scanDetail.provider", "Provider")}:</span>
-              <span className="value">{scan.aiProvider || "unknown"}</span>
+              <span className="value">{scan.aiProvider || t('common.unknown', { defaultValue: 'unknown' })}</span>
             </div>
           </div>
         </div>
@@ -214,7 +216,7 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
         <div className="accuracy-assessment card">
           <h4>{t("admin.scanDetail.accuracyAssessment", "Accuracy Assessment")}</h4>
           
-          {/* AC1: Accuracy buttons */}
+          {/* Accuracy buttons */}
           <div className="accuracy-buttons">
             <button
               className={`accuracy-btn accuracy-btn--too-big ${
@@ -258,7 +260,7 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
             </button>
           </div>
 
-          {/* AC3: Correction panel (shown after selecting non-correct button) */}
+          {/* Correction panel */}
           {selectedAccuracy && selectedAccuracy !== "correct" && !adminCorrection && (
             <div className="correction-panel">
               <h5>{t("admin.scanDetail.correction", "Correction")}</h5>
@@ -319,7 +321,7 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
             </div>
           )}
 
-          {/* AC6: Display correction status */}
+          {/* Display correction status */}
           {adminCorrection && (
             <div className="correction-status">
               <h5>{t("admin.scanDetail.correctionApplied", "Correction Applied")}</h5>
@@ -335,7 +337,7 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
                 <div className="status-row">
                   <span className="label">{t("admin.scanDetail.timestamp", "Timestamp")}:</span>
                   <span className="value">
-                    {new Date(adminCorrection.at).toLocaleString()}
+                    {new Date(adminCorrection.at).toLocaleString(locale)}
                   </span>
                 </div>
                 {trainingEligible && (
@@ -360,7 +362,7 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
                 </div>
                 <div className="result-row">
                   <span className="label">{t("admin.scanDetail.confidence", "Confidence")}:</span>
-                  <span className="value">{adminLlmResult.confidence}</span>
+                  <span className="value">{t(`history.confidenceLevels.${adminLlmResult.confidence}`, { defaultValue: adminLlmResult.confidence })}</span>
                 </div>
                 <div className="result-row">
                   <span className="label">{t("admin.scanDetail.provider", "Provider")}:</span>
@@ -369,7 +371,7 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
                 <div className="result-row">
                   <span className="label">{t("admin.scanDetail.rerunAt", "Re-run at")}:</span>
                   <span className="value">
-                    {new Date(adminLlmResult.rerunAt).toLocaleString()}
+                    {new Date(adminLlmResult.rerunAt).toLocaleString(locale)}
                   </span>
                 </div>
               </div>

@@ -1,7 +1,10 @@
 import type { AnalysisResult } from "../state/appState.ts";
 
 const WORKER_URL = import.meta.env.VITE_PROXY_URL || "http://localhost:8787";
-const DEFAULT_TIMEOUT_MS = 15000; // 15 seconds
+
+// M8: Test mode detection
+const isTestMode = typeof window !== 'undefined' && (window as any).__AFIA_TEST_MODE__ === true;
+const DEFAULT_TIMEOUT_MS = isTestMode ? 5000 : 15000; // 5s for tests, 15s for prod
 
 async function fetchWithTimeout(
   url: string,

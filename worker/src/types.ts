@@ -14,6 +14,7 @@ export interface Env {
   OPENROUTER_API_KEY?: string;
   MISTRAL_API_KEY?: string;
   ADMIN_PASSWORD?: string; // Admin dashboard password (server-side only)
+  ADMIN_JWT_SECRET?: string; // Dedicated HMAC signing key — separate from the login password
   // Monitoring
   BETTERSTACK_TOKEN?: string; // Optional monitoring token
   SLACK_WEBHOOK_URL?: string; // Optional Slack notifications
@@ -26,6 +27,7 @@ export interface Env {
 export interface Variables {
   requestId: string;
   skipRateLimit?: boolean;
+  enableMockLLM?: boolean;
 }
 
 export interface LLMResponse {

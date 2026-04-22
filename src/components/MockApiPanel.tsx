@@ -167,12 +167,12 @@ export function MockApiPanel({ onSelectScenario, onClose }: MockApiPanelProps) {
               type="button"
               aria-label={t('admin.mockApi.scenarioLabel', {
                 defaultValue: 'Run {{name}}: {{description}}',
-                name: scenario.name,
-                description: scenario.description
+                name: t(scenario.nameKey),
+                description: t(scenario.descriptionKey)
               })}
             >
               <div className="mock-api-scenario-header">
-                <span className="mock-api-scenario-name">{scenario.name}</span>
+                <span className="mock-api-scenario-name">{t(scenario.nameKey)}</span>
                 <span 
                   className={`confidence-badge ${getConfidenceBadgeClass(scenario.confidence)}`}
                   aria-label={t('admin.mockApi.confidenceLevel', {
@@ -183,13 +183,13 @@ export function MockApiPanel({ onSelectScenario, onClose }: MockApiPanelProps) {
                   {t(`admin.mockApi.confidence.${scenario.confidence}`, scenario.confidence)}
                 </span>
               </div>
-              <p className="mock-api-scenario-description">{scenario.description}</p>
+              <p className="mock-api-scenario-description">{t(scenario.descriptionKey)}</p>
               <div className="mock-api-scenario-meta">
                 <span className="mock-api-scenario-fill">{scenario.fillPercentage}% {t('admin.mockApi.fill', 'fill')}</span>
                 <span className="mock-api-scenario-latency">{scenario.latencyMs}ms</span>
                 {scenario.imageQualityIssues && scenario.imageQualityIssues.length > 0 && (
                   <span className="mock-api-scenario-issues">
-                    {scenario.imageQualityIssues.length} {t('admin.mockApi.issue', { count: scenario.imageQualityIssues.length, defaultValue: 'issue' })}{scenario.imageQualityIssues.length > 1 ? 's' : ''}
+                    {scenario.imageQualityIssues.length} {t('admin.mockApi.issue', { count: scenario.imageQualityIssues.length, defaultValue: 'issue' })}
                   </span>
                 )}
               </div>

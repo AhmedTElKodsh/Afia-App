@@ -3,6 +3,7 @@ import type { BottleEntry } from "../bottleRegistry.ts";
 import { parseLLMResponse } from "./parseLLMResponse.ts";
 import { buildOpenAIFewShotParts } from "../referenceFrames.ts";
 import { buildAnalysisPrompt } from "./buildAnalysisPrompt.ts";
+import { mockOpenRouterResponse } from "../mocks/llmMock.ts";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 // gemini-2.0-flash via OpenRouter — vision-capable, separate quota from direct Gemini keys
@@ -12,8 +13,14 @@ export async function callOpenRouter(
   imageBase64: string,
   bottle: BottleEntry,
   apiKey: string,
-  debugReasoning = false
+  debugReasoning = false,
+  enableMock = false
 ): Promise<LLMResponse> {
+  // Check for mock mode
+  if (enableMock) {
+    console.log('[Mock Mode] Using mock OpenRouter response');
+    return mockOpenRouterResponse(imageBase64, bottle.sku);
+  }
   const userText = `Bottle: ${bottle.name} (${bottle.sku}), ${bottle.totalVolumeMl}ml total. Return JSON fill estimate.`;
 
   const requestBody = {

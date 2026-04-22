@@ -10,7 +10,20 @@ import { UploadQualityWarning } from '../UploadQualityWarning';
 // Mock i18next
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, defaultValue?: string) => defaultValue || key,
+    t: (key: string, options?: any) => {
+      // Return English translations for test assertions
+      const translations: Record<string, string> = {
+        'uploadQuality.title': 'Photo Quality Warning',
+        'uploadQuality.message': 'This photo may not give a good result:',
+        'uploadQuality.retake': 'Retake Photo',
+        'uploadQuality.continue': 'Continue Anyway',
+        'uploadQuality.reasons.blur': 'Photo appears blurry — hold the camera steady',
+        'uploadQuality.reasons.tooDark': 'Photo is too dark — try better lighting',
+        'uploadQuality.reasons.tooBright': 'Photo is overexposed — avoid direct light',
+        'uploadQuality.reasons.noBottle': 'Bottle not clearly visible — center the bottle in frame',
+      };
+      return translations[key] || options?.defaultValue || key;
+    },
   }),
 }));
 

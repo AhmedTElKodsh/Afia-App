@@ -195,7 +195,7 @@ export function TestLab({ isAdmin, selectedSku: propsSku, onSkuChange }: TestLab
 
     const bottle = selectedBottle;
     if (!bottle) {
-      handleError("No bottle selected");
+      handleError(t('admin.testLab.noBottleSelected', 'No bottle selected'));
       return;
     }
 
@@ -228,7 +228,7 @@ export function TestLab({ isAdmin, selectedSku: propsSku, onSkuChange }: TestLab
       // F15: Indicate this is a mock result
       success(t('admin.testLab.mockScenarioComplete', {
         defaultValue: 'Mock scenario complete: {{name}}',
-        name: scenario.name
+        name: t(scenario.nameKey)
       }));
       
       // Track analytics
@@ -407,7 +407,7 @@ export function TestLab({ isAdmin, selectedSku: propsSku, onSkuChange }: TestLab
           aria-selected={activeTab === "visuals"}
         >
           <TestTube size={16} strokeWidth={2} />
-          Visuals
+          {t('admin.testLab.tabVisuals', 'Visuals')}
         </button>
       </div>
 
@@ -471,7 +471,7 @@ export function TestLab({ isAdmin, selectedSku: propsSku, onSkuChange }: TestLab
                   style={{ width: '100%', maxWidth: '320px' }}
                 >
                   <Zap size={22} strokeWidth={2} />
-                  <span>Mock API Test</span>
+                  <span>{t('admin.testLab.mockApiTest', 'Mock API Test')}</span>
                 </button>
 
                 <div style={{ position: 'relative', width: '100%', maxWidth: '320px' }}>
@@ -482,7 +482,7 @@ export function TestLab({ isAdmin, selectedSku: propsSku, onSkuChange }: TestLab
                     style={{ width: '100%' }}
                   >
                     <TestTube size={22} strokeWidth={2} />
-                    <span>Upload Image for Geometry Test</span>
+                    <span>{t('admin.testLab.geometryTest', 'Upload Image for Geometry Test')}</span>
                   </button>
                   <input
                     id="geometry-upload"
@@ -499,7 +499,7 @@ export function TestLab({ isAdmin, selectedSku: propsSku, onSkuChange }: TestLab
           {/* Scan Flow */}
           {scanState === "scanning" && selectedBottle && (
             <div className="test-lab-section">
-              <h2 className="test-lab-section-title">{testImage ? 'GEOMETRY OVERLAY TEST' : t('admin.testLab.capturePhoto')}</h2>
+              <h2 className="test-lab-section-title">{testImage ? t('admin.testLab.geometryOverlay', 'GEOMETRY OVERLAY TEST') : t('admin.testLab.capturePhoto')}</h2>
               <CameraViewfinder
                 onCapture={handleCapture}
                 onError={handleError}

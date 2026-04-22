@@ -4,7 +4,20 @@ This directory contains CI/CD workflows for the Afia Oil Tracker application's 3
 
 ## Workflows
 
-### 1. `deploy-stage1.yml` - Production (LLM API Only)
+### Current Status: Manual Deployment Only
+
+**All automatic workflows are disabled** (`.yml.disabled` extension) to prevent:
+- ❌ Cloudflare endpoint overload during development
+- ❌ GitHub Actions errors on incomplete features
+- ❌ Wasted CI/CD minutes
+
+**Deployment Strategy:** Deploy manually only when app is fully tested and functional.
+
+See [../LOCAL-DEVELOPMENT-STRATEGY.md](../../_bmad-output/implementation-artifacts/LOCAL-DEVELOPMENT-STRATEGY.md) for complete strategy.
+
+### Available Workflows (Disabled)
+
+### 1. `deploy-stage1.yml.disabled` - Production (LLM API Only)
 - **Branch**: `master`
 - **Trigger**: Push or PR to `master`
 - **Purpose**: Deploy production version using LLM APIs (Gemini/Groq)
@@ -17,7 +30,7 @@ This directory contains CI/CD workflows for the Afia Oil Tracker application's 3
 - `deploy-worker-stage1`: Deploy worker to production
 - `deploy-pages-stage1`: Deploy PWA to Cloudflare Pages
 
-### 2. `deploy-stage2.yml` - Testing (Local Model + LLM Fallback)
+### 2. `deploy-stage2.yml.disabled` - Testing (Local Model + LLM Fallback)
 - **Branch**: `local-model`
 - **Trigger**: Push or PR to `local-model`
 - **Purpose**: Test local ONNX model with LLM fallback
@@ -119,6 +132,93 @@ Test results are uploaded as artifacts on failure for debugging.
         │  Deploy Worker   │  │  Deploy Pages    │
         │    (Stage 2)     │  │    (Stage 2)     │
         └──────────────────┘  └──────────────────┘
+```
+
+## Manual Deployment
+
+### Using Deployment Script (Recommended)
+
+```bash
+# From project root
+chmod +x scripts/deploy-manual.sh
+./scripts/deploy-manual.sh
+```
+
+The script will:
+1. Run all tests
+2. Deploy Worker to production
+3. Build and deploy Pages
+4. Run smoke tests
+5. Display production URLs
+
+### Manual Commands
+
+```bash
+# 1. Run tests
+npm test && npm run test:e2e
+
+# 2. Deploy Worker
+cd worker && npx wrangler deploy --env stage1
+
+# 3. Build and deploy Pages
+cd .. && npm run build
+npx wrangler pages deploy dist --project-name=afia-app --branch=master
+```
+
+## Re-enabling GitHub Actions (Future)
+
+When the app is stable and you want automated deployments:
+
+### Option 1: Manual Trigger Only (Recommended)
+
+```bash
+# Use the template workflow
+cp deploy-manual-trigger.yml.template deploy-manual-trigger.yml
+```
+
+This workflow:
+- ✅ Only runs when manually triggered from GitHub UI
+- ✅ Requires typing "deploy" to confirm
+- ✅ Runs all tests before deploying
+- ✅ Includes smoke tests after deployment
+- ✅ No automatic deployments on push/PR
+
+**How to trigger:**
+1. Go to: `Actions > Deploy (Manual Trigger Only) > Run workflow`
+2. Select environment (stage1 or stage2)
+3. Type "deploy" to confirm
+4. Click "Run workflow"
+
+### Option 2: Tag-Based Deployment
+
+Rename workflow and modify trigger:
+```yaml
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Only deploy on version tags
+```
+
+Deploy by creating a tag:
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+### Option 3: Protected Branch
+
+Rename workflow and modify trigger:
+```yaml
+on:
+  push:
+    branches: [production]  # Separate production branch
+
+jobs:
+  deploy:
+    environment:
+      name: production
+      url: https://afia-app.pages.dev
+    # Requires manual approval in GitHub UI
 ```
 
 ## Manual Workflow Dispatch

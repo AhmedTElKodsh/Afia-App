@@ -22,7 +22,7 @@ export async function verifyAdminSession(c: Context<{ Bindings: Env; Variables: 
     const { expiresAt } = JSON.parse(payload) as { expiresAt: number };
     if (typeof expiresAt !== "number" || expiresAt <= Date.now()) return false;
 
-    const secret = c.env.ADMIN_PASSWORD;
+    const secret = c.env.ADMIN_JWT_SECRET || c.env.ADMIN_PASSWORD;
     if (!secret) return false;
 
     const encoder = new TextEncoder();
@@ -49,7 +49,10 @@ export async function handleGetScans(c: Context<{ Bindings: Env; Variables: Vari
   }
 
   try {
-    const scans = await getGlobalScans(c.env);
+    const rawScans = await getGlobalScans(c.env);
+    // Strip internal debug fields before returning to the UI
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const scans = rawScans.map(({ reasoning: _r, ...scan }) => scan);
     return c.json({ scans });
   } catch (error) {
     console.error("Failed to fetch scans:", error);

@@ -37,7 +37,7 @@ describe('uploadFilter', () => {
       const result = checkUploadQuality(signals);
 
       expect(result.shouldWarn).toBe(true);
-      expect(result.reasons).toContain('Photo appears blurry — hold the camera steady');
+      expect(result.reasons).toContain('uploadQuality.reasons.blur');
     });
 
     it('should warn for too dark image', () => {
@@ -50,7 +50,7 @@ describe('uploadFilter', () => {
       const result = checkUploadQuality(signals);
 
       expect(result.shouldWarn).toBe(true);
-      expect(result.reasons).toContain('Photo is too dark — try better lighting');
+      expect(result.reasons).toContain('uploadQuality.reasons.tooDark');
     });
 
     it('should warn for overexposed image', () => {
@@ -63,7 +63,7 @@ describe('uploadFilter', () => {
       const result = checkUploadQuality(signals);
 
       expect(result.shouldWarn).toBe(true);
-      expect(result.reasons).toContain('Photo is overexposed — avoid direct light');
+      expect(result.reasons).toContain('uploadQuality.reasons.tooBright');
     });
 
     it('should warn for low bottle detection confidence', () => {
@@ -76,7 +76,7 @@ describe('uploadFilter', () => {
       const result = checkUploadQuality(signals);
 
       expect(result.shouldWarn).toBe(true);
-      expect(result.reasons).toContain('Bottle not clearly visible — center the bottle in frame');
+      expect(result.reasons).toContain('uploadQuality.reasons.noBottle');
     });
 
     it('should not warn when bottle detection confidence is null', () => {
@@ -103,9 +103,9 @@ describe('uploadFilter', () => {
 
       expect(result.shouldWarn).toBe(true);
       expect(result.reasons).toHaveLength(3);
-      expect(result.reasons).toContain('Photo appears blurry — hold the camera steady');
-      expect(result.reasons).toContain('Photo is too dark — try better lighting');
-      expect(result.reasons).toContain('Bottle not clearly visible — center the bottle in frame');
+      expect(result.reasons).toContain('uploadQuality.reasons.blur');
+      expect(result.reasons).toContain('uploadQuality.reasons.tooDark');
+      expect(result.reasons).toContain('uploadQuality.reasons.noBottle');
     });
 
     it('should handle edge case at exact threshold values', () => {

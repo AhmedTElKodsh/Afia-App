@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { StoredScan } from "../hooks/useScanHistory";
 import { formatDate, formatTime } from "../utils/formatters";
 import "./TimelineGroup.css";
@@ -15,15 +16,17 @@ function normalizeTimestamp(raw: string): string {
 }
 
 function groupByMonth(
-  scans: StoredScan[]
+  scans: StoredScan[],
+  locale: string,
+  t: any
 ): { month: string; scans: StoredScan[] }[] {
   const groups = new Map<string, StoredScan[]>();
   scans.forEach((scan) => {
     const date = new Date(normalizeTimestamp(scan.timestamp));
     // Guard: invalid date gets grouped under a fallback key
     const key = isNaN(date.getTime())
-      ? "Unknown Date"
-      : date.toLocaleDateString("en-US", {
+      ? t('common.unknownDate', { defaultValue: 'Unknown Date' })
+      : date.toLocaleDateString(locale, {
           month: "long",
           year: "numeric",
         });
@@ -34,10 +37,12 @@ function groupByMonth(
 }
 
 export function TimelineGroup({ scans, onScanClick }: TimelineGroupProps) {
-  const groups = groupByMonth(scans);
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language === 'ar' ? 'ar-SA' : 'en-US';
+  const groups = groupByMonth(scans, locale, t);
 
   return (
-    <div className="timeline-groups">
+    <div className="timeline-groups" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
       {groups.map(({ month, scans: monthScans }) => (
         <div key={month} className="timeline-group">
           <div className="timeline-group-header">
@@ -45,50 +50,53 @@ export function TimelineGroup({ scans, onScanClick }: TimelineGroupProps) {
             <span className="timeline-badge">{monthScans.length}</span>
           </div>
           <div className="timeline-items card card-compact">
-            {monthScans.map((scan, i) => (
-              <div
-                key={scan.id ?? `${scan.sku ?? "scan"}-${i}`}
-                className={[
-                  "timeline-item",
-                  i === 0 ? "timeline-item--latest" : "",
-                  i === monthScans.length - 1 ? "timeline-item--last" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                onClick={() => onScanClick(scan)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => e.key === "Enter" && onScanClick(scan)}
-                aria-label={`${scan.bottleName} — ${scan.fillPercentage}% fill`}
-              >
-                <div className="timeline-dot-wrap">
-                  <div className="timeline-dot" />
-                  {i < monthScans.length - 1 && (
-                    <div className="timeline-line" />
-                  )}
-                </div>
+            {monthScans.map((scan, i) => {
+              const localizedBottleName = t(`bottles.${scan.sku}`, { defaultValue: scan.bottleName });
+              return (
+                <div
+                  key={scan.id ?? `${scan.sku ?? "scan"}-${i}`}
+                  className={[
+                    "timeline-item",
+                    i === 0 ? "timeline-item--latest" : "",
+                    i === monthScans.length - 1 ? "timeline-item--last" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onClick={() => onScanClick(scan)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && onScanClick(scan)}
+                  aria-label={`${localizedBottleName} — ${scan.fillPercentage}% ${t('results.fillLevel')}`}
+                >
+                  <div className="timeline-dot-wrap">
+                    <div className="timeline-dot" />
+                    {i < monthScans.length - 1 && (
+                      <div className="timeline-line" />
+                    )}
+                  </div>
 
-                <div className="timeline-info">
-                  <div className="timeline-name">{scan.bottleName}</div>
-                  <div className="timeline-meta">
-                    {formatDate(scan.timestamp)} · {formatTime(scan.timestamp)}{" "}
-                    · {scan.consumedMl}ml used
+                  <div className="timeline-info">
+                    <div className="timeline-name">{localizedBottleName}</div>
+                    <div className="timeline-meta">
+                      {formatDate(scan.timestamp)} · {formatTime(scan.timestamp)}{" "}
+                      · {scan.consumedMl}{t('common.ml')} {t('results.consumed')}
+                    </div>
+                  </div>
+
+                  <div className="timeline-fill-section">
+                    <div className="timeline-fill-bar">
+                      <div
+                        className="timeline-fill-inner"
+                        style={{
+                          width: `${Math.max(scan.fillPercentage, 2)}%`,
+                        }}
+                      />
+                    </div>
+                    <span className="timeline-pct">{scan.fillPercentage}%</span>
                   </div>
                 </div>
-
-                <div className="timeline-fill-section">
-                  <div className="timeline-fill-bar">
-                    <div
-                      className="timeline-fill-inner"
-                      style={{
-                        width: `${Math.max(scan.fillPercentage, 2)}%`,
-                      }}
-                    />
-                  </div>
-                  <span className="timeline-pct">{scan.fillPercentage}%</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ))}

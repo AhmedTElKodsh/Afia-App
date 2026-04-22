@@ -61,7 +61,14 @@
       "Bash(tensorflowjs_converter --version)",
       "Bash(git -C \"D:/AI Projects/Freelance/Afia-App\" check-ignore .env)",
       "Bash(git -C \"D:/AI Projects/Freelance/Afia-App\" ls-files --error-unmatch dist/ models/ \"*.patch\" \"oil-bottle-videos/\")",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx|json\\)$\")",
+      "Bash(npx wrangler *)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(pkill -f \"wrangler dev\")",
+      "mcp__claude_ai_Tavily__tavily_search",
+      "PowerShell(curl *)",
+      "PowerShell(Invoke-WebRequest -Uri \"http://localhost:8787/health\" -UseBasicParsing | Select-Object -ExpandProperty Content)"
     ]
   }
 }

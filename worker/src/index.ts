@@ -44,39 +44,47 @@ app.use("*", async (c, next) => {
   return corsMiddleware(c, next);
 });
 
-// Rate limiting middleware — 30 req/min per IP (3 req/min for admin auth), KV-backed sliding window
+// CSRF protection — reject state-changing requests from unknown origins
+app.use("*", async (c, next) => {
+  const method = c.req.method;
+  if (method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE") {
+    const origin = c.req.header("Origin");
+    // Allow requests with no Origin (server-to-server, curl, Wrangler local dev)
+    if (origin) {
+      const allowedOrigins = c.env.ALLOWED_ORIGINS?.split(",").map((o) => o.trim()).filter(Boolean) ?? [
+        "http://localhost:5173",
+        "http://localhost:4173",
+      ];
+      const isPagesPreview =
+        /^https:\/\/[a-z0-9-]+\.afia-app\.pages\.dev$/.test(origin) ||
+        /^https:\/\/[a-z0-9-]+\.afia-oil-tracker\.pages\.dev$/.test(origin);
+      if (!allowedOrigins.includes(origin) && !isPagesPreview) {
+        return c.json({ error: "Forbidden", code: "CSRF_REJECTED" }, 403);
+      }
+    }
+  }
+  return next();
+});
+
+// Rate limiting middleware — 30 req/min per IP (3 req/min for admin auth, 10 req/min for admin actions), KV-backed sliding window
 app.use("*", async (c, next) => {
   const requestId = crypto.randomUUID();
   c.set("requestId", requestId);
 
   // Check for mock mode header - bypass rate limiting for tests
+  // SECURITY: Only allow mock mode if explicitly enabled in environment (for tests/staging)
   const mockMode = c.req.header("X-Mock-Mode");
-  if (mockMode === "true") {
-    // Enable mock LLM for this request
-    c.env.ENABLE_MOCK_LLM = "true";
-    // Set flag to bypass rate limiting
-    c.set('skipRateLimit', true);
-    try {
-      const response = await next();
-      c.header("X-RequestId", requestId);
-      return response;
-    } finally {
-      // Clean up mock mode flag after request
-      delete c.env.ENABLE_MOCK_LLM;
-    }
-  }
-
-  const ip =
-    c.req.header("CF-Connecting-IP") ??
-    c.req.header("X-Forwarded-For") ??
-    "127.0.0.1"; // Fallback for local development
-
-  // Skip rate limiting if in mock mode
-  if (c.get('skipRateLimit')) {
+  if (mockMode === "true" && c.env.ENABLE_MOCK_LLM === "true") {
+    // Use Hono context variable instead of mutating c.env (prevents race conditions in production)
+    c.set('enableMockLLM', true);
     const response = await next();
     c.header("X-RequestId", requestId);
     return response;
   }
+  const ip =
+    c.req.header("CF-Connecting-IP") ??
+    c.req.header("X-Forwarded-For") ??
+    "127.0.0.1"; // Fallback for local development
 
   // Skip rate limiting entirely if KV is not available (local development without KV setup)
   if (!c.env.RATE_LIMIT_KV) {
@@ -99,11 +107,13 @@ app.use("*", async (c, next) => {
     );
   }
   
-  // Stricter rate limiting for admin auth endpoint (3 attempts per minute)
+  // Stricter rate limiting for admin endpoints
   const isAdminAuth = c.req.path === "/admin/auth";
-  const key = isAdminAuth ? `ratelimit:admin:${ip}` : `ratelimit:${ip}`;
+  // /admin/correct and /admin/rerun-llm are resource-intensive/destructive — 10 req/min
+  const isAdminAction = !isAdminAuth && c.req.path.startsWith("/admin/");
+  const key = isAdminAuth ? `ratelimit:admin:${ip}` : isAdminAction ? `ratelimit:admin-action:${ip}` : `ratelimit:${ip}`;
   const windowMs = 60_000;
-  const limit = isAdminAuth ? 3 : 30;
+  const limit = isAdminAuth ? 3 : isAdminAction ? 10 : 30;
   const now = Date.now();
   const windowStart = now - windowMs;
 

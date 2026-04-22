@@ -70,6 +70,8 @@ export interface CompositionAssessment {
   centroidX: number;
   /** Brand verification status (Stage 0.5) */
   isBrandMatch: boolean;
+  /** Brand verification findings (e.g., green_band, heart_logo) */
+  brandFindings: string[];
 }
 
 /**
@@ -459,10 +461,22 @@ export function analyzeComposition(
     // +1 on end: Array.slice is end-exclusive; maxRow itself must be included.
     const neckRows   = Math.max(1, Math.floor(bboxHeight * NECK_TOP_FRACTION));
     const bodyRows   = Math.max(1, Math.floor(bboxHeight * NECK_BODY_FRACTION));
-    const neckTotal  = rowCounts.slice(minRow, minRow + neckRows).reduce((a, b) => a + b, 0);
-    const bodyTotal  = rowCounts.slice(maxRow - bodyRows, maxRow + 1).reduce((a, b) => a + b, 0);
-    const neckDensity = neckTotal / (neckRows * bboxWidth);
-    const bodyDensity = bodyTotal / (bodyRows * bboxWidth);
+    
+    // M5: Guard against out-of-bounds indices and ensures we don't slice negative ranges
+    const neckStart = minRow;
+    const neckEnd = Math.min(H, minRow + neckRows);
+    const bodyStart = Math.max(minRow, maxRow - bodyRows + 1);
+    const bodyEnd = Math.min(H, maxRow + 1);
+
+    const neckTotal  = rowCounts.slice(neckStart, neckEnd).reduce((a, b) => a + b, 0);
+    const bodyTotal  = rowCounts.slice(bodyStart, bodyEnd).reduce((a, b) => a + b, 0);
+    
+    const actualNeckRows = neckEnd - neckStart;
+    const actualBodyRows = bodyEnd - bodyStart;
+
+    const neckDensity = actualNeckRows > 0 ? neckTotal / (actualNeckRows * bboxWidth) : 0;
+    const bodyDensity = actualBodyRows > 0 ? bodyTotal / (actualBodyRows * bboxWidth) : 0;
+    
     if (bodyDensity === 0 || neckDensity >= NECK_MAX_DENSITY_RATIO * bodyDensity) {
       return { isCentered, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: true, widthFraction: bboxWidth / W, centroidX, isBrandMatch: false };
     }

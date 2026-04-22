@@ -35,22 +35,22 @@ export function checkUploadQuality(signals: ImageQualitySignals): QualityCheckRe
   const reasons: string[] = [];
 
   if (signals.blurScore < QUALITY_THRESHOLDS.BLUR_MIN) {
-    reasons.push("Photo appears blurry — hold the camera steady");
+    reasons.push("uploadQuality.reasons.blur");
   }
   
   if (signals.brightnessScore < QUALITY_THRESHOLDS.BRIGHTNESS_MIN) {
-    reasons.push("Photo is too dark — try better lighting");
+    reasons.push("uploadQuality.reasons.tooDark");
   }
   
   if (signals.brightnessScore > QUALITY_THRESHOLDS.BRIGHTNESS_MAX) {
-    reasons.push("Photo is overexposed — avoid direct light");
+    reasons.push("uploadQuality.reasons.tooBright");
   }
   
   if (
     signals.bottleDetectionConfidence !== null &&
     signals.bottleDetectionConfidence < QUALITY_THRESHOLDS.BOTTLE_CONF_MIN
   ) {
-    reasons.push("Bottle not clearly visible — center the bottle in frame");
+    reasons.push("uploadQuality.reasons.noBottle");
   }
 
   return { 
@@ -128,38 +128,45 @@ export function calculateBrightnessScore(imageData: ImageData): number {
  * @param imageBase64 - Base64 encoded image data URL
  * @returns Promise resolving to quality signals
  */
-export async function analyzeImageQuality(imageBase64: string): Promise<Omit<ImageQualitySignals, 'bottleDetectionConfidence'>> {
+export function analyzeImageQuality(imageBase64: string): Promise<Omit<ImageQualitySignals, 'bottleDetectionConfidence'>> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    
+
+    img.onerror = () => reject(new Error('Failed to load image for quality analysis'));
+
     img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      
-      if (!ctx) {
-        reject(new Error('Failed to get canvas context'));
-        return;
+      // Yield to the main thread before heavy canvas work to avoid jank
+      const compute = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        if (!ctx) {
+          reject(new Error('Failed to get canvas context'));
+          return;
+        }
+
+        // Downsample to 320px for speed — sufficient for quality signals
+        const maxSize = 320;
+        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+        const blurScore = calculateBlurScore(imageData);
+        const brightnessScore = calculateBrightnessScore(imageData);
+
+        resolve({ blurScore, brightnessScore });
+      };
+
+      if (typeof requestIdleCallback !== 'undefined') {
+        requestIdleCallback(() => compute(), { timeout: 2000 });
+      } else {
+        setTimeout(compute, 0);
       }
-      
-      // Use smaller size for quality analysis (faster)
-      const maxSize = 640;
-      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-      
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      
-      const blurScore = calculateBlurScore(imageData);
-      const brightnessScore = calculateBrightnessScore(imageData);
-      
-      resolve({ blurScore, brightnessScore });
     };
-    
-    img.onerror = () => {
-      reject(new Error('Failed to load image for quality analysis'));
-    };
-    
+
     img.src = imageBase64;
   });
 }

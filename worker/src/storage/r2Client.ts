@@ -7,18 +7,10 @@
  */
 
 import type { Env } from "../types.ts";
-import { createClient } from "@supabase/supabase-js";
-
-let supabaseInstance: ReturnType<typeof createClient> | null = null;
+import { getSupabaseClient } from "../db/supabase";
 
 function getSupabase(env: Env) {
-  if (!supabaseInstance) {
-    const key = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
-    supabaseInstance = createClient(env.SUPABASE_URL, key, {
-      auth: { persistSession: false },
-    });
-  }
-  return supabaseInstance;
+  return getSupabaseClient(env);
 }
 
 export interface ScanMetadataExtended {

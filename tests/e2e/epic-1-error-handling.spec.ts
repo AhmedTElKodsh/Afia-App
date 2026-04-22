@@ -22,7 +22,7 @@ test.describe('Epic 1: Error Handling', () => {
     
     test('should show clear message for unknown SKU', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.invalid.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Should show error message
       const pageContent = await page.textContent('body');
@@ -33,7 +33,7 @@ test.describe('Epic 1: Error Handling', () => {
     
     test('should display the invalid SKU that was scanned', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.invalid.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Should show the SKU somewhere
       const pageContent = await page.textContent('body');
@@ -53,7 +53,7 @@ test.describe('Epic 1: Error Handling', () => {
       await mockAnalyzeError(page, 500);
 
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Trigger analyze directly — avoids timing race with auto-capture
       await page.evaluate(() => {
@@ -78,7 +78,7 @@ test.describe('Epic 1: Error Handling', () => {
       await mockAnalyzeError(page, 429);
 
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Trigger analyze directly — avoids timing race with auto-capture
       await page.evaluate(() => {
@@ -96,10 +96,11 @@ test.describe('Epic 1: Error Handling', () => {
     test('should offer retry option after API failure', async ({ page }) => {
       // Apply camera mock FIRST before any init scripts
       await mockCamera(page);
-      
+
       await page.addInitScript(() => {
         window.localStorage.setItem('afia_privacy_accepted', 'true');
         (window as any).__AFIA_TEST_MODE__ = true;
+        (window as any).__AFIA_PREVENT_CAPTURE__ = true;
       });
       
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
@@ -149,7 +150,7 @@ test.describe('Epic 1: Error Handling', () => {
       });
       
       // Navigate and wait
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Page should still be functional
       expect(await page.textContent('body')).toBeTruthy();
@@ -158,7 +159,7 @@ test.describe('Epic 1: Error Handling', () => {
     test('should show offline message when network is unavailable', async ({ page }) => {
       // Navigate while online first
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Then go offline
       await page.context().setOffline(true);
@@ -211,7 +212,7 @@ test.describe('Epic 1: Error Handling', () => {
       });
 
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Click start scan — same pattern as working critical-path tests
       await page.evaluate(() => {
@@ -252,7 +253,7 @@ test.describe('Epic 1: Error Handling', () => {
     
     test('should detect and report poor image quality', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API with quality issues
       await page.route('**/analyze', async (route) => {
@@ -277,7 +278,7 @@ test.describe('Epic 1: Error Handling', () => {
     
     test('should suggest retake for poor quality images', async ({ page }) => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Mock API suggesting retake
       await page.route('**/analyze', async (route) => {
@@ -305,7 +306,7 @@ test.describe('Epic 1: Error Handling', () => {
     
     test('should handle empty SKU parameter', async ({ page }) => {
       await page.goto('/?sku=');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Should handle gracefully
       const pageContent = await page.textContent('body');
@@ -314,7 +315,7 @@ test.describe('Epic 1: Error Handling', () => {
     
     test('should handle special characters in SKU', async ({ page }) => {
       await page.goto('/?sku=special%40%23%24chars');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Should handle or show error
       const pageContent = await page.textContent('body');
@@ -324,7 +325,7 @@ test.describe('Epic 1: Error Handling', () => {
     test('should handle very long SKU parameter', async ({ page }) => {
       const longSku = 'a'.repeat(500);
       await page.goto(`/?sku=${longSku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Should handle gracefully
       const pageContent = await page.textContent('body');

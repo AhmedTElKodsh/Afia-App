@@ -37,7 +37,7 @@ async function setupAdmin(page: import('@playwright/test').Page) {
 /** Navigate to admin, wait for dashboard, then switch to TestLab view */
 async function navigateToTestLab(page: import('@playwright/test').Page) {
   await page.goto('/?mode=admin');
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
   
   // Navigate via tab nav if not already there
   const testLabBtn = page.locator('button[aria-label="Test Lab"]');

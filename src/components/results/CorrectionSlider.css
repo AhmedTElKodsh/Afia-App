@@ -1,0 +1,89 @@
+.correction-slider-container {
+  margin: 1rem 0;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+}
+
+.correction-slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.correction-slider-label {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.correction-slider-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.correction-slider-track {
+  position: relative;
+  width: 100%;
+  padding: 1rem 0;
+}
+
+/* Custom range input styling */
+.correction-range-input {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  outline: none;
+}
+
+/* 28px Large Thumb for Mobile - AC5 */
+.correction-range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px;
+  height: 28px;
+  background: var(--color-primary);
+  border: 4px solid #1a1a1a;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: transform 0.1s ease;
+}
+
+.correction-range-input::-webkit-slider-thumb:active {
+  transform: scale(1.15);
+}
+
+.correction-slider-markers {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+  position: relative;
+}
+
+.marker {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+.marker-dot.initial-marker {
+  position: absolute;
+  top: -24px;
+  width: 2px;
+  height: 12px;
+  background: var(--color-primary);
+  opacity: 0.4;
+  transform: translateX(-50%);
+}
+
+.correction-slider-hint {
+  margin-top: 1rem;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}

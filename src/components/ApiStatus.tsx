@@ -1,4 +1,5 @@
 import { AlertTriangle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import "./ApiStatus.css";
 
 interface ApiStatusProps {
@@ -14,6 +15,8 @@ export function ApiStatus({
   onRetry,
   onRetake,
 }: ApiStatusProps) {
+  const { t } = useTranslation();
+
   if (state === "loading") {
     return (
       <div className="api-status" role="status" aria-live="polite">
@@ -22,9 +25,9 @@ export function ApiStatus({
             <div className="fill-wave" />
           </div>
         </div>
-        <p className="analyzing-text">Analyzing your bottle...</p>
+        <p className="analyzing-text">{t('analysis.analyzing')}</p>
         <p className="text-caption text-secondary">
-          This usually takes 3–8 seconds
+          {t('analysis.timeEstimate')}
         </p>
       </div>
     );
@@ -35,17 +38,17 @@ export function ApiStatus({
       <div className="error-icon" aria-hidden="true">
         <AlertTriangle size={32} strokeWidth={1.5} />
       </div>
-      <h2>Unable to analyze image</h2>
-      <p className="text-secondary">{errorMessage || "Please try again"}</p>
+      <h2>{t('analysis.failed')}</h2>
+      <p className="text-secondary">{errorMessage || t('common.retry')}</p>
       <div className="error-actions">
         {onRetry && (
           <button className="btn btn-primary" onClick={onRetry}>
-            Retry
+            {t('common.retry')}
           </button>
         )}
         {onRetake && (
           <button className="btn btn-outline" onClick={onRetake}>
-            Retake Photo
+            {t('camera.retake')}
           </button>
         )}
       </div>

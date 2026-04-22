@@ -19,7 +19,7 @@ import { ResultDisplay } from "./components/ResultDisplay.tsx";
 import { IosWarning } from "./components/IosWarning.tsx";
 import { useIosInAppBrowser } from "./hooks/useIosInAppBrowser.ts";
 import { reportScanError } from "./api/apiClient.ts";
-import { calculateVolumes } from "./utils/volumeCalculator.ts";
+import { calculateVolumes } from "../shared/volumeCalculator.ts";
 import { useScanHistory, createStoredScan } from "./hooks/useScanHistory.ts";
 import { analyze as runAnalysis } from "./services/analysisRouter.ts";
 import { loadModel } from "./services/modelLoader.ts";
@@ -48,6 +48,7 @@ function hasValidAdminSession(): boolean {
 type CurrentView = "scan" | "history" | "admin";
 
 export default function App() {
+  const { t } = useTranslation();
   const [isAdminUrlParam] = useState(() => window.location.search.includes("mode=admin"));
 
   const [currentView, setCurrentView] = useState<CurrentView>(() => {
@@ -65,6 +66,16 @@ export default function App() {
   const [analysisProgress, setAnalysisProgress] = useState<string>("");
   const [selectedSku, setSelectedSku] = useState<string>(() => {
     const params = new URLSearchParams(window.location.search);
+    
+    // M8: Enable test mode and bypasses via URL params for maximum E2E reliability
+    // SECURITY: This bypass is restricted to DEV mode to prevent privacy/onboarding bypass in production.
+    if (import.meta.env.DEV && params.get("test_mode") === "1") {
+      (window as any).__AFIA_TEST_MODE__ = true;
+      localStorage.setItem('afia_privacy_accepted', 'true');
+      localStorage.setItem('afia_onboarding_complete', 'true');
+      localStorage.setItem('afia_mock_mode', 'true');
+    }
+    
     return params.get("sku") || "";
   });
   
@@ -192,7 +203,7 @@ export default function App() {
 
     setAppState("API_PENDING");
     setError(null);
-    setAnalysisProgress("Preparing analysis...");
+    setAnalysisProgress(t('analysis.preparing', 'Preparing analysis...'));
 
     try {
       // Story 7.8: Use analysisRouter with quality warning callback
@@ -242,8 +253,8 @@ export default function App() {
           selectedSku,
           bottle.name,
           bottle.totalVolumeMl,
-          { ...analysisResult, fillPercentage: 0, confidence: 'low' as const },
-          0
+          { ...analysisResult },
+          analysisResult.remainingMl // Use calculated ml from local result
         );
         addScan(queuedScan);
         setAppState("API_SUCCESS");
@@ -265,20 +276,33 @@ export default function App() {
         qualityWarningResolverRef.current = null;
         setQualityWarning(null);
       }
+      
+      const error = err as Error;
+      
       // Story 7.8 - AC2: Handle user cancellation
-      if (err instanceof Error && err.message.startsWith('USER_CANCELLED:')) {
+      if (error.message.startsWith('USER_CANCELLED:')) {
         handleRetake();
         return;
       }
 
-      const msg = err instanceof Error ? err.message : "Analysis failed";
+      // Story 7.6 - AC6: Handle needs-sku route
+      if (error.message.startsWith('NEEDS_SKU:')) {
+        // Switch to bottle selector view so user can pick SKU manually
+        setCurrentView("scan"); // Ensure we are on scan tab
+        setAppState("IDLE");    // Reset to idle to show selector
+        // We keep the captured image so we can analyze it once SKU is picked
+        // Actually, the UX is better if they pick THEN scan if it was a brand rejection
+        return;
+      }
+
+      const msg = error.message || t('errors.analysis', 'Analysis failed');
       setError(msg);
       setAppState("API_ERROR");
       reportScanError(selectedSku, msg, navigator.userAgent);
     } finally {
       isAnalyzingRef.current = false;
     }
-  }, [capturedImage, selectedSku, bottle]);
+  }, [capturedImage, selectedSku, bottle, t]);
 
   const handleConfirmFill = useCallback((finalPercentage: number) => {
     if (!result || !bottle) return;
@@ -403,15 +427,27 @@ export default function App() {
   useEffect(() => {
     if (!import.meta.env.DEV) return;
     if (window.__AFIA_TEST_MODE__) {
-      // Minimal 1×1 blank JPEG for test
-      const blankJpeg = '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAAFCAABAAEEAQD/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwABgB/9k=';
+      // Minimal 1×1 blank JPEG for test (must include data URI prefix to pass validation)
+      const blankJpeg = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAAFCAABAAEEAQD/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwABgB/9k=';
       window.__AFIA_TRIGGER_ANALYZE__ = () => {
         setCapturedImage(blankJpeg);
         handleAnalyze(blankJpeg);
       };
+      window.__AFIA_TRIGGER_ERROR__ = (message: string) => {
+        const error = new Error(message);
+        // Story 7.6 - AC6: Handle needs-sku route
+        if (message.startsWith('NEEDS_SKU:')) {
+          setCurrentView("scan");
+          setAppState("IDLE");
+          return;
+        }
+        setError(message);
+        setAppState("API_ERROR");
+      };
     }
     return () => {
       delete window.__AFIA_TRIGGER_ANALYZE__;
+      delete window.__AFIA_TRIGGER_ERROR__;
     };
   }, [handleAnalyze]);
 
@@ -524,7 +560,7 @@ export default function App() {
           <CameraViewfinder
             onCapture={handleCapture}
             onError={setError}
-            onPermissionDenied={() => setError('Camera permission denied')}
+            onPermissionDenied={() => setError(t('camera.permissionDenied'))}
             onCancel={() => setAppState("IDLE")}
             sku={selectedSku}
           />
@@ -558,7 +594,7 @@ export default function App() {
           <div className="app-with-nav">
             <AppControls isAdminMode={isAdminMode} />
             <Navigation currentView={currentView} onViewChange={setCurrentView} isAdminMode={isAdminMode} />
-            <ApiStatus state="error" errorMessage="Analysis state lost" onRetry={handleRetake} onRetake={handleRetake} />
+            <ApiStatus state="error" errorMessage={t('errors.stateLost', 'Analysis state lost')} onRetry={handleRetake} onRetake={handleRetake} />
           </div>
         );
       }
@@ -591,7 +627,7 @@ export default function App() {
           <Navigation currentView={currentView} onViewChange={setCurrentView} isAdminMode={isAdminMode} />
           <ApiStatus
             state="error"
-            errorMessage={error ?? "Analysis failed"}
+            errorMessage={error ?? t('errors.analysis', 'Analysis failed')}
             onRetry={handleRetry}
             onRetake={handleRetake}
           />
@@ -605,7 +641,7 @@ export default function App() {
           <div className="app-with-nav">
             <AppControls isAdminMode={isAdminMode} />
             <Navigation currentView={currentView} onViewChange={setCurrentView} isAdminMode={isAdminMode} />
-            <ApiStatus state="error" errorMessage="Analysis result unavailable" onRetry={handleRetake} onRetake={handleRetake} />
+            <ApiStatus state="error" errorMessage={t('errors.analysisUnavailable', 'Analysis result unavailable')} onRetry={handleRetake} onRetake={handleRetake} />
           </div>
         );
       }

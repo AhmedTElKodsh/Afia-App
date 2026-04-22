@@ -44,15 +44,16 @@ npm run test:integration   # Integration tests - requires Worker running
 
 **How It Works:**
 - Playwright sends `X-Mock-Mode: true` header on all requests (configured in `playwright.config.ts`)
-- Worker detects header and enables all mocks (`ENABLE_MOCK_LLM = "true"`)
-- Rate limiting is bypassed for mock requests via `skipRateLimit` flag
-- Mock mode flag is automatically cleaned up after each request (prevents cross-request contamination)
+- Worker detects header and enables all mocks using Hono context variable: `c.set('enableMockLLM', true)`
+- Rate limiting is bypassed entirely for mock requests (early return before rate limit check)
+- Context variables are request-scoped (no cleanup needed, prevents race conditions)
 - RequestId is preserved for logging/debugging
+- `analyze.ts` checks both `c.get('enableMockLLM')` (header-based) and `c.env.ENABLE_MOCK_LLM` (environment-based)
 
 ### Limitations and Considerations
 
 - **Scope**: Mock mode currently applies to all API endpoints that use the LLM service
-- **Environment Variables**: The `ENABLE_MOCK_LLM` flag is set per-request and cleaned up automatically
+- **Context Variables**: Uses Hono context variables (`c.set('enableMockLLM', true)`) instead of mutating `c.env` to prevent race conditions in production with request multiplexing
 - **Rate Limiting**: Bypassed completely in mock mode - tests won't reflect production rate limit behavior
 - **Determinism**: Mock responses are deterministic but may not reflect actual LLM behavior
 - **Performance**: Mock mode is significantly faster than real LLM calls, which may mask performance issues
@@ -82,6 +83,11 @@ GitHub Actions workflows can run E2E tests without secrets:
 
 **Verification:**
 Run `tests/e2e/mock-mode.spec.ts` to verify mock responses are deterministic.
+
+**Test Directory Structure:**
+- E2E tests: `tests/e2e/` (configured in `playwright.config.ts`)
+- Unit tests: `src/test/unit/`
+- Integration tests: `src/test/integration/`
 
 **Manual Verification Steps:**
 1. Remove all API keys from `.dev.vars` (comment out `GROQ_API_KEY`, `GEMINI_API_KEY`, etc.)

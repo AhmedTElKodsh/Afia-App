@@ -40,7 +40,6 @@ import { ModelVersionManager } from "./admin/ModelVersionManager";
 import "./AdminDashboard.css";
 
 const WORKER_URL = import.meta.env.VITE_PROXY_URL || "";
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "";
 const SESSION_KEY = "afia_admin_session";
 const SESSION_EXPIRES_KEY = "afia_admin_session_expires";
 
@@ -142,21 +141,8 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
     e.preventDefault();
     setError("");
 
-    // Local password check when no worker is configured
     if (!WORKER_URL) {
-      if (!ADMIN_PASSWORD) {
-        setError(t('admin.login.errorNotConfigured'));
-        return;
-      }
-      if (password === ADMIN_PASSWORD) {
-        const expiresAt = Date.now() + 3600000;
-        sessionStorage.setItem(SESSION_KEY, btoa(`${expiresAt}:local`));
-        sessionStorage.setItem(SESSION_EXPIRES_KEY, String(expiresAt));
-        setIsAuthenticated(true);
-        onAuthSuccess?.();
-      } else {
-        setError(t('admin.login.errorInvalid'));
-      }
+      setError(t('errors.generic'));
       return;
     }
 
@@ -166,6 +152,7 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       });
+      
       if (res.ok) {
         const data = await res.json() as { token: string; expiresAt: number };
         const { token, expiresAt } = data;
@@ -175,19 +162,6 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
         onAuthSuccess?.();
       } else if (res.status === 401) {
         setError(t('admin.login.errorInvalid'));
-      } else if (res.status === 503) {
-        // Worker has no ADMIN_PASSWORD secret — fall back to local env check (POC only)
-        if (ADMIN_PASSWORD && password === ADMIN_PASSWORD) {
-          const expiresAt = Date.now() + 3600000;
-          sessionStorage.setItem(SESSION_KEY, btoa(`${expiresAt}:local`));
-          sessionStorage.setItem(SESSION_EXPIRES_KEY, String(expiresAt));
-          setIsAuthenticated(true);
-          onAuthSuccess?.();
-        } else if (ADMIN_PASSWORD) {
-          setError(t('admin.login.errorInvalid'));
-        } else {
-          setError(t('admin.login.errorNotConfigured'));
-        }
       } else {
         setError(t('errors.generic'));
       }
@@ -263,7 +237,7 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
         <div className="brand">
           <div className="brand-logo"><Shield size={18} strokeWidth={2.5} /></div>
           <div className="brand-text">
-            <div className="brand-name">Afia Tracker</div>
+            <div className="brand-name">{t('app.name')}</div>
             <div className="brand-sub">{t('admin.header.brandSub', 'Admin Console')}</div>
           </div>
         </div>
@@ -389,7 +363,7 @@ function SparklineCard({ scans, t, locale }: { scans: StoredScan[], t: TFunction
               <div
                 className={`sparkline-bar${day.count > 0 ? " sparkline-bar--active" : ""}${day.isToday ? " sparkline-bar--today" : ""}`}
                 style={{ height: `${Math.max((day.count / maxCount) * 100, 4)}%` }}
-                title={`${day.label}: ${day.count} scan${day.count !== 1 ? "s" : ""}`}
+                title={t('admin.overview.sparkline.barTitle', { defaultValue: '{{label}}: {{count}} scan', label: day.label, count: day.count }) + (day.count !== 1 ? 's' : '')}
               />
             </div>
             <span className="sparkline-day">{day.label}</span>
@@ -477,7 +451,9 @@ function OverviewTab({ stats, scans, onGoToTestLab, onReview, t, isRTL, isLoadin
           icon={<TrendingUp size={20} />}
           value={stats.mae !== "N/A" ? `${stats.mae}%` : "N/A"}
           label={t('admin.overview.metrics.mae', 'Model Error (MAE)')}
-          subValue={stats.mae !== "N/A" ? (Number(stats.mae) < 5 ? "Excellent" : "Needs Training") : "Pending Review"}
+          subValue={stats.mae !== "N/A" 
+            ? (Number(stats.mae) < 5 ? t('admin.modelVersion.maeExcellent', 'Excellent') : t('admin.modelVersion.maeNeedsImprovement', 'Needs Training')) 
+            : t('admin.modelVersion.pendingReview', 'Pending Review')}
         />
       </div>
 
@@ -549,9 +525,9 @@ function OverviewTab({ stats, scans, onGoToTestLab, onReview, t, isRTL, isLoadin
                   {paginatedScans.map((scan, idx) => (
                     <tr key={scan.id ?? `row-${idx}`}>
                       <td>{new Date(scan.timestamp.replace(' ', 'T')).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')}</td>
-                      <td>{scan.bottleName}</td>
+                      <td>{t(`bottles.${scan.sku}`, { defaultValue: scan.bottleName })}</td>
                       <td>
-                        <div className="fill-mini-bar-wrap" aria-label={`${scan.fillPercentage}% full`} title={`${scan.fillPercentage}% full`}>
+                        <div className="fill-mini-bar-wrap" aria-label={`${scan.fillPercentage}% ${t('results.fillLevel')}`} title={`${scan.fillPercentage}% ${t('results.fillLevel')}`}>
                           <div className="fill-mini-bar" aria-hidden="true">
                             <div className="fill-mini-bar-inner" style={{ width: `${scan.fillPercentage}%` }} />
                           </div>

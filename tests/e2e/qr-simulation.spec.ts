@@ -42,7 +42,7 @@ test.describe('QR Simulation: URL Entry Point (active SKU)', () => {
 
   test('navigating to /?sku=afia-corn-1.5l shows the QR landing page', async ({ page }) => {
     await page.goto(`/?sku=${ACTIVE_SKU}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const pill = page.locator('.qrl-selector-pill');
     await expect(pill).toBeVisible({ timeout: 5000 });
@@ -55,7 +55,7 @@ test.describe('QR Simulation: URL Entry Point (active SKU)', () => {
 
   test('navigating with mode=scan param loads landing page with scan intent', async ({ page }) => {
     await page.goto(`/?sku=${ACTIVE_SKU}&mode=scan`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(page.locator('.qrl-selector-pill')).toBeVisible({ timeout: 5000 });
     await expect(
@@ -65,7 +65,7 @@ test.describe('QR Simulation: URL Entry Point (active SKU)', () => {
 
   test('the active SKU resolves without showing unknown-bottle state', async ({ page }) => {
     await page.goto(`/?sku=${ACTIVE_SKU}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const unknownEl = page.locator('.unknown-title, h1:has-text("not supported"), h1:has-text("unknown")');
     const isUnknown = await unknownEl.isVisible({ timeout: 2000 }).catch(() => false);
@@ -83,7 +83,7 @@ test.describe('QR Simulation: Invalid / Missing / Legacy SKU states', () => {
 
   test('navigating with no SKU shows "No bottle linked" state', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(
       page.locator('.unknown-title, h1').first()
@@ -92,7 +92,7 @@ test.describe('QR Simulation: Invalid / Missing / Legacy SKU states', () => {
 
   test('navigating with invalid SKU shows not-supported state', async ({ page }) => {
     await page.goto('/?sku=fake-bottle-99999');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(
       page.locator('.unknown-title, h1').first()
@@ -106,7 +106,7 @@ test.describe('QR Simulation: Invalid / Missing / Legacy SKU states', () => {
 
     for (const sku of legacySkus) {
       await page.goto(`/?sku=${sku}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       await expect(
         page.locator('.unknown-title, h1').first(),
@@ -117,7 +117,7 @@ test.describe('QR Simulation: Invalid / Missing / Legacy SKU states', () => {
 
   test('invalid SKU does NOT show a camera start button', async ({ page }) => {
     await page.goto('/?sku=nonexistent-sku-abc');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const startBtn = page.locator('button:has-text("START SMART SCAN"), button:has-text("Start Scan")');
     const isVisible = await startBtn.isVisible({ timeout: 2000 }).catch(() => false);
@@ -126,7 +126,7 @@ test.describe('QR Simulation: Invalid / Missing / Legacy SKU states', () => {
 
   test('empty SKU param (?sku=) shows unknown state', async ({ page }) => {
     await page.goto('/?sku=');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(
       page.locator('.unknown-title, h1').first()
@@ -144,7 +144,7 @@ test.describe('QR Simulation: Privacy consent gate', () => {
     });
 
     await page.goto(`/?sku=${ACTIVE_SKU}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const startBtn = page.locator('button:has-text("START SMART SCAN"), button:has-text("Start Scan")').first();
     await expect(startBtn).toBeDisabled({ timeout: 5000 });
@@ -160,7 +160,7 @@ test.describe('QR Simulation: Privacy consent gate', () => {
     });
 
     await page.goto(`/?sku=${ACTIVE_SKU}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     await expect(
       page.locator('button:has-text("START SMART SCAN"), button:has-text("Start Scan")').first()
@@ -190,7 +190,7 @@ test.describe('QR Simulation: QR Landing history sparkline', () => {
     });
 
     await page.goto(`/?sku=${ACTIVE_SKU}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const sparklineCount = page.locator('.qrl-sparkline-count');
     await expect(sparklineCount).toBeVisible({ timeout: 5000 });
@@ -213,7 +213,7 @@ test.describe('QR Simulation: QR Landing history sparkline', () => {
     });
 
     await page.goto(`/?sku=${ACTIVE_SKU}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const sparklineCount = page.locator('.qrl-sparkline-count');
     await expect(sparklineCount).toBeVisible({ timeout: 5000 });
@@ -229,7 +229,7 @@ test.describe('QR Simulation: QR Landing history sparkline', () => {
     });
 
     await page.goto(`/?sku=${ACTIVE_SKU}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const sparklineCount = page.locator('.qrl-sparkline-count');
     const isVisible = await sparklineCount.isVisible({ timeout: 2000 }).catch(() => false);
@@ -344,12 +344,14 @@ test.describe('QR Simulation: Full scan flow triggered from URL entry point', ()
     await page.addInitScript(() => {
       window.localStorage.setItem('afia_privacy_accepted', 'true');
       (window as any).__AFIA_TEST_MODE__ = true;
+      // Prevent auto-capture from unmounting the camera view before the capture button check
+      (window as any).__AFIA_PREVENT_CAPTURE__ = true;
     });
     await mockCamera(page);
     await mockAnalyzeSuccess(page);
 
     await page.goto(`/?sku=${testBottles.afiaCorn15L.sku}&mode=scan`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 1. Landing page loaded for active bottle
     await expect(page.locator('.qrl-selector-pill')).toContainText(ACTIVE_NAME_FRAGMENT, { timeout: 5000 });

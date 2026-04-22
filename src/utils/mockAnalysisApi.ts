@@ -9,8 +9,8 @@ import type { AnalysisResult } from "../state/appState";
 
 export interface MockScenario {
   id: string;
-  name: string;
-  description: string;
+  nameKey: string;
+  descriptionKey: string;
   /** Fill percentage - must be between 0 and 100 */
   fillPercentage: number;
   confidence: "high" | "medium" | "low";
@@ -32,48 +32,48 @@ export interface MockScenario {
 export const MOCK_SCENARIOS: readonly MockScenario[] = Object.freeze([
   {
     id: "high-full",
-    name: "High Confidence - Full Bottle",
-    description: "100% fill level with high confidence",
+    nameKey: "admin.mockScenarios.highFull.name",
+    descriptionKey: "admin.mockScenarios.highFull.desc",
     fillPercentage: 100,
     confidence: "high",
     latencyMs: 800,
   },
   {
     id: "high-75",
-    name: "High Confidence - 75% Full",
-    description: "75% fill level with high confidence",
+    nameKey: "admin.mockScenarios.high75.name",
+    descriptionKey: "admin.mockScenarios.high75.desc",
     fillPercentage: 75,
     confidence: "high",
     latencyMs: 900,
   },
   {
     id: "high-50",
-    name: "High Confidence - Half Full",
-    description: "50% fill level with high confidence",
+    nameKey: "admin.mockScenarios.high50.name",
+    descriptionKey: "admin.mockScenarios.high50.desc",
     fillPercentage: 50,
     confidence: "high",
     latencyMs: 850,
   },
   {
     id: "high-25",
-    name: "High Confidence - Quarter Full",
-    description: "25% fill level with high confidence",
+    nameKey: "admin.mockScenarios.high25.name",
+    descriptionKey: "admin.mockScenarios.high25.desc",
     fillPercentage: 25,
     confidence: "high",
     latencyMs: 920,
   },
   {
     id: "medium-60",
-    name: "Medium Confidence - 60% Full",
-    description: "60% fill level with medium confidence",
+    nameKey: "admin.mockScenarios.medium60.name",
+    descriptionKey: "admin.mockScenarios.medium60.desc",
     fillPercentage: 60,
     confidence: "medium",
     latencyMs: 1200,
   },
   {
     id: "medium-40",
-    name: "Medium Confidence - 40% Full",
-    description: "40% fill level with medium confidence",
+    nameKey: "admin.mockScenarios.medium40.name",
+    descriptionKey: "admin.mockScenarios.medium40.desc",
     fillPercentage: 40,
     confidence: "medium",
     imageQualityIssues: ["slight_blur"],
@@ -81,8 +81,8 @@ export const MOCK_SCENARIOS: readonly MockScenario[] = Object.freeze([
   },
   {
     id: "low-30",
-    name: "Low Confidence - 30% Full",
-    description: "30% fill level with low confidence and quality issues",
+    nameKey: "admin.mockScenarios.low30.name",
+    descriptionKey: "admin.mockScenarios.low30.desc",
     fillPercentage: 30,
     confidence: "low",
     imageQualityIssues: ["blur", "poor_lighting"],
@@ -90,8 +90,8 @@ export const MOCK_SCENARIOS: readonly MockScenario[] = Object.freeze([
   },
   {
     id: "low-70",
-    name: "Low Confidence - 70% Full",
-    description: "70% fill level with low confidence and reflection",
+    nameKey: "admin.mockScenarios.low70.name",
+    descriptionKey: "admin.mockScenarios.low70.desc",
     fillPercentage: 70,
     confidence: "low",
     imageQualityIssues: ["reflection"],
@@ -99,16 +99,16 @@ export const MOCK_SCENARIOS: readonly MockScenario[] = Object.freeze([
   },
   {
     id: "edge-empty",
-    name: "Edge Case - Nearly Empty",
-    description: "5% fill level (edge case)",
+    nameKey: "admin.mockScenarios.edgeEmpty.name",
+    descriptionKey: "admin.mockScenarios.edgeEmpty.desc",
     fillPercentage: 5,
     confidence: "medium",
     latencyMs: 1100,
   },
   {
     id: "edge-95",
-    name: "Edge Case - Nearly Full",
-    description: "95% fill level (edge case)",
+    nameKey: "admin.mockScenarios.edge95.name",
+    descriptionKey: "admin.mockScenarios.edge95.desc",
     fillPercentage: 95,
     confidence: "high",
     latencyMs: 750,
@@ -169,7 +169,7 @@ export async function mockAnalyzeBottle(
 ): Promise<AnalysisResult> {
   // F8: Simulate API errors for testing
   if (scenario.id.startsWith('error-')) {
-    throw new Error(`Simulated API error: ${scenario.description}`);
+    throw new Error(`Simulated API error: ${scenario.descriptionKey}`);
   }
 
   const latency = scenario.latencyMs || 1000;

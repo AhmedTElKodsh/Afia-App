@@ -1,0 +1,17 @@
+# Local Development Secrets (Wrangler)
+# Copy this file to .dev.vars for local testing
+
+# Enable mock LLM for local testing (no API keys required)
+# Set to "true" to use deterministic mock responses instead of real API calls
+ENABLE_MOCK_LLM="true"
+
+SUPABASE_URL="https://anfgqdgcbvmyegbfvvfh.supabase.co"
+SUPABASE_SERVICE_KEY="[YOUR_SUPABASE_SERVICE_ROLE_KEY]"
+
+# Real API keys (optional when ENABLE_MOCK_LLM="true")
+GEMINI_API_KEY="[YOUR_GEMINI_KEY_1]"
+GEMINI_API_KEY2="[YOUR_GEMINI_KEY_2]"
+GEMINI_API_KEY3="[YOUR_GEMINI_KEY_3]"
+GROQ_API_KEY="[YOUR_GROQ_KEY]"
+
+ADMIN_SECRET="afia-local-dev-secret"

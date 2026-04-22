@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TrendingUp, Database, Calendar, AlertCircle } from 'lucide-react';
 import type { TFunction } from 'i18next';
 
@@ -23,9 +24,12 @@ interface ModelVersionPanelProps {
 }
 
 export function ModelVersionPanel({ t }: ModelVersionPanelProps) {
+  const { i18n } = useTranslation();
   const [versionInfo, setVersionInfo] = useState<ModelVersionInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const locale = i18n.language === 'ar' ? 'ar-SA' : 'en-US';
 
   useEffect(() => {
     const fetchVersionInfo = async () => {
@@ -39,7 +43,7 @@ export function ModelVersionPanel({ t }: ModelVersionPanelProps) {
         });
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch model version: ${response.status}`);
+          throw new Error(t('admin.modelVersion.fetchError', { defaultValue: `Failed to fetch model version: ${response.status}`, status: response.status }));
         }
 
         const data = await response.json();
@@ -47,14 +51,14 @@ export function ModelVersionPanel({ t }: ModelVersionPanelProps) {
         setError(null);
       } catch (err) {
         console.error('[ModelVersionPanel] Failed to fetch version:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load model version');
+        setError(err instanceof Error ? err.message : t('admin.modelVersion.error', 'Failed to load model version'));
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchVersionInfo();
-  }, []);
+  }, [t]);
 
   if (isLoading) {
     return (
@@ -82,11 +86,11 @@ export function ModelVersionPanel({ t }: ModelVersionPanelProps) {
   }
 
   const deployedDate = new Date(versionInfo.deployedAt);
-  const maePercentage = (versionInfo.mae * 100).toFixed(2);
+  const maePercentage = (versionInfo.mae * 100).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const maeStatus = versionInfo.mae < 0.05 ? 'excellent' : versionInfo.mae < 0.10 ? 'good' : 'needs-improvement';
 
   return (
-    <div className="model-version-panel">
+    <div className="model-version-panel" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
       <div className="model-version-header">
         <h3>{t('admin.modelVersion.title', 'Model Version')}</h3>
         <span className="model-version-badge">v{versionInfo.version}</span>
@@ -123,7 +127,7 @@ export function ModelVersionPanel({ t }: ModelVersionPanelProps) {
               {t('admin.modelVersion.trainingCount', 'Training Samples')}
             </span>
             <span className="model-version-metric-value">
-              {versionInfo.trainingCount.toLocaleString()}
+              {versionInfo.trainingCount.toLocaleString(locale)}
             </span>
           </div>
         </div>
@@ -137,10 +141,10 @@ export function ModelVersionPanel({ t }: ModelVersionPanelProps) {
               {t('admin.modelVersion.deployedAt', 'Deployed')}
             </span>
             <span className="model-version-metric-value">
-              {deployedDate.toLocaleDateString()}
+              {deployedDate.toLocaleDateString(locale)}
             </span>
             <span className="model-version-metric-sub">
-              {deployedDate.toLocaleTimeString()}
+              {deployedDate.toLocaleTimeString(locale)}
             </span>
           </div>
         </div>

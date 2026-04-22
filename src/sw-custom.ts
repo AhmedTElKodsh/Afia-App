@@ -8,24 +8,43 @@
 
 declare const self: ServiceWorkerGlobalScope;
 
+const SYNC_TAG = 'analyze-sync';
+const DB_NAME = 'afia-sync-queue';
+const DB_VERSION = 1;
+const STORE_NAME = 'sync-queue';
+const MAX_RETRIES = 5;
+const MAX_ITEM_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+// In-memory lock — prevents concurrent sync runs within same SW lifetime
+let isProcessing = false;
+
 /**
  * Background Sync event handler
  * Processes queued analyze requests when connectivity is restored
  */
-self.addEventListener('sync', (event: any) => {
-  if (event.tag === 'analyze-sync') {
-    event.waitUntil(processSyncQueue());
+self.addEventListener('sync', (event: ExtendableEvent & { tag: string }) => {
+  if (event.tag === SYNC_TAG) {
+    event.waitUntil(runSyncQueue());
   }
 });
 
+async function runSyncQueue(): Promise<void> {
+  if (isProcessing) return;
+  isProcessing = true;
+  try {
+    await processSyncQueue();
+  } finally {
+    isProcessing = false;
+  }
+}
+
 /**
  * Process the sync queue from IndexedDB
- * This is a simplified version that delegates to the main app's sync queue
  */
 async function processSyncQueue(): Promise<void> {
   try {
-    // Open IndexedDB
     const db = await openDatabase();
+    await pruneExpiredItems(db);
     const items = await getAllQueueItems(db);
     
     for (const item of items) {
@@ -95,20 +114,39 @@ async function processSyncQueue(): Promise<void> {
 }
 
 /**
- * Open IndexedDB connection
+ * Remove items older than MAX_ITEM_AGE_MS or beyond max retries
+ */
+async function pruneExpiredItems(db: IDBDatabase): Promise<void> {
+  const now = Date.now();
+  const items = await getAllQueueItems(db);
+  for (const item of items) {
+    if (
+      now - item.enqueuedAt > MAX_ITEM_AGE_MS ||
+      item.retryCount >= MAX_RETRIES
+    ) {
+      await removeQueueItem(db, item.id);
+    }
+  }
+}
+
+/**
+ * Open IndexedDB connection — handles version change by closing stale connections
  */
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('afia-sync-queue', 1);
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
     
     request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-    
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains('sync-queue')) {
-        db.createObjectStore('sync-queue', { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
       }
+    };
+    request.onsuccess = () => {
+      const db = request.result;
+      db.onversionchange = () => db.close();
+      resolve(db);
     };
   });
 }
@@ -118,7 +156,7 @@ function openDatabase(): Promise<IDBDatabase> {
  */
 function getAllQueueItems(db: IDBDatabase): Promise<any[]> {
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['sync-queue'], 'readonly');
+    const transaction = db.transaction([STORE_NAME], 'readonly');
     const store = transaction.objectStore('sync-queue');
     const request = store.getAll();
     
@@ -132,7 +170,7 @@ function getAllQueueItems(db: IDBDatabase): Promise<any[]> {
  */
 function removeQueueItem(db: IDBDatabase, id: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['sync-queue'], 'readwrite');
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
     const store = transaction.objectStore('sync-queue');
     const request = store.delete(id);
     
@@ -146,7 +184,7 @@ function removeQueueItem(db: IDBDatabase, id: string): Promise<void> {
  */
 function updateQueueItem(db: IDBDatabase, item: any): Promise<void> {
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['sync-queue'], 'readwrite');
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
     const store = transaction.objectStore('sync-queue');
     const request = store.put(item);
     

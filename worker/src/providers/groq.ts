@@ -3,6 +3,7 @@ import type { BottleEntry } from "../bottleRegistry.ts";
 import { parseLLMResponse } from "./parseLLMResponse.ts";
 import { buildOpenAIFewShotParts } from "../referenceFrames.ts";
 import { buildAnalysisPrompt } from "./buildAnalysisPrompt.ts";
+import { mockGroqResponse } from "../mocks/llmMock.ts";
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
@@ -11,8 +12,14 @@ export async function callGroq(
   imageBase64: string,
   bottle: BottleEntry,
   apiKey: string,
-  debugReasoning = false
+  debugReasoning = false,
+  enableMock = false
 ): Promise<LLMResponse> {
+  // Check for mock mode
+  if (enableMock) {
+    console.log('[Mock Mode] Using mock Groq response');
+    return mockGroqResponse(imageBase64, bottle.sku);
+  }
   const userText = `Bottle: ${bottle.name} (${bottle.sku}), ${bottle.totalVolumeMl}ml total. Return JSON fill estimate.`;
 
   const requestBody = {

@@ -14,15 +14,18 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { QRCodeSVG } from 'qrcode.react';
 import { activeBottleRegistry } from '../../shared/bottleRegistry';
 import { Camera, QrCode, Smartphone, Bug, Copy, Check, Droplets } from 'lucide-react';
 import './QrMockGenerator.css';
 
 export function QrMockGenerator() {
+  const { t, i18n } = useTranslation();
   const [baseUrl, setBaseUrl] = useState<string>('');
   const [copiedSku, setCopiedSku] = useState<string | null>(null);
   const [vConsoleEnabled, setVConsoleEnabled] = useState(false);
+  const isRTL = i18n.language === 'ar';
 
   // Detect current environment URL
   useEffect(() => {
@@ -74,55 +77,37 @@ export function QrMockGenerator() {
                    window.location.hostname === 'localhost';
 
   return (
-    <div className="qr-mock-generator">
+    <div className="qr-mock-generator" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header with Status */}
       <div className="qrmg-header">
         <div className="qrmg-title-section">
           <QrCode size={28} strokeWidth={2} />
-          <h2>Mock QR Code Generator</h2>
+          <h2>{t('qrmock.title')}</h2>
         </div>
         
         <div className={`qrmg-status ${isSecure ? 'qrmg-status-ok' : 'qrmg-status-warning'}`}>
           {isSecure ? (
             <>
               <Check size={16} />
-              <span>HTTPS Active - Camera Will Work</span>
+              <span>{t('qrmock.statusHttps')}</span>
             </>
           ) : (
             <>
               <Camera size={16} />
-              <span>⚠️ HTTP - Camera Blocked on Mobile</span>
+              <span>{t('qrmock.statusHttp')}</span>
             </>
           )}
         </div>
-      </div>
-
-      {/* Environment Info */}
-      <div className="qrmg-env-info card card-compact">
-        <div className="qrmg-env-row">
-          <strong>Current Origin:</strong>
-          <code>{baseUrl}</code>
-        </div>
-        <div className="qrmg-env-row">
-          <strong>Protocol:</strong>
-          <span>{window.location.protocol}</span>
-        </div>
-        {!isSecure && (
-          <div className="qrmg-env-row qrmg-warning">
-            <strong>⚠️ Action Required:</strong>
-            <span>Run: <code>npx ngrok http 5173</code></span>
-          </div>
-        )}
       </div>
 
       {/* vConsole Toggle */}
       <div className="qrmg-vconsole-toggle card card-compact">
         <div className="qrmg-toggle-header">
           <Bug size={20} strokeWidth={2} />
-          <strong>Mobile Debugging Console</strong>
+          <strong>{t('qrmock.vconsoleTitle')}</strong>
         </div>
         <p className="text-caption text-secondary">
-          Enable vConsole to see JavaScript errors directly on your phone screen
+          {t('qrmock.vconsoleDesc')}
         </p>
         <label className="toggle-switch">
           <input
@@ -132,7 +117,7 @@ export function QrMockGenerator() {
           />
           <span className="toggle-slider"></span>
           <span className="toggle-label">
-            {vConsoleEnabled ? 'Enabled' : 'Disabled'}
+            {vConsoleEnabled ? t('qrmock.enabled') : t('qrmock.disabled')}
           </span>
         </label>
       </div>
@@ -147,7 +132,7 @@ export function QrMockGenerator() {
             <div key={bottle.sku} className="qrmg-card card">
               <div className="qrmg-card-header">
                 <span className="qrmg-bottle-icon"><Droplets size={22} style={{ color: "var(--color-primary)" }} /></span>
-                <h3 className="qrmg-bottle-name">{bottle.name}</h3>
+                <h3 className="qrmg-bottle-name">{t(`bottles.${bottle.sku}`, { defaultValue: bottle.name })}</h3>
                 <span className="qrmg-sku">{bottle.sku}</span>
               </div>
 
@@ -180,17 +165,17 @@ export function QrMockGenerator() {
                   className="qrmg-copy-btn"
                   onClick={() => copyToClipboard(fullUrl, bottle.sku)}
                   type="button"
-                  aria-label={isCopied ? 'Copied to clipboard' : 'Copy URL'}
+                  aria-label={isCopied ? t('qrmock.copied') : t('qrmock.copyUrl')}
                 >
                   {isCopied ? (
                     <>
                       <Check size={16} />
-                      <span>Copied!</span>
+                      <span>{t('qrmock.copied')}</span>
                     </>
                   ) : (
                     <>
                       <Copy size={16} />
-                      <span>Copy URL</span>
+                      <span>{t('qrmock.copyUrl')}</span>
                     </>
                   )}
                 </button>
@@ -200,15 +185,15 @@ export function QrMockGenerator() {
               <div className="qrmg-instructions">
                 <div className="qrmg-step">
                   <Camera size={14} />
-                  <span>1. Open phone camera</span>
+                  <span>{t('qrmock.step1')}</span>
                 </div>
                 <div className="qrmg-step">
                   <QrCode size={14} />
-                  <span>2. Point at QR code</span>
+                  <span>{t('qrmock.step2')}</span>
                 </div>
                 <div className="qrmg-step">
                   <Smartphone size={14} />
-                  <span>3. Tap notification</span>
+                  <span>{t('qrmock.step3')}</span>
                 </div>
               </div>
             </div>
@@ -216,62 +201,35 @@ export function QrMockGenerator() {
         })}
       </div>
 
-      {/* Quick Start Guide */}
-      <div className="qrmg-quickstart card card-compact">
-        <h3>🚀 Quick Start Guide</h3>
-        <ol className="qrmg-steps">
-          <li>
-            <strong>Start Tunnel:</strong>
-            <code>npx ngrok http 5173</code>
-          </li>
-          <li>
-            <strong>Open Admin:</strong>
-            <code>https://[ngrok-url]/?mode=admin</code>
-          </li>
-          <li>
-            <strong>Navigate:</strong> Go to "Mock QRs" tab
-          </li>
-          <li>
-            <strong>Scan:</strong> Point phone camera at QR code on screen
-          </li>
-          <li>
-            <strong>Test:</strong> App opens with bottle pre-selected
-          </li>
-          <li>
-            <strong>Debug:</strong> Enable vConsole to see errors on phone
-          </li>
-        </ol>
-      </div>
-
       {/* Troubleshooting */}
       <div className="qrmg-troubleshooting card card-compact">
-        <h3>🔧 Troubleshooting</h3>
+        <h3>{t('qrmock.troubleshootingTitle')}</h3>
         
         <div className="qrmg-issue">
-          <strong>Camera not working on mobile?</strong>
+          <strong>{t('qrmock.issue1')}</strong>
           <ul>
-            <li>Ensure you're using HTTPS tunnel (ngrok/cloudflared)</li>
-            <li>Check browser permissions: Settings → Safari/Chrome → Camera</li>
-            <li>Restart browser if permissions were denied</li>
+            <li>{t('qrmock.issue1Step1')}</li>
+            <li>{t('qrmock.issue1Step2')}</li>
+            <li>{t('qrmock.issue1Step3')}</li>
           </ul>
         </div>
 
         <div className="qrmg-issue">
-          <strong>QR code not scanning?</strong>
+          <strong>{t('qrmock.issue2')}</strong>
           <ul>
-            <li>Increase screen brightness</li>
-            <li>Hold phone 15-20cm from screen</li>
-            <li>Ensure QR code is fully visible</li>
-            <li>Try manual URL (click "Copy URL" and paste)</li>
+            <li>{t('qrmock.issue2Step1')}</li>
+            <li>{t('qrmock.issue2Step2')}</li>
+            <li>{t('qrmock.issue2Step3')}</li>
+            <li>{t('qrmock.issue2Step4')}</li>
           </ul>
         </div>
 
         <div className="qrmg-issue">
-          <strong>vConsole not appearing?</strong>
+          <strong>{t('qrmock.issue3')}</strong>
           <ul>
-            <li>Enable toggle in "Mobile Debugging Console" section</li>
-            <li>Refresh page after enabling</li>
-            <li>Look for green "Console" button on mobile screen</li>
+            <li>{t('qrmock.issue3Step1')}</li>
+            <li>{t('qrmock.issue3Step2')}</li>
+            <li>{t('qrmock.issue3Step3')}</li>
           </ul>
         </div>
       </div>

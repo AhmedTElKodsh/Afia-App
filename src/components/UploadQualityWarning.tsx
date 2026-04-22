@@ -40,7 +40,7 @@ export function UploadQualityWarning({
         
         <ul className="quality-warning-reasons">
           {reasons.map((reason, index) => (
-            <li key={index}>{reason}</li>
+            <li key={index}>{t(reason, { defaultValue: reason })}</li>
           ))}
         </ul>
         

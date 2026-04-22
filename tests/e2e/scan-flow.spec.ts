@@ -46,7 +46,7 @@ test.describe('Oil Bottle Scan Flow', () => {
 
     // Verify camera viewfinder appears (or camera permission prompt)
     // Note: In real browser, camera may not work without actual device
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Check for viewfinder, camera error, or camera-related text
     const hasViewfinder = await page.locator('.camera-viewfinder, .camera-error, video').count();

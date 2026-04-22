@@ -7,7 +7,7 @@ import {
   Database,
 } from "lucide-react";
 import { bottleRegistry } from "../data/bottleRegistry";
-import { calculateVolumes } from "../utils/volumeCalculator";
+import { calculateVolumes } from "../../shared/volumeCalculator.ts";
 import { hapticFeedback } from "../utils/haptics";
 import { adminUploadImage } from "../api/apiClient";
 import "./AdminUpload.css";
@@ -117,7 +117,7 @@ export function AdminUpload() {
         {/* ── Left: Global Labeling Controls ── */}
         <aside className="upload-controls card">
           <h4>{t('admin.upload.batchLabels', 'Batch Labels')}</h4>
-          <p className="text-caption text-tertiary">Applied to all images in this batch</p>
+          <p className="text-caption text-tertiary">{t('admin.upload.batchLabelsDesc', 'Applied to all images in this batch')}</p>
           
           <div className="form-group">
             <label>{t('admin.bottles.sku', 'Target Bottle SKU')}</label>
@@ -151,10 +151,10 @@ export function AdminUpload() {
           <div className="form-group">
             <label>{t('admin.upload.augmentation', 'Augmentation Type')}</label>
             <div className="tag-cloud">
-              <span className="badge badge-outline">None / Real</span>
-              <span className="badge badge-outline">Brightness</span>
-              <span className="badge badge-outline">Tilt/Rotation</span>
-              <span className="badge badge-outline">Synthetic Background</span>
+              <span className="badge badge-outline">{t('admin.upload.aug.none', 'None / Real')}</span>
+              <span className="badge badge-outline">{t('admin.upload.aug.brightness', 'Brightness')}</span>
+              <span className="badge badge-outline">{t('admin.upload.aug.tilt', 'Tilt/Rotation')}</span>
+              <span className="badge badge-outline">{t('admin.upload.aug.background', 'Synthetic Background')}</span>
             </div>
           </div>
         </aside>
@@ -203,7 +203,7 @@ export function AdminUpload() {
                 ))}
                 <label htmlFor="file-input" className="add-more-card">
                   <Upload size={20} />
-                  <span>Add More</span>
+                  <span>{t('common.addMore', 'Add More')}</span>
                 </label>
               </div>
             )}

@@ -1,29 +1,61 @@
-import { getNutritionByOilType } from "../data/oilNutrition.ts";
-
 export interface NutritionResult {
   calories: number;
   totalFatG: number;
   saturatedFatG: number;
 }
 
-export function calculateNutrition(
-  consumedMl: number,
-  oilType: string
-): NutritionResult | null {
-  const nutrition = getNutritionByOilType(oilType);
-  if (!nutrition) return null;
+interface OilProfile {
+  densityGPerMl: number;
+  caloriesPer100g: number;
+  totalFatPct: number;
+  saturatedFatPct: number;
+}
 
-  if (consumedMl < 0) {
+const OIL_PROFILES: Record<string, OilProfile> = {
+  extra_virgin_olive: {
+    densityGPerMl: 0.92,
+    caloriesPer100g: 884,
+    totalFatPct: 100,
+    saturatedFatPct: 13.8,
+  },
+  olive: {
+    densityGPerMl: 0.92,
+    caloriesPer100g: 884,
+    totalFatPct: 100,
+    saturatedFatPct: 13.8,
+  },
+  sunflower: {
+    densityGPerMl: 0.92,
+    caloriesPer100g: 884,
+    totalFatPct: 100,
+    saturatedFatPct: 10.3,
+  },
+  corn: {
+    densityGPerMl: 0.92,
+    caloriesPer100g: 884,
+    totalFatPct: 100,
+    saturatedFatPct: 12.9,
+  },
+  vegetable: {
+    densityGPerMl: 0.92,
+    caloriesPer100g: 884,
+    totalFatPct: 100,
+    saturatedFatPct: 14.0,
+  },
+};
+
+export function calculateNutrition(volumeMl: number, oilType: string): NutritionResult | null {
+  const profile = OIL_PROFILES[oilType];
+  if (!profile) return null;
+
+  if (volumeMl === 0) {
     return { calories: 0, totalFatG: 0, saturatedFatG: 0 };
   }
 
-  const consumedGrams = consumedMl * nutrition.densityGPerMl;
-  const scale = consumedGrams / 100;
+  const massG = volumeMl * profile.densityGPerMl;
+  const calories = (massG / 100) * profile.caloriesPer100g;
+  const totalFatG = (massG / 100) * profile.totalFatPct;
+  const saturatedFatG = (massG / 100) * profile.saturatedFatPct;
 
-  return {
-    calories: Math.round(nutrition.per100g.calories * scale * 100) / 100,
-    totalFatG: Math.round(nutrition.per100g.totalFatG * scale * 100) / 100,
-    saturatedFatG:
-      Math.round(nutrition.per100g.saturatedFatG * scale * 100) / 100,
-  };
+  return { calories, totalFatG, saturatedFatG };
 }

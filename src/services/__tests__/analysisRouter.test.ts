@@ -130,7 +130,7 @@ describe('AnalysisRouter - Error Handling', () => {
         sku: 'TEST-004',
         imageBase64: 'data:image/png;base64,test',
         totalVolumeMl: 1000,
-      })).rejects.toThrow('Cannot analyze offline without cached model');
+      })).rejects.toThrow(/Cannot analyze offline without cached model/);
     }, 60000);
 
     it('should not attempt LLM fallback when offline', async () => {

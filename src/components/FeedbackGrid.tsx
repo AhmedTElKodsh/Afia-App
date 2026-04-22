@@ -28,6 +28,8 @@ interface FeedbackGridProps {
   isSubmitting?: boolean;
   /** Whether feedback has been submitted (shows confirmation) */
   hasSubmitted?: boolean;
+  /** Externally controlled selected type */
+  selectedType?: FeedbackType;
 }
 
 // i18n label keys indexed by feedback option type
@@ -41,11 +43,19 @@ const OPTION_LABEL_KEYS: Record<string, string> = {
 export function FeedbackGrid({
   onSubmit,
   isSubmitting = false,
-  hasSubmitted = false
+  hasSubmitted = false,
+  selectedType
 }: FeedbackGridProps) {
   const { t } = useTranslation();
-  const [selected, setSelected] = useState<FeedbackType | null>(null);
+  const [selected, setSelected] = useState<FeedbackType | null>(selectedType || null);
   const isMountedRef = useRef(true);
+
+  // Sync with prop
+  useEffect(() => {
+    if (selectedType) {
+      setSelected(selectedType);
+    }
+  }, [selectedType]);
 
   useEffect(() => {
     isMountedRef.current = true;

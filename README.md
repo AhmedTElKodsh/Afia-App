@@ -12,6 +12,45 @@ A mobile-first PWA that uses AI vision to estimate the fill level of cooking oil
 4. **Result** — Fill %, volume breakdown (remaining + consumed), nutrition facts, visual fill gauge
 5. **Feedback** — User rates accuracy; corrected estimates are stored for future model training
 
+## 🛠 Local-First Development Mode (ACTIVE)
+
+> **IMPORTANT:** Automated Cloudflare deployments are currently **PAUSED** to focus on local testing and hardening. The GitHub Actions workflows in `.github/workflows/` have been disabled (`.yml.disabled`).
+>
+> **Deployment Strategy:** We deploy to Cloudflare **manually** only when the app is fully functional and tested. This prevents:
+> - ❌ Cloudflare endpoint overload from frequent deployments
+> - ❌ GitHub Actions errors during active development
+> - ❌ Wasted CI/CD minutes on incomplete features
+>
+> See [LOCAL-DEVELOPMENT-STRATEGY.md](_bmad-output/implementation-artifacts/LOCAL-DEVELOPMENT-STRATEGY.md) for the complete strategy.
+
+To develop and test the app fully locally:
+
+### 1. Frontend (Vite)
+```bash
+# In the root directory
+npm install
+cp .env.example .env.local
+# Ensure VITE_PROXY_URL=http://localhost:8787 is set in .env.local
+npm run dev
+```
+
+### 2. Backend (Cloudflare Worker)
+```bash
+cd worker
+npm install
+# Copy the local secrets template
+cp .dev.vars.example .dev.vars
+# EDIT .dev.vars with your actual Gemini/Groq API keys
+npm run dev
+```
+
+### 3. Local Testing Strategy
+- **Unit Tests:** `npm test` (Runs Vitest)
+- **E2E Tests:** `npm run test:e2e` (Runs Playwright)
+- **Manual Scan:** Open `http://localhost:5173/?sku=Afia-sunflower-1l` and use the local worker.
+
+---
+
 ## Tech Stack
 
 | Layer         | Technology                                           |
@@ -160,6 +199,15 @@ npm run dev
 # Run unit tests (34 tests)
 npm test
 
+# Run E2E tests (Playwright - no API keys required)
+npm run test:e2e
+
+# Run integration tests (requires Worker running at localhost:8787)
+npm run test:integration
+
+# Run all tests (unit + integration + E2E)
+npm run test:all
+
 # Watch mode
 npm run test:watch
 
@@ -168,6 +216,10 @@ cd worker && npx tsc --noEmit
 ```
 
 **Note:** Test and hook timeouts are set to 10 seconds (increased from the default 5 seconds) to accommodate CI environment performance variations.
+
+**E2E Tests (Playwright):** All E2E tests run in **mock mode** by default, which means they don't require real API keys or a running Worker. The `playwright.config.ts` automatically sets the `X-Mock-Mode: true` header for all requests, enabling the Worker's mock LLM responses. This allows you to run E2E tests immediately without any setup. E2E tests are located in `tests/e2e/` and are separate from unit tests in `src/test/`.
+
+**Integration Tests:** The integration test suite (`src/test/integration/worker-api.test.ts`) automatically detects if the Worker is running. If the Worker is not available at `http://localhost:8787`, tests will be gracefully skipped with a warning message instead of failing. To run integration tests, start the Worker first with `cd worker && npm run dev`.
 
 ### Test Coverage
 
@@ -190,36 +242,80 @@ npm run preview
 
 ## Deployment
 
+### Current Strategy: Manual Deployment Only
+
+**GitHub Actions are disabled** during active development to prevent:
+- Cloudflare endpoint overload
+- CI/CD errors on incomplete features
+- Wasted deployment cycles
+
+**When to Deploy:**
+- ✅ All tests passing (unit + E2E + integration)
+- ✅ Feature complete and manually tested
+- ✅ No critical bugs
+- ✅ Ready for production use
+
+### Manual Deployment (Recommended)
+
+**Option 1: Use Deployment Script**
+```bash
+# Make script executable (first time only)
+chmod +x scripts/deploy-manual.sh
+
+# Run deployment
+./scripts/deploy-manual.sh
+```
+
+The script will:
+1. Run all tests
+2. Deploy Worker to production
+3. Build and deploy Pages
+4. Run smoke tests
+5. Display production URLs
+
+**Option 2: Manual Commands**
+```bash
+# 1. Run tests first
+npm test && npm run test:e2e
+
+# 2. Deploy Worker
+cd worker && npx wrangler deploy --env stage1
+
+# 3. Build and deploy Pages
+cd .. && npm run build
+npx wrangler pages deploy dist --project-name=afia-app --branch=master
+
+# 4. Verify deployment
+curl https://afia-worker.savona.workers.dev/health
+```
+
 ### First-time Cloudflare Setup
 
+If you haven't set up Cloudflare yet:
+
 1. Create a Cloudflare account and install Wrangler: `npm i -g wrangler && wrangler login`
-2. Create the R2 bucket: `cd worker && npx wrangler r2 bucket create Afia-training-data`
+2. Create the R2 bucket: `cd worker && npx wrangler r2 bucket create afia-training-data`
 3. Create the KV namespace: `npx wrangler kv namespace create RATE_LIMIT_KV`
 4. Update `worker/wrangler.toml` with the real KV namespace IDs
 5. Set secrets: `npx wrangler secret put GEMINI_API_KEY` and `GROQ_API_KEY`
-6. Create a Cloudflare Pages project connected to your GitHub repo
-7. Set `VITE_PROXY_URL=https://Afia-worker.<your-subdomain>.workers.dev` in Pages environment variables
+6. Create a Cloudflare Pages project: `npx wrangler pages project create afia-app`
 
-### Manual Deploy
+### Future: Re-enabling GitHub Actions
+
+When the app is stable, you can re-enable CI/CD with **manual triggers only**:
 
 ```bash
-# Deploy Worker
-cd worker && npx wrangler deploy
-
-# Deploy PWA (or let CI handle it)
-npm run build
-npx wrangler pages deploy dist --project-name=Afia-oil-tracker
+# Rename workflow files to re-enable them
+mv .github/workflows/deploy-stage1.yml.disabled .github/workflows/deploy-stage1.yml
 ```
 
-### CI/CD (GitHub Actions)
+Then modify the workflow to use manual triggers:
+```yaml
+on:
+  workflow_dispatch:  # Manual trigger only - no automatic pushes
+```
 
-Push to `main` → automatic deploy of both Worker and Pages.
-PR push → preview deployment with URL commented on the PR.
-
-Required GitHub secrets:
-
-- `CLOUDFLARE_API_TOKEN` — Cloudflare API token with Pages + Workers + R2 permissions
-- `CLOUDFLARE_ACCOUNT_ID` — Your Cloudflare account ID
+See [LOCAL-DEVELOPMENT-STRATEGY.md](_bmad-output/implementation-artifacts/LOCAL-DEVELOPMENT-STRATEGY.md) for details.
 
 ## Key Design Decisions
 

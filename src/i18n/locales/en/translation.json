@@ -26,6 +26,7 @@
     "confirm": "Confirm",
     "ml": "ml",
     "tablespoons": "tbsp",
+    "cup": "Cup",
     "cups": "cups",
     "percent": "%",
     "language": "Language",
@@ -33,7 +34,10 @@
     "arabic": "العربية",
     "adminMode": "Admin Mode",
     "dark": "Dark",
-    "light": "Light"
+    "light": "Light",
+    "actions": "Actions",
+    "saving": "Saving...",
+    "addMore": "Add More"
   },
   "landing": {
     "title": "Afia Oil Tracker",
@@ -129,7 +133,25 @@
     "serviceUnavailable": "Service Unavailable",
     "serviceUnavailableMessage": "Our AI service is temporarily unavailable. Please try again later.",
     "timeEstimate": "This usually takes 3–8 seconds",
-    "cancelAriaLabel": "Cancel analysis and return to camera"
+    "cancelAriaLabel": "Cancel analysis and return to camera",
+    "preparing": "Preparing analysis...",
+    "checkingQuality": "Checking image quality...",
+    "loadingModel": "Loading AI model...",
+    "analyzingOffline": "Analyzing offline...",
+    "analyzingLocally": "Analyzing locally...",
+    "verifyingCloud": "Verifying with cloud AI..."
+  },
+  "uploadQuality": {
+    "title": "Photo Quality Warning",
+    "message": "This photo may not give a good result:",
+    "retake": "Retake Photo",
+    "continue": "Continue Anyway",
+    "reasons": {
+      "blur": "Photo appears blurry — hold the camera steady",
+      "tooDark": "Photo is too dark — try better lighting",
+      "tooBright": "Photo is overexposed — avoid direct light",
+      "noBottle": "Bottle not clearly visible — center the bottle in frame"
+    }
   },
   "results": {
     "title": "Results",
@@ -168,7 +190,11 @@
     "qualityIssuesTitle": "Image quality issues:",
     "confidenceHighSr": "Very accurate reading",
     "confidenceMediumSr": "Moderately accurate reading",
-    "confidenceLowSr": "Low accuracy - consider retaking for better results"
+    "confidenceLowSr": "Low accuracy - consider retaking for better results",
+    "inferenceSource": "✨ Analyzed on-device",
+    "cloudVerification": " with cloud verification",
+    "offlineMode": " (offline mode)",
+    "offlineNotice": "📡 You were offline during analysis. This result will be verified when you reconnect."
   },
   "feedback": {
     "title": "Was this estimate accurate?",
@@ -202,7 +228,11 @@
       "star": "Optional feedback rating stored",
       "lock": "Not linked to personal identity",
       "search": "Reviewed to improve accuracy"
-    }
+    },
+    "beforeFirstScan": "Before Your First Scan",
+    "storageNote": "Scan images are stored to improve AI accuracy.",
+    "noPersonalNote": "No personal information is collected.",
+    "understand": "I Understand"
   },
   "offline": {
     "title": "No Internet Connection",
@@ -220,17 +250,24 @@
       "backToApp": "Back to App",
       "errorNotConfigured": "Admin access not configured. Contact your administrator.",
       "errorInvalid": "Invalid password",
-      "skipToContent": "Skip to main content"
+      "skipToContent": "Skip to main content",
+      "showPassword": "Show Password",
+      "hidePassword": "Hide Password"
     },
     "header": {
       "title": "Admin Dashboard",
       "brandSub": "Admin Console"
     },
+    "menu": {
+      "toggle": "Toggle Menu"
+    },
     "tabs": {
       "overview": "Overview",
       "bottles": "Bottles",
       "qrmock": "QR Codes",
-      "export": "Export"
+      "export": "Export",
+      "failures": "Failures",
+      "models": "Models"
     },
     "overview": {
       "metrics": {
@@ -241,7 +278,17 @@
         "period7D": "7D",
         "period30D": "30D",
         "activeUsers": "Scan Days",
-        "feedbackCount": "Feedback Count"
+        "feedbackCount": "Feedback Count",
+        "mae": "Model Error (MAE)"
+      },
+      "feedbackSummary": {
+        "title": "Feedback Summary"
+      },
+      "feedback": {
+        "accurate": "Accurate",
+        "tooHigh": "Too High",
+        "tooLow": "Too Low",
+        "wayOff": "Way Off"
       },
       "pagination": {
         "previous": "Previous",
@@ -262,6 +309,10 @@
         "fillPercent": "Fill %",
         "consumed": "Consumed",
         "confidence": "Confidence"
+      },
+      "sparkline": {
+        "title": "Scan Activity",
+        "period": "Last 7 Days"
       }
     },
     "export": {
@@ -277,7 +328,11 @@
       "noScansError": "No scans to export for the selected date range.",
       "buttons": {
         "exportJson": "Export JSON",
-        "exportCsv": "Export CSV"
+        "exportCsv": "Export CSV",
+        "exportTraining": "Training Manifest",
+        "subCsv": "Opens in Excel or Google Sheets",
+        "subJson": "Structured data, great for developers",
+        "subTraining": "Filtered high-quality labels for model training"
       },
       "info": {
         "title": "What's Included:",
@@ -290,6 +345,101 @@
           "Feedback rating (if provided)"
         ]
       }
+    },
+    "failures": {
+      "title": "Camera Guidance Rejections",
+      "description": "Real-time rejection logs (blur, low light, wrong brand) to help refine logic.",
+      "emptyTitle": "No rejections recorded",
+      "emptyDescription": "Guidance rejections will appear here once users start scanning.",
+      "reason": "Reason",
+      "details": "Details"
+    },
+    "upload": {
+      "tab": "Upload Data",
+      "title": "Batch Dataset Upload",
+      "subtitle": "Upload real or augmented images to seed local model training set.",
+      "submitAll": "Upload Batch to Database",
+      "batchLabels": "Batch Labels",
+      "batchLabelsDesc": "Applied to all images in this batch",
+      "augmentation": "Augmentation Type",
+      "dropTitle": "Click or drag images here",
+      "dropLimits": "Supports JPG, PNG up to 5MB",
+      "aug": {
+        "none": "None / Real",
+        "brightness": "Brightness",
+        "tilt": "Tilt/Rotation",
+        "background": "Synthetic Background"
+      }
+    },
+    "scanDetail": {
+      "title": "Scan Details",
+      "sku": "SKU Code",
+      "fillPct": "Fill %",
+      "confidence": "Confidence",
+      "provider": "Provider",
+      "accuracyAssessment": "Accuracy Assessment",
+      "tooBig": "Too Big",
+      "tooSmall": "Too Small",
+      "correct": "Correct",
+      "wayOff": "Way Off",
+      "correction": "Correction",
+      "correctFillPct": "Correct fill %",
+      "saveCorrection": "Save Correction",
+      "runLlmAgain": "Run LLM Again",
+      "correctionApplied": "Correction Applied",
+      "correctedFill": "Corrected fill",
+      "method": "Method",
+      "timestamp": "Timestamp",
+      "trainingEligible": "Training Eligible",
+      "llmRerunResult": "LLM Re-run Result",
+      "llmRerunSuccess": "LLM re-run complete: {{value}}% ({{provider}})",
+      "markedCorrect": "Marked as correct and training-eligible",
+      "correctionSaved": "Correction saved successfully",
+      "rerunAt": "Re-run at",
+      "methods": {
+        "manual": "Manual Correction",
+        "llm-rerun": "LLM Re-run"
+      }
+    },
+    "modelVersion": {
+      "managerTitle": "Model Versions",
+      "loading": "Loading model versions...",
+      "error": "Failed to load model versions",
+      "version": "Version",
+      "mae": "MAE",
+      "valAccuracy": "Val Accuracy",
+      "trainingSamples": "Training Samples",
+      "deployed": "Deployed",
+      "status": "Status",
+      "actions": "Actions",
+      "active": "Active",
+      "inactive": "Inactive",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "activateError": "Failed to activate version",
+      "deactivateError": "Failed to deactivate version",
+      "deactivateConfirm": "Deactivate this version? Users will fall back to LLM.",
+      "title": "Model Version",
+      "maeExcellent": "Excellent",
+      "maeGood": "Good",
+      "maeNeedsImprovement": "Needs Training",
+      "trainingCount": "Training Samples",
+      "deployedAt": "Deployed"
+    },
+    "review": {
+      "title": "Scan Correction",
+      "save": "Save Label",
+      "aiEstimate": "AI Estimate",
+      "groundTruth": "Ground Truth",
+      "quickFlag": "Quick Flagging",
+      "accurate": "Accurate",
+      "tooBig": "Too Big",
+      "tooSmall": "Too Small",
+      "correction": "Manual Correction",
+      "metadata": "Dataset Metadata",
+      "errorType": "Error Primary Cause",
+      "notes": "Admin Notes",
+      "trainingEligible": "Eligible for Training Set"
     },
     "bottleManager": {
       "title": "Bottle Manager",
@@ -377,11 +527,12 @@
     },
     "testLab": {
       "title": "TEST LAB",
-      "sessionTests": "Test{{count}} This Session",
-      "sessionTests_plural": "Tests{{count}} This Session",
+      "sessionTests": "Test {{count}} This Session",
+      "sessionTests_plural": "Tests {{count}} This Session",
       "subtitle": "No QR code needed — select the 1.5L Corn Oil and run the full scan right here",
       "tabFlow": "Flow Test",
       "tabInspector": "API Inspector",
+      "tabVisuals": "Visuals",
       "showDebugPanel": "Show debug panel after scan",
       "selectBottleScanQr": "START TEST SCAN",
       "openUserView": "Open as Real User ↗",
@@ -396,7 +547,23 @@
       "validationSaved": "Validation saved!",
       "feedbackFailed": "Failed to submit feedback to server",
       "mockScenarioComplete": "Mock scenario complete: {{name}}",
-      "mockScenarioCancelled": "Mock scenario cancelled"
+      "mockScenarioCancelled": "Mock scenario cancelled",
+      "mockApiTest": "Mock API Test",
+      "geometryTest": "Upload Image for Geometry Test",
+      "geometryOverlay": "GEOMETRY OVERLAY TEST",
+      "noBottleSelected": "No bottle selected"
+    },
+    "mockScenarios": {
+      "highFull": { "name": "High Confidence - Full Bottle", "desc": "100% fill level with high confidence" },
+      "high75": { "name": "High Confidence - 75% Full", "desc": "75% fill level with high confidence" },
+      "high50": { "name": "High Confidence - Half Full", "desc": "50% fill level with high confidence" },
+      "high25": { "name": "High Confidence - Quarter Full", "desc": "25% fill level with high confidence" },
+      "medium60": { "name": "Medium Confidence - 60% Full", "desc": "60% fill level with medium confidence" },
+      "medium40": { "name": "Medium Confidence - 40% Full", "desc": "40% fill level with medium confidence" },
+      "low30": { "name": "Low Confidence - 30% Full", "desc": "30% fill level with low confidence and quality issues" },
+      "low70": { "name": "Low Confidence - 70% Full", "desc": "70% fill level with low confidence and reflection" },
+      "edgeEmpty": { "name": "Edge Case - Nearly Empty", "desc": "5% fill level (edge case)" },
+      "edge95": { "name": "Edge Case - Nearly Full", "desc": "95% fill level (edge case)" }
     },
     "mockApi": {
       "title": "Mock API Test Scenarios",
@@ -443,13 +610,13 @@
         "title": "Performance Metrics",
         "responseTime": {
           "label": "Response Time",
-          "value": "{value}ms",
+          "value": "{{value}}ms",
           "statusFast": "✅ Target <5s",
           "statusSlow": "⚠️ Slow"
         },
         "aiProvider": {
           "label": "AI Provider",
-          "value": "{provider}"
+          "value": "{{provider}}"
         },
         "confidence": {
           "label": "Confidence",
@@ -550,17 +717,74 @@
     "emptyMessage": "Scan more bottles to see your consumption trends",
     "dailyAverage": "Daily Average",
     "weeklyAverage": "Weekly Average",
-    "totalConsumed": "Total Consumed"
+    "totalConsumed": "Total Consumed",
+    "noTrends": "No trends yet",
+    "completionMessage": "Complete some scans to see your consumption trends",
+    "avgDay": "Avg/Day"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
     "camera": "Camera error. Please refresh and try again.",
     "analysis": "Analysis failed. Please retake the photo.",
     "network": "Network error. Please check your connection.",
-    "notFound": "Page not found"
+    "notFound": "Page not found",
+    "stateLost": "Analysis state lost",
+    "analysisUnavailable": "Analysis result unavailable"
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "description": "We encountered an unexpected error. Don't worry, your data is safe.",
+    "details": "Error Details (Development)",
+    "retry": "Try Again"
+  },
+  "iosWarning": {
+    "title": "Open in Safari",
+    "body": "For best experience and camera access, please open this page in Safari.",
+    "step1": "Tap the Share button (□↑)",
+    "step2": "Select \"Open in Safari\"",
+    "note": "Camera access requires Safari on iOS devices."
+  },
+  "qrmock": {
+    "title": "Mock QR Code Generator",
+    "statusHttps": "HTTPS Active - Camera Will Work",
+    "statusHttp": "HTTP - Camera Blocked on Mobile",
+    "origin": "Current Origin:",
+    "protocol": "Protocol:",
+    "actionRequired": "Action Required:",
+    "vconsoleTitle": "Mobile Debugging Console",
+    "vconsoleDesc": "Enable vConsole to see JavaScript errors directly on your phone screen",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "copied": "Copied!",
+    "copyUrl": "Copy URL",
+    "step1": "1. Open phone camera",
+    "step2": "2. Point at QR code",
+    "step3": "3. Tap notification",
+    "quickStartTitle": "Quick Start Guide",
+    "qsStep1": "Start Tunnel:",
+    "qsStep2": "Open Admin:",
+    "qsStep3": "Navigate:",
+    "qsStep4": "Scan:",
+    "qsStep5": "Test:",
+    "qsStep6": "Debug:",
+    "troubleshootingTitle": "Troubleshooting",
+    "issue1": "Camera not working on mobile?",
+    "issue1Step1": "Ensure you're using HTTPS tunnel (ngrok/cloudflared)",
+    "issue1Step2": "Check browser permissions: Settings → Safari/Chrome → Camera",
+    "issue1Step3": "Restart browser if permissions were denied",
+    "issue2": "QR code not scanning?",
+    "issue2Step1": "Increase screen brightness",
+    "issue2Step2": "Hold phone 15-20cm from screen",
+    "issue2Step3": "Ensure QR code is fully visible",
+    "issue2Step4": "Try manual URL (click \"Copy URL\" and paste)",
+    "issue3": "vConsole not appearing?",
+    "issue3Step1": "Enable toggle in \"Mobile Debugging Console\" section",
+    "issue3Step2": "Refresh page after enabling",
+    "issue3Step3": "Look for green \"Console\" button on mobile screen"
   },
   "bottles": {
-    "afia-corn-1.5l": "Afia Pure Corn Oil 1.5L"
+    "afia-corn-1.5l": "Afia Pure Corn Oil 1.5L",
+    "afia-corn-2.5l": "Afia Pure Corn Oil 2.5L"
   },
   "fillConfirm": {
     "title": "Confirm Fill Level",

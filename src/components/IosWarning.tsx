@@ -1,20 +1,24 @@
+import { useTranslation } from "react-i18next";
 import "./IosWarning.css";
 
 export function IosWarning() {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
+
   return (
-    <div className="ios-warning-screen" role="main">
+    <div className="ios-warning-screen" role="main" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="ios-warning-card card">
         <div className="ios-warning-icon" aria-hidden="true">📱</div>
-        <h1 className="ios-warning-title">Open in Safari</h1>
+        <h1 className="ios-warning-title">{t('iosWarning.title')}</h1>
         <p className="ios-warning-body">
-          For best experience and camera access, please open this page in Safari.
+          {t('iosWarning.body')}
         </p>
         <ol className="ios-warning-steps">
-          <li>Tap the <strong>Share</strong> button (□↑)</li>
-          <li>Select <strong>"Open in Safari"</strong></li>
+          <li>{t('iosWarning.step1')}</li>
+          <li>{t('iosWarning.step2')}</li>
         </ol>
         <p className="ios-warning-note text-caption text-secondary">
-          Camera access requires Safari on iOS devices.
+          {t('iosWarning.note')}
         </p>
       </div>
     </div>

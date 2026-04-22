@@ -144,6 +144,7 @@ export function useScanHistory() {
         scansLast30Days: 0,
         feedbackCount: 0,
         activeUsers: 0,
+        mae: "N/A" as const,
       };
     }
 

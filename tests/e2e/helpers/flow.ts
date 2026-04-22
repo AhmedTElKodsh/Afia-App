@@ -1,4 +1,30 @@
 import { Page, expect } from '@playwright/test';
+import { waitForCameraReady } from './cameraHelpers';
+import { TIMEOUTS } from '../constants';
+
+/**
+ * Helper: Navigate to camera view from landing page
+ */
+export async function navigateToCamera(page: Page, sku = 'afia-corn-1.5l') {
+  await page.goto(`/?sku=${sku}`);
+  
+  // Wait for page to be fully loaded
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(TIMEOUTS.REACT_UPDATE);
+  
+  // Click Start Scan button using multiple strategies for resilience
+  await page.evaluate(() => {
+    const btn = (document.querySelector('button.qrl-cta') as HTMLButtonElement)
+      ?? (document.querySelector('.btn-primary') as HTMLButtonElement)
+      ?? Array.from(document.querySelectorAll('button')).find(
+        b => b.textContent?.toLowerCase().includes('scan')
+      ) as HTMLButtonElement;
+    if (btn) btn.click();
+  });
+  
+  // Use consolidated camera ready helper
+  await waitForCameraReady(page);
+}
 
 /**
  * Shared helper to trigger analysis and handle the Fill Confirmation step
@@ -17,9 +43,12 @@ export async function triggerAnalyzeAndConfirm(page: Page) {
       { timeout: 30000 }
     );
 
+    // Wait for the test hook to be available
+    await page.waitForFunction(() => (window as any).__AFIA_TRIGGER_ANALYZE__ !== undefined, { timeout: 10000 });
+
     // Use the test hook — bypasses camera readyState race condition
     await page.evaluate(() => {
-      (window as any).__AFIA_TRIGGER_ANALYZE__?.();
+      (window as any).__AFIA_TRIGGER_ANALYZE__();
     });
 
     const response = await analyzePromise;

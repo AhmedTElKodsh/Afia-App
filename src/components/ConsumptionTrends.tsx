@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useScanHistory } from "../hooks/useScanHistory";
 import "./ConsumptionTrends.css";
 
@@ -16,11 +17,13 @@ interface DailyData {
 }
 
 export function ConsumptionTrends() {
+  const { t, i18n } = useTranslation();
   const { scans, getStats } = useScanHistory();
   const [timeRange, setTimeRange] = useState<TimeRange>(30);
   const [unit, setUnit] = useState<Unit>("ml");
 
   const stats = getStats();
+  const locale = i18n.language === 'ar' ? 'ar-SA' : 'en-US';
 
   // Aggregate scans by day
   const dailyData = useMemo(() => {
@@ -41,7 +44,7 @@ export function ConsumptionTrends() {
         if (!groups[dateKey]) {
           groups[dateKey] = {
             date: dateKey,
-            label: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+            label: date.toLocaleDateString(locale, { month: "short", day: "numeric" }),
             consumedMl: 0,
             scanCount: 0,
           };
@@ -53,7 +56,7 @@ export function ConsumptionTrends() {
 
     // Convert to array and sort by date
     return Object.values(groups).sort((a, b) => a.date.localeCompare(b.date));
-  }, [scans, timeRange]);
+  }, [scans, timeRange, locale]);
 
   // Convert to selected unit
   const convertValue = (ml: number): number => {
@@ -71,11 +74,11 @@ export function ConsumptionTrends() {
     const value = convertValue(ml);
     switch (unit) {
       case "ml":
-        return `${Math.round(value)}ml`;
+        return `${Math.round(value)}${t('common.ml')}`;
       case "tbsp":
-        return `${value.toFixed(1)} tbsp`;
+        return `${value.toFixed(1)} ${t('common.tablespoons')}`;
       case "cups":
-        return `${value.toFixed(2)} cups`;
+        return `${value.toFixed(2)} ${t('common.cups')}`;
     }
   };
 
@@ -89,9 +92,9 @@ export function ConsumptionTrends() {
       <div className="consumption-trends">
         <div className="empty-state">
           <div className="empty-icon">📈</div>
-          <h3>No trends yet</h3>
+          <h3>{t('trends.noTrends')}</h3>
           <p className="text-secondary">
-            Complete some scans to see your consumption trends
+            {t('trends.completionMessage')}
           </p>
         </div>
       </div>
@@ -99,9 +102,9 @@ export function ConsumptionTrends() {
   }
 
   return (
-    <div className="consumption-trends">
+    <div className="consumption-trends" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
       <header className="trends-header">
-        <h3>Consumption Trends</h3>
+        <h3>{t('trends.title')}</h3>
         <div className="trends-controls">
           <div className="time-range">
             <button
@@ -128,19 +131,19 @@ export function ConsumptionTrends() {
               className={unit === "ml" ? "active" : ""}
               onClick={() => setUnit("ml")}
             >
-              ml
+              {t('common.ml')}
             </button>
             <button
               className={unit === "tbsp" ? "active" : ""}
               onClick={() => setUnit("tbsp")}
             >
-              tbsp
+              {t('common.tablespoons')}
             </button>
             <button
               className={unit === "cups" ? "active" : ""}
               onClick={() => setUnit("cups")}
             >
-              cups
+              {t('common.cups')}
             </button>
           </div>
         </div>
@@ -150,11 +153,11 @@ export function ConsumptionTrends() {
       <div className="trends-summary">
         <div className="summary-stat">
           <span className="stat-value">{stats.totalScans}</span>
-          <span className="stat-label">Total Scans</span>
+          <span className="stat-label">{t('history.totalScans')}</span>
         </div>
         <div className="summary-stat">
           <span className="stat-value">{formatValue(stats.totalConsumedMl)}</span>
-          <span className="stat-label">Total Consumed</span>
+          <span className="stat-label">{t('history.totalConsumed')}</span>
         </div>
         <div className="summary-stat">
           <span className="stat-value">
@@ -162,7 +165,7 @@ export function ConsumptionTrends() {
               ? formatValue(stats.totalConsumedMl / dailyData.length)
               : "0"}
           </span>
-          <span className="stat-label">Avg/Day</span>
+          <span className="stat-label">{t('trends.avgDay')}</span>
         </div>
       </div>
 
@@ -205,7 +208,7 @@ export function ConsumptionTrends() {
                   rx="1"
                 />
                 <title>
-                  {day.label}: {formatValue(day.consumedMl)} ({day.scanCount} scans)
+                  {day.label}: {formatValue(day.consumedMl)} ({day.scanCount} {t('history.scansCount', { count: day.scanCount })})
                 </title>
               </g>
             );

@@ -92,7 +92,7 @@ export function QrLanding({ bottle, onStartScan }: QrLandingProps) {
       <div className="qrl-selector-wrap">
         <div className="qrl-selector-pill">
           <Droplets size={16} style={{ color: "var(--color-primary)" }} aria-hidden="true" />
-          <span>{bottle.name}</span>
+          <span>{t(`bottles.${bottle.sku}`, { defaultValue: bottle.name })}</span>
         </div>
       </div>
 

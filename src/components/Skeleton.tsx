@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import "./Skeleton.css";
 
 /**
@@ -8,7 +9,7 @@ import "./Skeleton.css";
  *
  * Features:
  * - Shimmer animation
- * - Multiple variants (text, card, chart, list)
+ * - Multiple variants (text, card, circle, chart, list)
  * - Accessible with aria-busy
  * - Respects reduced motion
  */
@@ -34,12 +35,15 @@ export function Skeleton({
   height,
   lines = 1,
   className = '',
-  ariaLabel = 'Loading content...',
+  ariaLabel,
 }: SkeletonProps) {
+  const { t } = useTranslation();
   const style = {
     width,
     height,
   } as React.CSSProperties;
+
+  const defaultAriaLabel = ariaLabel || t('common.loading', 'Loading content...');
 
   if (variant === 'text') {
     return (
@@ -47,7 +51,7 @@ export function Skeleton({
         className={`skeleton skeleton-text ${className}`}
         style={style}
         aria-busy="true"
-        aria-label={ariaLabel}
+        aria-label={defaultAriaLabel}
       >
         {Array.from({ length: lines }).map((_, i) => (
           <span
@@ -66,7 +70,7 @@ export function Skeleton({
         className={`skeleton skeleton-card ${className}`}
         style={style}
         aria-busy="true"
-        aria-label={ariaLabel}
+        aria-label={defaultAriaLabel}
       >
         <div className="skeleton-card__header">
           <span className="skeleton-line skeleton-card__title" />
@@ -90,7 +94,7 @@ export function Skeleton({
           borderRadius: '50%',
         }}
         aria-busy="true"
-        aria-label={ariaLabel}
+        aria-label={defaultAriaLabel}
       />
     );
   }
@@ -101,7 +105,7 @@ export function Skeleton({
         className={`skeleton skeleton-chart ${className}`}
         style={style}
         aria-busy="true"
-        aria-label={ariaLabel}
+        aria-label={defaultAriaLabel}
       >
         <div className="skeleton-chart__bars">
           {Array.from({ length: 7 }).map((_, i) => {
@@ -129,7 +133,7 @@ export function Skeleton({
       <div
         className={`skeleton skeleton-list-item ${className}`}
         aria-busy="true"
-        aria-label={ariaLabel}
+        aria-label={defaultAriaLabel}
       >
         <span className="skeleton-list-item__icon" />
         <div className="skeleton-list-item__content">
@@ -146,7 +150,7 @@ export function Skeleton({
         className={`skeleton skeleton-metric ${className}`}
         style={style}
         aria-busy="true"
-        aria-label={ariaLabel}
+        aria-label={defaultAriaLabel}
       >
         <span className="skeleton-line skeleton-metric__icon" />
         <div className="skeleton-metric__values">
@@ -164,28 +168,29 @@ export function Skeleton({
  * SkeletonHistory - Pre-configured skeleton for ScanHistory page
  */
 export function SkeletonHistory() {
+  const { t } = useTranslation();
   return (
-    <div className="skeleton-history" aria-busy="true" aria-label="Loading scan history...">
+    <div className="skeleton-history" aria-busy="true" aria-label={t('history.loading', 'Loading scan history...')}>
       <div className="skeleton-history__header">
-        <Skeleton variant="text" width="150px" height="24px" ariaLabel="Loading title" />
-        <Skeleton variant="circle" width="60px" height="24px" ariaLabel="Loading count badge" />
+        <Skeleton variant="text" width="150px" height="24px" ariaLabel={t('history.loadingTitle', 'Loading title')} />
+        <Skeleton variant="circle" width="60px" height="24px" ariaLabel={t('history.loadingCount', 'Loading count badge')} />
       </div>
 
       <div className="skeleton-history__stats">
-        <Skeleton variant="metric" ariaLabel="Loading total scans" />
-        <Skeleton variant="metric" ariaLabel="Loading total consumed" />
+        <Skeleton variant="metric" ariaLabel={t('history.totalScans')} />
+        <Skeleton variant="metric" ariaLabel={t('history.totalConsumed')} />
       </div>
 
-      <Skeleton variant="chart" height="120px" ariaLabel="Loading consumption trend" />
+      <Skeleton variant="chart" height="120px" ariaLabel={t('trends.title')} />
 
       <div className="skeleton-history__filters">
-        <Skeleton variant="text" width="200px" height="40px" ariaLabel="Loading date filters" />
-        <Skeleton variant="text" width="100%" height="40px" ariaLabel="Loading search input" />
+        <Skeleton variant="text" width="200px" height="40px" ariaLabel={t('history.filterAll')} />
+        <Skeleton variant="text" width="100%" height="40px" ariaLabel={t('history.searchPlaceholder')} />
       </div>
 
       <div className="skeleton-history__list">
         {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} variant="list-item" ariaLabel={`Loading scan ${i + 1}`} />
+          <Skeleton key={i} variant="list-item" ariaLabel={`${t('common.loading')} ${i + 1}`} />
         ))}
       </div>
     </div>
@@ -196,18 +201,19 @@ export function SkeletonHistory() {
  * SkeletonAdmin - Pre-configured skeleton for AdminDashboard
  */
 export function SkeletonAdmin() {
+  const { t } = useTranslation();
   return (
-    <div className="skeleton-admin" aria-busy="true" aria-label="Loading admin dashboard...">
-      <Skeleton variant="text" width="200px" height="32px" ariaLabel="Loading dashboard title" />
+    <div className="skeleton-admin" aria-busy="true" aria-label={t('admin.loading', 'Loading admin dashboard...')}>
+      <Skeleton variant="text" width="200px" height="32px" ariaLabel={t('admin.header.title')} />
 
       <div className="skeleton-admin__stats">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} variant="card" ariaLabel={`Loading stat ${i + 1}`} />
+          <Skeleton key={i} variant="card" ariaLabel={`${t('admin.overview.metrics.totalScans')} ${i + 1}`} />
         ))}
       </div>
 
       <div className="skeleton-admin__content">
-        <Skeleton variant="card" height="300px" ariaLabel="Loading dashboard content" />
+        <Skeleton variant="card" height="300px" ariaLabel={t('admin.overview.table.caption')} />
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import type { BottleEntry } from "../bottleRegistry.ts";
 import { parseLLMResponse } from "./parseLLMResponse.ts";
 import { buildGeminiFewShotParts } from "../referenceFrames.ts";
 import { buildAnalysisPrompt } from "./buildAnalysisPrompt.ts";
+import { mockGeminiResponse } from "../mocks/llmMock.ts";
 
 // v1beta has weaker stability guarantees than v1 (breaking changes possible
 // without notice). Migrate to v1 once gemini-2.5-flash is promoted there.
@@ -17,8 +18,18 @@ export async function callGemini(
   imageBase64: string,
   bottle: BottleEntry,
   apiKeys: string[],
-  debugReasoning = false
+  debugReasoning = false,
+  enableMock = false
 ): Promise<{ result: LLMResponse; keyIndex: number }> {
+  // Check for mock mode
+  if (enableMock) {
+    console.log('[Mock Mode] Using mock Gemini response');
+    const mockResponse = mockGeminiResponse(imageBase64, bottle.sku);
+    return {
+      result: mockResponse,
+      keyIndex: 0
+    };
+  }
   const userMessage = `Bottle: ${bottle.name} (${bottle.sku}), ${bottle.totalVolumeMl}ml total. Return JSON fill estimate.`;
 
   const requestBody = {

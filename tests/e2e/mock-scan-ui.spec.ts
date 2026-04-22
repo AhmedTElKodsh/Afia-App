@@ -29,7 +29,7 @@ test.describe('Mock Scan UI Test', () => {
 
     // 3. Navigate to Landing Page with SKU
     await page.goto('/?sku=afia-corn-1.5l');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 4. Wait for the START button to be ready
     await page.waitForSelector('button:has-text("START SMART SCAN"), button:has-text("Start Scan")', { timeout: 10000 });

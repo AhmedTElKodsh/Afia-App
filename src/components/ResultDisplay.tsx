@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { AnalysisResult } from "../state/appState.ts";
 import type { BottleEntry } from "../data/bottleRegistry.ts";
-import { calculateVolumes } from "../utils/volumeCalculator.ts";
-import { calculateNutrition } from "../utils/nutritionCalculator.ts";
+import { calculateVolumes } from "../../shared/volumeCalculator.ts";
+import { calculateNutrition } from "../../shared/nutritionCalculator.ts";
 import { ConfidenceBadge } from "./ConfidenceBadge.tsx";
 import { FeedbackGrid } from "./FeedbackGrid.tsx";
+import { CorrectionSlider } from "./results/CorrectionSlider.tsx";
 import { hapticFeedback } from "../utils/haptics.ts";
 import { useScanHistory, type StoredScan } from "../hooks/useScanHistory.ts";
 import { submitFeedback } from "../api/apiClient.ts";
@@ -77,26 +78,38 @@ function CupIcon({ fill, size = 24 }: CupIconProps) {
 export function ResultDisplay({ result, bottle, capturedImage, onRetake }: ResultDisplayProps) {
   const { t } = useTranslation();
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [pendingRating, setPendingRating] = useState<FeedbackType | null>(null);
+  const [userFillPct, setUserFillPct] = useState(result.fillPercentage);
   const [sliderValue, setSliderValue] = useState(0); // Value in ml to consume
+  
   // M2 FIX: Add loading state to prevent double-submission
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { updateFeedback } = useScanHistory();
 
   const handleFeedbackSubmit = useCallback(async (feedback: FeedbackType) => {
+    // If it's a correction rating, show the slider first
+    if (feedback !== 'accurate' && !pendingRating) {
+      setPendingRating(feedback);
+      return;
+    }
+
     if (isSubmitting) return;
     setIsSubmitting(true);
     
     try {
       const rating = FEEDBACK_RATING_MAP[feedback];
       if (result.scanId && rating) {
+        const correctedPct = feedback === 'accurate' ? undefined : userFillPct;
         updateFeedback(result.scanId, rating);
-        await submitFeedback(result.scanId, rating, result.fillPercentage).catch(() => {});
+        // M1 FIX: Include correctedFillPercentage in API call
+        await submitFeedback(result.scanId, rating, result.fillPercentage, correctedPct).catch(() => {});
       }
       setFeedbackSubmitted(true);
+      setPendingRating(null);
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, result.scanId, result.fillPercentage, updateFeedback]);
+  }, [isSubmitting, result.scanId, result.fillPercentage, userFillPct, pendingRating, updateFeedback]);
 
   // Trigger success haptics on result display
   useEffect(() => {
@@ -108,10 +121,10 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
   }, [result.confidence]);
 
   const originalVolumes = useMemo(() => calculateVolumes(
-    result.fillPercentage,
+    userFillPct, // Drives real-time gauge/volume sync (Story 4.4 AC2)
     bottle.totalVolumeMl,
     bottle.geometry
-  ), [result.fillPercentage, bottle.totalVolumeMl, bottle.geometry]);
+  ), [userFillPct, bottle.totalVolumeMl, bottle.geometry]);
 
   // Helper converters
   const { mlToTablespoons, mlToCups } = useMemo(() => {
@@ -123,14 +136,7 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
 
   // Update volumes based on slider (planned consumption)
   const volumes = useMemo(() => {
-    // If we have a calibrated bottle, we should just subtract the ml directly
-    // instead of re-interpolating based on a ratio, to avoid double-interpolation errors.
     const remainingMl = Math.max(0, originalVolumes.remaining.ml - sliderValue);
-    
-    // We still use calculateVolumes to get the tablespoons and cups breakdown consistently
-    // but we pass a linear percentage that will bypass calibration if we already have the ML.
-    // Actually, a better way is to manually construct the VolumeBreakdown.
-    
     const consumedMl = bottle.totalVolumeMl - remainingMl;
     
     return {
@@ -175,17 +181,26 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
       {result.aiProvider === 'local-tfjs' && (
         <div className="card card-compact result-inference-source">
           <p className="text-caption">
-            ✨ Analyzed on-device{result.llmFallbackUsed ? ' with cloud verification' : ''}
-            {result.offlineMode && ' (offline mode)'}
+            {t('results.inferenceSource')}{result.llmFallbackUsed ? t('results.cloudVerification') : ''}
+            {result.offlineMode && t('results.offlineMode')}
+          </p>
+        </div>
+      )}
+
+      {/* Story 7.8 - Background sync indicator */}
+      {result.queuedForSync && (
+        <div className="card card-compact result-sync-notice" data-testid="sync-pending-icon">
+          <p className="text-caption">
+            <span className="sync-icon">â†»</span> {t('results.queuedForSync', 'Scan queued. Results will be verified when online.')}
           </p>
         </div>
       )}
       
       {/* Story 7.4 - Task 6: Offline mode indicator */}
-      {result.offlineMode && (
+      {result.offlineMode && !result.queuedForSync && (
         <div className="card card-compact result-offline-notice">
           <p className="text-caption">
-            📡 You were offline during analysis. This result will be verified when you reconnect.
+            {t('results.offlineNotice')}
           </p>
         </div>
       )}
@@ -196,19 +211,20 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
           {/* Left: Image with Red Line */}
           <div className="result-image-container">
             <img
-              src={`data:image/jpeg;base64,${capturedImage}`}
+              src={capturedImage?.startsWith('data:') ? capturedImage : `data:image/jpeg;base64,${capturedImage}`}
               alt="Detected Level"
               className="result-captured-img"
             />
-            {/* The Red Line Overlay */}
+            {/* The Red Line Overlay - Synchronized with user correction (AC2) */}
             <div 
               className="result-red-line"
               style={{ 
-                bottom: `${(result.red_line_y_normalized || 0) / 10}%`,
+                // Approximate mapping: 100% fill maps to top of visual area, 0% to bottom
+                bottom: `${userFillPct}%`,
               }}
             >
               <div className="red-line-label">
-                {Math.round(originalVolumes.remaining.ml)}ml
+                {Math.round(originalVolumes.remaining.ml)}{t('common.ml', 'ml')}
               </div>
             </div>
           </div>
@@ -235,7 +251,7 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
                 {hasHalfCup && <CupIcon fill="half" size={28} />}
               </div>
               <div className="slider-ml-label">
-                -{sliderValue}ml
+                -{sliderValue}{t('common.ml', 'ml')}
               </div>
             </div>
           </div>
@@ -246,17 +262,26 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
       <div className="result-summary-grid">
         <div className="summary-item consumed">
           <span className="summary-label">{t('results.consumed')}</span>
-          <span className="summary-value">{Math.round(volumes.consumed.ml)}ml</span>
+          <span className="summary-value">{Math.round(volumes.consumed.ml)}{t('common.ml', 'ml')}</span>
           <span className="summary-sub">
             {fullCups > 0 || hasHalfCup ? `${fullCups} ${hasHalfCup ? '+ 1/2' : ''} ${t('common.cups')}` : `0 ${t('common.cups')}`}
           </span>
         </div>
         <div className="summary-item remaining">
           <span className="summary-label">{t('results.remaining')}</span>
-          <span className="summary-value">{Math.round(volumes.remaining.ml)}ml</span>
-          <span className="summary-sub">{(volumes.remaining.ml / 1500 * 100).toFixed(1)}%</span>
+          <span className="summary-value">{Math.round(volumes.remaining.ml)}{t('common.ml', 'ml')}</span>
+          <span className="summary-sub">{(volumes.remaining.ml / bottle.totalVolumeMl * 100).toFixed(1)}%</span>
         </div>
       </div>
+
+      {/* ── Correction Mode UI - Story 4.4 ── */}
+      {pendingRating && (
+        <CorrectionSlider
+          initialValue={result.fillPercentage}
+          value={userFillPct}
+          onChange={setUserFillPct}
+        />
+      )}
 
       {/* ── 2-column metrics grid ── */}
       <div className="result-metrics">
@@ -319,6 +344,7 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
           onSubmit={handleFeedbackSubmit}
           hasSubmitted={feedbackSubmitted}
           isSubmitting={isSubmitting}
+          selectedType={pendingRating || undefined}
         />
       ) : (
         <div className="card card-compact result-feedback-thanks">

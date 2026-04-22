@@ -114,9 +114,13 @@ async function logAnalysisToSupabase(provider: string, result: AnalysisResult) {
         llm_raw_response: result,
         status: 'success'
       });
-    if (error) console.error('Supabase Log Error:', error);
+    if (error) {
+      console.error('[Telemetry] Supabase log insert failed:', error);
+      // Non-fatal — analysis already succeeded; telemetry loss is acceptable
+    }
   } catch (err) {
-    console.error('Logging failed:', err);
+    console.error('[Telemetry] logAnalysisToSupabase threw unexpectedly:', err);
+    // Swallowed intentionally: logging failure must never surface to the user
   }
 }
 

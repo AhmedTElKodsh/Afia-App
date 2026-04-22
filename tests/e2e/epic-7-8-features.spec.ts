@@ -55,7 +55,7 @@ test.describe('Epic 7: Single-SKU Restriction (1.5L only)', () => {
 
     test('should display the 1.5L Corn Oil bottle details', async ({ page }) => {
       await page.goto(`/?sku=${ACTIVE_SKU}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const pill = page.locator('.qrl-selector-pill');
       await expect(pill).toBeVisible({ timeout: 5000 });
@@ -74,7 +74,7 @@ test.describe('Epic 7: Single-SKU Restriction (1.5L only)', () => {
 
       for (const sku of legacySkus) {
         await page.goto(`/?sku=${sku}`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         // App shell must still render — no white screen of death
         await expect(page.locator('body')).toBeVisible();
       }
@@ -82,7 +82,7 @@ test.describe('Epic 7: Single-SKU Restriction (1.5L only)', () => {
 
     test('root URL (no SKU) renders the landing page', async ({ page }) => {
       await page.goto('/');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await expect(page.locator('body')).toBeVisible();
     });
   });
@@ -135,7 +135,7 @@ test.describe('Epic 7: Single-SKU Restriction (1.5L only)', () => {
       });
 
       await page.goto(`/?sku=${ACTIVE_SKU}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const sparklineCount = page.locator('.qrl-sparkline-count');
       await expect(sparklineCount).toBeVisible({ timeout: 5000 });
@@ -154,7 +154,7 @@ test.describe('Epic 7: Single-SKU Restriction (1.5L only)', () => {
         localStorage.setItem('afia_privacy_accepted', 'true');
       });
       await page.goto('/?mode=admin');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       await expect(page.locator('.nav-label:has-text("Test Lab"), .app-ctrl-admin-label').first()).toBeVisible({ timeout: 5000 });
     });
@@ -167,7 +167,7 @@ test.describe('Epic 7: Single-SKU Restriction (1.5L only)', () => {
         localStorage.setItem('afia_admin_onboarding_seen', 'true');
       });
       await page.goto('/?mode=admin');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Wait for Test Lab button and click it
       const testLabBtn = page.locator('button[aria-label="Test Lab"]');

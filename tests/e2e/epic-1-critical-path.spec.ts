@@ -13,6 +13,8 @@ test.describe('Epic 1: Core Scan Experience', () => {
     await page.addInitScript(() => {
       window.localStorage.setItem('afia_privacy_accepted', 'true');
       (window as any).__AFIA_TEST_MODE__ = true;
+      // Prevent auto-capture from unmounting the camera view before waitForVideoReady completes
+      (window as any).__AFIA_PREVENT_CAPTURE__ = true;
     });
     // Camera mock only — each test registers its own analyze route
     await mockCamera(page);
@@ -106,7 +108,7 @@ test('Critical Path: QR -> Privacy -> Scan -> Results', async ({ page }) => {
       window.localStorage.removeItem('afia_privacy_accepted');
     });
     await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const startBtn = page.locator('button:has-text("START SMART SCAN"), button:has-text("Start Scan")').first();
     await expect(startBtn).toBeDisabled();

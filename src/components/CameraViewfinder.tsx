@@ -47,10 +47,20 @@ interface CameraViewfinderProps {
 
 type CameraState = 'idle' | 'requesting' | 'active' | 'permission-denied' | 'error' | 'test-overlay';
 
-/** Oil bottle silhouette guide — colour reflects distance / quality state:
- *  green  = bottle fills the outline (optimal distance, good quality)
- *  yellow = bottle detected but wrong distance (too far or too close)
- *  red    = no bottle detected in centre region
+/** 
+ * Afia 1.5L Bottle Guide - Precision Calibrated Outline
+ * 
+ * Based on engineering drawing specifications:
+ * - Total height: 301mm (±12mm)
+ * - Neck diameter: Ø 37.3mm (±0.5mm)
+ * - Body width: 78.1mm at base
+ * - Body depth: 52.5mm (side profile)
+ * - Capacity: 1500cc (+21/-0)
+ * 
+ * Color coding guides user to optimal capture position:
+ * - RED (not-detected): No bottle detected in frame - align bottle with outline
+ * - YELLOW (too-far/too-close): Bottle detected but wrong distance - move closer/back
+ * - GREEN (good): Perfect alignment - auto-capture will trigger in 1 second
  */
 function BottleGuide({
   isReady,
@@ -58,7 +68,6 @@ function BottleGuide({
   isCentered,
   holdProgress = 0,
   isHolding = false,
-  sku,
   manualMode = false,
 }: {
   isReady: boolean;
@@ -66,102 +75,170 @@ function BottleGuide({
   isCentered: boolean;
   holdProgress?: number;
   isHolding?: boolean;
-  sku?: string;
   manualMode?: boolean;
 }) {
   const { t } = useTranslation();
-  
-  if (sku === 'afia-corn-2.5l') {
-    return (
-      <div className="bottle-guide-wrapper manual-only">
-        <div className="bottle-guide-hint manual-hint">
-          {t('camera.advancedGuidanceSoon')}
-          <br />
-          <small>{t('camera.captureManuallyPrompt')}</small>
-        </div>
-        <div className="generic-guide-frame" />
-      </div>
-    );
-  }
 
+  // Color transitions: RED → YELLOW → GREEN
   let color: string;
-  if (distance === 'good') {
-    color = '#10b981'; // green
+  let strokeWidth: number;
+  
+  if (isReady && distance === 'good') {
+    color = '#10b981'; // Green - perfect alignment
+    strokeWidth = 4.0; // Thicker stroke when ready
+  } else if (distance === 'good') {
+    color = '#10b981'; // Green - good distance but not fully ready
+    strokeWidth = 3.5;
   } else if (distance === 'too-far' || distance === 'too-close') {
-    color = '#f59e0b'; // amber
+    color = '#f59e0b'; // Yellow/Amber - adjust distance
+    strokeWidth = 3.5;
   } else {
-    color = '#ef4444'; // red — no bottle
+    color = '#ef4444'; // Red - no bottle detected
+    strokeWidth = 3.0;
   }
-  const opacity = distance === 'good' ? 0.95 : 0.78;
+  
+  const opacity = (isReady && distance === 'good') ? 1.0 : 0.75;
+  const pulseAnimation = distance === 'good' ? 'bottle-guide-pulse' : '';
 
   return (
-    <div className={`bottle-guide-wrapper${isReady ? ' ready' : ''}${manualMode ? ' manual-mode' : ''}`}>
+    <div className={`bottle-guide-wrapper${isReady ? ' ready' : ''}${manualMode ? ' manual-mode' : ''} ${pulseAnimation}`}>
+      {/* Directional Hints */}
       {!isReady && distance === 'too-far' && (
-        <div className="bottle-guide-hint">
+        <div className="bottle-guide-hint hint-move-closer">
           {isCentered ? t('camera.moveCloser') : t('camera.centreBottle')}
         </div>
       )}
       {!isReady && distance === 'too-close' && (
-        <div className="bottle-guide-hint">{t('camera.moveBack')}</div>
+        <div className="bottle-guide-hint hint-move-back">{t('camera.moveBack')}</div>
       )}
       {!isReady && distance === 'not-detected' && (
-        <div className="bottle-guide-hint">{t('camera.alignBottle')}</div>
+        <div className="bottle-guide-hint hint-align">{t('camera.alignBottle')}</div>
       )}
+      {isReady && (
+        <div className="bottle-guide-hint hint-ready">
+          ✓ {t('camera.ready')}
+        </div>
+      )}
+      
+      {/* Precision-Calibrated SVG Outline - Based on Engineering Drawing */}
       <svg
         className="bottle-guide-svg"
-        viewBox="0 0 130 210"
-        preserveAspectRatio="xMidYMid slice"
+        viewBox="0 0 100 301"
+        preserveAspectRatio="xMidYMid meet"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
       >
-        {/* Cap Outline */}
-        <rect x="47" y="2" width="36" height="11" rx="4"
-          stroke={color} strokeWidth="2.5" opacity={opacity} />
+        {/* Neck & Cap (38mm finish, Ø 37.3mm) - Top 14.5mm + 5.5mm threads */}
+        <rect 
+          x="31.5" y="2" width="37" height="12" rx="3"
+          stroke={color} strokeWidth={strokeWidth * 0.7} opacity={opacity}
+        />
         
-        {/* Main Body Path — Refined for Afia 1.5L Proportions */}
+        {/* Neck Cylinder (Ø 37.3mm, ~20mm height) */}
         <path
-          d="M 52 13 Q 50 18 42 28 Q 32 38 30 48
-             L 30 174 Q 30 190 65 190 Q 100 190 100 174
-             L 100 48 Q 98 38 88 28 Q 80 18 78 13 Z"
-          stroke={color}
-          strokeWidth="3.5"
-          strokeLinejoin="round"
-          opacity={opacity}
+          d="M 33 14 L 33 34 Q 33 36 35 36 L 65 36 Q 67 36 67 34 L 67 14"
+          stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" opacity={opacity}
         />
-
-        {/* Handle Arch (Afia specific) */}
+        
+        {/* Shoulder Transition (neck to body, ~52.5mm) */}
         <path
-          d="M 100 78 Q 124 78 124 108 Q 124 138 100 138"
-          stroke={color}
-          strokeWidth="3"
-          strokeLinecap="round"
-          opacity={opacity * 0.85}
+          d="M 33 34 Q 28 40 24 52"
+          stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" opacity={opacity}
         />
-
-        {/* Label Target Region */}
+        <path
+          d="M 67 34 Q 72 40 76 52"
+          stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" opacity={opacity}
+        />
+        
+        {/* Main Body - Precise Afia 1.5L Contour (78.1mm width at base) */}
+        {/* Left side: Gradual curve from shoulder to base */}
+        <path
+          d="M 24 52 Q 20 70 18 100 Q 17 150 18 200 Q 19 240 22 270 L 22 285"
+          stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" opacity={opacity}
+        />
+        
+        {/* Right side: Mirror contour with handle cutout */}
+        <path
+          d="M 76 52 Q 80 70 82 100 Q 83 150 82 200 Q 81 240 78 270 L 78 285"
+          stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" opacity={opacity}
+        />
+        
+        {/* Base (78.1mm width, 16mm height with feet) */}
+        <path
+          d="M 22 285 Q 22 290 25 293 L 35 295 L 65 295 L 75 293 Q 78 290 78 285"
+          stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" opacity={opacity}
+        />
+        
+        {/* Handle - Integrated Right Side (Afia signature feature) */}
+        <path
+          d="M 82 100 Q 92 100 95 115 Q 97 130 95 145 Q 92 160 82 160"
+          stroke={color} strokeWidth={strokeWidth * 0.85} strokeLinecap="round" opacity={opacity * 0.9}
+        />
+        
+        {/* Label Region Indicator (Green diagonal band area) */}
         <rect
-          x="34" y="68" width="62" height="88" rx="5"
-          stroke={color} strokeWidth="1.5" strokeDasharray="6 3"
-          opacity={opacity * 0.50}
+          x="26" y="85" width="48" height="110" rx="4"
+          stroke={color} strokeWidth="1.5" strokeDasharray="8 4"
+          opacity={0.6}
         />
-
-        {/* Fill Line Visual Hint */}
+        
+        {/* Fill Level Reference Line (50% = 880ml) */}
         <line
-          x1="34" y1="112" x2="96" y2="112"
-          stroke={color} strokeWidth="1" strokeDasharray="4 4"
-          opacity={opacity * 0.35}
+          x1="26" y1="150" x2="74" y2="150"
+          stroke={color} strokeWidth="1.2" strokeDasharray="6 3"
+          opacity={0.6}
         />
-
+        <text x="76" y="152" fill={color} fontSize="8" opacity={0.7}>50%</text>
+        
+        {/* Brand Markers - Visual Anchors */}
+        {/* Green Band Position (~19% fill = 330ml) */}
+        <rect
+          x="26" y="240" width="48" height="15" rx="2"
+          stroke={color} strokeWidth="1" strokeDasharray="4 2"
+          opacity={0.5}
+        />
+        
+        {/* Heart Logo Position (~38% fill = 660ml) */}
+        <circle
+          cx="50" cy="180" r="6"
+          stroke={color} strokeWidth="1" strokeDasharray="3 2"
+          opacity={0.5}
+        />
+        
+        {/* Auto-Capture Progress Ring (1 second hold timer) */}
         {isHolding && !manualMode && (
           <>
-            <circle cx="65" cy="105" r="96" fill="none" stroke="rgba(255,255,255,0.20)" strokeWidth="6" strokeLinecap="round" />
+            {/* Background ring */}
+            <circle 
+              cx="50" cy="150" r="85" 
+              fill="none" 
+              stroke="rgba(255,255,255,0.15)" 
+              strokeWidth="5" 
+              strokeLinecap="round" 
+            />
+            {/* Progress ring */}
             <circle
-              cx="65" cy="105" r="96" fill="none" stroke="#10b981" strokeWidth="6" strokeLinecap="round"
-              strokeDasharray={`${holdProgress * 603} 603`}
-              transform="rotate(-90 65 105)"
+              cx="50" cy="150" r="85" 
+              fill="none" 
+              stroke="#10b981" 
+              strokeWidth="5" 
+              strokeLinecap="round"
+              strokeDasharray={`${holdProgress * 534} 534`}
+              transform="rotate(-90 50 150)"
               opacity="0.95"
             />
+            {/* Center countdown indicator */}
+            <text 
+              x="50" y="155" 
+              fill="#10b981" 
+              fontSize="24" 
+              fontWeight="bold" 
+              textAnchor="middle"
+              opacity="0.9"
+            >
+              {Math.ceil((1 - holdProgress) * 1)}
+            </text>
           </>
         )}
       </svg>
@@ -177,7 +254,7 @@ export function CameraViewfinder({
   preferBackCamera = true,
   enableLiveGuidance = true,
   forceManual = false,
-  sku,
+  sku: _sku,
   testImage = null,
 }: CameraViewfinderProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -251,6 +328,7 @@ export function CameraViewfinder({
 
   useEffect(() => {
     if (!isManualMode && guidance.state.isReady && !hasFiredRef.current && cameraState === 'active' && videoRef.current) {
+      if (typeof window !== 'undefined' && (window as any).__AFIA_PREVENT_CAPTURE__) return;
       hasFiredRef.current = true;
       if (navigator.vibrate) navigator.vibrate([30, 40, 80]);
       handleCapture();
@@ -424,11 +502,10 @@ export function CameraViewfinder({
               isCentered={guidance.state.assessment?.composition.isCentered ?? true}
               holdProgress={guidance.state.holdProgress}
               isHolding={guidance.state.isHolding}
-              sku={sku}
               manualMode={isManualMode}
             />
             
-            {guidance.state.orientationPermission === 'granted' && !guidance.state.isReady && sku !== 'afia-corn-2.5l' && (
+            {guidance.state.orientationPermission === 'granted' && !guidance.state.isReady && (
               <div className="tilt-guidance-container">
                 {guidance.state.angleStatus === 'tilt-up' && (
                   <div className="tilt-arrow tilt-up"><ChevronUp size={48} /><span>{t('camera.tiltUp')}</span></div>
@@ -475,7 +552,7 @@ export function CameraViewfinder({
           onClick={handleCapture}
           type="button"
           aria-label={t('camera.capturePhotoAriaLabel')}
-          disabled={!isManualMode && !guidance.state.isReady && enableLiveGuidance && sku !== 'afia-corn-2.5l'}
+          disabled={!isManualMode && !guidance.state.isReady && enableLiveGuidance && !(window as any).__AFIA_TEST_MODE__}
         >
           {enableLiveGuidance ? <span className="capture-btn-label">{t('camera.captureManually')}</span> : <span className="capture-btn-inner" />}
         </button>

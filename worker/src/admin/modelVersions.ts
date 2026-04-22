@@ -6,8 +6,8 @@
  * Ensures only one version can be active at a time.
  */
 
-import { createClient } from "@supabase/supabase-js";
 import type { Env } from "../types";
+import { getSupabaseClient } from "../db/supabase";
 
 /**
  * GET /admin/model/versions
@@ -15,13 +15,6 @@ import type { Env } from "../types";
  * Returns all model versions from Supabase, sorted by deployed_at (newest first).
  * Requires admin authentication.
  */
-function getSupabaseClient(env: Env) {
-  const key = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
-  if (!env.SUPABASE_URL) throw new Error("SUPABASE_URL not configured");
-  if (!key) throw new Error("Supabase key not configured");
-  return createClient(env.SUPABASE_URL, key, { auth: { persistSession: false } });
-}
-
 export async function handleGetVersions(env: Env): Promise<Response> {
   try {
     const supabase = getSupabaseClient(env);

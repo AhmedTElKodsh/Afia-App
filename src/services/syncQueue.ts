@@ -8,11 +8,17 @@
 
 import { openDB, type IDBPDatabase } from 'idb';
 
-const WORKER_URL = import.meta.env.VITE_PROXY_URL || 'http://localhost:8787';
+const WORKER_URL = import.meta.env.VITE_PROXY_URL || (import.meta.env.DEV ? 'http://localhost:8787' : '');
 const DB_NAME = 'afia-sync-queue';
 const DB_VERSION = 1;
 const STORE_NAME = 'sync-queue';
 const MAX_RETRIES = 5;
+const MAX_QUEUE_ITEMS = 50; // M3: Prevent excessive storage usage
+const MAX_ITEM_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+interface ServiceWorkerRegistrationWithSync extends ServiceWorkerRegistration {
+  sync: { register(tag: string): Promise<void> };
+}
 
 export interface AnalyzeRequest {
   sku: string;
@@ -42,7 +48,17 @@ async function getDB(): Promise<IDBPDatabase> {
           db.createObjectStore(STORE_NAME, { keyPath: 'id' });
         }
       },
-    // Clear cached promise on failure so next call retries
+      blocked() {
+        console.warn('[SyncQueue] IndexedDB upgrade blocked by another tab');
+      },
+      blocking() {
+        // This connection blocks a newer-version open — release it
+        dbPromise = null;
+      },
+      terminated() {
+        // Browser killed the DB connection (e.g. low disk space)
+        dbPromise = null;
+      },
     }).catch(e => { dbPromise = null; throw e; });
   }
   return dbPromise;
@@ -76,6 +92,31 @@ export async function enqueueAnalyzeRequest(payload: AnalyzeRequest): Promise<st
   }
   const db = await getDB();
   
+  // M3: Check global queue limit
+  const count = await db.count(STORE_NAME);
+  if (count >= MAX_QUEUE_ITEMS) {
+    // Evict oldest item to make room
+    const allItems = await db.getAll(STORE_NAME);
+    const oldest = allItems.sort((a, b) => a.enqueuedAt - b.enqueuedAt)[0];
+    if (oldest) await db.delete(STORE_NAME, oldest.id);
+  }
+
+  // M4: Prevent duplicates by checking if same image+sku already exists
+  const existingItems = await db.getAll(STORE_NAME);
+  const isDuplicate = existingItems.some(item => 
+    item.payload.sku === payload.sku && 
+    item.payload.imageBase64 === payload.imageBase64
+  );
+  
+  if (isDuplicate) {
+    const duplicate = existingItems.find(item => 
+      item.payload.sku === payload.sku && 
+      item.payload.imageBase64 === payload.imageBase64
+    );
+    console.log('[SyncQueue] Skipping duplicate request:', duplicate?.id);
+    return duplicate?.id || generateId();
+  }
+  
   const item: SyncQueueItem = {
     id: generateId(),
     payload,
@@ -90,7 +131,7 @@ export async function enqueueAnalyzeRequest(payload: AnalyzeRequest): Promise<st
   if (isBackgroundSyncSupported()) {
     try {
       const registration = await navigator.serviceWorker.ready;
-      await (registration as unknown as { sync: { register(tag: string): Promise<void> } }).sync.register('analyze-sync');
+      await (registration as unknown as ServiceWorkerRegistrationWithSync).sync.register('analyze-sync');
     } catch (error) {
       console.warn('Background sync registration failed:', error);
     }
@@ -146,8 +187,20 @@ export async function processSyncQueue(): Promise<{
   removed: number;
 }> {
   if (isProcessingSyncQueue) return { processed: 0, succeeded: 0, failed: 0, removed: 0 };
+  if (!WORKER_URL) {
+    console.error('[SyncQueue] VITE_PROXY_URL not set — cannot process sync queue');
+    return { processed: 0, succeeded: 0, failed: 0, removed: 0 };
+  }
   isProcessingSyncQueue = true;
   try {
+  // Prune stale / exhausted items before processing
+  const allItems = await getAllQueueItems();
+  const now = Date.now();
+  for (const item of allItems) {
+    if (now - item.enqueuedAt > MAX_ITEM_AGE_MS || item.retryCount >= item.maxRetries) {
+      await removeQueueItem(item.id);
+    }
+  }
   const items = await getAllQueueItems();
 
   const results = {
