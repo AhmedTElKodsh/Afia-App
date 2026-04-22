@@ -10,6 +10,17 @@ import { triggerAnalyzeAndConfirm } from './helpers/flow';
 test.describe('Epic 3: Feedback System', () => {
 
   test.beforeEach(async ({ page }) => {
+    // Enable console logging for debugging
+    page.on('console', msg => {
+      if (msg.type() === 'error' || msg.type() === 'warning') {
+        console.log(`[BROWSER ${msg.type().toUpperCase()}]:`, msg.text());
+      }
+    });
+    
+    page.on('pageerror', error => {
+      console.log('[PAGE ERROR]:', error.message);
+    });
+    
     await setupDefaultMocks(page);
     
     // Use test_mode=1 to enable test features immediately
@@ -60,13 +71,11 @@ test.describe('Epic 3: Feedback System', () => {
     // "About right" auto-submits after 150ms
     await page.locator('button:has-text("About right")').click();
 
-    // ResultDisplay shows .result-feedback-thanks - robust wait for state change
-    await page.waitForFunction(() => {
-      return document.querySelector('.result-feedback-thanks') !== null &&
-             document.querySelector('.feedback-grid-container') === null;
-    }, { timeout: 15000 });
+    // Wait for auto-submit delay (150ms) + state update cycle
+    await page.waitForTimeout(250);
 
-    await expect(page.locator('.result-feedback-thanks')).toBeVisible();
+    // ResultDisplay shows .result-feedback-thanks
+    await expect(page.locator('.result-feedback-thanks')).toBeVisible({ timeout: 15000 });
     await expect(page.locator('.result-feedback-thanks')).toContainText('Thank you');
     
     // The feedback grid should be gone
@@ -93,16 +102,24 @@ test.describe('Epic 3: Feedback System', () => {
     const submitBtn = page.locator('.feedback-submit-btn');
     await expect(submitBtn).toBeVisible({ timeout: 5000 });
 
+    // Wait for feedback API call
+    const feedbackPromise = page.waitForResponse(
+      res => res.url().includes('/feedback'),
+      { timeout: 10000 }
+    );
+
     // Submit
     await submitBtn.click();
 
-    // ResultDisplay swaps FeedbackGrid for thank-you message - robust wait for transition
-    await page.waitForFunction(() => {
-      return document.querySelector('.result-feedback-thanks') !== null &&
-             document.querySelector('.feedback-grid-container') === null;
-    }, { timeout: 15000 });
+    // Wait for API call to complete
+    const feedbackResponse = await feedbackPromise;
+    console.log('[TEST] Feedback API response status:', feedbackResponse.status());
 
-    await expect(page.locator('.result-feedback-thanks')).toBeVisible();
+    // Wait for state update cycle (feedback submission + re-render)
+    await page.waitForTimeout(1000);
+
+    // ResultDisplay swaps FeedbackGrid for thank-you message
+    await expect(page.locator('.result-feedback-thanks')).toBeVisible({ timeout: 15000 });
     await expect(page.locator('.result-feedback-thanks')).toContainText('Thank you');
     await expect(page.locator('.feedback-grid-container')).toBeHidden();
   });
@@ -115,15 +132,22 @@ test.describe('Epic 3: Feedback System', () => {
     const submitBtn = page.locator('.feedback-submit-btn');
     await expect(submitBtn).toBeVisible({ timeout: 5000 });
     
+    // Wait for feedback API call
+    const feedbackPromise = page.waitForResponse(
+      res => res.url().includes('/feedback'),
+      { timeout: 10000 }
+    );
+    
     await page.locator('.feedback-submit-btn').click();
 
-    // Wait for transition
-    await page.waitForFunction(() => {
-      return document.querySelector('.result-feedback-thanks') !== null &&
-             document.querySelector('.feedback-grid-container') === null;
-    }, { timeout: 15000 });
+    // Wait for API call to complete
+    const feedbackResponse = await feedbackPromise;
+    console.log('[TEST] Feedback API response status:', feedbackResponse.status());
 
-    await expect(page.locator('.result-feedback-thanks')).toBeVisible();
+    // Wait for state update cycle (feedback submission + re-render)
+    await page.waitForTimeout(1000);
+
+    await expect(page.locator('.result-feedback-thanks')).toBeVisible({ timeout: 15000 });
     await expect(page.locator('.result-feedback-thanks')).toContainText('Thank you');
     await expect(page.locator('.feedback-grid-container')).toBeHidden();
     });
