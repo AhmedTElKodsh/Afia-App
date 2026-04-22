@@ -36,16 +36,9 @@ const BottleSelector = lazy(() => import("./components/BottleSelector.tsx").then
 const AdminDashboard = lazy(() => import("./components/AdminDashboard.tsx").then(m => ({ default: m.AdminDashboard })));
 const TestLab = lazy(() => import("./components/TestLab.tsx").then(m => ({ default: m.TestLab })));
 
+import { Navigation, type CurrentView } from "./components/Navigation.tsx";
+
 const ADMIN_SESSION_KEY = "afia_admin_session";
-const ADMIN_SESSION_EXPIRES_KEY = "afia_admin_session_expires";
-
-function hasValidAdminSession(): boolean {
-  const token = sessionStorage.getItem(ADMIN_SESSION_KEY);
-  const expiresAt = Number(sessionStorage.getItem(ADMIN_SESSION_EXPIRES_KEY) || "0");
-  return !!(token && expiresAt > Date.now());
-}
-
-type CurrentView = "scan" | "history" | "admin";
 
 export default function App() {
   const { t } = useTranslation();
@@ -103,7 +96,7 @@ export default function App() {
   useEffect(() => {
     const checkForUpdates = async () => {
       try {
-        const { checkModelVersion } = await import('./services/modelLoader');
+        const { checkModelVersion } = await import('./services/modelLoader.ts');
         const result = await checkModelVersion();
         
         if (result.updateAvailable) {
@@ -133,7 +126,7 @@ export default function App() {
       if (isProcessingOnline) return;
       isProcessingOnline = true;
       console.log('[App] Network connection restored, processing offline queue');
-      import('./services/analysisRouter')
+      import('./services/analysisRouter.ts')
         .then(({ processOfflineQueue }) => processOfflineQueue())
         .catch(err => console.warn('[App] processOfflineQueue failed:', err))
         .finally(() => { isProcessingOnline = false; });
@@ -185,8 +178,14 @@ export default function App() {
     };
   }, []);
 
+  // Helper function to check if admin session is valid
+  const hasValidAdminSession = (): boolean => {
+    const token = sessionStorage.getItem('afia_admin_session');
+    return !!token;
+  };
+
   // Admin mode: URL param AND valid session token required
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(hasValidAdminSession);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(hasValidAdminSession());
   const isAdminMode = isAdminUrlParam && isAdminAuthenticated;
 
   const isIosInApp = useIosInAppBrowser();
@@ -663,68 +662,5 @@ export default function App() {
   }
 }
 
-// Navigation Component
-interface NavigationProps {
-  currentView: CurrentView;
-  onViewChange: (view: CurrentView) => void;
-  isAdminMode: boolean;
-}
-
-function Navigation({ currentView, onViewChange, isAdminMode }: NavigationProps) {
-  const { t } = useTranslation();
-  return (
-    <nav className={`main-navigation${isAdminMode ? " main-navigation--admin" : ""}`}>
-      {isAdminMode ? (
-        // Admin Mode Navigation: Test Lab | History | Dashboard
-        <>
-          <button
-            className={`nav-item ${currentView === "scan" ? "active" : ""}`}
-            onClick={() => onViewChange("scan")}
-            aria-label={t('nav.testLab')}
-          >
-            <span className="nav-icon"><FlaskConical size={20} strokeWidth={2} /></span>
-            <span className="nav-label">{t('nav.testLab')}</span>
-          </button>
-          <button
-            className={`nav-item ${currentView === "history" ? "active" : ""}`}
-            onClick={() => onViewChange("history")}
-            aria-label={t('nav.history')}
-          >
-            <span className="nav-icon"><History size={20} strokeWidth={2} /></span>
-            <span className="nav-label">{t('nav.history')}</span>
-          </button>
-          <button
-            className={`nav-item ${currentView === "admin" ? "active" : ""}`}
-            onClick={() => onViewChange("admin")}
-            aria-label={t('nav.dashboard')}
-          >
-            <span className="nav-icon"><LayoutDashboard size={20} strokeWidth={2} /></span>
-            <span className="nav-label">{t('nav.dashboard')}</span>
-          </button>
-        </>
-      ) : (
-        // User Mode Navigation: Scan | History
-        <>
-          <button
-            className={`nav-item ${currentView === "scan" ? "active" : ""}`}
-            onClick={() => onViewChange("scan")}
-            aria-label={t('nav.scan')}
-          >
-            <span className="nav-icon"><Camera size={20} strokeWidth={2} /></span>
-            <span className="nav-label">{t('nav.scan')}</span>
-          </button>
-          <button
-            className={`nav-item ${currentView === "history" ? "active" : ""}`}
-            onClick={() => onViewChange("history")}
-            aria-label={t('nav.history')}
-          >
-            <span className="nav-icon"><History size={20} strokeWidth={2} /></span>
-            <span className="nav-label">{t('nav.history')}</span>
-          </button>
-        </>
-      )}
-    </nav>
-  );
-}
 
 
