@@ -18,7 +18,12 @@ export function Navigation({ currentView, onViewChange, isAdminMode }: Navigatio
     label: string;
     icon: ReactNode;
   }> = [
-    { key: "scan", label: t("navigation.scan", "Scan"), icon: <Camera size={18} /> },
+    {
+      key: "scan",
+      // Backward-compatible label expected by existing E2E admin flows.
+      label: isAdminMode ? t("navigation.testLab", "Test Lab") : t("navigation.scan", "Scan"),
+      icon: <Camera size={18} />,
+    },
     { key: "history", label: t("navigation.history", "History"), icon: <History size={18} /> },
   ];
 

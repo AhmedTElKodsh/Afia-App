@@ -5,9 +5,8 @@ import { Page } from '@playwright/test';
  * Returns calibrated values matching the afia-corn-1.5l bottle
  */
 export async function mockAnalyzeSuccess(page: Page) {
-  // Mock both relative and absolute proxy URLs
-  const analyzePattern = /:8787\/analyze$/;
-  await page.route(analyzePattern, async (route) => {
+  // Match analyze endpoint regardless of configured proxy origin.
+  await page.route(/\/analyze$/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -27,7 +26,7 @@ export async function mockAnalyzeSuccess(page: Page) {
  * Mock the /analyze API endpoint with low confidence response
  */
 export async function mockAnalyzeLowConfidence(page: Page) {
-  await page.route(/:8787\/analyze$/, async (route) => {
+  await page.route(/\/analyze$/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -48,7 +47,7 @@ export async function mockAnalyzeLowConfidence(page: Page) {
  * Mock the /analyze API endpoint with error response
  */
 export async function mockAnalyzeError(page: Page, statusCode = 500) {
-  await page.route(/:8787\/analyze$/, async (route) => {
+  await page.route(/\/analyze$/, async (route) => {
     await route.fulfill({
       status: statusCode,
       contentType: 'application/json',
@@ -66,8 +65,8 @@ export async function mockAnalyzeError(page: Page, statusCode = 500) {
  * Vite dev-server module requests like src/config/feedback.ts (port 5173).
  */
 export async function mockFeedbackSuccess(page: Page) {
-  // Match any origin's /feedback endpoint
-  await page.route(/:8787\/feedback$/, async (route) => {
+  // Match feedback endpoint regardless of configured proxy origin.
+  await page.route(/\/feedback$/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',

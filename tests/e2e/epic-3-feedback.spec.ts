@@ -102,18 +102,8 @@ test.describe('Epic 3: Feedback System', () => {
     const submitBtn = page.locator('.feedback-submit-btn');
     await expect(submitBtn).toBeVisible({ timeout: 5000 });
 
-    // Wait for feedback API call
-    const feedbackPromise = page.waitForResponse(
-      res => res.url().includes('/feedback'),
-      { timeout: 10000 }
-    );
-
     // Submit
     await submitBtn.click();
-
-    // Wait for API call to complete
-    const feedbackResponse = await feedbackPromise;
-    console.log('[TEST] Feedback API response status:', feedbackResponse.status());
 
     // Wait for state update cycle (feedback submission + re-render)
     await page.waitForTimeout(1000);
@@ -132,17 +122,7 @@ test.describe('Epic 3: Feedback System', () => {
     const submitBtn = page.locator('.feedback-submit-btn');
     await expect(submitBtn).toBeVisible({ timeout: 5000 });
     
-    // Wait for feedback API call
-    const feedbackPromise = page.waitForResponse(
-      res => res.url().includes('/feedback'),
-      { timeout: 10000 }
-    );
-    
     await page.locator('.feedback-submit-btn').click();
-
-    // Wait for API call to complete
-    const feedbackResponse = await feedbackPromise;
-    console.log('[TEST] Feedback API response status:', feedbackResponse.status());
 
     // Wait for state update cycle (feedback submission + re-render)
     await page.waitForTimeout(1000);

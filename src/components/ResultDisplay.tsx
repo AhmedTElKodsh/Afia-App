@@ -87,10 +87,10 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
   const { updateFeedback } = useScanHistory();
 
   const handleFeedbackSubmit = useCallback(async (feedback: FeedbackType) => {
-    // If it's a correction rating, show the slider first
+    // Keep correction UI state in sync for non-accurate ratings,
+    // but do not require a second submit click.
     if (feedback !== 'accurate' && !pendingRating) {
       setPendingRating(feedback);
-      return;
     }
 
     if (isSubmitting) return;
