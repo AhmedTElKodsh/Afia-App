@@ -73,8 +73,9 @@ export function QrMockGenerator() {
   };
 
   // Check if running in secure context
-  const isSecure = window.location.protocol === 'https:' || 
-                   window.location.hostname === 'localhost';
+  const host = window.location.hostname;
+  const isLoopbackHost = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+  const isSecure = window.location.protocol === 'https:' || isLoopbackHost;
 
   return (
     <div className="qr-mock-generator" dir={isRTL ? 'rtl' : 'ltr'}>
