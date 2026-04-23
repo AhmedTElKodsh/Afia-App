@@ -5,10 +5,12 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { handleModelVersion } from "../modelVersion";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseClient } from "../db/supabase";
 
 // Mock Supabase
-vi.mock("@supabase/supabase-js");
+vi.mock("../db/supabase", () => ({
+  getSupabaseClient: vi.fn(),
+}));
 
 describe("handleModelVersion", () => {
   let mockContext: any;
@@ -25,15 +27,26 @@ describe("handleModelVersion", () => {
         if (key === "requestId") return "test-request-123";
         return undefined;
       }),
-      json: vi.fn((data: any, status?: number, headers?: any) => {
+      json: (data: any, statusOrHeaders?: number | Record<string, string>, headers?: Record<string, string>) => {
+        // Handle both signatures: json(data, status, headers) and json(data, headers)
+        let status = 200;
+        let responseHeaders: Record<string, string> = {};
+        
+        if (typeof statusOrHeaders === 'number') {
+          status = statusOrHeaders;
+          responseHeaders = headers || {};
+        } else if (statusOrHeaders) {
+          responseHeaders = statusOrHeaders;
+        }
+        
         return new Response(JSON.stringify(data), {
-          status: status || 200,
+          status,
           headers: {
             "Content-Type": "application/json",
-            ...headers,
+            ...responseHeaders,
           },
         });
-      }),
+      },
     };
   });
 
@@ -56,7 +69,7 @@ describe("handleModelVersion", () => {
       })),
     };
 
-    (createClient as any).mockReturnValue(mockSupabase);
+    vi.mocked(getSupabaseClient).mockReturnValue(mockSupabase as any);
 
     const response = await handleModelVersion(mockContext);
     const responseData = await response.json();
@@ -85,7 +98,7 @@ describe("handleModelVersion", () => {
       })),
     };
 
-    (createClient as any).mockReturnValue(mockSupabase);
+    vi.mocked(getSupabaseClient).mockReturnValue(mockSupabase as any);
 
     const response = await handleModelVersion(mockContext);
     const responseData = await response.json();
@@ -111,7 +124,7 @@ describe("handleModelVersion", () => {
       })),
     };
 
-    (createClient as any).mockReturnValue(mockSupabase);
+    vi.mocked(getSupabaseClient).mockReturnValue(mockSupabase as any);
 
     const response = await handleModelVersion(mockContext);
     const responseData = await response.json();
@@ -122,7 +135,7 @@ describe("handleModelVersion", () => {
   });
 
   it("should handle unexpected errors gracefully", async () => {
-    (createClient as any).mockImplementation(() => {
+    vi.mocked(getSupabaseClient).mockImplementation(() => {
       throw new Error("Unexpected error");
     });
 
