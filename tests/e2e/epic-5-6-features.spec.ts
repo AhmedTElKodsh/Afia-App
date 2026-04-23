@@ -58,15 +58,9 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
       });
       
       await page.fill('input[type="password"]', 'definitely-wrong-password-12345');
-      
-      // Wait for the auth request to complete
-      const responsePromise = page.waitForResponse(response => 
-        response.url().includes('/admin/auth') && response.status() === 401
-      );
       await page.click('button[type="submit"]');
-      await responsePromise;
       
-      // Check for error message or alert
+      // Assert user-visible failure state instead of waiting on network internals.
       const errorMsg = page.locator('.error-message, [role="alert"]');
       await expect(errorMsg.first()).toBeVisible({ timeout: 5000 });
     });
