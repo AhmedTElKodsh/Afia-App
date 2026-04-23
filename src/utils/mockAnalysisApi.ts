@@ -5,7 +5,7 @@
  * without making actual API calls.
  */
 
-import type { AnalysisResult } from "../state/appState";
+import type { AnalysisResult } from "../state/appState.ts";
 
 export interface MockScenario {
   id: string;

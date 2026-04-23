@@ -5,10 +5,11 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { handleModelVersion } from "../modelVersion";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseClient } from "../db/supabase";
 
-// Mock Supabase
-vi.mock("@supabase/supabase-js");
+vi.mock("../db/supabase", () => ({
+  getSupabaseClient: vi.fn(),
+}));
 
 describe("handleModelVersion", () => {
   let mockContext: any;
@@ -20,11 +21,15 @@ describe("handleModelVersion", () => {
       env: {
         SUPABASE_URL: "https://test.supabase.co",
         SUPABASE_SERVICE_ROLE_KEY: "test-key",
+        STAGE: "prod",
       },
       get: vi.fn((key: string) => {
         if (key === "requestId") return "test-request-123";
         return undefined;
       }),
+      req: {
+        header: vi.fn(() => null),
+      },
       json: vi.fn((data: any, status?: number, headers?: any) => {
         return new Response(JSON.stringify(data), {
           status: status || 200,
@@ -56,10 +61,10 @@ describe("handleModelVersion", () => {
       })),
     };
 
-    (createClient as any).mockReturnValue(mockSupabase);
+    vi.mocked(getSupabaseClient as any).mockReturnValue(mockSupabase);
 
     const response = await handleModelVersion(mockContext);
-    const responseData = await response.json();
+    const responseData = await response.json() as any;
 
     expect(responseData).toEqual({
       version: "1.2.0",
@@ -85,10 +90,10 @@ describe("handleModelVersion", () => {
       })),
     };
 
-    (createClient as any).mockReturnValue(mockSupabase);
+    vi.mocked(getSupabaseClient as any).mockReturnValue(mockSupabase);
 
     const response = await handleModelVersion(mockContext);
-    const responseData = await response.json();
+    const responseData = await response.json() as any;
 
     expect(response.status).toBe(404);
     expect(responseData.error).toBe("No active model version");
@@ -111,10 +116,10 @@ describe("handleModelVersion", () => {
       })),
     };
 
-    (createClient as any).mockReturnValue(mockSupabase);
+    vi.mocked(getSupabaseClient as any).mockReturnValue(mockSupabase);
 
     const response = await handleModelVersion(mockContext);
-    const responseData = await response.json();
+    const responseData = await response.json() as any;
 
     expect(response.status).toBe(500);
     expect(responseData.error).toBe("Failed to fetch model version");
@@ -122,12 +127,12 @@ describe("handleModelVersion", () => {
   });
 
   it("should handle unexpected errors gracefully", async () => {
-    (createClient as any).mockImplementation(() => {
+    vi.mocked(getSupabaseClient as any).mockImplementation(() => {
       throw new Error("Unexpected error");
     });
 
     const response = await handleModelVersion(mockContext);
-    const responseData = await response.json();
+    const responseData = await response.json() as any;
 
     expect(response.status).toBe(500);
     expect(responseData.error).toBe("Internal server error");

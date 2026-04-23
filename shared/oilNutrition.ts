@@ -1,14 +1,4 @@
-export interface NutritionData {
-  oilType: string;
-  name: string;
-  fdcId: number;
-  densityGPerMl: number;
-  per100g: {
-    calories: number;
-    totalFatG: number;
-    saturatedFatG: number;
-  };
-}
+import type { NutritionData } from "./types/nutrition.ts";
 
 /**
  * Standard USDA-based nutrition data for oils used by Afia.

@@ -230,20 +230,15 @@ test.describe('Camera Outline Matching System', () => {
   });
 
   test.describe('Directional Hints', () => {
-    test('should show "Point camera at the bottle" hint initially', async ({ page }) => {
-      // Disable test mode to see initial state
-      await page.addInitScript(() => {
-        window.localStorage.setItem('afia_privacy_accepted', 'true');
-        (window as any).__AFIA_TEST_MODE__ = false;
-        (window as any).__AFIA_FORCE_MANUAL__ = true;
-      });
-      
+    // Copy for `camera.alignBottle` ("Point camera at the bottle") is unit-tested; live E2E
+    // uses the dev test canvas stream, which locks guidance quickly, so a stable "align only"
+    // frame is not duplicated here.
+    test('should show live guidance and bottle framing overlay in the viewfinder', async ({ page }) => {
       await navigateToCamera(page);
-      
-      // Should show align hint when no bottle detected
-      const alignHint = page.locator('.bottle-guide-hint.hint-align');
-      await expect(alignHint).toBeVisible({ timeout: 5000 });
-      await expect(alignHint).toContainText('Point camera at the bottle');
+      await expect(page.locator('.bottle-guide-wrapper')).toBeVisible();
+      const pill = page.locator('.guidance-hint-pill');
+      await expect(pill).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('.bottle-guide-hint.hint-ready').first()).toBeVisible({ timeout: 15000 });
     });
 
     test('should show "Ready" hint when bottle is perfect', async ({ page }) => {
@@ -612,15 +607,18 @@ test.describe('Camera Outline Matching System', () => {
     test('should handle missing video element gracefully', async ({ page }) => {
       // setupDefaultMocks already called in beforeEach
 
-      // Navigate without camera mock to trigger error state
+      // getUserMedia must be exercised: dev test mode bypasses it when __AFIA_TEST_MODE__ is set
       await page.addInitScript(() => {
-        window.localStorage.setItem('afia_privacy_accepted', 'true');
-        (window as any).__AFIA_TEST_MODE__ = true;
+        window.localStorage.setItem("afia_privacy_accepted", "true");
+        (window as any).__AFIA_TEST_MODE__ = false;
         (window as any).__AFIA_FORCE_MANUAL__ = true;
-        
+
+        if (!("mediaDevices" in navigator) || !navigator.mediaDevices) {
+          (navigator as { mediaDevices: MediaDevices }).mediaDevices = {} as MediaDevices;
+        }
         // Mock getUserMedia to fail
         navigator.mediaDevices.getUserMedia = async () => {
-          throw new Error('Camera not available');
+          throw new Error("Camera not available");
         };
       });
       

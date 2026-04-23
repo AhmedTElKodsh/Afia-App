@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { StoredScan } from "./useScanHistory";
-import { getBottleBySku } from "../data/bottleRegistry";
+import type { StoredScan } from "./useScanHistory.ts";
+import { getBottleBySku } from "../data/bottleRegistry.ts";
 
 const PROXY_URL = import.meta.env.VITE_PROXY_URL || "http://localhost:8787";
 const SESSION_KEY = "afia_admin_session";

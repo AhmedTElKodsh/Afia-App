@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { PrivacyInline } from './PrivacyInline';
-import { hasAcceptedPrivacy } from './PrivacyNotice';
+import { PrivacyInline } from './PrivacyInline.tsx';
+import { hasAcceptedPrivacy } from './PrivacyNotice.tsx';
 
 // Mock localStorage
 const localStorageMock = (() => {

@@ -99,21 +99,26 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
     });
 
     test('should navigate between tabs', async ({ page }) => {
-      // Default is Overview
-      const pageHeader = page.locator('.page-title, h1');
-      await expect(pageHeader.first()).toContainText('Overview');
+      // Default is Overview - active tab + overview content should be visible
+      const overviewTab = page.getByRole('button', { name: /Overview/i });
+      await expect(overviewTab).toHaveClass(/active/, { timeout: 10000 });
+      await expect(page.locator('.metrics-grid')).toBeVisible();
       
       // Go to Bottles
-      await page.getByRole('button', { name: /Bottles/i }).click();
-      await expect(pageHeader.first()).toContainText('Bottles');
+      const bottlesTab = page.getByRole('button', { name: /Bottles/i });
+      await bottlesTab.click();
+      await expect(bottlesTab).toHaveClass(/active/);
       
       // Go to QR Codes
-      await page.getByRole('button', { name: /QR Codes/i }).click();
-      await expect(pageHeader.first()).toContainText('QR Codes');
+      const qrCodesTab = page.getByRole('button', { name: /QR Codes/i });
+      await qrCodesTab.click();
+      await expect(qrCodesTab).toHaveClass(/active/);
       
       // Go to Export
-      await page.getByRole('button', { name: /Export/i }).click();
-      await expect(pageHeader.first()).toContainText('Export');
+      const exportTab = page.getByRole('button', { name: /^Export$/i });
+      await exportTab.click();
+      await expect(exportTab).toHaveClass(/active/);
+      await expect(page.getByRole('button', { name: /Export JSON/i })).toBeVisible();
     });
 
     test('should display overview metrics', async ({ page }) => {

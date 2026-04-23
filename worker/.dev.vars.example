@@ -4,8 +4,9 @@
 # Enable mock LLM for local testing (no API keys required)
 # Set to "true" to use deterministic mock responses instead of real API calls
 ENABLE_MOCK_LLM="true"
+STAGE="local"
 
-SUPABASE_URL="https://anfgqdgcbvmyegbfvvfh.supabase.co"
+SUPABASE_URL="https://your-project.supabase.co"
 SUPABASE_SERVICE_KEY="[YOUR_SUPABASE_SERVICE_ROLE_KEY]"
 
 # Real API keys (optional when ENABLE_MOCK_LLM="true")

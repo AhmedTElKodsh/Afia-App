@@ -18,7 +18,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import type { StoredScan } from "../../hooks/useScanHistory";
+import type { StoredScan } from "../../hooks/useScanHistory.ts";
 import "./ScanDetail.css";
 
 interface ScanDetailProps {

@@ -124,8 +124,12 @@ export async function enqueueAnalyzeRequest(payload: AnalyzeRequest): Promise<st
     retryCount: 0,
     maxRetries: MAX_RETRIES,
   };
-  
-  await db.put(STORE_NAME, item);
+
+  try {
+    await db.put(STORE_NAME, item);
+  } catch (e) {
+    throw new Error("STORAGE_FULL");
+  }
   
   // Register background sync if supported
   if (isBackgroundSyncSupported()) {

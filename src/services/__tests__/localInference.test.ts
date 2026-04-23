@@ -45,20 +45,20 @@ describe('LocalInference - Error Handling', () => {
 
   describe('Invalid Input Handling', () => {
     it('should throw error for invalid image format', async () => {
-      const { runLocalInference } = await import('../localInference');
+      const { runLocalInference } = await import('../localInference.ts');
       
       await expect(runLocalInference('not-a-valid-base64')).rejects.toThrow();
     });
 
     it('should throw error for corrupted image data', async () => {
-      const { runLocalInference } = await import('../localInference');
+      const { runLocalInference } = await import('../localInference.ts');
       
       const corruptedImage = 'data:image/png;base64,CORRUPT_DATA';
       await expect(runLocalInference(corruptedImage)).rejects.toThrow();
     });
 
     it('should handle empty image gracefully', async () => {
-      const { runLocalInference } = await import('../localInference');
+      const { runLocalInference } = await import('../localInference.ts');
       
       await expect(runLocalInference('')).rejects.toThrow('Invalid image data');
     });
@@ -66,8 +66,8 @@ describe('LocalInference - Error Handling', () => {
 
   describe('Out of Memory (OOM) Handling', () => {
     it('should catch and report OOM errors during inference', async () => {
-      const { runLocalInference } = await import('../localInference');
-      const { getModel } = await import('../modelLoader');
+      const { runLocalInference } = await import('../localInference.ts');
+      const { getModel } = await import('../modelLoader.ts');
       
       const mockModel = {
         predict: vi.fn(() => {
@@ -94,8 +94,8 @@ describe('LocalInference - Error Handling', () => {
     });
 
     it('should dispose tensors even when inference fails', async () => {
-      const { runLocalInference } = await import('../localInference');
-      const { getModel } = await import('../modelLoader');
+      const { runLocalInference } = await import('../localInference.ts');
+      const { getModel } = await import('../modelLoader.ts');
       
       // Mock model to throw error
       (getModel as any).mockImplementation(() => {
@@ -126,8 +126,8 @@ describe('LocalInference - Error Handling', () => {
   describe('Model Not Loaded', () => {
     it('should throw clear error when model not loaded', async () => {
       // RED: Should fail - error message clarity not verified
-      const { runLocalInference } = await import('../localInference');
-      const { getModel } = await import('../modelLoader');
+      const { runLocalInference } = await import('../localInference.ts');
+      const { getModel } = await import('../modelLoader.ts');
       
       (getModel as any).mockImplementation(() => {
         throw new Error('Model not loaded');
@@ -139,8 +139,8 @@ describe('LocalInference - Error Handling', () => {
 
   describe('Preprocessing Failures', () => {
     it('should handle image load timeout', async () => {
-      const { runLocalInference } = await import('../localInference');
-      const { getModel } = await import('../modelLoader');
+      const { runLocalInference } = await import('../localInference.ts');
+      const { getModel } = await import('../modelLoader.ts');
       
       // Mock model as loaded
       (getModel as any).mockReturnValue({

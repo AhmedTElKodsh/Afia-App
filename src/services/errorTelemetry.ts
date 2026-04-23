@@ -15,6 +15,35 @@ interface ErrorEvent {
 
 const errorLog: ErrorEvent[] = [];
 const MAX_LOG_SIZE = 100;
+const RECENT_ERROR_COOLDOWN_MS = 5000;
+const recentErrorMap = new Map<string, number>();
+
+function isTestModeEnabled(): boolean {
+  return typeof window !== 'undefined' && (window as { __AFIA_TEST_MODE__?: boolean }).__AFIA_TEST_MODE__ === true;
+}
+
+function shouldSuppressInDevOrTest(category: ErrorEvent['category'], error: Error): boolean {
+  const message = error.message || '';
+  const isTransientNetwork = message.includes('Failed to fetch') || message.includes('NetworkError');
+  const isModelDownloadRetryNoise = message.includes('Model download failed after 3 retries');
+  const isInvalidMockImage = message.includes('invalid or corrupted image data');
+
+  if (category === 'network' && isTransientNetwork) return true;
+  if (category === 'model_loading' && (isTransientNetwork || isModelDownloadRetryNoise)) return true;
+  if (category === 'inference' && isInvalidMockImage) return true;
+  return false;
+}
+
+function shouldRateLimitEvent(category: ErrorEvent['category'], error: Error): boolean {
+  const key = `${category}:${error.name}:${error.message}`;
+  const now = Date.now();
+  const lastSeen = recentErrorMap.get(key) ?? 0;
+  if (now - lastSeen < RECENT_ERROR_COOLDOWN_MS) {
+    return true;
+  }
+  recentErrorMap.set(key, now);
+  return false;
+}
 
 /**
  * Log an error event for telemetry
@@ -24,6 +53,12 @@ export function logError(
   error: Error,
   context?: Record<string, any>
 ): void {
+  if (shouldRateLimitEvent(category, error)) {
+    return;
+  }
+
+  const suppressNoise = (import.meta.env.DEV || isTestModeEnabled()) && shouldSuppressInDevOrTest(category, error);
+
   const event: ErrorEvent = {
     timestamp: Date.now(),
     category,
@@ -39,11 +74,16 @@ export function logError(
     errorLog.shift();
   }
   
-  console.error(`[ErrorTelemetry] ${category}:`, {
+  const logFn = suppressNoise ? console.warn : console.error;
+  logFn(`[ErrorTelemetry] ${category}:`, {
     type: event.errorType,
     message: event.message,
     context: event.context,
   });
+
+  if (suppressNoise) {
+    return;
+  }
 
   // Send to worker error endpoint (fire-and-forget)
   const payload = JSON.stringify({
@@ -94,4 +134,5 @@ export function getErrorStats(): {
  */
 export function clearErrorLog(): void {
   errorLog.length = 0;
+  recentErrorMap.clear();
 }

@@ -6,6 +6,7 @@ import type { AnalysisResult } from "../state/appState.ts";
 import { fillPctToPixelY } from "../utils/coordinateMapping.ts";
 import { CupVisualization } from "./CupVisualization.tsx";
 import { hapticFeedback } from "../utils/haptics.ts";
+import { ML_PER_VOLUME_STEP } from "../../shared/volumeCalculator.ts";
 import "./FillConfirm.css";
 
 interface FillConfirmProps {
@@ -18,7 +19,7 @@ interface FillConfirmProps {
   bottleBottomPct?: number;
 }
 
-const STEP_ML = 55;
+const STEP_ML = ML_PER_VOLUME_STEP;
 
 export function FillConfirm({
   capturedImage,

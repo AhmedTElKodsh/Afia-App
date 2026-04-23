@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { bottleRegistry } from "../data/bottleRegistry";
-import { analyzeBottle } from "../api/apiClient";
-import { ImageUpload } from "./ImageUpload";
-import type { AnalysisResult } from "../state/appState";
-import type { TestResult } from "../utils/exportResults";
-import { exportToJSON, exportToCSV } from "../utils/exportResults";
+import { bottleRegistry } from "../data/bottleRegistry.ts";
+import { analyzeBottle } from "../api/apiClient.ts";
+import { ImageUpload } from "./ImageUpload.tsx";
+import type { AnalysisResult } from "../state/appState.ts";
+import type { TestResult } from "../utils/exportResults.ts";
+import { exportToJSON, exportToCSV } from "../utils/exportResults.ts";
 import "./TestHarness.css";
 
 export function TestHarness() {

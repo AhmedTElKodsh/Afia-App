@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Sun, Moon, Globe, ShieldCheck } from 'lucide-react';
-import { useTheme } from '../hooks/useTheme';
-import { AfiaLogo } from './AfiaLogo';
+import { useTheme } from '../hooks/useTheme.ts';
+import { AfiaLogo } from './AfiaLogo.tsx';
 import './AppControls.css';
 
 interface AppControlsProps {

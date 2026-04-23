@@ -15,11 +15,13 @@ export interface Env {
   MISTRAL_API_KEY?: string;
   ADMIN_PASSWORD?: string; // Admin dashboard password (server-side only)
   ADMIN_JWT_SECRET?: string; // Dedicated HMAC signing key — separate from the login password
+  ADMIN_JWT_SECRETS?: string; // Comma-separated list of secrets for rotation support
   // Monitoring
   BETTERSTACK_TOKEN?: string; // Optional monitoring token
   SLACK_WEBHOOK_URL?: string; // Optional Slack notifications
   // Vars
   ALLOWED_ORIGINS: string;
+  STAGE?: string; // Deployment stage identifier (e.g., "stage1")
   DEBUG_REASONING?: string; // Set to "true" to include reasoning field in LLM output
   ENABLE_MOCK_LLM?: string; // Set to "true" to use mock LLM responses for local testing
 }

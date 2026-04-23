@@ -1,26 +1,11 @@
 import type { Context } from "hono";
 import type { Env, Variables } from "./types.ts";
+import { signToken } from "./security.ts";
 
 const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes
 const LOCKOUT_WINDOW_MS = 900_000; // 15 minutes
 const LOCKOUT_LIMIT = 5;
 const LOCKOUT_TTL_S = 900; // 15 minutes in seconds
-
-async function signToken(payload: string, secret: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(secret);
-  const key = await crypto.subtle.importKey(
-    "raw",
-    keyData,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
-  const b64Payload = btoa(payload);
-  const b64Signature = btoa(String.fromCharCode(...new Uint8Array(signature)));
-  return `${b64Payload}.${b64Signature}`;
-}
 
 export async function handleAdminAuth(c: Context<{ Bindings: Env; Variables: Variables }>): Promise<Response> {
   // Step 1: Parse JSON body
@@ -107,9 +92,9 @@ export async function handleAdminAuth(c: Context<{ Bindings: Env; Variables: Var
 
   const expiresAt = Date.now() + SESSION_TTL_MS;
   const payload = JSON.stringify({ expiresAt, nonce: crypto.randomUUID() });
-  // Use dedicated JWT secret if set — keeps signing key separate from the login password
-  const signingKey = c.env.ADMIN_JWT_SECRET || adminPassword;
-  const token = await signToken(payload, signingKey);
+  
+  // Sign token using primary secret from security utility
+  const token = await signToken(payload, c.env);
 
   return c.json({ token, expiresAt });
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { FeedbackGrid, type FeedbackType } from './FeedbackGrid';
+import { FeedbackGrid, type FeedbackType } from './FeedbackGrid.tsx';
 
 describe('FeedbackGrid', () => {
   const mockOnSubmit = vi.fn();

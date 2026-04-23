@@ -3,7 +3,7 @@
  * Story 7.6 - LLM Fallback Routing Logic
  */
 import { describe, it, expect } from 'vitest';
-import { routeInference, type InferenceRoute, type RouterInput } from '../inferenceRouter';
+import { routeInference, type InferenceRoute, type RouterInput } from '../inferenceRouter.ts';
 
 describe('inferenceRouter', () => {
   describe('routeInference', () => {

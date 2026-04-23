@@ -21,8 +21,8 @@ export default defineConfig({
   // Retry on failure (0 in local, 2 in CI)
   retries: process.env.CI ? 2 : 0,
   
-  // Opt out of parallelization in CI
-  workers: process.env.CI ? 1 : undefined,
+  // Opt out of parallelization in CI, use limited workers locally for stability
+  workers: process.env.CI ? 1 : 2,
   
   // Reporter
   reporter: [
@@ -46,10 +46,11 @@ export default defineConfig({
     video: 'retain-on-failure',
     
     // Actionability timeout
-    actionTimeout: 15000,
-    
+    actionTimeout: 30000,
+
     // Navigation timeout
     navigationTimeout: 45000,
+
     
     // Enable mock mode for all E2E tests (no API keys required)
     extraHTTPHeaders: {

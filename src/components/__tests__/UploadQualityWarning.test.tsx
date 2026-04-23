@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { UploadQualityWarning } from '../UploadQualityWarning';
+import { UploadQualityWarning } from '../UploadQualityWarning.tsx';
 
 // Mock i18next
 vi.mock('react-i18next', () => ({

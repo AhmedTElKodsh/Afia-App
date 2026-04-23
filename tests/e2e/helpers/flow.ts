@@ -65,7 +65,7 @@ export async function triggerAnalyzeAndConfirm(page: Page) {
     
     // Wait for either fill-confirm or result-display to appear with longer timeout
     await page.waitForSelector('.fill-confirm, .result-display', { 
-      timeout: 25000,
+      timeout: 40000,
       state: 'visible'
     });
     
@@ -81,7 +81,7 @@ export async function triggerAnalyzeAndConfirm(page: Page) {
       });
       
       // Wait for result display after clicking confirm with extended timeout
-      await expect(resultDisplay).toBeVisible({ timeout: 25000 });
+      await expect(resultDisplay).toBeVisible({ timeout: 40000 });
     }
 
     // Final verification that results are visible

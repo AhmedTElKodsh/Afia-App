@@ -66,6 +66,7 @@ describe("adminCorrect", () => {
         fillPercentage: 75,
         confidence: "high" as const,
         aiProvider: "gemini" as const,
+        timestamp: new Date().toISOString(),
       };
 
       vi.spyOn(r2Client, "getMetadata").mockResolvedValue(mockMetadata);
@@ -78,7 +79,7 @@ describe("adminCorrect", () => {
       });
 
       const response = await handleAdminCorrect(mockContext(request, mockEnv));
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -117,6 +118,7 @@ describe("adminCorrect", () => {
         fillPercentage: 75,
         confidence: "medium" as const,
         aiProvider: "groq" as const,
+        timestamp: new Date().toISOString(),
       };
 
       vi.spyOn(r2Client, "getMetadata").mockResolvedValue(mockMetadata);
@@ -131,7 +133,7 @@ describe("adminCorrect", () => {
       });
 
       const response = await handleAdminCorrect(mockContext(request, mockEnv));
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -171,6 +173,7 @@ describe("adminCorrect", () => {
         fillPercentage: 50,
         confidence: "low" as const,
         aiProvider: "gemini" as const,
+        timestamp: new Date().toISOString(),
       };
 
       vi.spyOn(r2Client, "getMetadata").mockResolvedValue(mockMetadata);
@@ -212,6 +215,7 @@ describe("adminCorrect", () => {
         fillPercentage: 50,
         confidence: "medium" as const,
         aiProvider: "gemini" as const,
+        timestamp: new Date().toISOString(),
       };
 
       vi.spyOn(r2Client, "getMetadata").mockResolvedValue(mockMetadata);
@@ -286,6 +290,7 @@ describe("adminCorrect", () => {
         fillPercentage: 50,
         confidence: "medium" as const,
         aiProvider: "gemini" as const,
+        timestamp: new Date().toISOString(),
       };
 
       vi.spyOn(r2Client, "getMetadata").mockResolvedValue(mockMetadata);

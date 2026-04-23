@@ -16,7 +16,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { QRCodeSVG } from 'qrcode.react';
-import { activeBottleRegistry } from '../../shared/bottleRegistry';
+import { activeBottleRegistry } from '../../shared/bottleRegistry.ts';
 import { Camera, QrCode, Smartphone, Bug, Copy, Check, Droplets } from 'lucide-react';
 import './QrMockGenerator.css';
 

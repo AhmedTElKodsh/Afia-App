@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { BOTTLE_CONFIG, getFillColor } from "../config/bottle";
+import { BOTTLE_CONFIG, getFillColor } from "../config/bottle.ts";
 import "./BottleFillGauge.css";
 
 /**

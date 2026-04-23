@@ -1,11 +1,11 @@
 import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useScanHistory, type StoredScan } from "../hooks/useScanHistory";
-import { TimelineGroup } from "./TimelineGroup";
-import { EmptyState } from "./EmptyState";
-import { MetricCard } from "./MetricCard";
-import { InlineConfirm } from "./InlineConfirm";
-import { formatDate, formatTime } from "../utils/formatters";
+import { useScanHistory, type StoredScan } from "../hooks/useScanHistory.ts";
+import { TimelineGroup } from "./TimelineGroup.tsx";
+import { EmptyState } from "./EmptyState.tsx";
+import { MetricCard } from "./MetricCard.tsx";
+import { InlineConfirm } from "./InlineConfirm.tsx";
+import { formatDate, formatTime } from "../utils/formatters.ts";
 import {
   History,
   Droplets,

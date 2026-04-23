@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { ConfidenceBadge } from './ConfidenceBadge';
-import { CONFIDENCE_CONFIG } from '../config/confidence';
+import { ConfidenceBadge } from './ConfidenceBadge.tsx';
+import { CONFIDENCE_CONFIG } from '../config/confidence.ts';
 
 describe('ConfidenceBadge', () => {
   describe('rendering', () => {

@@ -21,13 +21,13 @@ function makePixels(fn: (x: number, y: number) => [number, number, number]): Uin
 }
 
 describe('analyzeComposition', () => {
-  let analyzeComposition!: (typeof import('../utils/cameraQualityAssessment'))['analyzeComposition'];
+  let analyzeComposition!: (typeof import('../utils/cameraQualityAssessment.ts'))['analyzeComposition'];
   // The `!` definite-assignment assertion is required — TypeScript strict mode cannot
   // infer that `beforeEach` always runs before each `it` block.
 
   beforeEach(async () => {
     vi.resetModules(); // resets module-level processingCanvas singleton
-    ({ analyzeComposition } = await import('../utils/cameraQualityAssessment'));
+    ({ analyzeComposition } = await import('../utils/cameraQualityAssessment.ts'));
   });
 
   afterEach(() => {

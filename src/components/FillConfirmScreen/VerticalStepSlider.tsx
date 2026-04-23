@@ -1,9 +1,10 @@
 import * as Slider from "@radix-ui/react-slider";
+import { ML_PER_VOLUME_STEP } from "../../../shared/volumeCalculator.ts";
 
 interface VerticalStepSliderProps {
   waterMl: number;
-  min?: number; // default: 55
-  step?: number; // default: 55
+  min?: number; // default: 55ml
+  step?: number; // default: 55ml
   max: number; // bottleCapacityMl
   height?: number; // CSS height in px for the track (default: 280)
   onChange: (waterMl: number) => void;
@@ -22,8 +23,8 @@ interface VerticalStepSliderProps {
  */
 export function VerticalStepSlider({
   waterMl,
-  min = 55,
-  step = 55,
+  min = ML_PER_VOLUME_STEP,
+  step = ML_PER_VOLUME_STEP,
   max,
   height = 280,
   onChange,

@@ -6,10 +6,10 @@ import {
   CheckCircle2, 
   Database,
 } from "lucide-react";
-import { bottleRegistry } from "../data/bottleRegistry";
+import { bottleRegistry } from "../data/bottleRegistry.ts";
 import { calculateVolumes } from "../../shared/volumeCalculator.ts";
-import { hapticFeedback } from "../utils/haptics";
-import { adminUploadImage } from "../api/apiClient";
+import { hapticFeedback } from "../utils/haptics.ts";
+import { adminUploadImage } from "../api/apiClient.ts";
 import "./AdminUpload.css";
 
 const SESSION_KEY = "afia_admin_session";

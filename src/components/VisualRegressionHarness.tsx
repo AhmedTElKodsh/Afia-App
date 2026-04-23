@@ -1,6 +1,6 @@
-import { BottleFillGauge } from "./BottleFillGauge";
-import { ConfidenceBadge } from "./ConfidenceBadge";
-import { FeedbackGrid } from "./FeedbackGrid";
+import { BottleFillGauge } from "./BottleFillGauge.tsx";
+import { ConfidenceBadge } from "./ConfidenceBadge.tsx";
+import { FeedbackGrid } from "./FeedbackGrid.tsx";
 import "./VisualRegressionHarness.css";
 
 export function VisualRegressionHarness() {

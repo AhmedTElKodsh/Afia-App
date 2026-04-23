@@ -24,13 +24,13 @@ describe('ModelLoader - Error Handling', () => {
     // Restore original fetch
     global.fetch = originalFetch;
     // CRITICAL: Dispose model instance to prevent caching between tests
-    const { disposeModel } = await import('../modelLoader');
+    const { disposeModel } = await import('../modelLoader.ts');
     disposeModel();
   });
 
   describe('Model Download Failures', () => {
     it('should retry download on network failure', async () => {
-      const { loadModel } = await import('../modelLoader');
+      const { loadModel } = await import('../modelLoader.ts');
       
       // Mock IndexedDB to return null (no cache)
       const mockDB = {
@@ -67,7 +67,7 @@ describe('ModelLoader - Error Handling', () => {
     });
 
     it('should throw error after max retries exceeded', async () => {
-      const { loadModel } = await import('../modelLoader');
+      const { loadModel } = await import('../modelLoader.ts');
       
       // Mock IndexedDB to return null (no cache)
       const mockDB = {
@@ -82,7 +82,7 @@ describe('ModelLoader - Error Handling', () => {
     });
 
     it('should handle HTTP error responses gracefully', async () => {
-      const { loadModel } = await import('../modelLoader');
+      const { loadModel } = await import('../modelLoader.ts');
       
       // Mock IndexedDB to return null (no cache)
       const mockDB = {
@@ -102,7 +102,7 @@ describe('ModelLoader - Error Handling', () => {
 
   describe('IndexedDB Quota Exceeded', () => {
     it('should clear old model versions when quota exceeded', async () => {
-      const { loadModel } = await import('../modelLoader');
+      const { loadModel } = await import('../modelLoader.ts');
       
       let putCallCount = 0;
       const mockDB = {
@@ -150,7 +150,7 @@ describe('ModelLoader - Error Handling', () => {
     }, 10000);
 
     it('should continue without caching if quota cannot be freed', async () => {
-      const { loadModel } = await import('../modelLoader');
+      const { loadModel } = await import('../modelLoader.ts');
       
       const mockDB = {
         get: vi.fn(() => Promise.resolve(null)),
@@ -185,7 +185,7 @@ describe('ModelLoader - Error Handling', () => {
 
   describe('Model Parse Errors', () => {
     it('should clear cache and retry on corrupt model data', async () => {
-      const { loadModel } = await import('../modelLoader');
+      const { loadModel } = await import('../modelLoader.ts');
       
       let getCallCount = 0;
       const mockDB = {
@@ -243,7 +243,7 @@ describe('ModelLoader - Error Handling', () => {
 
   describe('Backend Optimization Failures', () => {
     it('should fall back to CPU if WebGL fails', async () => {
-      const { loadModel } = await import('../modelLoader');
+      const { loadModel } = await import('../modelLoader.ts');
       
       // Mock IndexedDB to return null (no cache)
       const mockDB = {

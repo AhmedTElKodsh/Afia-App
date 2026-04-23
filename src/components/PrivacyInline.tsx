@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Camera, Database, Star, Lock, Search, Check } from "lucide-react";
 import "./PrivacyInline.css";
-import { PRIVACY_CONFIG, PRIVACY_DETAILS } from "../config/privacy";
+import { PRIVACY_CONFIG, PRIVACY_DETAILS } from "../config/privacy.ts";
 
 /**
  * PrivacyInline Component

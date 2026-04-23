@@ -1,5 +1,5 @@
 import { WifiOff, History, RotateCcw } from "lucide-react";
-import { OFFLINE_CONFIG } from "../config/offline";
+import { OFFLINE_CONFIG } from "../config/offline.ts";
 import "./OfflineBanner.css";
 
 /**

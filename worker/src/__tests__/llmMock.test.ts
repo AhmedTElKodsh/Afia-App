@@ -8,55 +8,56 @@ import {
   mockGeminiResponse, 
   mockGroqResponse,
   mockOpenRouterResponse,
-  mockMistralResponse,
-  type MockLLMResponse 
+  mockMistralResponse
 } from '../mocks/llmMock';
 
 describe('LLM Mock Service', () => {
+  const highQualityBase64 = 'a'.repeat(600);
+
   describe('mockGeminiResponse', () => {
     it('returns deterministic response for afia-corn-oil-1.8l', () => {
-      const result = mockGeminiResponse('fake-base64', 'afia-corn-oil-1.8l');
+      const result = mockGeminiResponse(highQualityBase64, 'afia-corn-oil-1.8l');
       
       expect(result.fillPercentage).toBe(75);
       expect(result.confidence).toBe('high');
       expect(result.reasoning).toContain('Mock: Detected Afia corn oil bottle at 75% fill level');
-      expect(result.red_line_y_normalized).toBe(0.25);
+      expect(result.red_line_y_normalized).toBe(250);
     });
 
     it('returns deterministic response for afia-sunflower-oil-1.8l', () => {
-      const result = mockGeminiResponse('fake-base64', 'afia-sunflower-oil-1.8l');
+      const result = mockGeminiResponse(highQualityBase64, 'afia-sunflower-oil-1.8l');
       
       expect(result.fillPercentage).toBe(50);
       expect(result.confidence).toBe('high');
       expect(result.reasoning).toContain('Mock: Detected Afia sunflower oil bottle at 50% fill level');
-      expect(result.red_line_y_normalized).toBe(0.50);
+      expect(result.red_line_y_normalized).toBe(500);
     });
 
     it('returns deterministic response for afia-vegetable-oil-1.8l', () => {
-      const result = mockGeminiResponse('fake-base64', 'afia-vegetable-oil-1.8l');
+      const result = mockGeminiResponse(highQualityBase64, 'afia-vegetable-oil-1.8l');
       
       expect(result.fillPercentage).toBe(90);
       expect(result.confidence).toBe('high');
       expect(result.reasoning).toContain('Mock: Detected Afia vegetable oil bottle at 90% fill level');
-      expect(result.red_line_y_normalized).toBe(0.10);
+      expect(result.red_line_y_normalized).toBe(100);
     });
 
     it('returns deterministic response for afia-corn-oil-750ml', () => {
-      const result = mockGeminiResponse('fake-base64', 'afia-corn-oil-750ml');
+      const result = mockGeminiResponse(highQualityBase64, 'afia-corn-oil-750ml');
       
       expect(result.fillPercentage).toBe(30);
       expect(result.confidence).toBe('medium');
       expect(result.reasoning).toContain('Mock: Detected Afia corn oil 750ml bottle at 30% fill level');
-      expect(result.red_line_y_normalized).toBe(0.70);
+      expect(result.red_line_y_normalized).toBe(700);
     });
 
     it('returns default response for unknown SKU', () => {
-      const result = mockGeminiResponse('fake-base64', 'unknown-sku');
+      const result = mockGeminiResponse(highQualityBase64, 'unknown-sku');
       
       expect(result.fillPercentage).toBe(60);
       expect(result.confidence).toBe('medium');
       expect(result.reasoning).toContain('Mock: Default response for testing');
-      expect(result.red_line_y_normalized).toBe(0.40);
+      expect(result.red_line_y_normalized).toBe(400);
     });
 
     it('returns same response for same SKU (deterministic)', () => {
@@ -67,7 +68,7 @@ describe('LLM Mock Service', () => {
     });
 
     it('returns valid MockLLMResponse structure', () => {
-      const result = mockGeminiResponse('fake-base64', 'afia-corn-oil-1.8l');
+      const result = mockGeminiResponse(highQualityBase64, 'afia-corn-oil-1.8l');
       
       expect(result).toHaveProperty('fillPercentage');
       expect(result).toHaveProperty('confidence');
@@ -81,12 +82,12 @@ describe('LLM Mock Service', () => {
 
   describe('mockGroqResponse', () => {
     it('returns fallback response with distinct values', () => {
-      const result = mockGroqResponse('fake-base64', 'any-sku');
+      const result = mockGroqResponse(highQualityBase64, 'any-sku');
       
       expect(result.fillPercentage).toBe(65);
       expect(result.confidence).toBe('medium');
       expect(result.reasoning).toContain('Mock: Groq fallback response for testing');
-      expect(result.red_line_y_normalized).toBe(0.35);
+      expect(result.red_line_y_normalized).toBe(350);
     });
 
     it('returns same response regardless of SKU', () => {
@@ -97,7 +98,7 @@ describe('LLM Mock Service', () => {
     });
 
     it('returns valid MockLLMResponse structure', () => {
-      const result = mockGroqResponse('fake-base64', 'any-sku');
+      const result = mockGroqResponse(highQualityBase64, 'any-sku');
       
       expect(result).toHaveProperty('fillPercentage');
       expect(result).toHaveProperty('confidence');
@@ -108,16 +109,16 @@ describe('LLM Mock Service', () => {
 
   describe('mockOpenRouterResponse', () => {
     it('returns fallback response with distinct values', () => {
-      const result = mockOpenRouterResponse('fake-base64', 'any-sku');
+      const result = mockOpenRouterResponse(highQualityBase64, 'any-sku');
       
       expect(result.fillPercentage).toBe(70);
       expect(result.confidence).toBe('medium');
       expect(result.reasoning).toContain('Mock: OpenRouter fallback response for testing');
-      expect(result.red_line_y_normalized).toBe(0.30);
+      expect(result.red_line_y_normalized).toBe(300);
     });
 
     it('returns valid MockLLMResponse structure', () => {
-      const result = mockOpenRouterResponse('fake-base64', 'any-sku');
+      const result = mockOpenRouterResponse(highQualityBase64, 'any-sku');
       
       expect(result).toHaveProperty('fillPercentage');
       expect(result).toHaveProperty('confidence');
@@ -128,16 +129,16 @@ describe('LLM Mock Service', () => {
 
   describe('mockMistralResponse', () => {
     it('returns fallback response with distinct values', () => {
-      const result = mockMistralResponse('fake-base64', 'any-sku');
+      const result = mockMistralResponse(highQualityBase64, 'any-sku');
       
       expect(result.fillPercentage).toBe(55);
       expect(result.confidence).toBe('low');
       expect(result.reasoning).toContain('Mock: Mistral fallback response for testing');
-      expect(result.red_line_y_normalized).toBe(0.45);
+      expect(result.red_line_y_normalized).toBe(450);
     });
 
     it('returns valid MockLLMResponse structure', () => {
-      const result = mockMistralResponse('fake-base64', 'any-sku');
+      const result = mockMistralResponse(highQualityBase64, 'any-sku');
       
       expect(result).toHaveProperty('fillPercentage');
       expect(result).toHaveProperty('confidence');
@@ -148,10 +149,10 @@ describe('LLM Mock Service', () => {
 
   describe('Provider Differentiation', () => {
     it('each provider returns different values for easy debugging', () => {
-      const gemini = mockGeminiResponse('base64', 'unknown-sku');
-      const groq = mockGroqResponse('base64', 'unknown-sku');
-      const openrouter = mockOpenRouterResponse('base64', 'unknown-sku');
-      const mistral = mockMistralResponse('base64', 'unknown-sku');
+      const gemini = mockGeminiResponse(highQualityBase64, 'unknown-sku');
+      const groq = mockGroqResponse(highQualityBase64, 'unknown-sku');
+      const openrouter = mockOpenRouterResponse(highQualityBase64, 'unknown-sku');
+      const mistral = mockMistralResponse(highQualityBase64, 'unknown-sku');
       
       // All should have different fill percentages
       const fillPercentages = [
@@ -166,10 +167,10 @@ describe('LLM Mock Service', () => {
     });
 
     it('reasoning strings identify the provider', () => {
-      const gemini = mockGeminiResponse('base64', 'unknown-sku');
-      const groq = mockGroqResponse('base64', 'unknown-sku');
-      const openrouter = mockOpenRouterResponse('base64', 'unknown-sku');
-      const mistral = mockMistralResponse('base64', 'unknown-sku');
+      const gemini = mockGeminiResponse(highQualityBase64, 'unknown-sku');
+      const groq = mockGroqResponse(highQualityBase64, 'unknown-sku');
+      const openrouter = mockOpenRouterResponse(highQualityBase64, 'unknown-sku');
+      const mistral = mockMistralResponse(highQualityBase64, 'unknown-sku');
       
       expect(gemini.reasoning).toContain('Default response');
       expect(groq.reasoning).toContain('Groq');
@@ -195,7 +196,7 @@ describe('LLM Mock Service', () => {
       });
     });
 
-    it('red_line_y_normalized is within valid range (0-1)', () => {
+    it('red_line_y_normalized is within valid range (0-1000)', () => {
       const skus = [
         'afia-corn-oil-1.8l',
         'afia-sunflower-oil-1.8l',
@@ -205,19 +206,19 @@ describe('LLM Mock Service', () => {
       ];
       
       skus.forEach(sku => {
-        const result = mockGeminiResponse('base64', sku);
+        const result = mockGeminiResponse(highQualityBase64, sku);
         expect(result.red_line_y_normalized).toBeGreaterThanOrEqual(0);
-        expect(result.red_line_y_normalized).toBeLessThanOrEqual(1);
+        expect(result.red_line_y_normalized).toBeLessThanOrEqual(1000);
       });
     });
 
     it('confidence values are valid enum values', () => {
       const validConfidences = ['high', 'medium', 'low'];
       
-      const gemini = mockGeminiResponse('base64', 'unknown-sku');
-      const groq = mockGroqResponse('base64', 'unknown-sku');
-      const openrouter = mockOpenRouterResponse('base64', 'unknown-sku');
-      const mistral = mockMistralResponse('base64', 'unknown-sku');
+      const gemini = mockGeminiResponse(highQualityBase64, 'unknown-sku');
+      const groq = mockGroqResponse(highQualityBase64, 'unknown-sku');
+      const openrouter = mockOpenRouterResponse(highQualityBase64, 'unknown-sku');
+      const mistral = mockMistralResponse(highQualityBase64, 'unknown-sku');
       
       expect(validConfidences).toContain(gemini.confidence);
       expect(validConfidences).toContain(groq.confidence);

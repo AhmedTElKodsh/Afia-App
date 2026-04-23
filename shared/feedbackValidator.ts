@@ -1,15 +1,17 @@
-export interface FeedbackInput {
-  accuracyRating: "about_right" | "too_high" | "too_low" | "way_off";
-  responseTimeMs?: number;
-  correctedFillPercentage?: number;
-}
+import { z } from "zod";
+import type { FeedbackInput, ValidationResult } from "./types/feedback.ts";
 
-export interface ValidationResult {
-  validationStatus: "accepted" | "flagged";
-  validationFlags: string[];
-  confidenceWeight: number;
-  trainingEligible: boolean;
-}
+export type { FeedbackInput, ValidationResult };
+
+/**
+ * Zod schema for feedback input validation
+ * Standardized using runtime validation for better reliability.
+ */
+export const FeedbackSchema = z.object({
+  accuracyRating: z.enum(["about_right", "too_high", "too_low", "way_off"]),
+  responseTimeMs: z.number().optional(),
+  correctedFillPercentage: z.number().min(0).max(100).optional(),
+});
 
 /**
  * Validates user feedback against LLM prediction to filter out
@@ -17,53 +19,53 @@ export interface ValidationResult {
  */
 export function validateFeedback(
   llmFillPercentage: number,
-  feedback: FeedbackInput
+  feedback: unknown
 ): ValidationResult {
   const flags: string[] = [];
 
-  // Normalise correctedFillPercentage: reject NaN, Infinity, and out-of-range values.
-  // Treat them as if no correction was provided to avoid poisoning training data.
-  const correctedFill =
-    feedback.correctedFillPercentage !== undefined &&
-    Number.isFinite(feedback.correctedFillPercentage) &&
-    feedback.correctedFillPercentage >= 0 &&
-    feedback.correctedFillPercentage <= 100
-      ? feedback.correctedFillPercentage
-      : undefined;
-  
-  const normalizedFeedback = { ...feedback, correctedFillPercentage: correctedFill };
+  // Runtime validation using Zod
+  const parseResult = FeedbackSchema.safeParse(feedback);
+  if (!parseResult.success) {
+    return {
+      validationStatus: "flagged",
+      validationFlags: ["invalid_schema"],
+      confidenceWeight: 0.1,
+      trainingEligible: false,
+    };
+  }
 
-  if (normalizedFeedback.responseTimeMs !== undefined && normalizedFeedback.responseTimeMs < 3000) {
+  const data = parseResult.data;
+
+  if (data.responseTimeMs !== undefined && data.responseTimeMs < 3000) {
     flags.push("too_fast");
   }
 
   if (
-    normalizedFeedback.correctedFillPercentage !== undefined &&
-    (normalizedFeedback.correctedFillPercentage === 0 ||
-      normalizedFeedback.correctedFillPercentage === 100)
+    data.correctedFillPercentage !== undefined &&
+    (data.correctedFillPercentage === 0 || data.correctedFillPercentage === 100)
   ) {
     flags.push("boundary_value");
   }
 
   if (
-    normalizedFeedback.accuracyRating === "too_low" &&
-    normalizedFeedback.correctedFillPercentage !== undefined &&
-    normalizedFeedback.correctedFillPercentage <= llmFillPercentage
+    data.accuracyRating === "too_low" &&
+    data.correctedFillPercentage !== undefined &&
+    data.correctedFillPercentage <= llmFillPercentage
   ) {
     flags.push("contradictory");
   }
 
   if (
-    normalizedFeedback.accuracyRating === "too_high" &&
-    normalizedFeedback.correctedFillPercentage !== undefined &&
-    normalizedFeedback.correctedFillPercentage >= llmFillPercentage
+    data.accuracyRating === "too_high" &&
+    data.correctedFillPercentage !== undefined &&
+    data.correctedFillPercentage >= llmFillPercentage
   ) {
     flags.push("contradictory");
   }
 
   if (
-    normalizedFeedback.correctedFillPercentage !== undefined &&
-    Math.abs(normalizedFeedback.correctedFillPercentage - llmFillPercentage) > 30
+    data.correctedFillPercentage !== undefined &&
+    Math.abs(data.correctedFillPercentage - llmFillPercentage) > 30
   ) {
     flags.push("extreme_delta");
   }

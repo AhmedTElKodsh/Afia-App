@@ -1,5 +1,5 @@
 import { Check, AlertTriangle, X } from "lucide-react";
-import { CONFIDENCE_CONFIG, type ConfidenceLevel } from "../config/confidence";
+import { CONFIDENCE_CONFIG, type ConfidenceLevel } from "../config/confidence.ts";
 import "./ConfidenceBadge.css";
 
 /**

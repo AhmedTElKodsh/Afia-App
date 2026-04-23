@@ -5,14 +5,14 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173"
-SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co"
+SUPABASE_URL = "https://your-project.supabase.co"
 DEBUG_REASONING = "false"
 STAGE = "stage1"
 
 # Stage 1 environment (LLM API only - production)
 [env.stage1]
 name = "afia-worker"
-vars = { STAGE = "stage1", ENABLE_LOCAL_MODEL = "false", ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173", SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co", DEBUG_REASONING = "false" }
+vars = { STAGE = "stage1", ENABLE_LOCAL_MODEL = "false", ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173", SUPABASE_URL = "https://your-project.supabase.co", DEBUG_REASONING = "false" }
 
 [[env.stage1.kv_namespaces]]
 binding = "RATE_LIMIT_KV"
@@ -27,7 +27,7 @@ preview_id = "d6d688f5cfd04d73a42c7c979c1f1791"
 # Stage 2 environment (Local Model + LLM fallback - testing)
 [env.stage2]
 name = "afia-worker-stage2"
-vars = { STAGE = "stage2", ENABLE_LOCAL_MODEL = "true", LLM_FALLBACK_ENABLED = "true", ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173", SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co", DEBUG_REASONING = "false" }
+vars = { STAGE = "stage2", ENABLE_LOCAL_MODEL = "true", LLM_FALLBACK_ENABLED = "true", ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173", SUPABASE_URL = "https://your-project.supabase.co", DEBUG_REASONING = "false" }
 
 [[env.stage2.kv_namespaces]]
 binding = "RATE_LIMIT_KV"
@@ -39,29 +39,23 @@ preview_id = "d6d688f5cfd04d73a42c7c979c1f1791"
 # bucket_name = "afia-images"
 # preview_bucket_name = "afia-images-preview"
 
+# Backblaze B2 (Object Storage)
+B2_ACCOUNT_ID = ""
+B2_BUCKET_ID = ""
+B2_DOWNLOAD_URL = ""
+
+# Upstash Redis (Edge State & Rate Limiting)
+UPSTASH_REDIS_REST_URL = ""
+
 # Stage 3 environment (Local Model only - future production)
 [env.stage3]
 name = "afia-worker-stage3"
-vars = { STAGE = "stage3", ENABLE_LOCAL_MODEL = "true", LLM_FALLBACK_ENABLED = "false", ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173", SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co", DEBUG_REASONING = "false" }
+vars = { STAGE = "stage3", ENABLE_LOCAL_MODEL = "true", LLM_FALLBACK_ENABLED = "false", ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173", SUPABASE_URL = "https://your-project.supabase.co", DEBUG_REASONING = "false" }
 
 [[env.stage3.kv_namespaces]]
 binding = "RATE_LIMIT_KV"
 id = "9dc0bcc958de473199e5ded5701b932a"
 preview_id = "d6d688f5cfd04d73a42c7c979c1f1791"
-
-# [[env.stage3.r2_buckets]]
-# binding = "AFIA_IMAGES"
-# bucket_name = "afia-images"
-# preview_bucket_name = "afia-images-preview"
-
-# Backblaze B2 (Object Storage) — set actual values in .dev.vars for local dev,
-# or via wrangler secret put / Cloudflare dashboard for production.
-B2_ACCOUNT_ID = ""
-B2_BUCKET_ID = ""
-B2_DOWNLOAD_URL = ""
-
-# Upstash Redis (Edge State & Rate Limiting) — see above note.
-UPSTASH_REDIS_REST_URL = ""
 
 [[kv_namespaces]]
 binding = "RATE_LIMIT_KV"

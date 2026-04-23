@@ -5,7 +5,7 @@
  */
 import * as tf from '@tensorflow/tfjs';
 import { openDB, type IDBPDatabase } from 'idb';
-import { logError } from './errorTelemetry';
+import { logError } from './errorTelemetry.ts';
 
 const MODEL_CONFIG = {
   version: '1.0.0',
@@ -142,8 +142,12 @@ async function downloadModel(url: string, retries = 3): Promise<{
 
   const baseUrl = url.substring(0, url.lastIndexOf('/'));
   const weightBuffers: ArrayBuffer[] = [];
+  const weightSpecs: tf.io.WeightsManifestEntry[] = [];
 
   for (const group of weightsManifest) {
+    if (group.weights) {
+      weightSpecs.push(...group.weights);
+    }
     for (const path of group.paths) {
       const weightUrl = `${baseUrl}/${path}`;
       const weightResponse = await fetch(weightUrl);
@@ -166,7 +170,7 @@ async function downloadModel(url: string, retries = 3): Promise<{
 
       return {
         modelTopology: modelJson.modelTopology,
-        weightSpecs: modelJson.weightsManifest,
+        weightSpecs,
         weightData,
       };
     } catch (error) {

@@ -14,6 +14,14 @@ import type { LLMResponse, Variables } from "./types.ts";
 // 4MB binary limit — base64 is ~4/3 larger, so max string length is ~5.5M chars
 const MAX_IMAGE_SIZE_BYTES = Math.ceil(4 * 1024 * 1024 * (4 / 3));
 const CACHE_TTL_SECONDS = 1800; // 30 minutes
+const MIN_IMAGE_BYTES = 32;
+
+function estimateBase64Bytes(rawBase64: string): number {
+  // Strip padding for size estimation
+  const trimmed = rawBase64.replace(/=+$/, "");
+  // Each 4 base64 chars represent 3 bytes
+  return Math.floor((trimmed.length * 3) / 4);
+}
 
 /** SHA-256 hex of imageBase64+sku — used as KV cache key */
 async function buildCacheKey(imageBase64: string, sku: string): Promise<string> {
@@ -62,8 +70,8 @@ export async function handleAnalyze(c: Context<{ Bindings: Env; Variables: Varia
     const rawBase64 = body.imageBase64
       .replace(/^data:image\/[a-z]+;base64,/, "")
       .replace(/[\r\n]/g, "");
-    // Threshold of 50 chars catches empty/garbage inputs; smallest valid PNG header is ~52 base64 chars
-    if (rawBase64.length < 50 || !/^[A-Za-z0-9+/]+=*$/.test(rawBase64)) {
+    // Reject empty/garbage inputs using byte-length estimation rather than a magic char threshold.
+    if (estimateBase64Bytes(rawBase64) < MIN_IMAGE_BYTES || !/^[A-Za-z0-9+/]+=*$/.test(rawBase64)) {
       return c.json({ error: "Invalid image data", code: "INVALID_REQUEST" }, 400);
     }
 

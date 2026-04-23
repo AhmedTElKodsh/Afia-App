@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { hapticFeedback } from "../../utils/haptics";
+import { hapticFeedback } from "../../utils/haptics.ts";
 import "./CorrectionSlider.css";
 
 /**

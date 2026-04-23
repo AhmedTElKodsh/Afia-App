@@ -6,7 +6,7 @@
  * from the admin dashboard without requiring direct database access.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
@@ -30,14 +30,14 @@ export function ModelVersionManager({ t }: ModelVersionManagerProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const apiUrl = import.meta.env.VITE_API_URL || 'https://api.afia.app';
-  const locale = i18n.language === 'ar' ? 'ar-SA' : 'en-US';
+  const apiUrl = useMemo(() => import.meta.env.VITE_API_URL || 'https://api.afia.app', []);
+  const locale = useMemo(() => (i18n.language === 'ar' ? 'ar-SA' : 'en-US'), [i18n.language]);
 
-  const getAdminToken = (): string => {
+  const getAdminToken = useCallback((): string => {
     return sessionStorage.getItem('afia_admin_session') || '';
-  };
+  }, []);
 
-  const fetchVersions = async () => {
+  const fetchVersions = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`${apiUrl}/admin/model/versions`, {
@@ -59,13 +59,13 @@ export function ModelVersionManager({ t }: ModelVersionManagerProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiUrl, getAdminToken, t]);
 
   useEffect(() => {
     fetchVersions();
-  }, []);
+  }, [fetchVersions]);
 
-  const handleActivate = async (version: string) => {
+  const handleActivate = useCallback(async (version: string) => {
     try {
       const response = await fetch(`${apiUrl}/admin/model/activate`, {
         method: 'POST',
@@ -86,9 +86,9 @@ export function ModelVersionManager({ t }: ModelVersionManagerProps) {
       console.error('[ModelVersionManager] Failed to activate version:', err);
       alert(t('admin.modelVersion.activateError', 'Failed to activate version'));
     }
-  };
+  }, [apiUrl, fetchVersions, getAdminToken, t]);
 
-  const handleDeactivate = async (version: string) => {
+  const handleDeactivate = useCallback(async (version: string) => {
     const confirmed = confirm(
       t(
         'admin.modelVersion.deactivateConfirm',
@@ -120,7 +120,7 @@ export function ModelVersionManager({ t }: ModelVersionManagerProps) {
       console.error('[ModelVersionManager] Failed to deactivate version:', err);
       alert(t('admin.modelVersion.deactivateError', 'Failed to deactivate version'));
     }
-  };
+  }, [apiUrl, fetchVersions, getAdminToken, t]);
 
   if (loading) {
     return (

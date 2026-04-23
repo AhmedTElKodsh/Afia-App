@@ -9,10 +9,10 @@ import {
   Info,
   Maximize2
 } from "lucide-react";
-import type { StoredScan } from "../hooks/useScanHistory";
-import { bottleRegistry } from "../data/bottleRegistry";
+import type { StoredScan } from "../hooks/useScanHistory.ts";
+import { bottleRegistry } from "../data/bottleRegistry.ts";
 import { calculateVolumes } from "../../shared/volumeCalculator.ts";
-import { hapticFeedback } from "../utils/haptics";
+import { hapticFeedback } from "../utils/haptics.ts";
 import "./ScanReview.css";
 
 interface ScanReviewProps {

@@ -8,8 +8,8 @@ import {
   checkUploadQuality,
   QUALITY_THRESHOLDS,
   type ImageQualitySignals,
-} from '../uploadFilter';
-import type { AnalyzeRequest } from '../syncQueue';
+} from '../uploadFilter.ts';
+import type { AnalyzeRequest } from '../syncQueue.ts';
 
 // Mock fetch
 global.fetch = vi.fn();

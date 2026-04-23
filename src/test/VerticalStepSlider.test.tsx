@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { VerticalStepSlider } from "../components/FillConfirmScreen/VerticalStepSlider";
+import { VerticalStepSlider } from "../components/FillConfirmScreen/VerticalStepSlider.tsx";
 
 describe("VerticalStepSlider", () => {
   it("AC1 - Renders vertically with correct orientation", () => {

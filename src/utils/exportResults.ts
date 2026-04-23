@@ -1,4 +1,4 @@
-import type { AnalysisResult } from "../state/appState";
+import type { AnalysisResult } from "../state/appState.ts";
 
 export interface TestResult {
   id: string;

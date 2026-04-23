@@ -6,7 +6,8 @@
  */
 
 import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
-import { assessImageQuality, detectBlur, getAngleGuidance, type QualityAssessment } from '../utils/cameraQualityAssessment';
+import { assessImageQuality, detectBlur, getAngleGuidance, type QualityAssessment } from '../utils/cameraQualityAssessment.ts';
+import { CAMERA_CONFIG } from '../config/camera.ts';
 
 /**
  * Camera guidance configuration
@@ -30,12 +31,12 @@ export interface CameraGuidanceConfig {
  * Default configuration
  */
 const DEFAULT_CONFIG: CameraGuidanceConfig = {
-  minBlurScore: 50,
+  minBlurScore: CAMERA_CONFIG.minQuality.blurScore,
   requireGoodLighting: false,
-  analysisInterval: 200, // Throttled to 5fps fallback
+  analysisInterval: CAMERA_CONFIG.guidanceAnalysisInterval,
   enableHaptics: true,
   enableAudio: false,
-  goodQualityThreshold: 75,
+  goodQualityThreshold: CAMERA_CONFIG.minQuality.overallScore,
 };
 
 /**
@@ -114,11 +115,6 @@ function provideFeedback(
   if (stateChanged) triggerHaptic(feedbackType);
 }
 
-/**
- * Constants for auto-capture
- */
-const HOLD_DURATION_MS = 1000;
-const GRACE_PERIOD_MS = 150;
 const BRAND_STABILITY_THRESHOLD = 3; // frames
 
 /**
@@ -143,9 +139,6 @@ export function useCameraGuidance(
   const lastBlurScoreRef = useRef<number>(50);
   const stableBrandCountRef = useRef<number>(0);
   const currentBetaRef = useRef<number | null>(null);
-  
-  // M8: Test mode detection (global flag set by E2E tests)
-  const isTestMode = typeof window !== 'undefined' && (window as any).__AFIA_TEST_MODE__ === true;
   
   const [state, setState] = useState<CameraGuidanceState>({
     assessment: null,
@@ -187,8 +180,6 @@ export function useCameraGuidance(
   }, []);
 
   const analyzeFrame = useCallback((now?: number, _metadata?: any) => {
-    // M8: Test mode detection (global flag set by E2E tests)
-    // Check dynamically to handle late-set flags or re-renders
     const isTestMode = typeof window !== 'undefined' && (window as any).__AFIA_TEST_MODE__ === true;
     
     try {
@@ -196,12 +187,10 @@ export function useCameraGuidance(
       if (!video || video.readyState < 2) return;
 
       const currentTime = now ?? performance.now();
-      // M6: Explicit throttle in the callback to prevent redundant runs on high-refresh screens
       if (currentTime - lastAnalysisRef.current < mergedConfig.analysisInterval) return;
       lastAnalysisRef.current = currentTime;
 
       frameCountRef.current++;
-      // T1.8: Blur runs every other frame; composition runs every frame
       const shouldComputeBlur = frameCountRef.current % 2 === 0;
       if (shouldComputeBlur) {
         lastBlurScoreRef.current = detectBlur(video);
@@ -215,22 +204,17 @@ export function useCameraGuidance(
       
       const angleStatus = getAngleGuidance(currentBetaRef.current);
       
-      // Stable brand detection
       if (assessment.composition.isBrandMatch) {
         stableBrandCountRef.current++;
       } else {
         stableBrandCountRef.current = 0;
       }
       
-      // M8.1: Relax brand stability for tests to avoid timeouts
       const threshold = isTestMode ? 1 : BRAND_STABILITY_THRESHOLD;
       const brandDetected = stableBrandCountRef.current >= threshold;
 
-      // Update state
       setState(prev => {
-        // Perfect Match criteria
         const isPerfect = (assessment.isGoodQuality && brandDetected && angleStatus === 'good') || isTestMode;
-        // Locking criteria (detected but maybe not perfect yet)
         const isLocking = assessment.composition.bottleDetected || isTestMode;
         
         let holdProgress = 0;
@@ -243,16 +227,10 @@ export function useCameraGuidance(
           if (!holdStartRef.current) holdStartRef.current = Date.now();
           const elapsed = Date.now() - holdStartRef.current;
           
-          // Progress of the "locking" phase
-          // M8.2: Shorter hold duration for tests (200ms vs 1000ms)
-          const duration = isTestMode ? 200 : HOLD_DURATION_MS;
-          holdProgress = Math.min(1, elapsed / duration);
-          isHolding = holdProgress < 1;
+          const duration = isTestMode ? 0 : CAMERA_CONFIG.autoCapture.holdDurationMs;
+          holdProgress = isTestMode ? 1 : Math.min(1, elapsed / duration);
+          isHolding = isTestMode ? false : holdProgress < 1;
           
-          // Fire logic: 
-          // M7: isReady now requires isPerfect to be true to fire automatically.
-          // This ensures we capture at the moment of highest quality/alignment.
-          // M8.4: Fire immediately in test mode
           if (isPerfect && (holdProgress >= 1 || isTestMode)) {
             shouldFire = true;
           }
@@ -260,7 +238,7 @@ export function useCameraGuidance(
           if (!lastFailRef.current) lastFailRef.current = Date.now();
           const failDuration = Date.now() - lastFailRef.current;
           
-          if (failDuration <= GRACE_PERIOD_MS && holdStartRef.current) {
+          if (failDuration <= CAMERA_CONFIG.autoCapture.gracePeriodMs && holdStartRef.current) {
             holdProgress = prev.holdProgress;
             isHolding = prev.isHolding;
             currentGoodFramesCount = prev.goodFramesCount;
@@ -280,11 +258,9 @@ export function useCameraGuidance(
           else qualityTrend = 'stable';
         }
         
-        // isReady latches once shouldFire triggers.
         const isReady = prev.isReady || shouldFire;
         
         if (isReady && !prev.isReady && mergedConfig.enableHaptics && navigator.vibrate) {
-          // AC9: Haptic lock confirmation pattern
           navigator.vibrate([30, 40, 80]);
         }
         

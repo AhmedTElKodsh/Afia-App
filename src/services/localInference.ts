@@ -5,8 +5,8 @@
  * Story 7.4 - Task 8: Added error telemetry
  */
 import * as tf from '@tensorflow/tfjs';
-import { getModel, getLoadedModelVersion, beginInference, endInference } from './modelLoader';
-import { logError } from './errorTelemetry';
+import { getModel, getLoadedModelVersion, beginInference, endInference } from './modelLoader.ts';
+import { logError } from './errorTelemetry.ts';
 
 const INFERENCE_CONFIG = {
   imageSize: 224,
@@ -177,7 +177,8 @@ function assessImageQualityFromElement(img: HTMLImageElement): ImageQuality {
   canvas.width = SIZE;
   canvas.height = SIZE;
   const ctx = canvas.getContext('2d');
-  if (!ctx) return { blurScore: 0.5, brightnessScore: 0.5 };
+  // No 2D context (e.g. low memory): treat as failed quality so confidence is not inflated
+  if (!ctx) return { blurScore: 0, brightnessScore: 0 };
 
   ctx.drawImage(img, 0, 0, SIZE, SIZE);
   const { data, width, height } = ctx.getImageData(0, 0, SIZE, SIZE);

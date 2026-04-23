@@ -6,7 +6,7 @@ import {
   FEEDBACK_CONFIG,
   FEEDBACK_OPTIONS,
   type FeedbackType
-} from "../config/feedback";
+} from "../config/feedback.ts";
 
 /**
  * FeedbackGrid Component
@@ -71,6 +71,11 @@ export function FeedbackGrid({
   const handleSelect = (type: FeedbackType) => {
     if (isSubmitting || hasSubmitted) return;
     setSelected(type);
+
+    // Call onSubmit on selection to allow parent to respond (e.g. show correction UI)
+    if (type !== FEEDBACK_CONFIG.types.ACCURATE) {
+      onSubmit(type);
+    }
 
     // Auto-submit for "accurate" feedback (1-tap)
     if (type === FEEDBACK_CONFIG.types.ACCURATE) {

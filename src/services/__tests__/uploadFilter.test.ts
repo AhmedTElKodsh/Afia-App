@@ -10,7 +10,7 @@ import {
   calculateBrightnessScore,
   QUALITY_THRESHOLDS,
   type ImageQualitySignals,
-} from '../uploadFilter';
+} from '../uploadFilter.ts';
 
 describe('uploadFilter', () => {
   describe('checkUploadQuality', () => {

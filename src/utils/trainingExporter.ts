@@ -1,4 +1,4 @@
-import type { StoredScan } from "../hooks/useScanHistory";
+import type { StoredScan } from "../hooks/useScanHistory.ts";
 
 export interface TrainingRecord {
   image_url: string;

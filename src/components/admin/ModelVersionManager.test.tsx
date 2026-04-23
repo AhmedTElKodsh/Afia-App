@@ -7,7 +7,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { ModelVersionManager } from './ModelVersionManager';
+import { ModelVersionManager } from './ModelVersionManager.tsx';
 
 // Mock translation function
 const mockT = (key: string, fallback: string) => fallback;

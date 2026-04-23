@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { checkModelVersion } from '../modelLoader';
+import { checkModelVersion } from '../modelLoader.ts';
 
 // Mock fetch
 const mockFetch = vi.fn();

@@ -20,10 +20,10 @@ class AudioFeedback {
 
   private initContext() {
     if (!this.ctx) {
-      // @ts-expect-error - Vendor prefix support
-      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
-      if (AudioContextCtor) {
-        this.ctx = new AudioContextCtor();
+      const AudioContextClass = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
+
+      if (AudioContextClass) {
+        this.ctx = new AudioContextClass();
       }
     }
     

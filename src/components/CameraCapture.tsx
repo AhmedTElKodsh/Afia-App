@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle } from "lucide-react";
 import { useCamera } from "../hooks/useCamera.ts";
-import { OrientationGuide } from "./OrientationGuide";
+import { OrientationGuide } from "./OrientationGuide.tsx";
 import "./CameraCapture.css";
 
 interface CameraCaptureProps {

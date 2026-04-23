@@ -11,7 +11,7 @@
  */
 
 import { useState, useCallback } from "react";
-import type { ToastData, ToastType } from "../components/Toast";
+import type { ToastData, ToastType } from "../components/Toast.tsx";
 
 export function useToast() {
   const [toasts, setToasts] = useState<ToastData[]>([]);

@@ -3,10 +3,10 @@
  * Story 7.4 - Task 8
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { analyze } from '../analysisRouter';
-import { loadModel, isModelLoaded } from '../modelLoader';
-import { runLocalInference } from '../localInference';
-import { analyzeBottle } from '../../api/apiClient';
+import { analyze } from '../analysisRouter.ts';
+import { loadModel, isModelLoaded } from '../modelLoader.ts';
+import { runLocalInference } from '../localInference.ts';
+import { analyzeBottle } from '../../api/apiClient.ts';
 
 vi.mock('../modelLoader');
 vi.mock('../localInference');

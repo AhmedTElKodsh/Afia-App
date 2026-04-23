@@ -31,6 +31,10 @@ dist-ssr
 .env.local
 .env.*.local
 
+# Wrangler local dev vars (contains secrets)
+worker/.dev.vars
+worker/.dev.vars.*
+
 # Test images (user-specific test data)
 public/test-images/*
 !public/test-images/README.md

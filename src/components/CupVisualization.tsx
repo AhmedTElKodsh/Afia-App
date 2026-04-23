@@ -1,4 +1,5 @@
 import { Coffee } from "lucide-react";
+import { ML_PER_VOLUME_STEP } from "../../shared/volumeCalculator.ts";
 import "./CupVisualization.css";
 
 interface CupVisualizationProps {
@@ -11,7 +12,7 @@ interface CupVisualizationProps {
  * 55ml = 1/2 Cup
  */
 export function CupVisualization({ volumeMl }: CupVisualizationProps) {
-  const halfCupsCount = Math.floor(volumeMl / 55);
+  const halfCupsCount = Math.floor(volumeMl / ML_PER_VOLUME_STEP);
   const fullCups = Math.floor(halfCupsCount / 2);
   const hasHalfCup = halfCupsCount % 2 === 1;
 

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useScanHistory } from "../hooks/useScanHistory";
+import { useScanHistory } from "../hooks/useScanHistory.ts";
 import "./ConsumptionTrends.css";
 
 type TimeRange = 7 | 30 | 90;

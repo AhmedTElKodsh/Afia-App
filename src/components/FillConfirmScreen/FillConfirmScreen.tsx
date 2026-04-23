@@ -1,10 +1,11 @@
 // src/components/FillConfirmScreen/FillConfirmScreen.tsx
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { AnnotatedImagePanel } from "./AnnotatedImagePanel.tsx";
 import { VerticalStepSlider } from "./VerticalStepSlider.tsx";
 import { CupVisualization } from "./CupVisualization.tsx";
 import { fillMlToPixelY } from "../../utils/fillMlToPixelY.ts";
+import { ML_PER_VOLUME_STEP } from "../../../shared/volumeCalculator.ts";
 import "./FillConfirmScreen.css";
 
 interface FillConfirmScreenProps {
@@ -34,7 +35,7 @@ export function FillConfirmScreen({
   const { t } = useTranslation();
 
   const [waterMl, setWaterMl] = useState<number>(() =>
-    snapToStep(aiEstimatePercent, bottleCapacityMl, 55)
+    snapToStep(aiEstimatePercent, bottleCapacityMl, ML_PER_VOLUME_STEP)
   );
   const [announcement, setAnnouncement] = useState("");
 
@@ -42,6 +43,24 @@ export function FillConfirmScreen({
   const imgRef = useRef<HTMLImageElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [linePx, setLinePx] = useState(0);
+
+  const recomputeLinePx = useCallback(
+    (nextWaterMl: number) => {
+      const imgEl = imgRef.current;
+      if (!imageLoaded || !imgEl) return;
+      setLinePx(
+        fillMlToPixelY(
+          nextWaterMl,
+          bottleCapacityMl,
+          imgEl,
+          bottleTopPct,
+          bottleBottomPct
+        )
+      );
+    },
+    [bottleBottomPct, bottleCapacityMl, bottleTopPct, imageLoaded]
+  );
 
   // Track container size with ResizeObserver (Safari-safe — do NOT use window.resize)
   useEffect(() => {
@@ -50,28 +69,33 @@ export function FillConfirmScreen({
     const ro = new ResizeObserver(entries => {
       const { width, height } = entries[0].contentRect;
       setContainerSize({ width, height });
+      // ResizeObserver fires outside render; safe place to re-measure DOM and update derived state.
+      recomputeLinePx(waterMl);
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [recomputeLinePx, waterMl]);
 
   const { width: containerW, height: containerH } = containerSize;
 
-  // linePx is DERIVED — never a useState. useMemo recalculates on waterMl OR container resize.
-  const linePx = useMemo(() => {
-    if (!imageLoaded || !imgRef.current || !containerW || !containerH) return 0;
-    return fillMlToPixelY(
-      waterMl,
-      bottleCapacityMl,
-      imgRef.current,
-      bottleTopPct,
-      bottleBottomPct
-    );
-  }, [waterMl, bottleCapacityMl, bottleTopPct, bottleBottomPct, containerW, containerH, imageLoaded]);
+  // Keep linePx in sync when slider changes (post-render, ref is stable).
+  const handleSliderChange = useCallback(
+    (nextWaterMl: number) => {
+      setWaterMl(nextWaterMl);
+      if (containerW && containerH) {
+        recomputeLinePx(nextWaterMl);
+      }
+    },
+    [containerH, containerW, recomputeLinePx]
+  );
 
   const handleImageLoad = useCallback(() => {
     setImageLoaded(true);
-  }, []);
+    // After image load, measure once to initialize line position.
+    if (containerW && containerH) {
+      recomputeLinePx(waterMl);
+    }
+  }, [containerH, containerW, recomputeLinePx, waterMl]);
 
   const handleConfirm = useCallback(() => {
     setAnnouncement(`${t("fillConfirm.confirmed", "Fill level confirmed")}: ${waterMl} ${t("common.ml", "ml")}`);
@@ -88,11 +112,11 @@ export function FillConfirmScreen({
         <div className="flex flex-col items-center gap-2">
           <VerticalStepSlider
             waterMl={waterMl}
-            min={55}
-            step={55}
+            min={ML_PER_VOLUME_STEP}
+            step={ML_PER_VOLUME_STEP}
             max={bottleCapacityMl}
             height={containerH || 280}
-            onChange={setWaterMl}
+            onChange={handleSliderChange}
             ariaLabel={t("fillConfirm.sliderLabel", "Adjust fill level")}
             ariaUnitLabel={t("common.ml", "ml")}
           />

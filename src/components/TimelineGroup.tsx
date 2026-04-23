@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
-import type { StoredScan } from "../hooks/useScanHistory";
-import { formatDate, formatTime } from "../utils/formatters";
+import type { StoredScan } from "../hooks/useScanHistory.ts";
+import { formatDate, formatTime } from "../utils/formatters.ts";
 import "./TimelineGroup.css";
 
 interface TimelineGroupProps {

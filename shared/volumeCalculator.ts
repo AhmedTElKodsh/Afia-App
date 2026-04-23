@@ -2,11 +2,27 @@ import type { BottleGeometry } from "./bottleRegistry.ts";
 
 export const ML_PER_TABLESPOON = 14.7868;
 export const ML_PER_CUP = 220;
+export const ML_PER_VOLUME_STEP = 55;
 
 /**
  * Linear interpolation helper for calibration table lookup.
  * Points must be sorted ascending by fillHeightPct.
  */
+const sortedCalibrationCache = new WeakMap<
+  Array<{ fillHeightPct: number; remainingMl: number }>,
+  Array<{ fillHeightPct: number; remainingMl: number }>
+>();
+
+function getSortedCalibrationPoints(
+  points: Array<{ fillHeightPct: number; remainingMl: number }>
+): Array<{ fillHeightPct: number; remainingMl: number }> {
+  const cached = sortedCalibrationCache.get(points);
+  if (cached) return cached;
+  const sorted = [...points].sort((a, b) => a.fillHeightPct - b.fillHeightPct);
+  sortedCalibrationCache.set(points, sorted);
+  return sorted;
+}
+
 function interpolateCalibration(
   fillHeightPct: number,
   points: Array<{ fillHeightPct: number; remainingMl: number }>
@@ -14,8 +30,13 @@ function interpolateCalibration(
   if (points.length === 0) return 0;
   if (points.length === 1) return points[0].remainingMl;
   
-  // M7: Ensure points are sorted by fillHeightPct ascending without mutating original
-  const sortedPoints = [...points].sort((a, b) => a.fillHeightPct - b.fillHeightPct);
+  // Ensure points are sorted by fillHeightPct ascending without mutating original,
+  // but avoid re-sorting on hot paths (memoized by array reference).
+  const sortedPoints = getSortedCalibrationPoints(points);
+
+  if (Number.isNaN(fillHeightPct) || !Number.isFinite(fillHeightPct)) {
+    return sortedPoints[0].remainingMl;
+  }
   
   // Boundary checks
   if (fillHeightPct <= sortedPoints[0].fillHeightPct) return sortedPoints[0].remainingMl;

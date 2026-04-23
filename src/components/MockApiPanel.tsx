@@ -8,7 +8,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Beaker, X, Zap } from "lucide-react";
-import { MOCK_SCENARIOS, type MockScenario } from "../utils/mockAnalysisApi";
+import { MOCK_SCENARIOS, type MockScenario } from "../utils/mockAnalysisApi.ts";
 import "./MockApiPanel.css";
 
 interface MockApiPanelProps {

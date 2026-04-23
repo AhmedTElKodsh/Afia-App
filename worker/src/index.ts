@@ -15,14 +15,26 @@ import {
   handleDeactivateVersion
 } from "./admin/modelVersions.ts";
 
+const DEFAULT_DEV_ORIGINS = ["http://localhost:5173", "http://localhost:4173"] as const;
+
+let allowedOriginsCacheKey: string | undefined = undefined;
+let allowedOriginsCacheValue: string[] | null = null;
+
+function resolveAllowedOrigins(allowedOriginsEnv: string | undefined): string[] {
+  if (allowedOriginsCacheValue && allowedOriginsCacheKey === allowedOriginsEnv) {
+    return allowedOriginsCacheValue;
+  }
+  const parsed = allowedOriginsEnv?.split(",").map((o) => o.trim()).filter(Boolean) ?? [];
+  allowedOriginsCacheKey = allowedOriginsEnv;
+  allowedOriginsCacheValue = parsed.length > 0 ? parsed : [...DEFAULT_DEV_ORIGINS];
+  return allowedOriginsCacheValue;
+}
+
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 // CORS middleware — restrict to known origins
 app.use("*", async (c, next) => {
-  const allowedOrigins = c.env.ALLOWED_ORIGINS?.split(",").map((o) => o.trim()).filter(Boolean) ?? [
-    "http://localhost:5173",
-    "http://localhost:4173",
-  ];
+  const allowedOrigins = resolveAllowedOrigins(c.env.ALLOWED_ORIGINS);
 
   const corsMiddleware = cors({
     origin: (origin) => {
@@ -51,10 +63,7 @@ app.use("*", async (c, next) => {
     const origin = c.req.header("Origin");
     // Allow requests with no Origin (server-to-server, curl, Wrangler local dev)
     if (origin) {
-      const allowedOrigins = c.env.ALLOWED_ORIGINS?.split(",").map((o) => o.trim()).filter(Boolean) ?? [
-        "http://localhost:5173",
-        "http://localhost:4173",
-      ];
+      const allowedOrigins = resolveAllowedOrigins(c.env.ALLOWED_ORIGINS);
       const isPagesPreview =
         /^https:\/\/[a-z0-9-]+\.afia-app\.pages\.dev$/.test(origin) ||
         /^https:\/\/[a-z0-9-]+\.afia-oil-tracker\.pages\.dev$/.test(origin);
@@ -73,8 +82,20 @@ app.use("*", async (c, next) => {
 
   // Check for mock mode header - bypass rate limiting for tests
   // SECURITY: Only allow mock mode if explicitly enabled in environment (for tests/staging)
-  const mockMode = c.req.header("X-Mock-Mode");
-  if (mockMode === "true" && c.env.ENABLE_MOCK_LLM === "true") {
+  const mockModeHeader = c.req.header("X-Mock-Mode") ?? c.req.header("x-mock-mode");
+  const isMockMode = mockModeHeader?.toLowerCase() === "true";
+  const stage = (c.env.STAGE ?? "").trim().toLowerCase();
+  const isProd = stage === "stage1";
+  const reqUrl = new URL(c.req.url);
+  const path = reqUrl.pathname;
+  const isLocalDevHost = reqUrl.hostname === "localhost" || reqUrl.hostname === "127.0.0.1";
+  const isExplicitNonProdStage =
+    stage === "local" || stage === "dev" || stage === "test" || stage === "stage2" || stage === "stage3" || stage === "preview";
+  const allowMockBypass =
+    isMockMode &&
+    ((c.env.ENABLE_MOCK_LLM === "true" && !isProd) || isExplicitNonProdStage || isLocalDevHost);
+  const allowTelemetryBypass = path === "/error";
+  if (allowMockBypass || allowTelemetryBypass) {
     // Use Hono context variable instead of mutating c.env (prevents race conditions in production)
     c.set('enableMockLLM', true);
     const response = await next();

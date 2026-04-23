@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { AnalysisResult } from "../state/appState.ts";
 import type { BottleEntry } from "../data/bottleRegistry.ts";
-import { calculateVolumes } from "../../shared/volumeCalculator.ts";
+import { calculateVolumes, ML_PER_CUP, ML_PER_VOLUME_STEP } from "../../shared/volumeCalculator.ts";
 import { calculateNutrition } from "../../shared/nutritionCalculator.ts";
 import { ConfidenceBadge } from "./ConfidenceBadge.tsx";
 import { FeedbackGrid } from "./FeedbackGrid.tsx";
@@ -87,29 +87,47 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
   const { updateFeedback } = useScanHistory();
 
   const handleFeedbackSubmit = useCallback(async (feedback: FeedbackType) => {
-    // If it's a correction rating, show the slider first
+    console.log('[ResultDisplay] handleFeedbackSubmit START', { feedback, pendingRating, isSubmitting });
+    
+    // 1. SELECT PHASE
     if (feedback !== 'accurate' && !pendingRating) {
+      console.log('[ResultDisplay] Branch: SELECT');
       setPendingRating(feedback);
       return;
     }
 
-    if (isSubmitting) return;
+    // 2. SUBMIT PHASE
+    if (isSubmitting) {
+      console.log('[ResultDisplay] Branch: IGNORE (already submitting)');
+      return;
+    }
+
     setIsSubmitting(true);
-    
+    const finalType = pendingRating || feedback;
+    console.log('[ResultDisplay] Branch: SUBMIT', { finalType });
+
     try {
-      const rating = FEEDBACK_RATING_MAP[feedback];
+      const rating = FEEDBACK_RATING_MAP[finalType];
       if (result.scanId && rating) {
-        const correctedPct = feedback === 'accurate' ? undefined : userFillPct;
+        const correctedPct = finalType === 'accurate' ? undefined : userFillPct;
+        console.log('[ResultDisplay] Calling API...', { scanId: result.scanId, rating, correctedPct });
         updateFeedback(result.scanId, rating);
-        // M1 FIX: Include correctedFillPercentage in API call
-        await submitFeedback(result.scanId, rating, result.fillPercentage, correctedPct).catch(() => {});
+        
+        const apiResult = await submitFeedback(result.scanId, rating, result.fillPercentage, correctedPct);
+        console.log('[ResultDisplay] API Success:', apiResult);
+      } else {
+        console.error('[ResultDisplay] Error: scanId or rating missing', { scanId: result.scanId, rating });
       }
+    } catch (err) {
+      console.error('[ResultDisplay] API Error:', err);
+    } finally {
+      console.log('[ResultDisplay] Finalizing UI state');
       setFeedbackSubmitted(true);
       setPendingRating(null);
-    } finally {
       setIsSubmitting(false);
+      console.log('[ResultDisplay] handleFeedbackSubmit END');
     }
-  }, [isSubmitting, result.scanId, result.fillPercentage, userFillPct, pendingRating, updateFeedback]);
+  }, [isSubmitting, result.scanId, result.fillPercentage, userFillPct, updateFeedback, pendingRating]);
 
   // Trigger success haptics on result display
   useEffect(() => {
@@ -130,7 +148,7 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
   const { mlToTablespoons, mlToCups } = useMemo(() => {
     return {
       mlToTablespoons: (ml: number) => ml / 14.7868,
-      mlToCups: (ml: number) => ml / 220
+      mlToCups: (ml: number) => ml / ML_PER_CUP
     };
   }, []);
 
@@ -155,10 +173,10 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
 
   const nutrition = calculateNutrition(volumes.consumed.ml, bottle.oilType);
 
-  const maxSliderValue = Math.floor(originalVolumes.remaining.ml / 55) * 55;
+  const maxSliderValue = Math.floor(originalVolumes.remaining.ml / ML_PER_VOLUME_STEP) * ML_PER_VOLUME_STEP;
   
-  // Calculate cup count based on 110ml = 1 full cup, 55ml = 1/2 cup
-  const halfCups = Math.floor(sliderValue / 55);
+  // Calculate cup count based on slider increments (55ml = half-cup unit for this UI).
+  const halfCups = Math.floor(sliderValue / ML_PER_VOLUME_STEP);
   const fullCups = Math.floor(halfCups / 2);
   const hasHalfCup = halfCups % 2 === 1;
 
@@ -229,14 +247,14 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
             </div>
           </div>
 
-          {/* Right: Interactive 55ml Slider */}
+          {/* Right: Interactive step slider (55ml increments) */}
           <div className="result-slider-sidebar">
             <div className="slider-track-visual">
               <input 
                 type="range" 
                 min="0" 
                 max={maxSliderValue} 
-                step="55" 
+                step={String(ML_PER_VOLUME_STEP)} 
                 value={sliderValue} 
                 onChange={handleSliderChange}
                 className="vertical-step-slider"

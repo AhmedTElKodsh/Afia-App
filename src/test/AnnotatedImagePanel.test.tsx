@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
-import { AnnotatedImagePanel } from "../components/FillConfirmScreen/AnnotatedImagePanel";
+import { AnnotatedImagePanel } from "../components/FillConfirmScreen/AnnotatedImagePanel.tsx";
 import { useRef } from "react";
 
 describe("AnnotatedImagePanel", () => {

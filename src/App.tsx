@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, useEffect, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
-import { Camera, History, LayoutDashboard, FlaskConical } from "lucide-react";
 
 import "./App.css";
 import "./components/Navigation.css";
@@ -22,13 +21,13 @@ import { reportScanError } from "./api/apiClient.ts";
 import { calculateVolumes } from "../shared/volumeCalculator.ts";
 import { useScanHistory, createStoredScan } from "./hooks/useScanHistory.ts";
 import { analyze as runAnalysis } from "./services/analysisRouter.ts";
-import { loadModel } from "./services/modelLoader.ts";
 import { AppControls } from "./components/AppControls.tsx";
 import { AnalyzingOverlay } from "./components/AnalyzingOverlay.tsx";
 import { SkeletonHistory, SkeletonAdmin } from "./components/Skeleton.tsx";
 import { hapticFeedback } from "./utils/haptics.ts";
 import { UploadQualityWarning } from "./components/UploadQualityWarning.tsx";
-import { processSyncQueue, getQueueLength } from "./services/syncQueue.ts";
+import { getQueueLength } from "./services/syncQueue.ts";
+import { useAppLifecycleEffects } from "./hooks/useAppLifecycleEffects.ts";
 
 // Lazy load non-critical components
 const ScanHistory = lazy(() => import("./components/ScanHistory.tsx").then(m => ({ default: m.ScanHistory })));
@@ -38,7 +37,22 @@ const TestLab = lazy(() => import("./components/TestLab.tsx").then(m => ({ defau
 
 import { Navigation, type CurrentView } from "./components/Navigation.tsx";
 
-const ADMIN_SESSION_KEY = "afia_admin_session";
+declare global {
+  interface Window {
+    __AFIA_TEST_MODE__?: boolean;
+    __AFIA_FORCE_MANUAL__?: boolean;
+    __AFIA_PREVENT_CAPTURE__?: boolean;
+    __AFIA_TRIGGER_ANALYZE__?: (base64Override?: string) => void;
+    __AFIA_TRIGGER_ERROR__?: (message: string) => void;
+    webkitAudioContext?: typeof AudioContext;
+  }
+}
+
+// Helper function to check if admin session is valid
+const hasValidAdminSession = (): boolean => {
+  const token = sessionStorage.getItem('afia_admin_session');
+  return !!token;
+};
 
 export default function App() {
   const { t } = useTranslation();
@@ -61,9 +75,12 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     
     // M8: Enable test mode and bypasses via URL params for maximum E2E reliability
-    // SECURITY: This bypass is restricted to DEV mode to prevent privacy/onboarding bypass in production.
-    if (import.meta.env.DEV && params.get("test_mode") === "1") {
-      (window as any).__AFIA_TEST_MODE__ = true;
+    // SECURITY: Require DEV *and* a local runtime host to avoid a "DEV build accidentally deployed"
+    // becoming a privacy/onboarding bypass in production.
+    const isLocalHost =
+      window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    if (import.meta.env.DEV && isLocalHost && params.get("test_mode") === "1") {
+      window.__AFIA_TEST_MODE__ = true;
       localStorage.setItem('afia_privacy_accepted', 'true');
       localStorage.setItem('afia_onboarding_complete', 'true');
       localStorage.setItem('afia_mock_mode', 'true');
@@ -84,105 +101,7 @@ export default function App() {
   const isAnalyzingRef = useRef<boolean>(false);
 
   const { addScan } = useScanHistory();
-
-  // Load local model on mount (Story 7.4)
-  useEffect(() => {
-    loadModel().catch(err => {
-      console.warn('[App] Model preload failed:', err);
-    });
-  }, []);
-
-  // Story 7.5 - Task 2: Check for model updates on app load
-  useEffect(() => {
-    const checkForUpdates = async () => {
-      try {
-        const { checkModelVersion } = await import('./services/modelLoader.ts');
-        const result = await checkModelVersion();
-        
-        if (result.updateAvailable) {
-          console.log('[App] Model update available:', result.latestVersion);
-          // Update is triggered automatically in background
-        }
-      } catch (err) {
-        console.warn('[App] Version check failed:', err);
-      }
-    };
-
-    // Check for updates after service worker is ready
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready
-        .then(() => checkForUpdates())
-        .catch(err => console.warn('[App] SW ready failed:', err));
-    } else {
-      checkForUpdates();
-    }
-  }, []);
-
-  // Story 7.4 - Task 6: Process offline queue when coming back online
-  useEffect(() => {
-    // isProcessingOnline: H1 in-flight guard prevents concurrent queue runs on rapid network flaps
-    let isProcessingOnline = false;
-    const handleOnline = () => {
-      if (isProcessingOnline) return;
-      isProcessingOnline = true;
-      console.log('[App] Network connection restored, processing offline queue');
-      import('./services/analysisRouter.ts')
-        .then(({ processOfflineQueue }) => processOfflineQueue())
-        .catch(err => console.warn('[App] processOfflineQueue failed:', err))
-        .finally(() => { isProcessingOnline = false; });
-    };
-
-    window.addEventListener('online', handleOnline);
-    return () => window.removeEventListener('online', handleOnline);
-  }, []);
-  
-  // Story 7.8 - AC4, AC5: Process sync queue on mount and update pending count
-  useEffect(() => {
-    let mounted = true;
-
-    const initSyncQueue = async () => {
-      try {
-        const count = await getQueueLength();
-        if (!mounted) return;
-        setPendingSyncCount(count);
-
-        // M2: only process queue if online
-        if (count > 0 && navigator.onLine) {
-          console.log(`[App] Found ${count} pending scans, processing...`);
-          await processSyncQueue();
-          if (!mounted) return;
-          const newCount = await getQueueLength();
-          if (mounted) setPendingSyncCount(newCount);
-        }
-      } catch (error) {
-        console.warn('[App] Failed to process sync queue:', error);
-      }
-    };
-
-    initSyncQueue();
-
-    // H1: sync event listeners use plain functions with try/catch — browser doesn't await async handlers
-    const handleSyncUpdate = () => {
-      getQueueLength()
-        .then(count => { if (mounted) setPendingSyncCount(count); })
-        .catch(err => console.warn('[App] getQueueLength failed:', err));
-    };
-
-    window.addEventListener('sync-success', handleSyncUpdate);
-    window.addEventListener('sync-failed', handleSyncUpdate);
-
-    return () => {
-      mounted = false;
-      window.removeEventListener('sync-success', handleSyncUpdate);
-      window.removeEventListener('sync-failed', handleSyncUpdate);
-    };
-  }, []);
-
-  // Helper function to check if admin session is valid
-  const hasValidAdminSession = (): boolean => {
-    const token = sessionStorage.getItem('afia_admin_session');
-    return !!token;
-  };
+  useAppLifecycleEffects({ setPendingSyncCount });
 
   // Admin mode: URL param AND valid session token required
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(hasValidAdminSession());
@@ -192,6 +111,19 @@ export default function App() {
 
   // All callbacks must be declared before any early returns (Rules of Hooks)
   const bottle = selectedSku ? getBottleBySku(selectedSku) : null;
+
+  const handleRetake = useCallback(() => {
+    setCapturedImage(null);
+    // C1: resolve the pending promise before nulling, so runAnalysis can settle
+    const resolver = qualityWarningResolverRef.current;
+    if (resolver) {
+      qualityWarningResolverRef.current = null;
+      resolver(false);
+    }
+    setQualityWarning(null);
+    isAnalyzingRef.current = false;
+    setAppState("CAMERA_ACTIVE");
+  }, []);
 
   const handleAnalyze = useCallback(async (base64Override?: string) => {
     const img = typeof base64Override === "string" ? base64Override : capturedImage;
@@ -301,7 +233,7 @@ export default function App() {
     } finally {
       isAnalyzingRef.current = false;
     }
-  }, [capturedImage, selectedSku, bottle, t]);
+  }, [addScan, bottle, capturedImage, handleRetake, selectedSku, t]);
 
   const handleConfirmFill = useCallback((finalPercentage: number) => {
     if (!result || !bottle) return;
@@ -342,7 +274,6 @@ export default function App() {
 
     // Play shutter sound via Web Audio API
     try {
-      // @ts-expect-error - Vendor prefix
       const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
       if (AudioContextCtor) {
         const audioCtx = new AudioContextCtor();
@@ -386,19 +317,6 @@ export default function App() {
     setAppState("CAMERA_ACTIVE");
   }, []);
 
-  const handleRetake = useCallback(() => {
-    setCapturedImage(null);
-    // C1: resolve the pending promise before nulling, so runAnalysis can settle
-    const resolver = qualityWarningResolverRef.current;
-    if (resolver) {
-      qualityWarningResolverRef.current = null;
-      resolver(false);
-    }
-    setQualityWarning(null);
-    isAnalyzingRef.current = false;
-    setAppState("CAMERA_ACTIVE");
-  }, []);
-
   const handleRetry = useCallback(() => {
     handleAnalyze();
   }, [handleAnalyze]);
@@ -433,7 +351,6 @@ export default function App() {
         handleAnalyze(blankJpeg);
       };
       window.__AFIA_TRIGGER_ERROR__ = (message: string) => {
-        const error = new Error(message);
         // Story 7.6 - AC6: Handle needs-sku route
         if (message.startsWith('NEEDS_SKU:')) {
           setCurrentView("scan");

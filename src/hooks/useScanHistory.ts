@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import type { AnalysisResult } from "../state/appState";
+import type { AnalysisResult } from "../state/appState.ts";
 
 export interface StoredScan {
   id: string;          // scanId from Worker

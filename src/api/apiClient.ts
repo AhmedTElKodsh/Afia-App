@@ -3,7 +3,9 @@ import type { AnalysisResult } from "../state/appState.ts";
 const WORKER_URL = import.meta.env.VITE_PROXY_URL || "http://localhost:8787";
 
 // M8: Test mode detection
-const isTestMode = typeof window !== 'undefined' && (window as any).__AFIA_TEST_MODE__ === true;
+const isTestMode =
+  typeof window !== "undefined" &&
+  (window as { __AFIA_TEST_MODE__?: boolean }).__AFIA_TEST_MODE__ === true;
 const DEFAULT_TIMEOUT_MS = isTestMode ? 5000 : 15000; // 5s for tests, 15s for prod
 
 async function fetchWithTimeout(
@@ -246,6 +248,15 @@ export function reportScanError(
   error: string,
   deviceInfo?: string
 ): void {
+  // E2E runs intentionally trigger many failure paths (rate limits, API/network failures).
+  // Skip telemetry emission in test mode to keep worker logs signal-focused.
+  const isTestMode =
+    typeof window !== "undefined" &&
+    (window as { __AFIA_TEST_MODE__?: boolean }).__AFIA_TEST_MODE__ === true;
+  if (isTestMode) {
+    return;
+  }
+
   const payload = JSON.stringify({
     sku,
     error,

@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useCameraGuidance } from '../hooks/useCameraGuidance';
-import * as assessmentUtils from '../utils/cameraQualityAssessment';
+import { useCameraGuidance } from '../hooks/useCameraGuidance.ts';
+import * as assessmentUtils from '../utils/cameraQualityAssessment.ts';
 
 vi.mock('../utils/cameraQualityAssessment', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../utils/cameraQualityAssessment')>();
+  const actual = await importOriginal<typeof import('../utils/cameraQualityAssessment.ts')>();
   return {
     ...actual,
     assessImageQuality: vi.fn(),

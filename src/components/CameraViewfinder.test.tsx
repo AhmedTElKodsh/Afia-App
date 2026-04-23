@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { CameraViewfinder } from './CameraViewfinder';
+import { CameraViewfinder } from './CameraViewfinder.tsx';
 
 // Stable mock for useCameraGuidance — returning the same object reference every call
 // prevents startCamera's useCallback from recreating on every render, which would
@@ -55,7 +55,10 @@ beforeEach(() => {
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
     mockCtx as unknown as CanvasRenderingContext2D
   );
-  vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/jpeg;base64,mock');
+  const mockJpegBase64 = 'A'.repeat(60);
+  vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue(
+    `data:image/jpeg;base64,${mockJpegBase64}`
+  );
 });
 
 afterEach(() => {

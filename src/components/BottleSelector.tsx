@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronDown, Check } from "lucide-react";
-import { activeBottleRegistry, getBottleBySku } from "../data/bottleRegistry";
+import { activeBottleRegistry, getBottleBySku } from "../data/bottleRegistry.ts";
 import "./BottleSelector.css";
 
 const STORAGE_KEY = "afia_selected_sku";

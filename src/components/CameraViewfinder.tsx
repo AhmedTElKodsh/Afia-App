@@ -12,10 +12,63 @@ import {
   CAMERA_CONFIG,
   getVideoConstraints,
   checkTorchSupport,
-} from "../config/camera";
-import { useCameraGuidance } from "../hooks/useCameraGuidance";
-import { OrientationGuide } from "./OrientationGuide";
+} from "../config/camera.ts";
+import { useCameraGuidance } from "../hooks/useCameraGuidance.ts";
+import { OrientationGuide } from "./OrientationGuide.tsx";
 import jsQR from "jsqr";
+
+/**
+ * Dev E2E only: return a real MediaStream without calling getUserMedia.
+ * Playwright init-script overrides of `getUserMedia` are unreliable; this path is gated by
+ * `import.meta.env.DEV` and `window.__AFIA_TEST_MODE__` (set by E2E only).
+ */
+function getDevTestModeMediaStream(): MediaStream {
+  const canvas = document.createElement("canvas");
+  canvas.width = 640;
+  canvas.height = 480;
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    ctx.fillStyle = "#e5e5e5";
+    ctx.fillRect(0, 0, 640, 480);
+    ctx.fillStyle = "#f4e4c1";
+    ctx.fillRect(220, 120, 200, 280);
+    ctx.fillStyle = "#d4c4a1";
+    ctx.fillRect(270, 80, 100, 50);
+    ctx.fillStyle = "#8B4513";
+    ctx.fillRect(280, 60, 80, 25);
+    ctx.fillStyle = "#10b981";
+    ctx.fillRect(220, 200, 200, 40);
+    ctx.fillStyle = "#ef4444";
+    ctx.beginPath();
+    ctx.arc(310, 220, 15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(230, 250, 180, 120);
+    ctx.fillStyle = "#333333";
+    ctx.fillRect(240, 270, 160, 8);
+  }
+  const stream = canvas.captureStream(30);
+  const videoTrack = stream.getVideoTracks()[0];
+  if (videoTrack) {
+    videoTrack.getCapabilities = () =>
+      ({
+        torch: true,
+        whiteBalanceMode: ["continuous", "manual", "single-shot"],
+        exposureMode: ["continuous", "manual", "single-shot"],
+        focusMode: ["continuous", "manual", "single-shot"],
+      }) as MediaTrackCapabilities;
+    videoTrack.applyConstraints = async () => {};
+    videoTrack.getSettings = () =>
+      ({
+        width: 640,
+        height: 480,
+        aspectRatio: 640 / 480,
+        frameRate: 30,
+        facingMode: "environment",
+      }) as MediaTrackSettings;
+  }
+  return stream;
+}
 
 /**
  * CameraViewfinder Component
@@ -46,6 +99,13 @@ interface CameraViewfinderProps {
 }
 
 type CameraState = 'idle' | 'requesting' | 'active' | 'permission-denied' | 'error' | 'test-overlay';
+
+const MIN_CAPTURED_IMAGE_BYTES = 32;
+
+function estimateBase64Bytes(rawBase64: string): number {
+  const trimmed = rawBase64.replace(/=+$/, "");
+  return Math.floor((trimmed.length * 3) / 4);
+}
 
 /** 
  * Afia 1.5L Bottle Guide - Precision Calibrated Outline
@@ -237,7 +297,7 @@ function BottleGuide({
               textAnchor="middle"
               opacity="0.9"
             >
-              {Math.ceil((1 - holdProgress) * 1)}
+              {Math.ceil((1 - holdProgress) * (CAMERA_CONFIG.autoCapture.holdDurationMs / 1000))}
             </text>
           </>
         )}
@@ -254,7 +314,6 @@ export function CameraViewfinder({
   preferBackCamera = true,
   enableLiveGuidance = true,
   forceManual = false,
-  sku: _sku,
   testImage = null,
 }: CameraViewfinderProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -269,12 +328,21 @@ export function CameraViewfinder({
   const [shutterFlash, setShutterFlash] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(true);
   // Force manual mode in test environment to prevent auto-capture from hiding orientation guide
-  const [isManualMode, setIsManualMode] = useState(forceManual || (typeof window !== 'undefined' && (window as any).__AFIA_FORCE_MANUAL__));
+  const [isManualMode, setIsManualMode] = useState(
+    forceManual || (typeof window !== "undefined" && window.__AFIA_FORCE_MANUAL__ === true)
+  );
   const [photoCaptured, setPhotoCaptured] = useState(false);
 
   const isStartingRef = useRef(false);
   const isCapturingRef = useRef(false);
   const hasFiredRef = useRef(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const guidanceConfig = useMemo(() => ({
     minBlurScore: CAMERA_CONFIG.minQuality.blurScore,
@@ -306,6 +374,10 @@ export function CameraViewfinder({
       context.drawImage(video, 0, 0, CAMERA_CONFIG.capture.width, CAMERA_CONFIG.capture.height);
       const imageBase64 = canvas.toDataURL('image/jpeg', CAMERA_CONFIG.jpegQuality);
       const base64Only = (imageBase64 || '').replace(/^data:image\/jpeg;base64,/, '');
+      if (estimateBase64Bytes(base64Only) < MIN_CAPTURED_IMAGE_BYTES) {
+        onError(t('camera.captureFailed'));
+        return;
+      }
       setPhotoCaptured(true);
       setShutterFlash(true);
       setTimeout(() => setShutterFlash(false), 200);
@@ -326,11 +398,20 @@ export function CameraViewfinder({
     }
   }, [onCapture, onError, t]);
 
+  // Auto-capture effect: Triggers when guidance state isReady
   useEffect(() => {
-    if (!isManualMode && guidance.state.isReady && !hasFiredRef.current && cameraState === 'active' && videoRef.current) {
-      if (typeof window !== 'undefined' && (window as any).__AFIA_PREVENT_CAPTURE__) return;
+    const shouldAutoCapture = !isManualMode && 
+                             guidance.state.isReady && 
+                             !hasFiredRef.current && 
+                             (cameraState === 'active' || cameraState === 'test-overlay');
+
+    if (shouldAutoCapture) {
+      if (typeof window !== "undefined" && window.__AFIA_PREVENT_CAPTURE__ === true) return;
       hasFiredRef.current = true;
+      
+      // Sensory feedback for lock-in
       if (navigator.vibrate) navigator.vibrate([30, 40, 80]);
+      
       handleCapture();
     }
   }, [guidance.state.isReady, cameraState, handleCapture, isManualMode]);
@@ -344,8 +425,24 @@ export function CameraViewfinder({
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
-      const constraints = getVideoConstraints(preferBackCamera);
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const useTestStream =
+        import.meta.env.DEV &&
+        typeof window !== "undefined" &&
+        (window as { __AFIA_TEST_MODE__?: boolean }).__AFIA_TEST_MODE__ === true;
+      const stream: MediaStream = useTestStream
+        ? getDevTestModeMediaStream()
+        : await navigator.mediaDevices.getUserMedia(
+            getVideoConstraints(
+              preferBackCamera,
+              typeof window !== "undefined" &&
+                (window as { __AFIA_TEST_MODE__?: boolean }).__AFIA_TEST_MODE__ === true
+            )
+          );
+      if (!isMountedRef.current) {
+        stream.getTracks().forEach((t) => t.stop());
+        isStartingRef.current = false;
+        return;
+      }
       streamRef.current = stream;
       if (videoRef.current) videoRef.current.srcObject = stream;
       const hasTorch = await checkTorchSupport(stream);
@@ -371,11 +468,17 @@ export function CameraViewfinder({
     try {
       const track = streamRef.current.getVideoTracks()[0];
       if (!track) return;
-      let capabilities: any = null;
-      try { capabilities = track.getCapabilities(); } catch { return; }
-      if (!capabilities?.torch) return;
+      let capabilities: MediaTrackCapabilities | null = null;
+      try {
+        capabilities = track.getCapabilities();
+      } catch {
+        return;
+      }
+      if (!capabilities || !("torch" in capabilities) || capabilities.torch !== true) return;
       const newTorchState = !torchOn;
-      await track.applyConstraints({ advanced: [{ torch: newTorchState } as any] });
+      await track.applyConstraints({
+        advanced: [{ torch: newTorchState } as unknown as MediaTrackConstraintSet],
+      });
       setTorchOn(newTorchState);
     } catch (error) { console.error('Torch error:', error); }
   }, [torchOn]);
@@ -396,6 +499,7 @@ export function CameraViewfinder({
       startCamera();
     }
     return () => {
+      isStartingRef.current = false;
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
@@ -552,7 +656,7 @@ export function CameraViewfinder({
           onClick={handleCapture}
           type="button"
           aria-label={t('camera.capturePhotoAriaLabel')}
-          disabled={!isManualMode && !guidance.state.isReady && enableLiveGuidance && !(window as any).__AFIA_TEST_MODE__}
+          disabled={!isManualMode && !guidance.state.isReady && enableLiveGuidance && !window.__AFIA_TEST_MODE__}
         >
           {enableLiveGuidance ? <span className="capture-btn-label">{t('camera.captureManually')}</span> : <span className="capture-btn-inner" />}
         </button>

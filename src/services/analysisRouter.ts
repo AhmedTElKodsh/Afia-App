@@ -5,16 +5,15 @@
  * Story 7.8 - Quality pre-check and background sync integration
  */
 import i18next from 'i18next';
-import { loadModel, isModelLoaded } from './modelLoader';
-import { runLocalInference } from './localInference';
-import { analyzeBottle } from '../api/apiClient';
-import { routeInference } from './inferenceRouter';
-import { isIOS, isWebGLAvailable } from '../utils/platformDetect';
-import { analyzeImageQuality, checkUploadQuality, type ImageQualitySignals } from './uploadFilter';
-import { enqueueAnalyzeRequest } from './syncQueue';
-import { getBottleBySku } from '../data/bottleRegistry';
+import { loadModel, isModelLoaded } from './modelLoader.ts';
+import { runLocalInference } from './localInference.ts';
+import { analyzeBottle } from '../api/apiClient.ts';
+import { routeInference } from './inferenceRouter.ts';
+import { isIOS, isWebGLAvailable } from '../utils/platformDetect.ts';
+import { enqueueAnalyzeRequest } from './syncQueue.ts';
+import { getBottleBySku } from '../data/bottleRegistry.ts';
 import { calculateRemainingMl } from "../../shared/volumeCalculator.ts";
-import type { AnalysisResult } from '../state/appState';
+import type { AnalysisResult } from '../state/appState.ts';
 
 interface AnalysisOptions {
   sku: string;
@@ -47,6 +46,8 @@ export async function initializePlatformDetection(): Promise<void> {
   });
 }
 
+import { runQualityCheck } from './qualityOrchestrator.ts';
+
 /**
  * Main analysis entry point with smart routing
  * Story 7.6 - Task 2: Integrated routing decision logic
@@ -54,85 +55,41 @@ export async function initializePlatformDetection(): Promise<void> {
  */
 export async function analyze(options: AnalysisOptions): Promise<AnalysisResult> {
   let { sku, imageBase64, totalVolumeMl, brandClassifierConfidence, bottleDetectionConfidence, onProgress, onQualityWarning } = options;
+  const safeTotalVolume = Math.max(0, totalVolumeMl);
   
-  // M8: Test mode detection (global flag set by E2E tests)
   const isTestMode = typeof window !== 'undefined' && (window as any).__AFIA_TEST_MODE__ === true;
-  
-  // M8.5: Debug flags from localStorage for E2E tests
-  const forceConfidence = typeof window !== 'undefined' ? localStorage.getItem('afia_force_local_confidence') : null;
   const forceNetErrorSync = typeof window !== 'undefined' ? localStorage.getItem('afia_net_error_sync') === 'true' : false;
 
-  // Validation: Ensure image is provided and valid
   if (!imageBase64) {
     throw new Error('INVALID_INPUT: Missing image data');
   }
 
-  // M1 FIX: Normalize image data. CameraViewfinder may pass raw base64 without prefix.
-  // analyzeImageQuality and runLocalInference need the data:image prefix to work.
   if (!imageBase64.startsWith('data:image/')) {
     imageBase64 = `data:image/jpeg;base64,${imageBase64}`;
   }
 
-  // Story 7.4 - Task 8: Wrap progress callback to prevent errors from breaking flow
   const safeProgress = (message: string) => {
     if (onProgress) {
       try {
         onProgress(message);
       } catch (error) {
         console.warn('[AnalysisRouter] Progress callback error:', error);
-        // Continue execution - callback errors should not break analysis
       }
     }
   };
   
-  // Story 7.8 - AC1: Quality pre-check before upload
-  try {
-    safeProgress(i18next.t('analysis.checkingQuality', 'Checking image quality...'));
-    
-    // Support testing override for quality check
-    const qualityFn = (window as any).analyzeImageQuality || analyzeImageQuality;
-    const qualityMetrics = await qualityFn(imageBase64);
-    
-    // M8: Ensure qualityMetrics is valid or provide dummy signals
-    const safeMetrics = (qualityMetrics && typeof qualityMetrics === 'object') ? qualityMetrics : {
-      blurriness: 0,
-      exposure: 0.5,
-      isTooDark: false,
-      isTooBlurry: false
-    };
-
-    const qualitySignals: ImageQualitySignals = {
-      ...safeMetrics,
-      bottleDetectionConfidence: bottleDetectionConfidence ?? null,
-    };
-    
-    const qualityCheck = checkUploadQuality(qualitySignals);
-    
-    // M1 FIX: Skip warning in test mode to avoid blocking E2E tests with synthetic images
-    if (qualityCheck.shouldWarn && !isTestMode) {
-      if (onQualityWarning) {
-        const translatedReasons = qualityCheck.reasons.map(key => i18next.t(key, key));
-        console.log('[AnalysisRouter] Quality warning:', translatedReasons);
-        const shouldContinue = await onQualityWarning(qualityCheck.reasons);
-        
-        if (!shouldContinue) {
-          throw new Error('USER_CANCELLED: User chose to retake photo');
-        }
-      } else {
-        console.warn('[AnalysisRouter] Quality warning triggered but no onQualityWarning handler provided');
+  // Quality pre-check
+  safeProgress(i18next.t('analysis.checkingQuality', 'Checking image quality...'));
+  const quality = await runQualityCheck(imageBase64, bottleDetectionConfidence ?? null, isTestMode);
+  
+  if (quality.shouldWarn) {
+    if (onQualityWarning) {
+      const shouldContinue = await onQualityWarning(quality.reasons);
+      if (!shouldContinue) {
+        throw new Error('USER_CANCELLED: User chose to retake photo');
       }
-    }
-  } catch (error) {
-    if (error instanceof Error && error.message.startsWith('USER_CANCELLED:')) {
-      throw error;
-    }
-    // Canvas or image decode failure — skip quality check, proceed with analysis
-    // This is intentionally fail-open: a broken quality check must not block the scan
-    console.warn('[AnalysisRouter] Quality check failed (non-blocking):', error);
-    
-    // M8: In test mode or on failure, ensure we don't block by any missing signals
-    if (isTestMode) {
-      console.log('[AnalysisRouter] Test mode: Bypassing quality check block');
+    } else {
+      console.warn('[AnalysisRouter] Quality warning skipped: no onQualityWarning callback', quality.reasons);
     }
   }
   
@@ -200,7 +157,7 @@ export async function analyze(options: AnalysisOptions): Promise<AnalysisResult>
       }
       const remainingMl = bottle
         ? Math.round(calculateRemainingMl(inference.fillPercentage, bottle.totalVolumeMl, bottle.geometry))
-        : Math.round((inference.fillPercentage / 100) * totalVolumeMl);
+        : Math.round((inference.fillPercentage / 100) * safeTotalVolume);
       return {
         scanId: `local-${Date.now()}`,
         fillPercentage: Math.round(inference.fillPercentage),
@@ -220,7 +177,7 @@ export async function analyze(options: AnalysisOptions): Promise<AnalysisResult>
       const bottle = getBottleBySku(sku);
       const remainingMl = bottle
         ? Math.round(calculateRemainingMl(inference.fillPercentage, bottle.totalVolumeMl, bottle.geometry))
-        : Math.round((inference.fillPercentage / 100) * totalVolumeMl);
+        : Math.round((inference.fillPercentage / 100) * safeTotalVolume);
       return {
         scanId: `local-offline-${Date.now()}`,
         fillPercentage: Math.round(inference.fillPercentage),
@@ -294,7 +251,7 @@ export async function analyze(options: AnalysisOptions): Promise<AnalysisResult>
         return {
           scanId: `queued-${Date.now()}`,
           fillPercentage: localResult?.fillPercentage ? Math.round(localResult.fillPercentage) : 0,
-          remainingMl: localResult ? Math.round((localResult.fillPercentage / 100) * totalVolumeMl) : 0,
+          remainingMl: localResult ? Math.round((localResult.fillPercentage / 100) * safeTotalVolume) : 0,
           confidence: 'low',
           aiProvider: 'queued',
           latencyMs: 0,
@@ -310,7 +267,7 @@ export async function analyze(options: AnalysisOptions): Promise<AnalysisResult>
           return {
             scanId: `queued-fallback-${Date.now()}`,
             fillPercentage: localResult?.fillPercentage ? Math.round(localResult.fillPercentage) : 0,
-            remainingMl: localResult ? Math.round((localResult.fillPercentage / 100) * totalVolumeMl) : 0,
+            remainingMl: localResult ? Math.round((localResult.fillPercentage / 100) * safeTotalVolume) : 0,
             confidence: 'low',
             aiProvider: 'queued',
             latencyMs: 0,
@@ -347,7 +304,7 @@ function queueForLaterVerification(
   enqueueAnalyzeRequest({ sku, imageBase64 }).catch(error => {
     console.error('[AnalysisRouter] Failed to queue scan for later verification:', error);
     // Log to error telemetry for monitoring
-    import('./errorTelemetry').then(({ logError }) => {
+    import('./errorTelemetry.ts').then(({ logError }) => {
       logError('storage', error as Error, {
         sku,
         operation: 'queueForLaterVerification',
@@ -362,6 +319,8 @@ function queueForLaterVerification(
  * Drain any legacy localStorage queue items into IndexedDB, then clear.
  * New items are queued directly to IndexedDB via queueForLaterVerification.
  */
+const LEGACY_QUEUE_MIGRATION_CHUNK = 10;
+
 export async function processOfflineQueue(): Promise<void> {
   try {
     const raw = localStorage.getItem('afia_offline_queue');
@@ -378,19 +337,33 @@ export async function processOfflineQueue(): Promise<void> {
       return;
     }
 
-    console.log(`[AnalysisRouter] Migrating ${queue.length} legacy localStorage scans to IndexedDB`);
-    
-    // Move all items to IndexedDB immediately and clear localStorage
-    for (const item of queue) {
-      try {
-        await enqueueAnalyzeRequest({ sku: item.sku, imageBase64: item.imageBase64 });
-      } catch (e) {
-        console.error('[AnalysisRouter] Failed to migrate item to IndexedDB:', e);
+    let pending = queue;
+    let migrated = 0;
+    while (pending.length > 0) {
+      const batch = pending.slice(0, LEGACY_QUEUE_MIGRATION_CHUNK);
+      pending = pending.slice(LEGACY_QUEUE_MIGRATION_CHUNK);
+      console.log(
+        `[AnalysisRouter] Migrating ${batch.length} legacy localStorage scan(s) to IndexedDB` +
+          (pending.length > 0 ? ` (${pending.length} remaining in this migration)` : '')
+      );
+      for (const item of batch) {
+        try {
+          await enqueueAnalyzeRequest({ sku: item.sku, imageBase64: item.imageBase64 });
+          migrated++;
+        } catch (e) {
+          console.error('[AnalysisRouter] Failed to migrate item to IndexedDB:', e);
+        }
+      }
+      if (pending.length > 0) {
+        localStorage.setItem('afia_offline_queue', JSON.stringify(pending));
+        await new Promise((r) => setTimeout(r, 0));
       }
     }
-    
+
     localStorage.removeItem('afia_offline_queue');
-    console.log('[AnalysisRouter] Legacy offline queue migrated to IndexedDB and cleared from localStorage');
+    console.log(
+      `[AnalysisRouter] Legacy offline queue migrated to IndexedDB (${migrated} item(s)) and cleared from localStorage`
+    );
   } catch (error) {
     console.warn('[AnalysisRouter] Failed to process offline queue:', error);
   }

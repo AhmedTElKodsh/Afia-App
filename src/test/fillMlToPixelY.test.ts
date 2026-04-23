@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fillMlToPixelY } from "../utils/fillMlToPixelY";
+import { fillMlToPixelY } from "../utils/fillMlToPixelY.ts";
 
 /**
  * Helper function to create a mock HTMLImageElement with specified dimensions

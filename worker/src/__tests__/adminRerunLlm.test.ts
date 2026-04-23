@@ -6,7 +6,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { handleAdminRerunLlm } from "../adminRerunLlm";
 import * as r2Client from "../storage/r2Client";
-import * as supabaseClient from "../storage/supabaseClient";
 import * as admin from "../admin";
 
 // Mock the storage clients
@@ -17,7 +16,7 @@ vi.mock("../admin.ts", () => ({
 }));
 
 // Mock fetch for LLM API calls
-global.fetch = vi.fn();
+globalThis.fetch = vi.fn();
 
 describe("adminRerunLlm", () => {
   const mockEnv = {
@@ -72,16 +71,17 @@ describe("adminRerunLlm", () => {
         confidence: "high" as const,
         aiProvider: "gemini" as const,
         imageKey: "images/scan-123.jpg",
+        timestamp: new Date().toISOString(),
       };
 
-      const mockImageBlob = new Blob(["fake-image-data"], { type: "image/jpeg" });
+      const mockImageBuffer = new Uint8Array(new TextEncoder().encode("fake-image-data")).buffer as ArrayBuffer;
 
       vi.spyOn(r2Client, "getMetadata").mockResolvedValue(mockMetadata);
-      vi.spyOn(r2Client, "getImage").mockResolvedValue(mockImageBlob);
+      vi.spyOn(r2Client, "getImage").mockResolvedValue(mockImageBuffer);
       vi.spyOn(r2Client, "putMetadata").mockResolvedValue(undefined);
 
       // Mock Gemini API response
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           candidates: [
@@ -103,7 +103,7 @@ describe("adminRerunLlm", () => {
 
       const request = mockRequest({ scanId: "scan-123" });
       const response = await handleAdminRerunLlm(mockContext(request, mockEnv));
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(200);
       expect(data.adminLlmResult).toBeDefined();
@@ -133,16 +133,17 @@ describe("adminRerunLlm", () => {
         confidence: "medium" as const,
         aiProvider: "groq" as const,
         imageKey: "images/scan-456.jpg",
+        timestamp: new Date().toISOString(),
       };
 
-      const mockImageBlob = new Blob(["fake-image-data"], { type: "image/jpeg" });
+      const mockImageBuffer = new Uint8Array(new TextEncoder().encode("fake-image-data")).buffer as ArrayBuffer;
 
       vi.spyOn(r2Client, "getMetadata").mockResolvedValue(mockMetadata);
-      vi.spyOn(r2Client, "getImage").mockResolvedValue(mockImageBlob);
+      vi.spyOn(r2Client, "getImage").mockResolvedValue(mockImageBuffer);
       vi.spyOn(r2Client, "putMetadata").mockResolvedValue(undefined);
 
       // Mock Gemini API response
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           candidates: [
@@ -184,16 +185,17 @@ describe("adminRerunLlm", () => {
         confidence: "low" as const,
         aiProvider: "gemini" as const,
         imageKey: "images/scan-789.jpg",
+        timestamp: new Date().toISOString(),
       };
 
-      const mockImageBlob = new Blob(["fake-image-data"], { type: "image/jpeg" });
+      const mockImageBuffer = new Uint8Array(new TextEncoder().encode("fake-image-data")).buffer as ArrayBuffer;
 
       vi.spyOn(r2Client, "getMetadata").mockResolvedValue(mockMetadata);
-      vi.spyOn(r2Client, "getImage").mockResolvedValue(mockImageBlob);
+      vi.spyOn(r2Client, "getImage").mockResolvedValue(mockImageBuffer);
       vi.spyOn(r2Client, "putMetadata").mockResolvedValue(undefined);
 
       // Mock Gemini API failure
-      vi.mocked(global.fetch)
+      vi.mocked(globalThis.fetch)
         .mockResolvedValueOnce({
           ok: false,
           status: 429,
@@ -223,7 +225,7 @@ describe("adminRerunLlm", () => {
 
       const request = mockRequest({ scanId: "scan-789" });
       const response = await handleAdminRerunLlm(mockContext(request, mockEnv));
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(200);
       expect(data.adminLlmResult.provider).toContain("groq");
@@ -256,6 +258,7 @@ describe("adminRerunLlm", () => {
         confidence: "medium" as const,
         aiProvider: "gemini" as const,
         imageKey: "images/scan-no-image.jpg",
+        timestamp: new Date().toISOString(),
       };
 
       vi.spyOn(r2Client, "getMetadata").mockResolvedValue(mockMetadata);
@@ -275,15 +278,16 @@ describe("adminRerunLlm", () => {
         confidence: "medium" as const,
         aiProvider: "gemini" as const,
         imageKey: "images/scan-all-fail.jpg",
+        timestamp: new Date().toISOString(),
       };
 
-      const mockImageBlob = new Blob(["fake-image-data"], { type: "image/jpeg" });
+      const mockImageBuffer = new Uint8Array(new TextEncoder().encode("fake-image-data")).buffer as ArrayBuffer;
 
       vi.spyOn(r2Client, "getMetadata").mockResolvedValue(mockMetadata);
-      vi.spyOn(r2Client, "getImage").mockResolvedValue(mockImageBlob);
+      vi.spyOn(r2Client, "getImage").mockResolvedValue(mockImageBuffer);
 
       // Mock all providers failing
-      vi.mocked(global.fetch).mockResolvedValue({
+      vi.mocked(globalThis.fetch).mockResolvedValue({
         ok: false,
         status: 500,
         text: async () => "Internal Server Error",

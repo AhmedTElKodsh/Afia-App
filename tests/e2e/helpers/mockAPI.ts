@@ -104,8 +104,23 @@ export async function mockWorkerUtils(page: Page) {
     });
   });
 
+  // Mock model version check
+  await page.route(/:8787\/model\/version$/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ 
+        version: '1.0.0',
+        mae: 0.08,
+        trainingCount: 1500,
+        r2Key: 'models/fill-regressor/v1.0.0/model.json',
+        deployedAt: new Date().toISOString()
+      }),
+    });
+  });
+
   // Mock generic 404 for unknown worker endpoints
-  await page.route(/localhost:8787\/(?!analyze|feedback|health|admin).*/, async (route) => {
+  await page.route(/localhost:8787\/(?!analyze|feedback|health|admin|error).*/, async (route) => {
     await route.fulfill({
       status: 404,
       contentType: 'application/json',
@@ -113,58 +128,66 @@ export async function mockWorkerUtils(page: Page) {
     });
   });
 
-  // Mock model loading from R2
-  await page.route(/.*pub-models.afia.app\/models\/.*/, async (route) => {
+  // Mock model loading from R2 - Use glob pattern for better reliability
+  await page.route('**/pub-models.afia.app/models/**', async (route) => {
     const url = route.request().url();
+    console.log('[MOCK] Intercepted model request:', url);
+    
     if (url.endsWith('model.json')) {
+      const modelData = {
+        modelTopology: {
+          class_name: 'Sequential',
+          config: { 
+            name: 'sequential', 
+            layers: [{
+              class_name: 'Dense',
+              config: {
+                units: 1,
+                activation: 'linear',
+                use_bias: true,
+                kernel_initializer: { class_name: 'GlorotUniform', config: { seed: null } },
+                bias_initializer: { class_name: 'Zeros', config: {} },
+                name: 'dense_1',
+                trainable: true,
+                batch_input_shape: [null, 10]
+              }
+            }] 
+          },
+          keras_version: '2.4.0',
+          backend: 'tensorflow'
+        },
+        format: 'layers-model',
+        generatedBy: 'keras-v2.4.0',
+        convertedBy: 'TensorFlow.js converter v3.6.0',
+        weightsManifest: [{
+          paths: ['./weights.bin'],
+          weights: [
+            { name: 'dense_1/kernel', shape: [10, 1], dtype: 'float32' },
+            { name: 'dense_1/bias', shape: [1], dtype: 'float32' }
+          ]
+        }]
+      };
+      
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          modelTopology: {
-            class_name: 'Sequential',
-            config: {
-              name: 'sequential',
-              layers: [
-                {
-                  class_name: 'Dense',
-                  config: {
-                    units: 1,
-                    activation: 'linear',
-                    use_bias: true,
-                    kernel_initializer: { class_name: 'GlorotUniform', config: { seed: null } },
-                    bias_initializer: { class_name: 'Zeros', config: {} },
-                    name: 'dense',
-                    trainable: true,
-                    batch_input_shape: [null, 10]
-                  }
-                }
-              ]
-            },
-            keras_version: '2.4.0',
-            backend: 'tensorflow'
-          },
-          format: 'layers-model',
-          generatedBy: 'keras-v2.4.0',
-          convertedBy: 'TensorFlow.js converter v3.6.0',
-          weightsManifest: [
-            {
-              paths: ['weights.bin'],
-              weights: [
-                { name: 'dense/kernel', shape: [10, 1], dtype: 'float32' },
-                { name: 'dense/bias', shape: [1], dtype: 'float32' }
-              ]
-            }
-          ]
-        }),
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(modelData),
       });
     } else if (url.endsWith('.bin')) {
-      // 10*4 + 1*4 = 44 bytes for float32 weights
-      const buffer = Buffer.alloc(44);
+      // weights for [10, 1] + [1] = 11 floats = 44 bytes
+      const weights = new Float32Array(11).fill(0.1);
       await route.fulfill({
         status: 200,
         contentType: 'application/octet-stream',
-        body: buffer,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/octet-stream'
+        },
+        body: Buffer.from(weights.buffer),
       });
     } else {
       await route.continue();
@@ -176,10 +199,20 @@ export async function mockWorkerUtils(page: Page) {
  * Combined helper to setup all default mocks for a standard scan test
  */
 export async function setupDefaultMocks(page: Page) {
+  // E2E: stable i18n + consent before app bundles load (i18n reads localStorage on import)
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.setItem("afia_user_language", "en");
+      window.localStorage.setItem("afia_privacy_accepted", "true");
+    } catch {
+      /* ignore */
+    }
+  });
+  // Setup worker utils (including model mocking) FIRST to intercept early loads
+  await mockWorkerUtils(page);
   await mockCamera(page);
   await mockAnalyzeSuccess(page);
   await mockFeedbackSuccess(page);
-  await mockWorkerUtils(page);
 }
 
 /**
@@ -193,51 +226,91 @@ export async function setupDefaultMocks(page: Page) {
  */
 export async function mockCamera(page: Page) {
   await page.addInitScript(() => {
+    // Ensure a patchable MediaDevices is always present. On some runtimes, `mediaDevices` can be
+    // undefined when this script first runs, which skipped the old mock and left the real
+    // getUserMedia in place (hanging in CI / fake-device setups).
+    if (!("mediaDevices" in navigator) || !navigator.mediaDevices) {
+      (navigator as { mediaDevices: MediaDevices }).mediaDevices = {} as MediaDevices;
+    }
+
     // Create fake video stream from canvas with realistic bottle
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     canvas.width = 640;
     canvas.height = 480;
-    const ctx = canvas.getContext('2d')!;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      const mediaDevices = navigator.mediaDevices as MediaDevices;
+      Object.defineProperty(mediaDevices, "getUserMedia", {
+        value: async function () {
+          const c = document.createElement("canvas");
+          c.width = 640;
+          c.height = 480;
+          const x = c.getContext("2d");
+          if (x) {
+            x.fillStyle = "#e5e5e5";
+            x.fillRect(0, 0, 640, 480);
+          }
+          return c.captureStream(30);
+        },
+        configurable: true,
+        writable: true,
+      });
+      Object.defineProperty(mediaDevices, "enumerateDevices", {
+        value: async function () {
+          return [
+            {
+              deviceId: "fake-camera",
+              kind: "videoinput" as MediaDeviceKind,
+              label: "Fake Camera (Back)",
+              groupId: "fake-group",
+            },
+          ];
+        },
+        configurable: true,
+        writable: true,
+      });
+      return;
+    }
 
     // Draw realistic bottle scene for auto-capture
     // Background - neutral gray (good lighting)
-    ctx.fillStyle = '#e5e5e5';
+    ctx.fillStyle = "#e5e5e5";
     ctx.fillRect(0, 0, 640, 480);
-    
+
     // Bottle body - centered and properly sized for "good" distance
-    ctx.fillStyle = '#f4e4c1'; // Light oil color
+    ctx.fillStyle = "#f4e4c1"; // Light oil color
     ctx.fillRect(220, 120, 200, 280); // Main body
-    
+
     // Bottle neck
-    ctx.fillStyle = '#d4c4a1';
+    ctx.fillStyle = "#d4c4a1";
     ctx.fillRect(270, 80, 100, 50);
-    
+
     // Cap
-    ctx.fillStyle = '#8B4513';
+    ctx.fillStyle = "#8B4513";
     ctx.fillRect(280, 60, 80, 25);
-    
+
     // GREEN BAND - Critical for brand detection (Afia signature)
-    ctx.fillStyle = '#10b981'; // Afia green
+    ctx.fillStyle = "#10b981"; // Afia green
     ctx.fillRect(220, 200, 200, 40);
-    
+
     // HEART LOGO - Another brand marker
-    ctx.fillStyle = '#ef4444'; // Red heart
+    ctx.fillStyle = "#ef4444"; // Red heart
     ctx.beginPath();
     ctx.arc(310, 220, 15, 0, Math.PI * 2);
     ctx.fill();
-    
+
     // Label text area (simulated)
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = "#ffffff";
     ctx.fillRect(230, 250, 180, 120);
-    
+
     // Add some text-like marks for realism
-    ctx.fillStyle = '#333333';
+    ctx.fillStyle = "#333333";
     ctx.fillRect(240, 270, 160, 8);
     ctx.fillRect(240, 290, 140, 8);
     ctx.fillRect(240, 310, 150, 8);
-    
+
     // Handle
-    ctx.strokeStyle = '#d4c4a1';
+    ctx.strokeStyle = "#d4c4a1";
     ctx.lineWidth = 8;
     ctx.beginPath();
     ctx.arc(420, 280, 40, Math.PI * 0.5, Math.PI * 1.5);
@@ -325,7 +398,14 @@ export async function mockCamera(page: Page) {
     const observer = new MutationObserver(() => {
       setupExistingVideos();
     });
-    observer.observe(document.body, { childList: true, subtree: true });
+    if (document.body) {
+      observer.observe(document.body, { childList: true, subtree: true });
+    } else {
+      // Fallback if body is not yet available
+      window.addEventListener('DOMContentLoaded', () => {
+        observer.observe(document.body, { childList: true, subtree: true });
+      });
+    }
 
     const stream = canvas.captureStream(30);
     const videoTrack = stream.getVideoTracks()[0];
@@ -351,18 +431,28 @@ export async function mockCamera(page: Page) {
       } as any);
     }
 
-    // Mock mediaDevices
-    if (navigator.mediaDevices) {
-      navigator.mediaDevices.getUserMedia = async () => stream;
-      navigator.mediaDevices.enumerateDevices = async () => [
-        {
-          deviceId: 'fake-camera',
-          kind: 'videoinput',
-          label: 'Fake Camera (Back)',
-          groupId: 'fake-group'
-        } as any
-      ];
-    }
+    const mediaDevices = navigator.mediaDevices!;
+    Object.defineProperty(mediaDevices, "getUserMedia", {
+      value: async function getUserMediaMock() {
+        return stream;
+      },
+      configurable: true,
+      writable: true,
+    });
+    Object.defineProperty(mediaDevices, "enumerateDevices", {
+      value: async function enumerateDevicesMock() {
+        return [
+          {
+            deviceId: "fake-camera",
+            kind: "videoinput" as const,
+            label: "Fake Camera (Back)",
+            groupId: "fake-group",
+          },
+        ];
+      },
+      configurable: true,
+      writable: true,
+    });
   });
 }
 

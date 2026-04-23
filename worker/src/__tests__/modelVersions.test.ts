@@ -64,7 +64,7 @@ describe('Model Version Management Endpoints', () => {
       });
 
       const response = await handleGetVersions(mockEnv);
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(200);
       expect(data.versions).toEqual(mockVersions);
@@ -81,7 +81,7 @@ describe('Model Version Management Endpoints', () => {
       });
 
       const response = await handleGetVersions(mockEnv);
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(500);
       expect(data.error).toBe('Database connection failed');
@@ -99,7 +99,7 @@ describe('Model Version Management Endpoints', () => {
       mockRpc.mockResolvedValue({ error: null });
 
       const response = await handleActivateVersion(mockRequest, mockEnv);
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -112,7 +112,7 @@ describe('Model Version Management Endpoints', () => {
       });
 
       const response = await handleActivateVersion(mockRequest, mockEnv);
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(400);
       expect(data.error).toContain('version');
@@ -132,7 +132,7 @@ describe('Model Version Management Endpoints', () => {
       });
 
       const response = await handleActivateVersion(mockRequest, mockEnv);
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(500);
       expect(data.error).toBe('Update failed');
@@ -152,7 +152,7 @@ describe('Model Version Management Endpoints', () => {
       });
 
       const response = await handleDeactivateVersion(mockRequest, mockEnv);
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -165,7 +165,7 @@ describe('Model Version Management Endpoints', () => {
       });
 
       const response = await handleDeactivateVersion(mockRequest, mockEnv);
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(400);
       expect(data.error).toContain('version');
@@ -185,7 +185,7 @@ describe('Model Version Management Endpoints', () => {
       });
 
       const response = await handleDeactivateVersion(mockRequest, mockEnv);
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(500);
       expect(data.error).toBe('Update failed');

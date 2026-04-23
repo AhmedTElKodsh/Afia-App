@@ -6,6 +6,7 @@ import {
   mlToCups,
   ML_PER_TABLESPOON,
   ML_PER_CUP,
+  ML_PER_VOLUME_STEP,
 } from "../utils/volumeCalculator.ts";
 import type { BottleGeometry } from "../data/bottleRegistry.ts";
 
@@ -79,6 +80,17 @@ describe("mlToCups", () => {
 
   it("converts 1 cup correctly", () => {
     expect(mlToCups(ML_PER_CUP)).toBeCloseTo(1, 5);
+  });
+});
+
+describe("measurement constants", () => {
+  it("uses the agreed regional cup size constant", () => {
+    expect(ML_PER_CUP).toBe(220);
+  });
+
+  it("keeps slider step aligned to cup calibration", () => {
+    expect(ML_PER_VOLUME_STEP).toBe(55);
+    expect(ML_PER_CUP % ML_PER_VOLUME_STEP).toBe(0);
   });
 });
 

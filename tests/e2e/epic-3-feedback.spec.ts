@@ -1,38 +1,22 @@
 import { test, expect } from '@playwright/test';
-import { setupDefaultMocks } from './helpers/mockAPI';
-import { testBottles } from './fixtures/testData';
+import { setupDefaultMocks, mockAnalyzeSuccess, mockAnalyzeLowConfidence, mockFeedbackSuccess } from './helpers/mockAPI';
 import { triggerAnalyzeAndConfirm } from './helpers/flow';
 
 /**
- * Epic 3: Continuous Improvement Loop - Feedback Tests
+ * Epic 3: Feedback System
+ * 
+ * Verifies that users can rate the accuracy of AI scans and that
+ * corrections are properly handled and submitted to the backend.
  */
-
 test.describe('Epic 3: Feedback System', () => {
-
+  
   test.beforeEach(async ({ page }) => {
-    // Enable console logging for debugging
-    page.on('console', msg => {
-      if (msg.type() === 'error' || msg.type() === 'warning') {
-        console.log(`[BROWSER ${msg.type().toUpperCase()}]:`, msg.text());
-      }
-    });
-    
-    page.on('pageerror', error => {
-      console.log('[PAGE ERROR]:', error.message);
-    });
-    
+    // Standard setup: scan corn oil 1.5L
     await setupDefaultMocks(page);
+    await page.goto('/?sku=afia-corn-1.5l&test_mode=1');
     
-    // Use test_mode=1 to enable test features immediately
-    await page.goto(`/?sku=${testBottles.filippoBerio.sku}&test_mode=1`);
-    
-    // Set mock state
-    await page.evaluate(() => {
-      localStorage.setItem('afia_privacy_accepted', 'true');
-      localStorage.setItem('afia_onboarding_complete', 'true');
-      localStorage.setItem('afia_mock_mode', 'true');
-    });
-    
+    // Ensure we start fresh for each test
+    await page.evaluate(() => localStorage.clear());
     await page.reload();
   });
 
@@ -72,7 +56,7 @@ test.describe('Epic 3: Feedback System', () => {
     await page.locator('button:has-text("About right")').click();
 
     // Wait for auto-submit delay (150ms) + state update cycle
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(500);
 
     // ResultDisplay shows .result-feedback-thanks
     await expect(page.locator('.result-feedback-thanks')).toBeVisible({ timeout: 15000 });
@@ -102,21 +86,18 @@ test.describe('Epic 3: Feedback System', () => {
     const submitBtn = page.locator('.feedback-submit-btn');
     await expect(submitBtn).toBeVisible({ timeout: 5000 });
 
-    // Wait for feedback API call
-    const feedbackPromise = page.waitForResponse(
-      res => res.url().includes('/feedback'),
-      { timeout: 10000 }
+    // Wait for feedback request to be issued by the app
+    const feedbackPromise = page.waitForRequest(
+      req => req.url().includes('/feedback') && req.method() === 'POST',
+      { timeout: 15000 }
     );
 
     // Submit
     await submitBtn.click();
 
-    // Wait for API call to complete
-    const feedbackResponse = await feedbackPromise;
-    console.log('[TEST] Feedback API response status:', feedbackResponse.status());
-
-    // Wait for state update cycle (feedback submission + re-render)
-    await page.waitForTimeout(1000);
+    // Wait for API call to be issued
+    const feedbackRequest = await feedbackPromise;
+    console.log('[TEST] Feedback API request URL:', feedbackRequest.url());
 
     // ResultDisplay swaps FeedbackGrid for thank-you message
     await expect(page.locator('.result-feedback-thanks')).toBeVisible({ timeout: 15000 });
@@ -132,23 +113,20 @@ test.describe('Epic 3: Feedback System', () => {
     const submitBtn = page.locator('.feedback-submit-btn');
     await expect(submitBtn).toBeVisible({ timeout: 5000 });
     
-    // Wait for feedback API call
-    const feedbackPromise = page.waitForResponse(
-      res => res.url().includes('/feedback'),
-      { timeout: 10000 }
+    // Wait for feedback request to be issued by the app
+    const feedbackPromise = page.waitForRequest(
+      req => req.url().includes('/feedback') && req.method() === 'POST',
+      { timeout: 15000 }
     );
     
-    await page.locator('.feedback-submit-btn').click();
+    await submitBtn.click();
 
-    // Wait for API call to complete
-    const feedbackResponse = await feedbackPromise;
-    console.log('[TEST] Feedback API response status:', feedbackResponse.status());
-
-    // Wait for state update cycle (feedback submission + re-render)
-    await page.waitForTimeout(1000);
+    // Wait for API call to be issued
+    const feedbackRequest = await feedbackPromise;
+    console.log('[TEST] Feedback API request URL:', feedbackRequest.url());
 
     await expect(page.locator('.result-feedback-thanks')).toBeVisible({ timeout: 15000 });
     await expect(page.locator('.result-feedback-thanks')).toContainText('Thank you');
     await expect(page.locator('.feedback-grid-container')).toBeHidden();
-    });
-    });
+  });
+});

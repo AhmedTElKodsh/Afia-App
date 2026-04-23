@@ -66,7 +66,7 @@ describe("API Integration Tests", () => {
       (storeScan as any).mockResolvedValue({ ok: true });
 
       const response = await handleAnalyze(mockContext);
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(200);
       expect(data.fillPercentage).toBe(75);
@@ -81,7 +81,7 @@ describe("API Integration Tests", () => {
       });
 
       const response = await handleAnalyze(mockContext);
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(400);
       expect(data.error).toContain("Missing required field: sku");
@@ -94,7 +94,7 @@ describe("API Integration Tests", () => {
       });
 
       const response = await handleAnalyze(mockContext);
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(400);
       expect(data.error).toContain("Invalid image data");
@@ -126,7 +126,7 @@ describe("API Integration Tests", () => {
       (updateScanWithFeedback as any).mockResolvedValue({ ok: true });
 
       const response = await handleFeedback(mockContext);
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(200);
       expect(data.validationStatus).toBe("accepted");
@@ -151,7 +151,7 @@ describe("API Integration Tests", () => {
       (getSupabase as any).mockReturnValue(mockSupabase);
 
       const response = await handleFeedback(mockContext);
-      const data = await response.json();
+      const data = await response.json() as any;
 
       expect(response.status).toBe(404);
       expect(data.error).toBe("Scan record not found");
