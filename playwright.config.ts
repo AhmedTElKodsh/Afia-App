@@ -98,7 +98,7 @@ export default defineConfig({
       timeout: 60000,
     },
     {
-      command: 'npx wrangler dev --config "./worker/wrangler.toml" --port 8787 --local',
+      command: 'cd worker && npx wrangler dev --config "./wrangler.toml" --port 8787 --local',
       url: 'http://localhost:8787/health',
       reuseExistingServer: !process.env.CI,
       timeout: 60000,
