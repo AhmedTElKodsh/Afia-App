@@ -6,8 +6,8 @@ on:
   pull_request:
     branches: [master, local-model]
 
-# NOTE: Cloudflare deployment is intentionally NOT in this workflow.
-# Deploy via: .github/workflows/deploy-manual-trigger.yml.template (copy → .yml, then use GitHub Actions UI)
+# NOTE: Cloudflare deployment runs in a separate workflow triggered by CI success:
+# .github/workflows/deploy-on-ci-success.yml
 
 jobs:
   unit-tests:
