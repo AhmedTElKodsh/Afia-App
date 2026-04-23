@@ -62,6 +62,9 @@ jobs:
       - name: Install worker dependencies
         run: cd worker && npm ci
 
+      - name: Remove auto-generated Wrangler deploy artifacts
+        run: rm -f dist/wrangler.json && rm -rf .wrangler/
+
       - name: Create worker dev vars with real API keys
         run: |
           cat > worker/.dev.vars << 'EOF'
@@ -73,7 +76,7 @@ jobs:
           EOF
 
       - name: Start worker in background
-        run: cd worker && npx wrangler dev --port 8787 --local &
+        run: cd worker && npx wrangler dev --config ./wrangler.toml --port 8787 --local &
 
       - name: Wait for worker to be ready
         run: |
@@ -120,6 +123,9 @@ jobs:
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
+
+      - name: Remove auto-generated Wrangler deploy artifacts
+        run: rm -f dist/wrangler.json && rm -rf .wrangler/
 
       - name: Build for E2E (Stage 1 — LLM API Only)
         run: npm run build
