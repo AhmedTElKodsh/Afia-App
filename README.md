@@ -286,7 +286,7 @@ cd .. && npm run build
 npx wrangler pages deploy dist --project-name=afia-app --branch=master
 
 # 4. Verify deployment
-curl https://afia-worker.savona.workers.dev/health
+curl https://afia-worker.savola.workers.dev/health
 ```
 
 ### First-time Cloudflare Setup

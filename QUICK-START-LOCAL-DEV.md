@@ -97,7 +97,7 @@ Before deploying to Cloudflare:
 - [ ] Offline mode tested (PWA)
 
 ### After Cloudflare Deployment
-- [ ] Worker health: `curl https://afia-worker.savona.workers.dev/health`
+- [ ] Worker health: `curl https://afia-worker.savola.workers.dev/health`
 - [ ] Pages loading: `https://afia-app.pages.dev`
 - [ ] QR code with production URL works
 - [ ] Camera on mobile works

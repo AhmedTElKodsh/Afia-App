@@ -64,7 +64,7 @@ VITE_ENABLE_LOCAL_MODEL=true
 VITE_STAGE=stage2
 
 # Worker URL for Stage 2
-VITE_PROXY_URL=https://afia-worker-stage2.savona.workers.dev
+VITE_PROXY_URL=https://afia-worker-stage2.savola.workers.dev
 
 # Admin password
 VITE_ADMIN_PASSWORD=your_admin_password_here

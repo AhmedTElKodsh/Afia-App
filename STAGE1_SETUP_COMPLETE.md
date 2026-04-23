@@ -29,7 +29,7 @@ Your Afia Oil Tracker application is now configured for a 3-stage deployment str
 - **Model**: LLM API (Gemini/Groq) only
 - **Status**: ✅ Production Ready
 - **Deployments**:
-  - Worker: `https://afia-worker.savona.workers.dev`
+  - Worker: `https://afia-worker.savola.workers.dev`
   - Pages: `https://afia-app.pages.dev`
 
 ### What Happens on Push to Master

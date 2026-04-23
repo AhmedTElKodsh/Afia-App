@@ -12,7 +12,7 @@ This document outlines the deployment strategy for the Afia Oil Tracker applicat
 - **Model**: Gemini/Groq API only
 - **Purpose**: Stable production release with proven cloud-based inference
 - **Deployment**:
-  - Worker: `afia-worker.savona.workers.dev`
+  - Worker: `afia-worker.savola.workers.dev`
   - Pages: `afia-app.pages.dev`
 
 ### Stage 2: Local Model + LLM Fallback (Testing)
@@ -21,7 +21,7 @@ This document outlines the deployment strategy for the Afia Oil Tracker applicat
 - **Model**: ONNX local model (primary) + LLM API (fallback)
 - **Purpose**: Test local model maturity while maintaining reliability
 - **Deployment**:
-  - Worker: `afia-worker-stage2.savona.workers.dev`
+  - Worker: `afia-worker-stage2.savola.workers.dev`
   - Pages: `afia-app-stage2.pages.dev`
 - **Note**: Workflow is configured but local model implementation is pending
 
@@ -263,13 +263,15 @@ Before deploying, you must set these secrets in your GitHub repository:
 ```
 CLOUDFLARE_API_TOKEN       # Get from Cloudflare dashboard
 CLOUDFLARE_ACCOUNT_ID      # Get from Cloudflare dashboard
+CLOUDFLARE_RATE_LIMIT_KV_ID  # KV namespace id in THIS account (see .github/workflows/README.md)
 VITE_ADMIN_PASSWORD        # Choose a strong password (NOT '1234'!)
 ```
 
 **Optional Secrets (have defaults):**
 ```
-CLOUDFLARE_WORKER_URL      # Defaults to: https://afia-worker.savona.workers.dev
-CLOUDFLARE_WORKER_URL_STAGE2  # Defaults to: https://afia-worker-stage2.savona.workers.dev
+CLOUDFLARE_RATE_LIMIT_KV_PREVIEW_ID  # Optional second KV id for wrangler preview
+CLOUDFLARE_WORKER_URL      # Defaults to: https://afia-worker.savola.workers.dev
+CLOUDFLARE_WORKER_URL_STAGE2  # Defaults to: https://afia-worker-stage2.savola.workers.dev
 ```
 
 ### Wrangler Secrets (Per Environment)

@@ -26,7 +26,7 @@ app.use("*", async (c, next) => {
 
   const corsMiddleware = cors({
     origin: (origin) => {
-      if (!origin) return null;
+      if (!origin) return undefined;
       if (allowedOrigins.includes(origin)) return origin;
       
       // Strict regex check for Cloudflare Pages previews - prevents subdomain attacks
@@ -34,7 +34,7 @@ app.use("*", async (c, next) => {
         /^https:\/\/[a-z0-9-]+\.afia-app\.pages\.dev$/.test(origin) || 
         /^https:\/\/[a-z0-9-]+\.afia-oil-tracker\.pages\.dev$/.test(origin);
       
-      return isPagesPreview ? origin : null;
+      return isPagesPreview ? origin : undefined;
     },
     allowMethods: ["GET", "POST", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],

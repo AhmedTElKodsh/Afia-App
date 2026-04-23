@@ -63,6 +63,11 @@ B2_DOWNLOAD_URL = ""
 # Upstash Redis (Edge State & Rate Limiting) — see above note.
 UPSTASH_REDIS_REST_URL = ""
 
+# KV ids below are placeholders from the original account. GitHub Actions
+# replaces them via scripts/apply-wrangler-kv-ids.sh + secrets
+# CLOUDFLARE_RATE_LIMIT_KV_ID (see .github/workflows/README.md). For local
+# deploy to your own account, run the same script with those env vars set, or
+# paste your namespace ids from: npx wrangler kv namespace create RATE_LIMIT_KV
 [[kv_namespaces]]
 binding = "RATE_LIMIT_KV"
 id = "9dc0bcc958de473199e5ded5701b932a"

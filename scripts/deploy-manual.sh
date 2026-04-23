@@ -23,7 +23,7 @@ fi
 
 # Confirmation prompt
 echo -e "${YELLOW}⚠️  This will deploy to production Cloudflare endpoints${NC}"
-echo "   Worker: https://afia-worker.savona.workers.dev"
+echo "   Worker: https://afia-worker.savola.workers.dev"
 echo "   Pages: https://afia-app.pages.dev"
 echo ""
 read -p "Are you sure you want to deploy? (yes/no): " confirm
@@ -117,7 +117,7 @@ echo "=============================="
 
 # Test worker health endpoint
 echo "Testing Worker health endpoint..."
-WORKER_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" https://afia-worker.savona.workers.dev/health)
+WORKER_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" https://afia-worker.savola.workers.dev/health)
 if [ "$WORKER_HEALTH" = "200" ]; then
     echo -e "${GREEN}✅ Worker health check passed${NC}"
 else
@@ -139,7 +139,7 @@ echo -e "${GREEN}✅ Deployment Complete!${NC}"
 echo "======================================"
 echo ""
 echo "🔗 Production URLs:"
-echo "   Worker: https://afia-worker.savona.workers.dev"
+echo "   Worker: https://afia-worker.savola.workers.dev"
 echo "   Pages:  https://afia-app.pages.dev"
 echo ""
 echo "📊 Next Steps:"
