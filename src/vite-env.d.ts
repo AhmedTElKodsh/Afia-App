@@ -6,6 +6,7 @@ declare global {
     __AFIA_TEST_MODE__?: boolean | { bypassQualityChecks?: boolean };
     __AFIA_FORCE_READY__?: () => void;
     __AFIA_TRIGGER_ANALYZE__?: () => void;
+    __AFIA_TRIGGER_ERROR__?: (message: string) => void;
   }
 }
 

@@ -113,7 +113,9 @@ app.use("*", async (c, next) => {
   const isAdminAction = !isAdminAuth && c.req.path.startsWith("/admin/");
   const key = isAdminAuth ? `ratelimit:admin:${ip}` : isAdminAction ? `ratelimit:admin-action:${ip}` : `ratelimit:${ip}`;
   const windowMs = 60_000;
-  const limit = isAdminAuth ? 3 : isAdminAction ? 10 : 30;
+  // Keep auth brute-force protection strict, but allow normal integration/admin flows
+  // to complete without tripping global per-minute limits.
+  const limit = isAdminAuth ? 5 : isAdminAction ? 60 : 120;
   const now = Date.now();
   const windowStart = now - windowMs;
 

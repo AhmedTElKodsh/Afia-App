@@ -7,7 +7,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { handleModelVersion } from "../modelVersion";
 import { getSupabaseClient } from "../db/supabase";
 
-// Mock Supabase
 vi.mock("../db/supabase", () => ({
   getSupabaseClient: vi.fn(),
 }));
@@ -27,26 +26,15 @@ describe("handleModelVersion", () => {
         if (key === "requestId") return "test-request-123";
         return undefined;
       }),
-      json: (data: any, statusOrHeaders?: number | Record<string, string>, headers?: Record<string, string>) => {
-        // Handle both signatures: json(data, status, headers) and json(data, headers)
-        let status = 200;
-        let responseHeaders: Record<string, string> = {};
-        
-        if (typeof statusOrHeaders === 'number') {
-          status = statusOrHeaders;
-          responseHeaders = headers || {};
-        } else if (statusOrHeaders) {
-          responseHeaders = statusOrHeaders;
-        }
-        
+      json: vi.fn((data: any, status?: number, headers?: any) => {
         return new Response(JSON.stringify(data), {
-          status,
+          status: status || 200,
           headers: {
             "Content-Type": "application/json",
-            ...responseHeaders,
+            ...headers,
           },
         });
-      },
+      }),
     };
   });
 

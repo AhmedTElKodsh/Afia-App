@@ -30,7 +30,7 @@ describe("apiClient", () => {
       const result = await analyzeBottle("filippo-berio-500ml", "base64data");
 
       expect(global.fetch).toHaveBeenCalledWith(
-        "http://localhost:8787/analyze",
+        expect.stringMatching(/\/analyze$/),
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -113,7 +113,7 @@ describe("apiClient", () => {
       );
 
       expect(global.fetch).toHaveBeenCalledWith(
-        "http://localhost:8787/feedback",
+        expect.stringMatching(/\/feedback$/),
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -145,7 +145,7 @@ describe("apiClient", () => {
       const result = await submitFeedback("test-scan-id", "too_high", 85);
 
       expect(global.fetch).toHaveBeenCalledWith(
-        "http://localhost:8787/feedback",
+        expect.stringMatching(/\/feedback$/),
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

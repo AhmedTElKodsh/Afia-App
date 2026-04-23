@@ -59,7 +59,6 @@ export async function analyze(options: AnalysisOptions): Promise<AnalysisResult>
   const isTestMode = typeof window !== 'undefined' && (window as any).__AFIA_TEST_MODE__ === true;
   
   // M8.5: Debug flags from localStorage for E2E tests
-  const forceConfidence = typeof window !== 'undefined' ? localStorage.getItem('afia_force_local_confidence') : null;
   const forceNetErrorSync = typeof window !== 'undefined' ? localStorage.getItem('afia_net_error_sync') === 'true' : false;
 
   // Validation: Ensure image is provided and valid

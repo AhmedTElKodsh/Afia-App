@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, useEffect, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
-import { Camera, History, LayoutDashboard, FlaskConical } from "lucide-react";
 
 import "./App.css";
 import "./components/Navigation.css";
@@ -37,8 +36,6 @@ const AdminDashboard = lazy(() => import("./components/AdminDashboard.tsx").then
 const TestLab = lazy(() => import("./components/TestLab.tsx").then(m => ({ default: m.TestLab })));
 
 import { Navigation, type CurrentView } from "./components/Navigation.tsx";
-
-const ADMIN_SESSION_KEY = "afia_admin_session";
 
 export default function App() {
   const { t } = useTranslation();
@@ -433,7 +430,6 @@ export default function App() {
         handleAnalyze(blankJpeg);
       };
       window.__AFIA_TRIGGER_ERROR__ = (message: string) => {
-        const error = new Error(message);
         // Story 7.6 - AC6: Handle needs-sku route
         if (message.startsWith('NEEDS_SKU:')) {
           setCurrentView("scan");

@@ -144,9 +144,6 @@ export function useCameraGuidance(
   const stableBrandCountRef = useRef<number>(0);
   const currentBetaRef = useRef<number | null>(null);
   
-  // M8: Test mode detection (global flag set by E2E tests)
-  const isTestMode = typeof window !== 'undefined' && (window as any).__AFIA_TEST_MODE__ === true;
-  
   const [state, setState] = useState<CameraGuidanceState>({
     assessment: null,
     isReady: false,

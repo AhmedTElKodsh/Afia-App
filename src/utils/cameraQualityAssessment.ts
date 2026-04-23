@@ -361,7 +361,7 @@ export function analyzeComposition(
       || H;
     // Video metadata not yet loaded — canvas would contain only black pixels.
     if (srcW === 0 || srcH === 0) {
-      return { isCentered: false, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: false, widthFraction: 0, centroidX: 0.5, isBrandMatch: false };
+      return { isCentered: false, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: false, widthFraction: 0, centroidX: 0.5, isBrandMatch: false, brandFindings: [] };
     }
     const cropX = srcW * CROP_X_START;
     const cropW = srcW * (CROP_X_END - CROP_X_START);
@@ -434,6 +434,7 @@ export function analyzeComposition(
         widthFraction: 0,
         centroidX: 0.5,
         isBrandMatch: false,
+        brandFindings: [],
       };
     }
 
@@ -441,7 +442,7 @@ export function analyzeComposition(
     const bboxHeight = maxRow - minRow + 1;
     const bboxWidth  = maxCol - minCol + 1;
     if (bboxHeight < BBOX_MIN_HEIGHT || bboxWidth < 2) {
-      return { isCentered: false, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: false, widthFraction: 0, centroidX: 0.5, isBrandMatch: false };
+      return { isCentered: false, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: false, widthFraction: 0, centroidX: 0.5, isBrandMatch: false, brandFindings: [] };
     }
 
 
@@ -453,7 +454,7 @@ export function analyzeComposition(
     // Gate 2: aspect ratio — bottle must be taller than wide (Afia 1.5L ≈ 0.62)
     const aspectRatio = bboxWidth / bboxHeight;
     if (aspectRatio > BOTTLE_ASPECT_MAX) {
-      return { isCentered, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: true, widthFraction: bboxWidth / W, centroidX, isBrandMatch: false };
+      return { isCentered, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: true, widthFraction: bboxWidth / W, centroidX, isBrandMatch: false, brandFindings: [] };
     }
 
     // Gate 3: neck sparsity — top 25% of bbox must be sparser than bottom 60%
@@ -478,7 +479,7 @@ export function analyzeComposition(
     const bodyDensity = actualBodyRows > 0 ? bodyTotal / (actualBodyRows * bboxWidth) : 0;
     
     if (bodyDensity === 0 || neckDensity >= NECK_MAX_DENSITY_RATIO * bodyDensity) {
-      return { isCentered, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: true, widthFraction: bboxWidth / W, centroidX, isBrandMatch: false };
+      return { isCentered, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: true, widthFraction: bboxWidth / W, centroidX, isBrandMatch: false, brandFindings: [] };
     }
 
     const spanFraction  = bboxHeight / H;
@@ -486,7 +487,7 @@ export function analyzeComposition(
 
     // Spec §4.2: matched region too short for confident classification even after shape gates.
     if (spanFraction < 0.30) {
-      return { isCentered, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: true, widthFraction, centroidX, isBrandMatch: false };
+      return { isCentered, isLevel: true, distance: 'not-detected', visibility: 0, bottleDetected: true, widthFraction, centroidX, isBrandMatch: false, brandFindings: [] };
     }
 
     // 'good' requires: vertical 55–90 %, width ≥ 35 %, and centred.
@@ -513,6 +514,7 @@ export function analyzeComposition(
       widthFraction,
       centroidX,
       isBrandMatch,
+      brandFindings: brandResult.findings,
     };
   } catch (error) {
     console.error('Composition analysis error:', error);
@@ -525,6 +527,7 @@ export function analyzeComposition(
       widthFraction: 0,
       centroidX: 0.5,
       isBrandMatch: false,
+      brandFindings: [],
     };
   }
 }
