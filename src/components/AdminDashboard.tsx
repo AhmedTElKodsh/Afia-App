@@ -39,7 +39,7 @@ import { ModelVersionPanel } from "./admin/ModelVersionPanel";
 import { ModelVersionManager } from "./admin/ModelVersionManager";
 import "./AdminDashboard.css";
 
-const WORKER_URL = import.meta.env.VITE_PROXY_URL || "";
+const WORKER_URL = import.meta.env.VITE_PROXY_URL || (import.meta.env.DEV ? 'http://localhost:8787' : '');
 const SESSION_KEY = "afia_admin_session";
 const SESSION_EXPIRES_KEY = "afia_admin_session_expires";
 
