@@ -241,23 +241,17 @@ def update_model_registry(
     
     client = create_client(config.supabase_url, config.supabase_key)
     
-    # Prepare record matching schema + AC7 requirements
+    # Prepare record for model_versions table (Matches Story 7.5 Schema)
     record = {
         'version': config.model_version,
-        'architecture': 'MobileNetV3-Small',
-        'training_set_size': training_samples_count,
-        'mae_validation': round(metrics['mae'], 2),
-        'model_url': f"{config.r2_endpoint}/{config.r2_bucket}/{r2_key}",
+        'architecture': config.architecture,
+        'mae': round(metrics['mae'], 4),
+        'val_accuracy': round(metrics['accuracy_within_10pct'], 4),
+        'training_samples_count': training_samples_count,
+        'r2_key': r2_key,
         'is_active': True,  # First model is active
-        # Store additional AC7 metrics in metadata JSONB column (if schema supports it)
-        # Otherwise these are logged but not persisted
-        # 'metadata': {
-        #     'val_accuracy': round(metrics['accuracy_within_10pct'], 2),
-        #     'r2_key': r2_key,
-        #     'rmse': round(metrics['rmse'], 2),
-        #     'median_ae': round(metrics['median_ae'], 2),
-        #     'max_error': round(metrics['max_error'], 2)
-        # }
+        'deployed_at': datetime.utcnow().isoformat(),
+        'notes': f"Automated training pipeline run. Architecture: {config.architecture}"
     }
     
     # Insert

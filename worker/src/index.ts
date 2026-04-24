@@ -16,6 +16,18 @@ import {
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
+// Global middleware to ensure body is drained to prevent Broken Pipe errors in Cloudflare Workers
+app.use("*", async (c, next) => {
+  try {
+    await next();
+  } finally {
+    // If body was never consumed (e.g. early return or error), drain it now
+    if (c.req.raw.body && !c.req.raw.bodyUsed) {
+      c.executionCtx.waitUntil(c.req.raw.body.cancel().catch(() => {}));
+    }
+  }
+});
+
 function getAllowedOrigin(origin: string | undefined, env: Env): string | null {
   if (!origin) return null;
   const allowedOrigins = env.ALLOWED_ORIGINS?.split(",").map((o) => o.trim()).filter(Boolean) ?? [
@@ -262,11 +274,13 @@ app.onError((err, c) => {
 });
 
 // 404 fallback
-app.all("*", (c) => c.json({ 
-  error: "Not found", 
-  code: "NOT_FOUND",
-  requestId: c.get("requestId") 
-}, 404));
+app.all("*", (c) => {
+  return c.json({ 
+    error: "Not found", 
+    code: "NOT_FOUND",
+    requestId: c.get("requestId") 
+  }, 404);
+});
 
 export default app;
 

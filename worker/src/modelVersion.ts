@@ -40,6 +40,19 @@ export async function handleModelVersion(
       .single();
 
     if (error) {
+      // Special handling for missing table (PGRST205) - common in fresh environments or tests
+      if (error.code === "PGRST205") {
+        console.warn(`[${requestId}] model_versions table not found in Supabase. Returning 404.`);
+        return c.json(
+          {
+            error: "Model versions table not initialized",
+            code: "NO_ACTIVE_VERSION",
+            requestId,
+          },
+          404
+        );
+      }
+
       console.error(`[${requestId}] Supabase query error:`, error);
       
       // Return graceful error response

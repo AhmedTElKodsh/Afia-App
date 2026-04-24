@@ -60,14 +60,37 @@ CREATE TABLE IF NOT EXISTS public.training_samples (
 
 -- 6. Model Versions
 CREATE TABLE IF NOT EXISTS public.model_versions (
-    version TEXT PRIMARY KEY, -- e.g. "0.1.2"
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    version TEXT NOT NULL UNIQUE,
     architecture TEXT DEFAULT 'MobileNetV3-Small',
-    training_set_size INTEGER,
-    mae_validation NUMERIC(5,2),
-    model_url TEXT NOT NULL, -- R2 URL to .onnx file
+    mae DOUBLE PRECISION NOT NULL,
+    val_accuracy DOUBLE PRECISION,
+    training_samples_count INTEGER NOT NULL,
+    r2_key TEXT NOT NULL,
     is_active BOOLEAN DEFAULT false,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    deployed_at TIMESTAMPTZ DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW(), -- Added back for compatibility
+    deployed_by TEXT,
+    notes TEXT
 );
+
+-- Ensure created_at exists on all tables for existing environments (idempotent backfill)
+DO $$
+DECLARE
+    tbl TEXT;
+BEGIN
+    FOREACH tbl IN ARRAY ARRAY['bottles', 'scans', 'augmented_data', 'training_samples', 'model_versions']
+    LOOP
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = tbl) THEN
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = tbl AND column_name = 'created_at') THEN
+                EXECUTE format('ALTER TABLE public.%I ADD COLUMN created_at TIMESTAMPTZ DEFAULT NOW()', tbl);
+            END IF;
+        END IF;
+    END LOOP;
+END $$;
+
+-- Only one version can be active at a time
+CREATE UNIQUE INDEX IF NOT EXISTS idx_active_version ON public.model_versions (is_active) WHERE is_active = true;
 
 -- RLS Policies
 ALTER TABLE public.bottles ENABLE ROW LEVEL SECURITY;

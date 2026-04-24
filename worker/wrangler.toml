@@ -7,6 +7,8 @@ account_id = "a34f53a07c2ef6f31c29f1dc20b71b23"
 [vars]
 ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173"
 SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co"
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFuZmdxZGdjYnZteWVnYmZ2dmZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDU4MzgsImV4cCI6MjA5MDM4MTgzOH0.uXYczNNpS6gefHCiIEOvR1hW4VQ4_tAHgqC-K-4RY0w"
+SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFuZmdxZGdjYnZteWVnYmZ2dmZoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDgwNTgzOCwiZXhwIjoyMDkwMzgxODM4fQ.r7j6vZb-bEo9i4WDWrhG5gEtl-ZgmUBaM9g_x1M_n2k"
 DEBUG_REASONING = "false"
 STAGE = "stage1"
 
@@ -14,7 +16,7 @@ STAGE = "stage1"
 [env.stage1]
 name = "afia-worker"
 account_id = "a34f53a07c2ef6f31c29f1dc20b71b23"
-vars = { STAGE = "stage1", ENABLE_LOCAL_MODEL = "false", ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173", SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co", DEBUG_REASONING = "false" }
+vars = { STAGE = "stage1", ENABLE_LOCAL_MODEL = "false", ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173", SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co", SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFuZmdxZGdjYnZteWVnYmZ2dmZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDU4MzgsImV4cCI6MjA5MDM4MTgzOH0.uXYczNNpS6gefHCiIEOvR1hW4VQ4_tAHgqC-K-4RY0w", SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFuZmdxZGdjYnZteWVnYmZ2dmZoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDgwNTgzOCwiZXhwIjoyMDkwMzgxODM4fQ.r7j6vZb-bEo9i4WDWrhG5gEtl-ZgmUBaM9g_x1M_n2k", DEBUG_REASONING = "false" }
 
 [[env.stage1.kv_namespaces]]
 binding = "RATE_LIMIT_KV"
@@ -30,7 +32,7 @@ preview_id = "d6d688f5cfd04d73a42c7c979c1f1791"
 [env.stage2]
 name = "afia-worker-stage2"
 account_id = "a34f53a07c2ef6f31c29f1dc20b71b23"
-vars = { STAGE = "stage2", ENABLE_LOCAL_MODEL = "true", LLM_FALLBACK_ENABLED = "true", ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173", SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co", DEBUG_REASONING = "false" }
+vars = { STAGE = "stage2", ENABLE_LOCAL_MODEL = "true", LLM_FALLBACK_ENABLED = "true", ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173", SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co", SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFuZmdxZGdjYnZteWVnYmZ2dmZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDU4MzgsImV4cCI6MjA5MDM4MTgzOH0.uXYczNNpS6gefHCiIEOvR1hW4VQ4_tAHgqC-K-4RY0w", SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFuZmdxZGdjYnZteWVnYmZ2dmZoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDgwNTgzOCwiZXhwIjoyMDkwMzgxODM4fQ.r7j6vZb-bEo9i4WDWrhG5gEtl-ZgmUBaM9g_x1M_n2k", DEBUG_REASONING = "false" }
 
 [[env.stage2.kv_namespaces]]
 binding = "RATE_LIMIT_KV"
@@ -46,7 +48,7 @@ preview_id = "d6d688f5cfd04d73a42c7c979c1f1791"
 [env.stage3]
 name = "afia-worker-stage3"
 account_id = "a34f53a07c2ef6f31c29f1dc20b71b23"
-vars = { STAGE = "stage3", ENABLE_LOCAL_MODEL = "true", LLM_FALLBACK_ENABLED = "false", ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173", SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co", DEBUG_REASONING = "false" }
+vars = { STAGE = "stage3", ENABLE_LOCAL_MODEL = "true", LLM_FALLBACK_ENABLED = "false", ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173", SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co", SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFuZmdxZGdjYnZteWVnYmZ2dmZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDU4MzgsImV4cCI6MjA5MDM4MTgzOH0.uXYczNNpS6gefHCiIEOvR1hW4VQ4_tAHgqC-K-4RY0w", SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFuZmdxZGdjYnZteWVnYmZ2dmZoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDgwNTgzOCwiZXhwIjoyMDkwMzgxODM4fQ.r7j6vZb-bEo9i4WDWrhG5gEtl-ZgmUBaM9g_x1M_n2k", DEBUG_REASONING = "false" }
 
 [[env.stage3.kv_namespaces]]
 binding = "RATE_LIMIT_KV"

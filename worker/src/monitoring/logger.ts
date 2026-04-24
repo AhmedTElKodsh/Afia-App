@@ -17,7 +17,7 @@ export class MonitoringLogger {
     if (!this.token) return;
 
     try {
-      await fetch('https://in.logs.betterstack.com', {
+      const response = await fetch('https://in.logs.betterstack.com', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -30,6 +30,8 @@ export class MonitoringLogger {
           ...event.metadata,
         }),
       });
+      // Always consume the response body in Cloudflare Workers to avoid connection issues
+      await response.text();
     } catch (error) {
       console.error('Monitoring log failed:', error);
     }

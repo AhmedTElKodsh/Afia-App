@@ -25,6 +25,12 @@ export async function handleGetVersions(env: Env): Promise<Response> {
       .order("deployed_at", { ascending: false });
 
     if (error) {
+      if (error.code === "PGRST205") {
+        console.warn("[handleGetVersions] model_versions table not found. Returning empty list.");
+        return new Response(JSON.stringify({ versions: [] }), {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
       console.error("[handleGetVersions] Supabase error:", error);
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
