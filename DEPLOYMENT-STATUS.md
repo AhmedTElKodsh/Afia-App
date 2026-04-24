@@ -25,8 +25,7 @@
 ### 1. Cloudflare Account Login
 **Status**: Blocked - Wrong account logged in
 
-**Current**: Account `531c665068721c28fb05e5bb83aade0c`
-**Required**: Account `a34f53a07c2ef6f31c29f1dc20b71b23`
+**Account**: `a34f53a07c2ef6f31c29f1dc20b71b23`
 
 **Action Required**:
 ```bash
@@ -35,9 +34,9 @@ npx wrangler logout
 npx wrangler login
 # Select account a34f53a07c2ef6f31c29f1dc20b71b23 in browser
 
-# Option 2: Use API token
-$env:CLOUDFLARE_API_TOKEN="your-token"
-$env:CLOUDFLARE_ACCOUNT_ID="a34f53a07c2ef6f31c29f1dc20b71b23"
+# Option 2: Use API token (Linux/macOS)
+export CLOUDFLARE_API_TOKEN="<YOUR_CLOUDFLARE_API_TOKEN>"
+export CLOUDFLARE_ACCOUNT_ID="a34f53a07c2ef6f31c29f1dc20b71b23"
 ```
 
 See `CLOUDFLARE-LOGIN-FIX.md` for detailed instructions.
@@ -48,7 +47,7 @@ See `CLOUDFLARE-LOGIN-FIX.md` for detailed instructions.
 Go to: https://github.com/AhmedTElKodsh/Afia-App/settings/secrets/actions
 
 Update these secrets:
-- `CLOUDFLARE_API_TOKEN` - Token for account a34f53a07c2ef6f31c29f1dc20b71b23
+- `CLOUDFLARE_API_TOKEN` - `<YOUR_CLOUDFLARE_API_TOKEN>`
 - `CLOUDFLARE_ACCOUNT_ID` - `a34f53a07c2ef6f31c29f1dc20b71b23`
 
 ### 3. Manual Deployment (Optional)

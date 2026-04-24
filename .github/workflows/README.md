@@ -5,7 +5,7 @@
 To enable automatic deployments, you need to configure these secrets in your GitHub repository:
 
 ### 1. CLOUDFLARE_ACCOUNT_ID
-- **Value**: `531c665068721c28fb05e5bb83aade0c`
+- **Value**: `a34f53a07c2ef6f31c29f1dc20b71b23`
 - **Description**: Your Cloudflare account ID
 
 ### 2. CLOUDFLARE_API_TOKEN
@@ -70,7 +70,7 @@ npx wrangler pages deploy dist --project-name=afia-app --branch=master
 
 ### Error: "Project not found"
 - Verify `CLOUDFLARE_ACCOUNT_ID` is set correctly in GitHub secrets
-- Ensure the account ID matches: `531c665068721c28fb05e5bb83aade0c`
+- Ensure the account ID matches: `a34f53a07c2ef6f31c29f1dc20b71b23`
 
 ### Error: "Authentication error"
 - Verify `CLOUDFLARE_API_TOKEN` is set and has the correct permissions
