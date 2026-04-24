@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { cors } from "hono/cors";
 import type { Env, Variables } from "./types.ts";
 import { handleAnalyze } from "./analyze.ts";
 import { handleFeedback } from "./feedback.ts";
@@ -17,31 +16,46 @@ import {
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// CORS middleware — restrict to known origins
-app.use("*", async (c, next) => {
-  const allowedOrigins = c.env.ALLOWED_ORIGINS?.split(",").map((o) => o.trim()).filter(Boolean) ?? [
+function getAllowedOrigin(origin: string | undefined, env: Env): string | null {
+  if (!origin) return null;
+  const allowedOrigins = env.ALLOWED_ORIGINS?.split(",").map((o) => o.trim()).filter(Boolean) ?? [
     "http://localhost:5173",
     "http://localhost:4173",
   ];
+  if (allowedOrigins.includes(origin)) return origin;
 
-  const corsMiddleware = cors({
-    origin: (origin) => {
-      if (!origin) return undefined;
-      if (allowedOrigins.includes(origin)) return origin;
-      
-      // Strict regex check for Cloudflare Pages previews - prevents subdomain attacks
-      const isPagesPreview = 
-        /^https:\/\/[a-z0-9-]+\.afia-app\.pages\.dev$/.test(origin) || 
-        /^https:\/\/[a-z0-9-]+\.afia-oil-tracker\.pages\.dev$/.test(origin);
-      
-      return isPagesPreview ? origin : undefined;
-    },
-    allowMethods: ["GET", "POST", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization"],
-    maxAge: 86400,
-  });
+  // Strict regex check for Cloudflare Pages previews - prevents subdomain attacks
+  const isPagesPreview =
+    /^https:\/\/[a-z0-9-]+\.afia-app\.pages\.dev$/.test(origin) ||
+    /^https:\/\/[a-z0-9-]+\.afia-oil-tracker\.pages\.dev$/.test(origin);
+  return isPagesPreview ? origin : null;
+}
 
-  return corsMiddleware(c, next);
+// CORS middleware — explicit credentialed CORS for all routes
+app.use("*", async (c, next) => {
+  const requestOrigin = c.req.header("Origin");
+  const allowedOrigin = getAllowedOrigin(requestOrigin, c.env);
+
+  if (allowedOrigin) {
+    c.header("Access-Control-Allow-Origin", allowedOrigin);
+    c.header("Access-Control-Allow-Credentials", "true");
+    c.header("Vary", "Origin, Access-Control-Request-Headers");
+    c.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+    c.header("Access-Control-Max-Age", "86400");
+
+    const requestedHeaders = c.req.header("Access-Control-Request-Headers");
+    c.header("Access-Control-Allow-Headers", requestedHeaders || "Content-Type,Authorization");
+  }
+
+  if (c.req.method === "OPTIONS") {
+    // Only allow preflight from trusted origins.
+    if (!allowedOrigin && requestOrigin) {
+      return c.json({ error: "Forbidden", code: "CORS_ORIGIN_REJECTED" }, 403);
+    }
+    return c.body(null, 204);
+  }
+
+  return next();
 });
 
 // CSRF protection — reject state-changing requests from unknown origins

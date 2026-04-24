@@ -2,6 +2,7 @@ name = "afia-worker"
 main = "src/index.ts"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
+account_id = "a34f53a07c2ef6f31c29f1dc20b71b23"
 
 [vars]
 ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173"
@@ -12,6 +13,7 @@ STAGE = "stage1"
 # Stage 1 environment (LLM API only - production)
 [env.stage1]
 name = "afia-worker"
+account_id = "a34f53a07c2ef6f31c29f1dc20b71b23"
 vars = { STAGE = "stage1", ENABLE_LOCAL_MODEL = "false", ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173", SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co", DEBUG_REASONING = "false" }
 
 [[env.stage1.kv_namespaces]]
@@ -27,6 +29,7 @@ preview_id = "d6d688f5cfd04d73a42c7c979c1f1791"
 # Stage 2 environment (Local Model + LLM fallback - testing)
 [env.stage2]
 name = "afia-worker-stage2"
+account_id = "a34f53a07c2ef6f31c29f1dc20b71b23"
 vars = { STAGE = "stage2", ENABLE_LOCAL_MODEL = "true", LLM_FALLBACK_ENABLED = "true", ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173", SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co", DEBUG_REASONING = "false" }
 
 [[env.stage2.kv_namespaces]]
@@ -42,6 +45,7 @@ preview_id = "d6d688f5cfd04d73a42c7c979c1f1791"
 # Stage 3 environment (Local Model only - future production)
 [env.stage3]
 name = "afia-worker-stage3"
+account_id = "a34f53a07c2ef6f31c29f1dc20b71b23"
 vars = { STAGE = "stage3", ENABLE_LOCAL_MODEL = "true", LLM_FALLBACK_ENABLED = "false", ALLOWED_ORIGINS = "https://afia-app.pages.dev,https://afia-oil-tracker.pages.dev,http://localhost:5173,http://localhost:4173", SUPABASE_URL = "https://anfgqdgcbvmyegbfvvfh.supabase.co", DEBUG_REASONING = "false" }
 
 [[env.stage3.kv_namespaces]]

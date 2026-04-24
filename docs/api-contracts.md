@@ -618,6 +618,7 @@ interface ModelVersionsResponse {
 
 **Allowed Methods:** `GET, POST, OPTIONS`  
 **Allowed Headers:** `Content-Type, Authorization`  
+**Credentials:** Enabled (allows cookies and authentication headers)  
 **Max Age:** 86400 seconds (24 hours)
 
 **Preflight Response:**
@@ -626,6 +627,7 @@ HTTP/1.1 204 No Content
 Access-Control-Allow-Origin: https://afia-oil-tracker.pages.dev
 Access-Control-Allow-Methods: GET, POST, OPTIONS
 Access-Control-Allow-Headers: Content-Type, Authorization
+Access-Control-Allow-Credentials: true
 Access-Control-Max-Age: 86400
 ```
 

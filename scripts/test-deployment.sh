@@ -43,7 +43,7 @@ else
 fi
 
 echo ""
-echo "🎯 Expected Account ID: 531c665068721c28fb05e5bb83aade0c"
+echo "🎯 Expected Account ID: a34f53a07c2ef6f31c29f1dc20b71b23"
 echo ""
 echo "📝 To deploy manually, run:"
 echo "   npm run build"

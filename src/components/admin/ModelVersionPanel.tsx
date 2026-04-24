@@ -34,7 +34,10 @@ export function ModelVersionPanel({ t }: ModelVersionPanelProps) {
   useEffect(() => {
     const fetchVersionInfo = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'https://api.afia.app';
+        const apiUrl =
+          import.meta.env.VITE_API_URL ||
+          import.meta.env.VITE_PROXY_URL ||
+          'https://afia-worker.savola.workers.dev';
         const response = await fetch(`${apiUrl}/model/version`, {
           method: 'GET',
           headers: {

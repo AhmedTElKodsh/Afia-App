@@ -30,7 +30,10 @@ export function ModelVersionManager({ t }: ModelVersionManagerProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const apiUrl = import.meta.env.VITE_API_URL || 'https://api.afia.app';
+  const apiUrl =
+    import.meta.env.VITE_API_URL ||
+    import.meta.env.VITE_PROXY_URL ||
+    'https://afia-worker.savola.workers.dev';
   const locale = i18n.language === 'ar' ? 'ar-SA' : 'en-US';
 
   const getAdminToken = (): string => {

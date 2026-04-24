@@ -68,8 +68,8 @@ The GitHub Actions workflow is now configured to automatically deploy when:
 
 To enable fully automated deployments via GitHub Actions, add these secrets:
 
-1. **CLOUDFLARE_ACCOUNT_ID:** `531c665068721c28fb05e5bb83aade0c`
-2. **CLOUDFLARE_API_TOKEN:** (Create at https://dash.cloudflare.com/profile/api-tokens)
+1. **CLOUDFLARE_ACCOUNT_ID:** `a34f53a07c2ef6f31c29f1dc20b71b23`
+2. **CLOUDFLARE_API_TOKEN:** `<your-api-token>` (Create at https://dash.cloudflare.com/profile/api-tokens)
 3. **VITE_ADMIN_PASSWORD:** (Your admin password)
 4. **CLOUDFLARE_RATE_LIMIT_KV_ID:** (Your KV namespace ID)
 5. **CLOUDFLARE_RATE_LIMIT_KV_PREVIEW_ID:** (Your preview KV namespace ID)

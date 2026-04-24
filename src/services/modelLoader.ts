@@ -14,7 +14,13 @@ const MODEL_CONFIG = {
   dbName: 'afia-models',
   storeName: 'models',
   dbVersion: 1,
-  versionCheckUrl: import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/model/version` : 'https://api.afia.app/model/version',
+  versionCheckUrl: (() => {
+    const apiBaseUrl =
+      import.meta.env.VITE_API_URL ||
+      import.meta.env.VITE_PROXY_URL ||
+      'https://afia-worker.savola.workers.dev';
+    return `${apiBaseUrl}/model/version`;
+  })(),
 };
 
 interface ModelCacheEntry {

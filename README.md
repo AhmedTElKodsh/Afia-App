@@ -293,7 +293,7 @@ curl https://afia-worker.savola.workers.dev/health
 
 If you haven't set up Cloudflare yet:
 
-1. Create a Cloudflare account and install Wrangler: `npm i -g wrangler && wrangler login`
+1. Use the account with ID `a34f53a07c2ef6f31c29f1dc20b71b23` and install Wrangler: `npm i -g wrangler && wrangler login`
 2. Create the R2 bucket: `cd worker && npx wrangler r2 bucket create afia-training-data`
 3. Create the KV namespace: `npx wrangler kv namespace create RATE_LIMIT_KV`
 4. Update `worker/wrangler.toml` with the real KV namespace IDs
