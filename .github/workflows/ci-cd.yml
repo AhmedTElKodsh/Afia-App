@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [master, local-model]
 
+# Prevent concurrent deployments to the same environment
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   unit-tests:
     name: Unit Tests
@@ -80,9 +85,10 @@ jobs:
       - name: Build for E2E
         run: npm run build
         env:
-          VITE_PROXY_URL: 'https://afia-worker.savola.workers.dev'
+          # Use stage2 worker for local-model branch, production for master
+          VITE_PROXY_URL: ${{ github.ref == 'refs/heads/local-model' && 'https://afia-worker-stage2.savola.workers.dev' || 'https://afia-worker.savola.workers.dev' }}
           VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD }}
-          VITE_STAGE: 'stage1'
+          VITE_STAGE: ${{ github.ref == 'refs/heads/local-model' && 'stage2' || 'stage1' }}
       - name: Run E2E tests
         run: npx playwright test tests/e2e/
         env:
@@ -135,7 +141,7 @@ jobs:
           npm run build
           npx wrangler pages deploy dist --project-name=afia-app --branch=${{ github.ref == 'refs/heads/master' && 'master' || 'local-model' }}
         env:
-          VITE_PROXY_URL: 'https://afia-worker.savola.workers.dev'
+          VITE_PROXY_URL: ${{ github.ref == 'refs/heads/local-model' && 'https://afia-worker-stage2.savola.workers.dev' || 'https://afia-worker.savola.workers.dev' }}
           VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
