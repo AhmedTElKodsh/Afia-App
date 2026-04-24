@@ -20,19 +20,14 @@ The `CLOUDFLARE_ACCOUNT_ID` GitHub secret is either missing or not accessible to
 
 #### CLOUDFLARE_ACCOUNT_ID
 ```
-531c665068721c28fb05e5bb83aade0c
+a34f53a07c2ef6f31c29f1dc20b71b23
 ```
 
 #### CLOUDFLARE_API_TOKEN
-Create a new API token:
-1. Visit: https://dash.cloudflare.com/profile/api-tokens
-2. Click **"Create Token"**
-3. Use **"Edit Cloudflare Workers"** template OR create custom with:
-   - Permission: **Account → Cloudflare Pages → Edit**
-   - Permission: **Account → Account Settings → Read**
-4. Click **"Continue to summary"** → **"Create Token"**
-5. Copy the token (you'll only see it once!)
-6. Add it to GitHub secrets as `CLOUDFLARE_API_TOKEN`
+```
+<YOUR_CLOUDFLARE_API_TOKEN>
+```
+Add this value to GitHub secrets as `CLOUDFLARE_API_TOKEN`.
 
 ### Step 2: Verify Locally (Optional)
 
@@ -57,7 +52,7 @@ npx wrangler pages deploy dist --project-name=afia-app --branch=master
 ## 📊 Current Status
 
 ✅ **Cloudflare Pages project exists**: `afia-app`
-✅ **Account ID confirmed**: `531c665068721c28fb05e5bb83aade0c`
+✅ **Account ID confirmed**: `a34f53a07c2ef6f31c29f1dc20b71b23`
 ✅ **Project URL**: https://afia-app.pages.dev
 ✅ **Production branch**: `master`
 ❌ **GitHub secrets**: Need to be configured
@@ -84,7 +79,7 @@ If you continue to see errors after adding the secrets:
 
 1. **Verify token permissions**: Make sure the API token has "Edit" permission for Cloudflare Pages
 2. **Check token expiry**: Ensure the token hasn't expired
-3. **Verify account access**: Confirm you have access to account `531c665068721c28fb05e5bb83aade0c`
+3. **Verify account access**: Confirm you have access to account `a34f53a07c2ef6f31c29f1dc20b71b23`
 4. **Check workflow logs**: Look for more specific error messages in the GitHub Actions logs
 
 For more details, see: `.github/workflows/README.md`

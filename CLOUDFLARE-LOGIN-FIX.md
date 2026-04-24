@@ -1,13 +1,9 @@
 # Cloudflare Account Login Fix
 
-## Current Situation
+## Target Account
 
-You're currently logged into Cloudflare account:
-- **Current Account ID**: `531c665068721c28fb05e5bb83aade0c`
-- **Email**: `ahmedtelkodsh@gmail.com`
-
-But the project is configured for:
-- **Target Account ID**: `a34f53a07c2ef6f31c29f1dc20b71b23`
+This project is configured for:
+- **Account ID**: `a34f53a07c2ef6f31c29f1dc20b71b23`
 - **Subdomain**: `savola.workers.dev`
 
 ## Solution: Switch to Correct Account
@@ -34,25 +30,19 @@ Look for account ID `a34f53a07c2ef6f31c29f1dc20b71b23` in the output.
 
 ### Option 2: Use API Token for Specific Account
 
-If you can't switch accounts via OAuth, use an API token:
+If you can't switch accounts via OAuth, use the API token directly:
 
 ```bash
-# Set the API token as environment variable
-$env:CLOUDFLARE_API_TOKEN="your-api-token-here"
+# Linux / macOS
+export CLOUDFLARE_API_TOKEN="<YOUR_CLOUDFLARE_API_TOKEN>"
+export CLOUDFLARE_ACCOUNT_ID="a34f53a07c2ef6f31c29f1dc20b71b23"
+
+# Windows PowerShell
+$env:CLOUDFLARE_API_TOKEN="<YOUR_CLOUDFLARE_API_TOKEN>"
 $env:CLOUDFLARE_ACCOUNT_ID="a34f53a07c2ef6f31c29f1dc20b71b23"
 
 # Deploy with environment variables
 npx wrangler deploy --config worker/wrangler.toml --env stage1
-```
-
-### Option 3: Update Configuration to Use Current Account
-
-If you want to use your current account (`531c665068721c28fb05e5bb83aade0c`) instead:
-
-**Note**: This will revert all the changes we just made. Only do this if you're sure you want to use the other account.
-
-```bash
-# This would require updating worker/wrangler.toml back to the old account ID
 ```
 
 ## After Logging In Correctly
