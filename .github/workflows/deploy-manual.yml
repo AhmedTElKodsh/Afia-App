@@ -1,0 +1,91 @@
+name: Deploy (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'stage1'
+        type: choice
+        options:
+          - stage1
+          - stage2
+      confirm:
+        description: 'Type "deploy" to confirm'
+        required: true
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "deploy" ]; then exit 1; fi
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run unit tests
+        run: npm run test
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Build and Test E2E
+        run: |
+          npm run build
+          npx playwright test tests/e2e/
+        env:
+          VITE_PROXY_URL: 'https://afia-worker.savola.workers.dev'
+          VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD }}
+          VITE_STAGE: ${{ github.event.inputs.environment }}
+
+  deploy-worker:
+    name: Deploy Worker
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install worker dependencies
+        run: cd worker && npm ci
+      - name: Apply KV namespace IDs
+        run: bash scripts/apply-wrangler-kv-ids.sh
+        env:
+          CLOUDFLARE_RATE_LIMIT_KV_ID: ${{ secrets.CLOUDFLARE_RATE_LIMIT_KV_ID }}
+      - name: Deploy Worker
+        run: cd worker && npx wrangler deploy --env ${{ github.event.inputs.environment }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  deploy-pages:
+    name: Deploy Pages
+    needs: deploy-worker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build and Deploy Pages
+        run: |
+          npm run build
+          npx wrangler pages deploy dist --project-name=afia-app --branch=${{ github.event.inputs.environment == 'stage1' && 'master' || 'local-model' }}
+        env:
+          VITE_PROXY_URL: 'https://afia-worker.savola.workers.dev'
+          VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
