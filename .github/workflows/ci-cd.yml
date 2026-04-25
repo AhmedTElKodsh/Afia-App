@@ -316,7 +316,7 @@ jobs:
 
   deploy-worker:
     name: Deploy Worker
-    needs: [lint, unit-tests, integration-tests, e2e-tests, security-scan]
+    needs: [setup, lint, unit-tests, integration-tests, e2e-tests, security-scan]
     runs-on: ubuntu-latest
     if: (github.event_name == 'push' || github.event_name == 'pull_request') && (github.ref_name == 'master' || github.ref_name == 'local-model' || github.ref_name == 'update-cicd-pipeline' || github.base_ref == 'master' || github.base_ref == 'local-model')
     environment:
