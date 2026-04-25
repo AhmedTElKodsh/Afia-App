@@ -22,6 +22,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 env:
   NODE_VERSION: '20'
   PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.playwright
@@ -182,7 +187,7 @@ jobs:
           EOF
       
       - name: Start worker
-        run: cd worker && npx wrangler dev --config ./wrangler.toml --port 8787 --local &
+        run: cd worker && npx wrangler dev --config ./wrangler.toml --port 8787 --local --ip 127.0.0.1 &
       
       - name: Wait for worker
         run: |
