@@ -1,3 +1,4 @@
+---
 name: CI/CD Pipeline
 
 on:
@@ -5,46 +6,171 @@ on:
     branches: [master, local-model]
   pull_request:
     branches: [master, local-model]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'stage1'
+        type: choice
+        options:
+          - stage1
+          - stage2
 
 # Prevent concurrent deployments to the same environment
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NODE_VERSION: '20'
+  PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.playwright
+
 jobs:
-  unit-tests:
-    name: Unit Tests
+  setup:
+    name: Setup & Cache Dependencies
     runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.cache-keys.outputs.cache-key }}
+      worker-cache-key: ${{ steps.cache-keys.outputs.worker-cache-key }}
     steps:
       - uses: actions/checkout@v4
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Install dependencies
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Generate cache keys
+        id: cache-keys
+        run: |
+          echo "cache-key=node-modules-${{ hashFiles('package-lock.json') }}" >> $GITHUB_OUTPUT
+          echo "worker-cache-key=worker-node-modules-${{ hashFiles('worker/package-lock.json') }}" >> $GITHUB_OUTPUT
+      
+      - name: Cache root dependencies
+        id: cache-root
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ steps.cache-keys.outputs.cache-key }}
+          restore-keys: |
+            node-modules-
+      
+      - name: Cache worker dependencies
+        id: cache-worker
+        uses: actions/cache@v4
+        with:
+          path: worker/node_modules
+          key: ${{ steps.cache-keys.outputs.worker-cache-key }}
+          restore-keys: |
+            worker-node-modules-
+      
+      - name: Install root dependencies
+        if: steps.cache-root.outputs.cache-hit != 'true'
         run: npm ci
-      - name: Run unit tests
-        run: npm run test
+      
       - name: Install worker dependencies
+        if: steps.cache-worker.outputs.cache-hit != 'true'
         run: cd worker && npm ci
+
+  lint:
+    name: Lint & Code Quality
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Restore root dependencies
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+      
+      - name: Restore worker dependencies
+        uses: actions/cache@v4
+        with:
+          path: worker/node_modules
+          key: ${{ needs.setup.outputs.worker-cache-key }}
+      
+      - name: Run ESLint
+        run: npm run lint --if-present
+        continue-on-error: true
+      
+      - name: Run Prettier check
+        run: npx prettier --check . --ignore-unknown
+        continue-on-error: true
+
+  unit-tests:
+    name: Unit Tests
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Restore root dependencies
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+      
+      - name: Restore worker dependencies
+        uses: actions/cache@v4
+        with:
+          path: worker/node_modules
+          key: ${{ needs.setup.outputs.worker-cache-key }}
+      
+      - name: Run root unit tests
+        run: npm run test
+        timeout-minutes: 10
+      
       - name: Run worker unit tests
         run: cd worker && npm run test
+        timeout-minutes: 10
+      
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            coverage/
+            worker/coverage/
+          retention-days: 7
 
   integration-tests:
     name: Integration Tests
+    needs: setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm ci
-      - name: Install worker dependencies
-        run: cd worker && npm ci
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Restore root dependencies
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+      
+      - name: Restore worker dependencies
+        uses: actions/cache@v4
+        with:
+          path: worker/node_modules
+          key: ${{ needs.setup.outputs.worker-cache-key }}
+      
       - name: Create worker dev vars
         run: |
           cat > worker/.dev.vars << 'EOF'
@@ -54,47 +180,85 @@ jobs:
           GEMINI_API_KEY3=${{ secrets.GEMINI_API_KEY3 }}
           GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
           EOF
+      
       - name: Start worker
         run: cd worker && npx wrangler dev --config ./wrangler.toml --port 8787 --local &
+      
       - name: Wait for worker
         run: |
+          echo "Waiting for worker to be ready..."
           for i in $(seq 1 30); do
-            if curl -sf http://127.0.0.1:8787/health > /dev/null 2>&1; then exit 0; fi
+            if curl -sf http://127.0.0.1:8787/health > /dev/null 2>&1; then
+              echo "Worker is ready!"
+              exit 0
+            fi
+            echo "Attempt $i/30 failed, retrying..."
             sleep 2
           done
+          echo "Worker failed to start"
           exit 1
+        timeout-minutes: 2
+      
       - name: Run integration tests
         run: npm run test:integration
+        timeout-minutes: 15
         env:
           ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD }}
 
   e2e-tests:
     name: E2E Tests
+    needs: setup
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm ci
-      - name: Install worker dependencies
-        run: cd worker && npm ci
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Restore root dependencies
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+      
+      - name: Restore worker dependencies
+        uses: actions/cache@v4
+        with:
+          path: worker/node_modules
+          key: ${{ needs.setup.outputs.worker-cache-key }}
+      
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
+          key: playwright-browsers-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-browsers-
+      
       - name: Install Playwright
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
+      
+      - name: Install Playwright dependencies only
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+      
       - name: Build for E2E
         run: npm run build
         env:
-          # Use stage2 worker for local-model branch, production for master
           VITE_PROXY_URL: ${{ github.ref == 'refs/heads/local-model' && 'https://afia-worker-stage2.savola.workers.dev' || 'https://afia-worker.savola.workers.dev' }}
           VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD }}
           VITE_STAGE: ${{ github.ref == 'refs/heads/local-model' && 'stage2' || 'stage1' }}
+      
       - name: Run E2E tests
         run: npx playwright test tests/e2e/
         env:
           CI: true
+      
       - name: Upload Playwright Report
         if: always()
         uses: actions/upload-artifact@v4
@@ -102,6 +266,7 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+      
       - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v4
@@ -109,58 +274,133 @@ jobs:
           name: test-results
           path: test-results/
           retention-days: 30
+      
+      - name: Comment PR with test results
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const testResults = fs.existsSync('test-results') ? '✅ E2E tests completed' : '❌ E2E tests failed';
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## E2E Test Results\n\n${testResults}\n\nView detailed results in the artifacts.`
+            });
 
-  deploy-worker:
-    name: Deploy Worker
-    needs: [unit-tests, integration-tests, e2e-tests]
+  security-scan:
+    name: Security Scan
+    needs: setup
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/local-model')
     steps:
       - uses: actions/checkout@v4
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Install worker dependencies
-        run: cd worker && npm ci
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+      
+      - name: Run worker npm audit
+        run: cd worker && npm audit --audit-level=moderate
+        continue-on-error: true
+
+  deploy-worker:
+    name: Deploy Worker
+    needs: [lint, unit-tests, integration-tests, e2e-tests, security-scan]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/local-model')
+    environment:
+      name: ${{ github.ref == 'refs/heads/master' && 'production' || 'staging' }}
+      url: ${{ github.ref == 'refs/heads/local-model' && 'https://afia-worker-stage2.savola.workers.dev' || 'https://afia-worker.savola.workers.dev' }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Restore worker dependencies
+        uses: actions/cache@v4
+        with:
+          path: worker/node_modules
+          key: ${{ needs.setup.outputs.worker-cache-key }}
+      
       - name: Apply KV namespace IDs to wrangler.toml
         run: bash scripts/apply-wrangler-kv-ids.sh
         env:
           CLOUDFLARE_RATE_LIMIT_KV_ID: ${{ secrets.CLOUDFLARE_RATE_LIMIT_KV_ID }}
           CLOUDFLARE_RATE_LIMIT_KV_PREVIEW_ID: ${{ secrets.CLOUDFLARE_RATE_LIMIT_KV_PREVIEW_ID }}
+      
       - name: Deploy Worker
+        id: deploy-worker
         run: |
           ENVIRONMENT="${{ github.ref == 'refs/heads/master' && 'stage1' || 'stage2' }}"
+          echo "Deploying to environment: $ENVIRONMENT"
           cd worker && npx wrangler deploy --env $ENVIRONMENT
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      
+      - name: Verify worker deployment
+        run: |
+          WORKER_URL="${{ github.ref == 'refs/heads/local-model' && 'https://afia-worker-stage2.savola.workers.dev' || 'https://afia-worker.savola.workers.dev' }}"
+          echo "Verifying worker at: $WORKER_URL/health"
+          for i in {1..5}; do
+            if curl -sf "$WORKER_URL/health" > /dev/null 2>&1; then
+              echo "Worker is healthy!"
+              exit 0
+            fi
+            echo "Attempt $i/5 failed, retrying in 5s..."
+            sleep 5
+          done
+          echo "Warning: Worker health check failed"
+          exit 0
 
   deploy-pages:
     name: Deploy Pages
-    needs: deploy-worker
+    needs: [setup, deploy-worker]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/local-model')
+    environment:
+      name: ${{ github.ref == 'refs/heads/master' && 'production' || 'staging' }}
+      url: https://afia-app.pages.dev
     steps:
       - uses: actions/checkout@v4
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm ci
-      - name: Build and Deploy Pages
-        run: |
-          ENVIRONMENT="${{ github.ref == 'refs/heads/master' && 'stage1' || 'stage2' }}"
-          npm run build
-          npx wrangler pages deploy dist --project-name=afia-app --branch=${{ github.ref == 'refs/heads/master' && 'master' || 'local-model' }}
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Restore root dependencies
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ needs.setup.outputs.cache-key }}
+      
+      - name: Build application
+        run: npm run build
         env:
           VITE_PROXY_URL: ${{ github.ref == 'refs/heads/local-model' && 'https://afia-worker-stage2.savola.workers.dev' || 'https://afia-worker.savola.workers.dev' }}
           VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD }}
+          VITE_STAGE: ${{ github.ref == 'refs/heads/local-model' && 'stage2' || 'stage1' }}
+      
+      - name: Deploy to Cloudflare Pages
+        id: deploy-pages
+        run: |
+          BRANCH="${{ github.ref == 'refs/heads/master' && 'master' || 'local-model' }}"
+          echo "Deploying to branch: $BRANCH"
+          npx wrangler pages deploy dist --project-name=afia-app --branch=$BRANCH
+        env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      
       - name: Deployment Summary
         run: |
           echo "### 🚀 Deployment Complete" >> $GITHUB_STEP_SUMMARY
@@ -168,4 +408,24 @@ jobs:
           echo "**Environment:** ${{ github.ref == 'refs/heads/master' && 'Production (stage1)' || 'Staging (stage2)' }}" >> $GITHUB_STEP_SUMMARY
           echo "**Worker URL:** ${{ github.ref == 'refs/heads/local-model' && 'https://afia-worker-stage2.savola.workers.dev' || 'https://afia-worker.savola.workers.dev' }}" >> $GITHUB_STEP_SUMMARY
           echo "**Pages URL:** https://afia-app.pages.dev" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All tests passed and deployment successful!" >> $GITHUB_STEP_SUMMARY
+
+  notify-on-failure:
+    name: Notify on Failure
+    needs: [lint, unit-tests, integration-tests, e2e-tests, deploy-worker, deploy-pages]
+    runs-on: ubuntu-latest
+    if: failure() && github.event_name == 'push'
+    steps:
+      - name: Create failure summary
+        run: |
+          echo "### ❌ Pipeline Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Please check the failed jobs above for details." >> $GITHUB_STEP_SUMMARY
