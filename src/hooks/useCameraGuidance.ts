@@ -9,6 +9,24 @@ import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { assessImageQuality, detectBlur, getAngleGuidance, type QualityAssessment } from '../utils/cameraQualityAssessment';
 
 /**
+ * Video Frame Callback Metadata
+ */
+interface VideoFrameMetadata {
+  presentationTime: number;
+  expectedDisplayTime: number;
+  width: number;
+  height: number;
+  mediaTime: number;
+  presentedFrames: number;
+  processingDuration?: number;
+}
+
+/**
+ * Video Frame Request Callback
+ */
+type VideoFrameRequestCallback = (now: number, metadata: VideoFrameMetadata) => void;
+
+/**
  * Camera guidance configuration
  */
 export interface CameraGuidanceConfig {
@@ -155,7 +173,7 @@ export function useCameraGuidance(
     brandDetected: false,
     brandFindings: [],
     angleStatus: 'good',
-    orientationPermission: (typeof (DeviceOrientationEvent as any)?.requestPermission === 'function') ? 'prompt' : 'granted',
+    orientationPermission: (typeof (DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<PermissionState> })?.requestPermission === 'function') ? 'prompt' : 'granted',
   });
   
   const prevAssessmentRef = useRef<QualityAssessment | null>(null);
@@ -171,7 +189,7 @@ export function useCameraGuidance(
   }, []);
 
   const requestOrientation = useCallback(async () => {
-    const DeviceOrientationEventAny = DeviceOrientationEvent as any;
+    const DeviceOrientationEventAny = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<PermissionState> };
     if (typeof DeviceOrientationEventAny.requestPermission === 'function') {
       try {
         const permission = await DeviceOrientationEventAny.requestPermission();
@@ -183,10 +201,10 @@ export function useCameraGuidance(
     }
   }, []);
 
-  const analyzeFrame = useCallback((now?: number, _metadata?: any) => {
+  const analyzeFrame = useCallback((now?: number) => {
     // M8: Test mode detection (global flag set by E2E tests)
     // Check dynamically to handle late-set flags or re-renders
-    const isTestMode = typeof window !== 'undefined' && (window as any).__AFIA_TEST_MODE__ === true;
+    const isTestMode = typeof window !== 'undefined' && (window as unknown as { __AFIA_TEST_MODE__?: boolean }).__AFIA_TEST_MODE__ === true;
     
     try {
       const video = videoRef.current;
@@ -311,20 +329,20 @@ export function useCameraGuidance(
     analyzeFrameRef.current = analyzeFrame;
   }, [analyzeFrame]);
 
-  const startFrameLoop = useCallback((videoEl: HTMLVideoElement, cb: (now: number, metadata?: any) => void) => {
-    let handle: any;
+  const startFrameLoop = useCallback((videoEl: HTMLVideoElement, cb: (now: number, metadata?: VideoFrameMetadata) => void) => {
+    let handle: number | undefined;
     // M8.3: Force requestAnimationFrame in test mode for reliability with static mock streams
-    const isTestMode = typeof window !== 'undefined' && (window as any).__AFIA_TEST_MODE__ === true;
+    const isTestMode = typeof window !== 'undefined' && (window as { __AFIA_TEST_MODE__?: boolean }).__AFIA_TEST_MODE__ === true;
     const isRvfcSupported = !isTestMode && 'requestVideoFrameCallback' in HTMLVideoElement.prototype;
 
     if (isRvfcSupported) {
-      const loop = (now: number, metadata: any) => {
-        cb(now, metadata);
-        handle = (videoEl as any).requestVideoFrameCallback(loop);
+      const loop = (now: number, _metadata: VideoFrameMetadata) => {
+        cb(now, _metadata);
+        handle = (videoEl as HTMLVideoElement & { requestVideoFrameCallback: (callback: VideoFrameRequestCallback) => number }).requestVideoFrameCallback(loop);
       };
-      handle = (videoEl as any).requestVideoFrameCallback(loop);
+      handle = (videoEl as HTMLVideoElement & { requestVideoFrameCallback: (callback: VideoFrameRequestCallback) => number }).requestVideoFrameCallback(loop);
       return () => {
-        if (handle) (videoEl as any).cancelVideoFrameCallback(handle);
+        if (handle !== undefined) (videoEl as HTMLVideoElement & { cancelVideoFrameCallback: (handle: number) => void }).cancelVideoFrameCallback(handle);
       };
     } else {
       let rafId: number;
@@ -434,11 +452,11 @@ export function useCameraGuidance(
   }, [stopGuidance]);
 
   useEffect(() => {
-    (window as any).__AFIA_FORCE_READY__ = () => {
+    (window as Window & { __AFIA_FORCE_READY__?: () => void }).__AFIA_FORCE_READY__ = () => {
       setState(prev => ({ ...prev, isReady: true, goodFramesCount: 10 }));
     };
     return () => {
-      delete (window as any).__AFIA_FORCE_READY__;
+      delete (window as Window & { __AFIA_FORCE_READY__?: () => void }).__AFIA_FORCE_READY__;
     };
   }, []);
 

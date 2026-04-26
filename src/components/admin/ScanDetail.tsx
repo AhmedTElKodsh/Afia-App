@@ -79,7 +79,12 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
 
     try {
       const token = getAuthToken();
-      const requestBody: any = {
+      const requestBody: {
+        scanId: string;
+        accuracy: AccuracyButton;
+        correctedFillPct?: number;
+        method?: string;
+      } = {
         scanId: scan.id,
         accuracy,
       };
