@@ -95,10 +95,8 @@ export async function analyze(options: AnalysisOptions): Promise<AnalysisResult>
 
     // M8: Ensure qualityMetrics is valid or provide dummy signals
     const safeMetrics = (qualityMetrics && typeof qualityMetrics === 'object') ? qualityMetrics : {
-      blurriness: 0,
-      exposure: 0.5,
-      isTooDark: false,
-      isTooBlurry: false
+      blurScore: 0,
+      brightnessScore: 0.5,
     };
 
     const qualitySignals: ImageQualitySignals = {
