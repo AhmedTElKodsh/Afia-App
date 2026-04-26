@@ -23,7 +23,7 @@ export interface AnalysisLog {
   primary_provider: string;
   local_result_ml?: number;
   llm_result_ml?: number;
-  llm_raw_response?: any;
+  llm_raw_response?: unknown;
   status: 'success' | 'failed' | 'mismatch' | 'flagged';
   error_message?: string;
 }

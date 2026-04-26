@@ -46,20 +46,20 @@ describe('LocalInference - Error Handling', () => {
   describe('Invalid Input Handling', () => {
     it('should throw error for invalid image format', async () => {
       const { runLocalInference } = await import('../localInference');
-      
+
       await expect(runLocalInference('not-a-valid-base64')).rejects.toThrow();
     });
 
     it('should throw error for corrupted image data', async () => {
       const { runLocalInference } = await import('../localInference');
-      
+
       const corruptedImage = 'data:image/png;base64,CORRUPT_DATA';
       await expect(runLocalInference(corruptedImage)).rejects.toThrow();
     });
 
     it('should handle empty image gracefully', async () => {
       const { runLocalInference } = await import('../localInference');
-      
+
       await expect(runLocalInference('')).rejects.toThrow('Invalid image data');
     });
   });
@@ -68,7 +68,7 @@ describe('LocalInference - Error Handling', () => {
     it('should catch and report OOM errors during inference', async () => {
       const { runLocalInference } = await import('../localInference');
       const { getModel } = await import('../modelLoader');
-      
+
       const mockModel = {
         predict: vi.fn(() => {
           const error = new Error('Out of memory');
@@ -76,9 +76,9 @@ describe('LocalInference - Error Handling', () => {
           throw error;
         }),
       };
-      
+
       (getModel as any).mockReturnValue(mockModel);
-      
+
       // Mock TensorFlow operations
       const mockTensor = {
         dispose: vi.fn(),
@@ -96,7 +96,7 @@ describe('LocalInference - Error Handling', () => {
     it('should dispose tensors even when inference fails', async () => {
       const { runLocalInference } = await import('../localInference');
       const { getModel } = await import('../modelLoader');
-      
+
       // Mock model to throw error
       (getModel as any).mockImplementation(() => {
         throw new Error('Model not loaded');
@@ -128,7 +128,7 @@ describe('LocalInference - Error Handling', () => {
       // RED: Should fail - error message clarity not verified
       const { runLocalInference } = await import('../localInference');
       const { getModel } = await import('../modelLoader');
-      
+
       (getModel as any).mockImplementation(() => {
         throw new Error('Model not loaded');
       });
@@ -141,12 +141,12 @@ describe('LocalInference - Error Handling', () => {
     it('should handle image load timeout', async () => {
       const { runLocalInference } = await import('../localInference');
       const { getModel } = await import('../modelLoader');
-      
+
       // Mock model as loaded
       (getModel as any).mockReturnValue({
         predict: vi.fn(),
       });
-      
+
       // Mock Image to never load (no onload or onerror called)
       class TimeoutImage {
         onload: (() => void) | null = null;

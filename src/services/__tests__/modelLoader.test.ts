@@ -31,14 +31,14 @@ describe('ModelLoader - Error Handling', () => {
   describe('Model Download Failures', () => {
     it('should retry download on network failure', async () => {
       const { loadModel } = await import('../modelLoader');
-      
+
       // Mock IndexedDB to return null (no cache)
       const mockDB = {
         get: vi.fn(() => Promise.resolve(null)),
         put: vi.fn(() => Promise.resolve()),
       };
       (openDB as any).mockResolvedValue(mockDB);
-      
+
       // Mock fetch to fail twice, then succeed
       let callCount = 0;
       global.fetch = vi.fn(() => {
@@ -68,14 +68,14 @@ describe('ModelLoader - Error Handling', () => {
 
     it('should throw error after max retries exceeded', async () => {
       const { loadModel } = await import('../modelLoader');
-      
+
       // Mock IndexedDB to return null (no cache)
       const mockDB = {
         get: vi.fn(() => Promise.resolve(null)),
         put: vi.fn(() => Promise.resolve()),
       };
       (openDB as any).mockResolvedValue(mockDB);
-      
+
       global.fetch = vi.fn(() => Promise.reject(new Error('Network error')));
 
       await expect(loadModel()).rejects.toThrow(/Model download failed after 3 retries/);
@@ -83,14 +83,14 @@ describe('ModelLoader - Error Handling', () => {
 
     it('should handle HTTP error responses gracefully', async () => {
       const { loadModel } = await import('../modelLoader');
-      
+
       // Mock IndexedDB to return null (no cache)
       const mockDB = {
         get: vi.fn(() => Promise.resolve(null)),
         put: vi.fn(() => Promise.resolve()),
       };
       (openDB as any).mockResolvedValue(mockDB);
-      
+
       global.fetch = vi.fn(() => Promise.resolve({
         ok: false,
         status: 404,
@@ -103,7 +103,7 @@ describe('ModelLoader - Error Handling', () => {
   describe('IndexedDB Quota Exceeded', () => {
     it('should clear old model versions when quota exceeded', async () => {
       const { loadModel } = await import('../modelLoader');
-      
+
       let putCallCount = 0;
       const mockDB = {
         get: vi.fn(() => Promise.resolve(null)),
@@ -124,7 +124,7 @@ describe('ModelLoader - Error Handling', () => {
       };
 
       (openDB as any).mockResolvedValue(mockDB);
-      
+
       // Mock successful model download
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
@@ -134,24 +134,24 @@ describe('ModelLoader - Error Handling', () => {
         }),
         arrayBuffer: () => Promise.resolve(new ArrayBuffer(100)),
       } as Response));
-      
+
       (tf.loadLayersModel as any).mockResolvedValue({ predict: vi.fn(), dispose: vi.fn() });
       (tf.setBackend as any).mockResolvedValue(undefined);
       (tf.ready as any).mockResolvedValue(undefined);
       (tf.getBackend as any).mockReturnValue('webgl');
 
       await loadModel();
-      
+
       // Wait for async cache operations to complete - increased timeout for CI
       await new Promise(resolve => setTimeout(resolve, 300));
-      
+
       expect(mockDB.delete).toHaveBeenCalledWith('models', '0.9.0');
       expect(putCallCount).toBe(2);
     }, 10000);
 
     it('should continue without caching if quota cannot be freed', async () => {
       const { loadModel } = await import('../modelLoader');
-      
+
       const mockDB = {
         get: vi.fn(() => Promise.resolve(null)),
         getAll: vi.fn(() => Promise.resolve([])),
@@ -163,7 +163,7 @@ describe('ModelLoader - Error Handling', () => {
       };
 
       (openDB as any).mockResolvedValue(mockDB);
-      
+
       // Mock successful model download
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
@@ -173,7 +173,7 @@ describe('ModelLoader - Error Handling', () => {
         }),
         arrayBuffer: () => Promise.resolve(new ArrayBuffer(100)),
       } as Response));
-      
+
       (tf.loadLayersModel as any).mockResolvedValue({ predict: vi.fn(), dispose: vi.fn() });
       (tf.setBackend as any).mockResolvedValue(undefined);
       (tf.ready as any).mockResolvedValue(undefined);
@@ -186,15 +186,15 @@ describe('ModelLoader - Error Handling', () => {
   describe('Model Parse Errors', () => {
     it('should clear cache and retry on corrupt model data', async () => {
       const { loadModel } = await import('../modelLoader');
-      
+
       let getCallCount = 0;
       const mockDB = {
         get: vi.fn(() => {
           getCallCount++;
           if (getCallCount === 1) {
-            return Promise.resolve({ 
+            return Promise.resolve({
               version: '1.0.0',
-              modelTopology: 'corrupt', 
+              modelTopology: 'corrupt',
               weightSpecs: [],
               weightData: new ArrayBuffer(0),
               cachedAt: Date.now(),
@@ -208,7 +208,7 @@ describe('ModelLoader - Error Handling', () => {
       };
 
       (openDB as any).mockResolvedValue(mockDB);
-      
+
       let loadCallCount = 0;
       (tf.loadLayersModel as any).mockImplementation(() => {
         loadCallCount++;
@@ -217,11 +217,11 @@ describe('ModelLoader - Error Handling', () => {
         }
         return Promise.resolve({ predict: vi.fn(), dispose: vi.fn() });
       });
-      
+
       (tf.setBackend as any).mockResolvedValue(undefined);
       (tf.ready as any).mockResolvedValue(undefined);
       (tf.getBackend as any).mockReturnValue('webgl');
-      
+
       // Mock successful model download for retry
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
@@ -233,10 +233,10 @@ describe('ModelLoader - Error Handling', () => {
       } as Response));
 
       await expect(loadModel()).rejects.toThrow(/Model parse failed/);
-      
+
       // Wait for async delete operation to complete
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       expect(mockDB.delete).toHaveBeenCalledWith('models', '1.0.0');
     }, 10000);
   });
@@ -244,17 +244,17 @@ describe('ModelLoader - Error Handling', () => {
   describe('Backend Optimization Failures', () => {
     it('should fall back to CPU if WebGL fails', async () => {
       const { loadModel } = await import('../modelLoader');
-      
+
       // Mock IndexedDB to return null (no cache)
       const mockDB = {
         get: vi.fn(() => Promise.resolve(null)),
         put: vi.fn(() => Promise.resolve()),
       };
       (openDB as any).mockResolvedValue(mockDB);
-      
+
       // Mock getBackend to return something other than 'webgl' initially
       (tf.getBackend as any).mockReturnValue('cpu');
-      
+
       // Mock setBackend to fail for webgl, succeed for cpu
       (tf.setBackend as any).mockImplementation((backend: string) => {
         if (backend === 'webgl') {
@@ -263,7 +263,7 @@ describe('ModelLoader - Error Handling', () => {
         return Promise.resolve();
       });
       (tf.ready as any).mockResolvedValue(undefined);
-      
+
       // Mock successful model download
       global.fetch = vi.fn(() => Promise.resolve({
         ok: true,
@@ -273,11 +273,11 @@ describe('ModelLoader - Error Handling', () => {
         }),
         arrayBuffer: () => Promise.resolve(new ArrayBuffer(100)),
       } as Response));
-      
+
       (tf.loadLayersModel as any).mockResolvedValue({ predict: vi.fn(), dispose: vi.fn() });
 
       await loadModel();
-      
+
       // Should have tried webgl first, then fallen back to cpu
       expect(tf.setBackend).toHaveBeenCalledWith('webgl');
       expect(tf.setBackend).toHaveBeenCalledWith('cpu');

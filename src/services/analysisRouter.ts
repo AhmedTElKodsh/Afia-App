@@ -53,11 +53,12 @@ export async function initializePlatformDetection(): Promise<void> {
  * Story 7.8 - Task 1: Quality pre-check integration
  */
 export async function analyze(options: AnalysisOptions): Promise<AnalysisResult> {
-  let { sku, imageBase64, totalVolumeMl, brandClassifierConfidence, bottleDetectionConfidence, onProgress, onQualityWarning } = options;
-  
+  const { sku, totalVolumeMl, brandClassifierConfidence, bottleDetectionConfidence, onProgress, onQualityWarning } = options;
+  let { imageBase64 } = options;
+
   // M8: Test mode detection (global flag set by E2E tests)
-  const isTestMode = typeof window !== 'undefined' && (window as any).__AFIA_TEST_MODE__ === true;
-  
+  const isTestMode = typeof window !== 'undefined' && (window as { __AFIA_TEST_MODE__?: boolean }).__AFIA_TEST_MODE__ === true;
+
   // M8.5: Debug flags from localStorage for E2E tests
   const forceNetErrorSync = typeof window !== 'undefined' ? localStorage.getItem('afia_net_error_sync') === 'true' : false;
 
@@ -83,15 +84,15 @@ export async function analyze(options: AnalysisOptions): Promise<AnalysisResult>
       }
     }
   };
-  
+
   // Story 7.8 - AC1: Quality pre-check before upload
   try {
     safeProgress(i18next.t('analysis.checkingQuality', 'Checking image quality...'));
-    
+
     // Support testing override for quality check
-    const qualityFn = (window as any).analyzeImageQuality || analyzeImageQuality;
+    const qualityFn = (window as { analyzeImageQuality?: typeof analyzeImageQuality }).analyzeImageQuality || analyzeImageQuality;
     const qualityMetrics = await qualityFn(imageBase64);
-    
+
     // M8: Ensure qualityMetrics is valid or provide dummy signals
     const safeMetrics = (qualityMetrics && typeof qualityMetrics === 'object') ? qualityMetrics : {
       blurriness: 0,
@@ -104,16 +105,16 @@ export async function analyze(options: AnalysisOptions): Promise<AnalysisResult>
       ...safeMetrics,
       bottleDetectionConfidence: bottleDetectionConfidence ?? null,
     };
-    
+
     const qualityCheck = checkUploadQuality(qualitySignals);
-    
+
     // M1 FIX: Skip warning in test mode to avoid blocking E2E tests with synthetic images
     if (qualityCheck.shouldWarn && !isTestMode) {
       if (onQualityWarning) {
         const translatedReasons = qualityCheck.reasons.map(key => i18next.t(key, key));
         console.log('[AnalysisRouter] Quality warning:', translatedReasons);
         const shouldContinue = await onQualityWarning(qualityCheck.reasons);
-        
+
         if (!shouldContinue) {
           throw new Error('USER_CANCELLED: User chose to retake photo');
         }
@@ -128,130 +129,136 @@ export async function analyze(options: AnalysisOptions): Promise<AnalysisResult>
     // Canvas or image decode failure — skip quality check, proceed with analysis
     // This is intentionally fail-open: a broken quality check must not block the scan
     console.warn('[AnalysisRouter] Quality check failed (non-blocking):', error);
-    
+
     // M8: In test mode or on failure, ensure we don't block by any missing signals
     if (isTestMode) {
       console.log('[AnalysisRouter] Test mode: Bypassing quality check block');
     }
   }
-  
+
   let localResult: LocalModelMetadata | null = null;
   const isOffline = !navigator.onLine;
-  
+
   // Ensure platform detection is initialized
   if (webGLAvailableCache === null) {
     await initializePlatformDetection();
   }
-  
-  try {
-    // Step 1: Ensure model is loaded
-    if (!isModelLoaded()) {
-      // M8: In test mode, we might want to bypass real model loading if we use mocks
-      if (isOffline && !isTestMode) {
-        throw new Error('Model not available offline. Please connect to download the AI model.');
-      }
-      safeProgress(i18next.t('analysis.loadingModel', 'Loading AI model...'));
-      await loadModel(safeProgress);
-    }
 
-    // Step 2: Run local inference
-    safeProgress(isOffline ? i18next.t('analysis.analyzingOffline', 'Analyzing offline...') : i18next.t('analysis.analyzingLocally', 'Analyzing locally...'));
-    const inference = await runLocalInference(imageBase64);
-    
-    localResult = {
-      fillPercentage: inference.fillPercentage,
-      confidence: inference.confidence,
-      modelVersion: inference.modelVersion,
-      inferenceTimeMs: inference.inferenceTimeMs,
-    };
-    
-    console.log('[AnalysisRouter] Local inference:', {
-      fillPercentage: inference.fillPercentage.toFixed(2),
-      confidence: inference.confidence.toFixed(3),
-      inferenceTimeMs: inference.inferenceTimeMs,
-      isOffline,
-    });
-    
-    // Story 7.6 - Task 2: Use routing decision logic
-    const route = routeInference({
-      modelLoaded: isModelLoaded(),
-      localModelConfidence: inference.confidence,
-      isIOS,
-      webGLAvailable: webGLAvailableCache ?? true,
-      brandClassifierConfidence: brandClassifierConfidence ?? null,
-      // Pass null only when SKU is genuinely absent (no QR scan, no manual selection)
-      sku: sku.length > 0 ? sku : null,
-    });
-    
-    console.log('[AnalysisRouter] Routing decision:', route);
-    
-    // Handle "needs-sku" route (AC6)
-    if (route === "needs-sku") {
-      throw new Error('NEEDS_SKU: Brand detection confidence too low. Please scan QR code or select SKU manually.');
-    }
-    
-    // Step 3: Route based on decision
-    if (route === "local") {
-      console.log('[AnalysisRouter] High confidence, using local result');
-      const bottle = getBottleBySku(sku);
-      if (!bottle && sku) {
-        console.warn('[AnalysisRouter] SKU not found in registry during volume calculation:', sku);
-      }
-      const remainingMl = bottle
-        ? Math.round(calculateRemainingMl(inference.fillPercentage, bottle.totalVolumeMl, bottle.geometry))
-        : Math.round((inference.fillPercentage / 100) * totalVolumeMl);
-      return {
-        scanId: `local-${Date.now()}`,
-        fillPercentage: Math.round(inference.fillPercentage),
-        remainingMl,
-        confidence: 'high',
-        aiProvider: 'local-tfjs',
-        latencyMs: inference.inferenceTimeMs,
-        localModelResult: localResult,
-        llmFallbackUsed: false,
-      };
-    }
+  // Story 7.6 - Task 2: Use routing decision logic
+  const isStage1 = import.meta.env.VITE_STAGE === 'stage1';
 
-    // Low confidence or other conditions - check if offline (AC2, AC3, AC4)
-    if (isOffline) {
-      console.log('[AnalysisRouter] Low confidence but offline, using local result with warning');
-      queueForLaterVerification(sku, imageBase64, localResult);
-      const bottle = getBottleBySku(sku);
-      const remainingMl = bottle
-        ? Math.round(calculateRemainingMl(inference.fillPercentage, bottle.totalVolumeMl, bottle.geometry))
-        : Math.round((inference.fillPercentage / 100) * totalVolumeMl);
-      return {
-        scanId: `local-offline-${Date.now()}`,
-        fillPercentage: Math.round(inference.fillPercentage),
-        remainingMl,
-        confidence: 'low',
-        aiProvider: 'local-tfjs',
-        latencyMs: inference.inferenceTimeMs,
-        localModelResult: localResult,
-        llmFallbackUsed: false,
-        offlineMode: true,
-      };
-    }
-    
-    // Low confidence - fall through to LLM (AC2)
-    console.log('[AnalysisRouter] Routing to LLM fallback');
-    safeProgress(i18next.t('analysis.verifyingCloud', 'Verifying with cloud AI...'));
-    
-  } catch (error) {
-    // Model loading or inference failed
-    if (isOffline && !isTestMode) {
-      throw new Error('Cannot analyze offline without cached model. Please connect to internet.');
-    }
-    
-    // Check if it's the NEEDS_SKU error
-    if (error instanceof Error && error.message.startsWith('NEEDS_SKU:')) {
-      throw error;
-    }
-    
-    console.warn('[AnalysisRouter] Local inference failed, falling back to LLM:', error);
+  // Step 3: Route based on decision
+  if (isStage1) {
+    console.log('[AnalysisRouter] Stage 1 (LLM Only) detected, skipping local model');
     safeProgress(i18next.t('analysis.analyzing', 'Analyzing...'));
+  } else {
+    try {
+      // Step 1: Ensure model is loaded
+      if (!isModelLoaded()) {
+        // M8: In test mode, we might want to bypass real model loading if we use mocks
+        if (isOffline && !isTestMode) {
+          throw new Error('Model not available offline. Please connect to download the AI model.');
+        }
+        safeProgress(i18next.t('analysis.loadingModel', 'Loading AI model...'));
+        await loadModel(safeProgress);
+      }
+
+      // Step 2: Run local inference
+      safeProgress(isOffline ? i18next.t('analysis.analyzingOffline', 'Analyzing offline...') : i18next.t('analysis.analyzingLocally', 'Analyzing locally...'));
+      const inference = await runLocalInference(imageBase64);
+
+      localResult = {
+        fillPercentage: inference.fillPercentage,
+        confidence: inference.confidence,
+        modelVersion: inference.modelVersion,
+        inferenceTimeMs: inference.inferenceTimeMs,
+      };
+
+      console.log('[AnalysisRouter] Local inference:', {
+        fillPercentage: inference.fillPercentage.toFixed(2),
+        confidence: inference.confidence.toFixed(3),
+        inferenceTimeMs: inference.inferenceTimeMs,
+        isOffline,
+      });
+
+      const route = routeInference({
+        modelLoaded: isModelLoaded(),
+        localModelConfidence: inference.confidence,
+        isIOS,
+        webGLAvailable: webGLAvailableCache ?? true,
+        brandClassifierConfidence: brandClassifierConfidence ?? null,
+        // Pass null only when SKU is genuinely absent (no QR scan, no manual selection)
+        sku: sku.length > 0 ? sku : null,
+      });
+
+      console.log('[AnalysisRouter] Routing decision:', route);
+
+      // Handle "needs-sku" route (AC6)
+      if (route === "needs-sku") {
+        throw new Error('NEEDS_SKU: Brand detection confidence too low. Please scan QR code or select SKU manually.');     
+      }
+
+      if (route === "local") {
+        console.log('[AnalysisRouter] High confidence, using local result');
+        const bottle = getBottleBySku(sku);
+        if (!bottle && sku) {
+          console.warn('[AnalysisRouter] SKU not found in registry during volume calculation:', sku);
+        }
+        const remainingMl = bottle
+          ? Math.round(calculateRemainingMl(inference.fillPercentage, bottle.totalVolumeMl, bottle.geometry))
+          : Math.round((inference.fillPercentage / 100) * totalVolumeMl);
+        return {
+          scanId: `local-${Date.now()}`,
+          fillPercentage: Math.round(inference.fillPercentage),
+          remainingMl,
+          confidence: 'high',
+          aiProvider: 'local-tfjs',
+          latencyMs: inference.inferenceTimeMs,
+          localModelResult: localResult,
+          llmFallbackUsed: false,
+        };
+      }
+
+      // Low confidence or other conditions - check if offline (AC2, AC3, AC4)
+      if (isOffline) {
+        console.log('[AnalysisRouter] Low confidence but offline, using local result with warning');
+        queueForLaterVerification(sku, imageBase64, localResult);
+        const bottle = getBottleBySku(sku);
+        const remainingMl = bottle
+          ? Math.round(calculateRemainingMl(inference.fillPercentage, bottle.totalVolumeMl, bottle.geometry))
+          : Math.round((inference.fillPercentage / 100) * totalVolumeMl);
+        return {
+          scanId: `local-offline-${Date.now()}`,
+          fillPercentage: Math.round(inference.fillPercentage),
+          remainingMl,
+          confidence: 'low',
+          aiProvider: 'local-tfjs',
+          latencyMs: inference.inferenceTimeMs,
+          localModelResult: localResult,
+          llmFallbackUsed: false,
+          offlineMode: true,
+        };
+      }
+
+      // Low confidence - fall through to LLM (AC2)
+      console.log('[AnalysisRouter] Routing to LLM fallback');
+      safeProgress(i18next.t('analysis.verifyingCloud', 'Verifying with cloud AI...'));
+
+    } catch (error) {
+      // Model loading or inference failed
+      if (isOffline && !isTestMode) {
+        throw new Error('Cannot analyze offline without cached model. Please connect to internet.');
+      }
+
+      // Check if it's the NEEDS_SKU error
+      if (error instanceof Error && error.message.startsWith('NEEDS_SKU:')) {
+        throw error;
+      }
+
+      console.warn('[AnalysisRouter] Local inference failed, falling back to LLM:', error);
+      safeProgress(i18next.t('analysis.analyzing', 'Analyzing...'));
+    }
   }
-  
   // Step 4: LLM fallback (AC2, AC5)
   try {
     // M8.6: Force network error for sync testing
@@ -259,9 +266,9 @@ export async function analyze(options: AnalysisOptions): Promise<AnalysisResult>
       console.log('[AnalysisRouter] Forced network error for sync testing');
       throw new Error('Forced network error for sync testing');
     }
-    
+
     const llmResult = await analyzeBottle(sku, imageBase64, localResult ?? undefined);
-    
+
     return {
       ...llmResult,
       localModelResult: localResult ?? undefined,
@@ -269,7 +276,7 @@ export async function analyze(options: AnalysisOptions): Promise<AnalysisResult>
     };
   } catch (error) {
     console.error('[AnalysisRouter] LLM analysis failed:', error);
-    
+
     // Story 7.8 - AC3: Network error → enqueue for background sync
     // Only queue on genuine connectivity failures, not server-side errors (5xx, 4xx).
     // Also support forced sync for testing.
@@ -282,13 +289,13 @@ export async function analyze(options: AnalysisOptions): Promise<AnalysisResult>
       error.message.includes('offline') ||
       error.message.includes('AbortError')
     ));
-    
+
     if (isNetworkError) {
       console.log('[AnalysisRouter] Network error detected, enqueueing for background sync');
-      
+
       try {
         await enqueueAnalyzeRequest({ sku, imageBase64 });
-        
+
         // Return a special result indicating queued state
         return {
           scanId: `queued-${Date.now()}`,
@@ -303,7 +310,7 @@ export async function analyze(options: AnalysisOptions): Promise<AnalysisResult>
         };
       } catch (queueError) {
         console.error('[AnalysisRouter] Failed to enqueue request:', queueError);
-        // M8: In test mode, don't re-throw original error if queueing fails, 
+        // M8: In test mode, don't re-throw original error if queueing fails,
         // to allow the test to see the "failure" path without a hard crash.
         if (isTestMode) {
           return {
@@ -318,10 +325,10 @@ export async function analyze(options: AnalysisOptions): Promise<AnalysisResult>
             queuedForSync: true,
           };
         }
-        throw error; 
+        throw error;
       }
     }
-    
+
     throw error;
   }
 
@@ -341,6 +348,7 @@ export function canAnalyzeOffline(): boolean {
 function queueForLaterVerification(
   sku: string,
   imageBase64: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _localResult: LocalModelMetadata
 ): void {
   enqueueAnalyzeRequest({ sku, imageBase64 }).catch(error => {
@@ -378,7 +386,7 @@ export async function processOfflineQueue(): Promise<void> {
     }
 
     console.log(`[AnalysisRouter] Migrating ${queue.length} legacy localStorage scans to IndexedDB`);
-    
+
     // Move all items to IndexedDB immediately and clear localStorage
     for (const item of queue) {
       try {
@@ -387,7 +395,7 @@ export async function processOfflineQueue(): Promise<void> {
         console.error('[AnalysisRouter] Failed to migrate item to IndexedDB:', e);
       }
     }
-    
+
     localStorage.removeItem('afia_offline_queue');
     console.log('[AnalysisRouter] Legacy offline queue migrated to IndexedDB and cleared from localStorage');
   } catch (error) {

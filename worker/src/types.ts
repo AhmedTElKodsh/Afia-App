@@ -1,4 +1,6 @@
 export interface Env {
+  // Environment stage
+  STAGE?: string;
   // Supabase for training data storage
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;

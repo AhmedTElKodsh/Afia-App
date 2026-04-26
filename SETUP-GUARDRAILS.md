@@ -23,15 +23,13 @@ VS Code settings added (`.vscode/settings.json`):
 ### Layer 2: Pre-Commit Hooks (Short-term)
 **Status:** ⚠️ Needs Manual Installation
 
-Due to locked files, you need to manually install:
+Install husky and lint-staged:
 
 ```bash
 # Close any running dev servers first
 npm install --save-dev husky lint-staged
 
-# Initialize husky
-npx husky init
-
+# The prepare script will automatically set up husky
 # Create pre-commit hook
 echo "npx lint-staged" > .husky/pre-commit
 ```
@@ -65,7 +63,7 @@ All type errors and lint warnings have been fixed:
 # Stop any running processes (dev server, tests)
 # Then run:
 npm install --save-dev husky lint-staged
-npx husky init
+# The prepare script will automatically set up husky during install
 echo "npx lint-staged" > .husky/pre-commit
 ```
 
@@ -97,7 +95,8 @@ git commit -m "test: verify pre-commit hooks"
 ### "Husky install failed"
 - Make sure you're in the project root
 - Check that `.git` folder exists
-- Try: `npx husky install` manually
+- The `prepare` script runs automatically during `npm install`
+- If needed, run `npm run prepare` manually
 
 ### "Pre-commit hook not running"
 - Check `.husky/pre-commit` exists and is executable

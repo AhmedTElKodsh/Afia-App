@@ -1,7 +1,7 @@
 /**
  * Custom Service Worker Extensions
  * Story 7.8 - Service Worker Smart Upload Filtering
- * 
+ *
  * Adds Background Sync support for failed /analyze requests.
  * This file is imported by the generated service worker.
  */
@@ -46,7 +46,7 @@ async function processSyncQueue(): Promise<void> {
     const db = await openDatabase();
     await pruneExpiredItems(db);
     const items = await getAllQueueItems(db);
-    
+
     for (const item of items) {
       try {
         const response = await fetch('/api/analyze', {
@@ -56,11 +56,11 @@ async function processSyncQueue(): Promise<void> {
           },
           body: JSON.stringify(item.payload),
         });
-        
+
         if (response.ok) {
           // Success - remove from queue
           await removeQueueItem(db, item.id);
-          
+
           // Notify all clients
           const clients = await self.clients.matchAll();
           clients.forEach(client => {
@@ -72,10 +72,10 @@ async function processSyncQueue(): Promise<void> {
         } else {
           // HTTP error - increment retry count
           item.retryCount++;
-          
+
           if (item.retryCount >= item.maxRetries) {
             await removeQueueItem(db, item.id);
-            
+
             const clients = await self.clients.matchAll();
             clients.forEach(client => {
               client.postMessage({
@@ -91,10 +91,10 @@ async function processSyncQueue(): Promise<void> {
       } catch (error) {
         // Network error - increment retry count
         item.retryCount++;
-        
+
         if (item.retryCount >= item.maxRetries) {
           await removeQueueItem(db, item.id);
-          
+
           const clients = await self.clients.matchAll();
           clients.forEach(client => {
             client.postMessage({
@@ -135,7 +135,7 @@ async function pruneExpiredItems(db: IDBDatabase): Promise<void> {
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
-    
+
     request.onerror = () => reject(request.error);
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
@@ -154,12 +154,12 @@ function openDatabase(): Promise<IDBDatabase> {
 /**
  * Get all items from the queue
  */
-function getAllQueueItems(db: IDBDatabase): Promise<any[]> {
+function getAllQueueItems(db: IDBDatabase): Promise<unknown[]> {
   return new Promise((resolve, reject) => {
     const transaction = db.transaction([STORE_NAME], 'readonly');
     const store = transaction.objectStore('sync-queue');
     const request = store.getAll();
-    
+
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve(request.result);
   });
@@ -173,7 +173,7 @@ function removeQueueItem(db: IDBDatabase, id: string): Promise<void> {
     const transaction = db.transaction([STORE_NAME], 'readwrite');
     const store = transaction.objectStore('sync-queue');
     const request = store.delete(id);
-    
+
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve();
   });
@@ -182,15 +182,15 @@ function removeQueueItem(db: IDBDatabase, id: string): Promise<void> {
 /**
  * Update an item in the queue
  */
-function updateQueueItem(db: IDBDatabase, item: any): Promise<void> {
+function updateQueueItem(db: IDBDatabase, item: unknown): Promise<void> {
   return new Promise((resolve, reject) => {
     const transaction = db.transaction([STORE_NAME], 'readwrite');
     const store = transaction.objectStore('sync-queue');
     const request = store.put(item);
-    
+
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve();
   });
 }
 
-export {};
+export { };

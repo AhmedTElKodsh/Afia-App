@@ -53,11 +53,11 @@ async function withRetry<T>(
   maxRetries = 3,
   baseDelayMs = 500
 ): Promise<T> {
-  let lastError: any;
+  let lastError: unknown;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       // Add timeout to prevent hanging requests
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Supabase operation timed out")), 5000)
       );
       return await Promise.race([operation(), timeoutPromise]) as T;
@@ -101,7 +101,7 @@ export async function storeScan(
 
   // 2. Upload Image to 'scans' bucket
   const imagePath = `raw/${metadata.sku}/${new Date().toISOString().split('T')[0]}/${scanId}.jpg`;
-  
+
   await withRetry(async () => {
     const { error: storageError } = await supabase.storage
       .from("scans")
@@ -196,30 +196,35 @@ export async function getGlobalScans(
     return data;
   }, 1);
 
-  return (data || []).map((row: any) => ({
-    scanId: row.id,
-    timestamp: row.created_at,
-    sku: row.sku,
-    bottleGeometry: { shape: "unknown" }, // Full geometry not in DB
-    oilType: "unknown",
-    totalVolumeMl: 0, // Not stored in scans table, would need join
-    aiProvider: row.llm_fallback_prediction?.provider || "unknown",
-    fillPercentage: row.llm_fallback_prediction?.percentage || 0,
-    confidence: row.llm_fallback_prediction?.confidence || "unknown",
-    latencyMs: row.client_metadata?.latency_ms || 0,
-    imageQualityIssues: row.client_metadata?.image_quality_issues,
-    isContribution: row.client_metadata?.is_contribution,
-    localModelPrediction: row.local_model_prediction,
-    reasoning: row.llm_fallback_prediction?.reasoning,
-    // Story 7.4: New local model fields
-    localModelResult: row.local_model_result !== null && row.local_model_confidence !== null ? {
-      fillPercentage: row.local_model_result,
-      confidence: row.local_model_confidence,
-      modelVersion: row.local_model_version ?? "unknown",
-      inferenceTimeMs: row.local_model_inference_ms ?? 0,
-    } : undefined,
-    llmFallbackUsed: row.llm_fallback_used
-  }));
+  return (data || []).map((row: Record<string, unknown>) => {
+    const llmPrediction = row.llm_fallback_prediction as Record<string, unknown> | undefined;
+    const clientMetadata = row.client_metadata as Record<string, unknown> | undefined;
+
+    return {
+      scanId: row.id as string,
+      timestamp: row.created_at as string,
+      sku: row.sku as string,
+      bottleGeometry: { shape: "unknown" }, // Full geometry not in DB
+      oilType: "unknown",
+      totalVolumeMl: 0, // Not stored in scans table, would need join
+      aiProvider: (llmPrediction?.provider as string) || "unknown",
+      fillPercentage: (llmPrediction?.percentage as number) || 0,
+      confidence: (llmPrediction?.confidence as string) || "unknown",
+      latencyMs: (clientMetadata?.latency_ms as number) || 0,
+      imageQualityIssues: clientMetadata?.image_quality_issues as string[] | undefined,
+      isContribution: clientMetadata?.is_contribution as boolean | undefined,
+      localModelPrediction: row.local_model_prediction as Record<string, unknown> | undefined,
+      reasoning: llmPrediction?.reasoning as string | undefined,
+      // Story 7.4: New local model fields
+      localModelResult: row.local_model_result !== null && row.local_model_confidence !== null ? {
+        fillPercentage: row.local_model_result as number,
+        confidence: row.local_model_confidence as number,
+        modelVersion: (row.local_model_version as string) ?? "unknown",
+        inferenceTimeMs: (row.local_model_inference_ms as number) ?? 0,
+      } : undefined,
+      llmFallbackUsed: row.llm_fallback_used as boolean
+    };
+  });
 }
 
 /**

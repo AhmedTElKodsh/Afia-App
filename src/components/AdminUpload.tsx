@@ -1,9 +1,9 @@
 import { useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { 
-  Upload, 
-  X, 
-  CheckCircle2, 
+import {
+  Upload,
+  X,
+  CheckCircle2,
   Database,
 } from "lucide-react";
 import { bottleRegistry } from "../data/bottleRegistry";
@@ -32,19 +32,7 @@ export function AdminUpload() {
   const bottle = bottleRegistry.find(b => b.sku === selectedSku) || bottleRegistry[0];
   const volumes = calculateVolumes(fillPercentage, bottle.totalVolumeMl, bottle.geometry);
 
-  const onDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    const droppedFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/"));
-    addFiles(droppedFiles);
-  }, []);
-
-  const onFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      addFiles(Array.from(e.target.files));
-    }
-  };
-
-  const addFiles = (newFiles: File[]) => {
+  const addFiles = useCallback((newFiles: File[]) => {
     const fileObjects: UploadFile[] = newFiles.map(file => ({
       file,
       preview: URL.createObjectURL(file),
@@ -54,6 +42,18 @@ export function AdminUpload() {
     }));
     setFiles(prev => [...prev, ...fileObjects]);
     hapticFeedback.selection();
+  }, []);
+
+  const onDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const droppedFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/"));
+    addFiles(droppedFiles);
+  }, [addFiles]);
+
+  const onFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      addFiles(Array.from(e.target.files));
+    }
   };
 
   const removeFile = (id: string) => {
@@ -68,20 +68,20 @@ export function AdminUpload() {
   const handleUploadAll = async () => {
     const token = sessionStorage.getItem(SESSION_KEY);
     if (!token || files.length === 0) return;
-    
+
     setIsUploading(true);
     hapticFeedback.scan();
 
     for (const fileObj of files) {
       if (fileObj.status === "success") continue;
-      
+
       setFiles(prev => prev.map(f => f.id === fileObj.id ? { ...f, status: "uploading" } : f));
-      
+
       try {
         await adminUploadImage(
-          token, 
-          fileObj.file, 
-          selectedSku, 
+          token,
+          fileObj.file,
+          selectedSku,
           fillPercentage,
           "none" // Could be dynamic based on selected augmentation
         );
@@ -103,12 +103,12 @@ export function AdminUpload() {
           <h3>{t('admin.upload.title', 'Batch Dataset Upload')}</h3>
           <p className="text-secondary">{t('admin.upload.subtitle', 'Upload real or augmented images to seed the local model training set.')}</p>
         </div>
-        <button 
-          className="btn btn-primary btn-icon-text" 
+        <button
+          className="btn btn-primary btn-icon-text"
           onClick={handleUploadAll}
           disabled={files.length === 0 || isUploading}
         >
-          <Database size={18} /> 
+          <Database size={18} />
           {isUploading ? t('common.uploading', 'Uploading...') : t('admin.upload.submitAll', 'Upload Batch to DB')}
         </button>
       </div>
@@ -118,7 +118,7 @@ export function AdminUpload() {
         <aside className="upload-controls card">
           <h4>{t('admin.upload.batchLabels', 'Batch Labels')}</h4>
           <p className="text-caption text-tertiary">{t('admin.upload.batchLabelsDesc', 'Applied to all images in this batch')}</p>
-          
+
           <div className="form-group">
             <label>{t('admin.bottles.sku', 'Target Bottle SKU')}</label>
             <select value={selectedSku} onChange={(e) => setSelectedSku(e.target.value)}>
@@ -133,12 +133,12 @@ export function AdminUpload() {
               <label>{t('admin.review.correction', 'Ground Truth Level')}</label>
               <span className="value-badge">{fillPercentage}%</span>
             </div>
-            <input 
-              type="range" 
-              min="0" 
-              max="100" 
-              step="0.5" 
-              value={fillPercentage} 
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="0.5"
+              value={fillPercentage}
               onChange={(e) => setFillPercentage(parseFloat(e.target.value))}
               className="correction-slider"
             />
@@ -161,20 +161,20 @@ export function AdminUpload() {
 
         {/* ── Right: Dropzone & Preview ── */}
         <main className="upload-main-area">
-          <div 
+          <div
             className={`dropzone card ${files.length === 0 ? 'empty' : ''}`}
             onDragOver={(e) => e.preventDefault()}
             onDrop={onDrop}
           >
-            <input 
-              type="file" 
-              id="file-input" 
-              multiple 
-              accept="image/*" 
-              onChange={onFileSelect} 
-              hidden 
+            <input
+              type="file"
+              id="file-input"
+              multiple
+              accept="image/*"
+              onChange={onFileSelect}
+              hidden
             />
-            
+
             {files.length === 0 ? (
               <label htmlFor="file-input" className="dropzone-inner">
                 <div className="drop-icon-wrap">

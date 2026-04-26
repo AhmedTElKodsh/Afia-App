@@ -84,6 +84,8 @@ export default function App() {
 
   // Load local model on mount (Story 7.4)
   useEffect(() => {
+    if (import.meta.env.VITE_STAGE === 'stage1') return;
+    
     loadModel().catch(err => {
       console.warn('[App] Model preload failed:', err);
     });
@@ -91,6 +93,8 @@ export default function App() {
 
   // Story 7.5 - Task 2: Check for model updates on app load
   useEffect(() => {
+    if (import.meta.env.VITE_STAGE === 'stage1') return;
+
     const checkForUpdates = async () => {
       try {
         const { checkModelVersion } = await import('./services/modelLoader.ts');

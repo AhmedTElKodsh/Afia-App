@@ -80,30 +80,31 @@ async function setCachedModel(entry: ModelCacheEntry): Promise<void> {
     const db = await openModelDB();
     await db.put(MODEL_CONFIG.storeName, entry);
     console.log('[ModelLoader] Model cached successfully');
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Handle quota exceeded errors
-    if (error?.name === 'QuotaExceededError') {
+    const err = error as { name?: string };
+    if (err?.name === 'QuotaExceededError') {
       console.warn('[ModelLoader] IndexedDB quota exceeded, attempting to clear old versions');
-      
+
       // Log telemetry
-      logError('storage', error, {
+      logError('storage', err as Error, {
         operation: 'cache_model',
         modelVersion: entry.version,
       });
-      
+
       try {
         const db = await openModelDB();
         const allEntries = await db.getAll(MODEL_CONFIG.storeName);
-        
+
         // Sort by cachedAt timestamp (oldest first)
         const sortedEntries = allEntries.sort((a, b) => a.cachedAt - b.cachedAt);
-        
+
         // Delete oldest entries (keep only the newest one)
         for (let i = 0; i < sortedEntries.length - 1; i++) {
           await db.delete(MODEL_CONFIG.storeName, sortedEntries[i].version);
           console.log(`[ModelLoader] Deleted old model version: ${sortedEntries[i].version}`);
         }
-        
+
         // Try to cache again after cleanup
         await db.put(MODEL_CONFIG.storeName, entry);
         console.log('[ModelLoader] Model cached successfully after cleanup');
@@ -128,9 +129,9 @@ async function downloadModel(url: string, retries = 3): Promise<{
   weightData: ArrayBuffer;
 }> {
   console.log('[ModelLoader] Downloading model from:', url);
-  
+
   let lastError: Error | null = null;
-  
+
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const response = await fetch(url);
@@ -139,36 +140,36 @@ async function downloadModel(url: string, retries = 3): Promise<{
       }
 
       const modelJson = await response.json();
-  
-  // Download weight files
-  const weightsManifest = modelJson.weightsManifest;
-  if (!weightsManifest || weightsManifest.length === 0) {
-    throw new Error('Invalid model.json: missing weightsManifest');
-  }
 
-  const baseUrl = url.substring(0, url.lastIndexOf('/'));
-  const weightBuffers: ArrayBuffer[] = [];
-
-  for (const group of weightsManifest) {
-    for (const path of group.paths) {
-      const weightUrl = `${baseUrl}/${path}`;
-      const weightResponse = await fetch(weightUrl);
-      if (!weightResponse.ok) {
-        throw new Error(`Weight download failed: ${weightUrl}`);
+      // Download weight files
+      const weightsManifest = modelJson.weightsManifest;
+      if (!weightsManifest || weightsManifest.length === 0) {
+        throw new Error('Invalid model.json: missing weightsManifest');
       }
-      weightBuffers.push(await weightResponse.arrayBuffer());
-    }
-  }
 
-  // Concatenate all weight buffers
-  const totalSize = weightBuffers.reduce((sum, buf) => sum + buf.byteLength, 0);
-  const weightData = new ArrayBuffer(totalSize);
-  const weightView = new Uint8Array(weightData);
-  let offset = 0;
-  for (const buf of weightBuffers) {
-    weightView.set(new Uint8Array(buf), offset);
-    offset += buf.byteLength;
-  }
+      const baseUrl = url.substring(0, url.lastIndexOf('/'));
+      const weightBuffers: ArrayBuffer[] = [];
+
+      for (const group of weightsManifest) {
+        for (const path of group.paths) {
+          const weightUrl = `${baseUrl}/${path}`;
+          const weightResponse = await fetch(weightUrl);
+          if (!weightResponse.ok) {
+            throw new Error(`Weight download failed: ${weightUrl}`);
+          }
+          weightBuffers.push(await weightResponse.arrayBuffer());
+        }
+      }
+
+      // Concatenate all weight buffers
+      const totalSize = weightBuffers.reduce((sum, buf) => sum + buf.byteLength, 0);
+      const weightData = new ArrayBuffer(totalSize);
+      const weightView = new Uint8Array(weightData);
+      let offset = 0;
+      for (const buf of weightBuffers) {
+        weightView.set(new Uint8Array(buf), offset);
+        offset += buf.byteLength;
+      }
 
       return {
         modelTopology: modelJson.modelTopology,
@@ -178,14 +179,14 @@ async function downloadModel(url: string, retries = 3): Promise<{
     } catch (error) {
       lastError = error as Error;
       console.warn(`[ModelLoader] Download attempt ${attempt}/${retries} failed:`, error);
-      
+
       // Log error telemetry
       logError('network', lastError, {
         attempt,
         maxRetries: retries,
         url,
       });
-      
+
       if (attempt < retries) {
         // Wait before retry (exponential backoff)
         const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
@@ -193,7 +194,7 @@ async function downloadModel(url: string, retries = 3): Promise<{
       }
     }
   }
-  
+
   throw new Error(`Model download failed after ${retries} retries: ${lastError?.message}`);
 }
 
@@ -204,6 +205,12 @@ async function downloadModel(url: string, retries = 3): Promise<{
 export async function loadModel(
   onProgress?: (message: string) => void
 ): Promise<tf.LayersModel> {
+  // Story 7.6: Skip model loading in Stage 1
+  if (import.meta.env.VITE_STAGE === 'stage1') {
+    console.log('[ModelLoader] Stage 1 (LLM Only) detected, skipping local model load');
+    throw new Error('Local model is disabled in Stage 1');
+  }
+
   // Return existing instance if already loaded
   if (modelInstance) {
     return modelInstance;
@@ -218,7 +225,7 @@ export async function loadModel(
     try {
       // Story 7.4 - Task 7: Try to use WebGL backend for better performance
       await optimizeBackend();
-      
+
       // Try cache first
       onProgress?.('Checking cache...');
       const cached = await getCachedModel(MODEL_CONFIG.version);
@@ -240,7 +247,7 @@ export async function loadModel(
       } else {
         console.log('[ModelLoader] Cache miss, downloading from R2');
         onProgress?.('Downloading model (~5MB)...');
-        
+
         const modelUrl = `${MODEL_CONFIG.r2BaseUrl}${MODEL_CONFIG.modelPath}`;
         modelData = await downloadModel(modelUrl);
 
@@ -257,7 +264,7 @@ export async function loadModel(
 
       // Load model into TF.js
       onProgress?.('Initializing model...');
-      
+
       let model: tf.LayersModel;
       try {
         model = await tf.loadLayersModel(
@@ -270,13 +277,13 @@ export async function loadModel(
       } catch (parseError) {
         // Story 7.4 - Task 8: Handle corrupt model data
         console.error('[ModelLoader] Model parse error, clearing cache:', parseError);
-        
+
         // Log telemetry
         logError('model_loading', parseError as Error, {
           modelVersion: MODEL_CONFIG.version,
           fromCache: !!cached,
         });
-        
+
         // Clear corrupted cache entry
         if (cached) {
           try {
@@ -287,7 +294,7 @@ export async function loadModel(
             console.warn('[ModelLoader] Failed to clear cache:', deleteError);
           }
         }
-        
+
         throw new Error(`Model parse failed: ${(parseError as Error).message}`);
       }
 
@@ -297,13 +304,13 @@ export async function loadModel(
       return model;
     } catch (error) {
       loadingPromise = null; // Reset so retry is possible
-      
+
       // Log telemetry
       logError('model_loading', error as Error, {
         modelVersion: MODEL_CONFIG.version,
         backend: tf.getBackend(),
       });
-      
+
       throw error;
     }
   })();
@@ -319,7 +326,7 @@ async function optimizeBackend(): Promise<void> {
   try {
     const currentBackend = tf.getBackend();
     console.log('[ModelLoader] Current backend:', currentBackend);
-    
+
     // Try to set WebGL backend for GPU acceleration
     if (currentBackend !== 'webgl') {
       await tf.setBackend('webgl');
@@ -380,7 +387,7 @@ export async function checkModelVersion(): Promise<{
 }> {
   try {
     console.log('[ModelLoader] Checking for model updates...');
-    
+
     // Fetch latest version from server
     const response = await fetch(MODEL_CONFIG.versionCheckUrl, {
       method: 'GET',
@@ -401,11 +408,11 @@ export async function checkModelVersion(): Promise<{
     }
 
     const serverVersion = await response.json();
-    
+
     // Get cached version from IndexedDB
     const db = await openModelDB();
     const allEntries = await db.getAll(MODEL_CONFIG.storeName);
-    const cachedVersion = allEntries.length > 0 
+    const cachedVersion = allEntries.length > 0
       ? allEntries.sort((a, b) => b.cachedAt - a.cachedAt)[0].version
       : null;
 
@@ -421,7 +428,7 @@ export async function checkModelVersion(): Promise<{
     // Check if update is needed
     if (latestVersion !== currentVersion) {
       console.log('[ModelLoader] New version available, triggering background update');
-      
+
       // Trigger background update (non-blocking)
       updateModelInBackground(serverVersion).catch(err => {
         console.error('[ModelLoader] Background update failed:', err);
@@ -447,7 +454,7 @@ export async function checkModelVersion(): Promise<{
     };
   } catch (error) {
     console.warn('[ModelLoader] Version check error:', error);
-    
+
     // Log telemetry
     logError('version_check', error as Error, {
       currentVersion: MODEL_CONFIG.version,
@@ -475,13 +482,13 @@ async function updateModelInBackground(serverVersion: {
 }): Promise<void> {
   try {
     console.log('[ModelLoader] Starting background model update to', serverVersion.version);
-    
+
     // Construct model URL from R2 key
     const modelUrl = `${MODEL_CONFIG.r2BaseUrl}/${serverVersion.r2Key}`;
-    
+
     // Download new model
     const modelData = await downloadModel(modelUrl);
-    
+
     // Save to IndexedDB
     await setCachedModel({
       version: serverVersion.version,
@@ -494,7 +501,7 @@ async function updateModelInBackground(serverVersion: {
       deployedAt: serverVersion.deployedAt,
       r2Key: serverVersion.r2Key,
     });
-    
+
     // Verify save was successful before deleting old versions
     const db = await openModelDB();
     const allEntries = await db.getAll(MODEL_CONFIG.storeName);
@@ -503,7 +510,7 @@ async function updateModelInBackground(serverVersion: {
     if (newVersionExists) {
       console.log('[ModelLoader] New version confirmed in cache, cleaning up old versions');
       const oldEntries = allEntries.filter(e => e.version !== serverVersion.version);
-      
+
       for (const oldEntry of oldEntries) {
         try {
           await db.delete(MODEL_CONFIG.storeName, oldEntry.version);
@@ -515,7 +522,7 @@ async function updateModelInBackground(serverVersion: {
     } else {
       console.warn('[ModelLoader] New version not found in cache after save attempt, skipping cleanup');
     }
-    
+
     // Defer disposal until any running inference completes
     const oldModel = modelInstance;
     modelInstance = null;
@@ -542,7 +549,7 @@ async function updateModelInBackground(serverVersion: {
     if (oldModel) deferDispose(oldModel);
 
     console.log('[ModelLoader] Model updated successfully to', serverVersion.version);
-    
+
     // Show notification to user
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification('Model Updated', {

@@ -3,7 +3,7 @@
  * Story 7.6 - LLM Fallback Routing Logic
  */
 import { describe, it, expect } from 'vitest';
-import { routeInference, type InferenceRoute, type RouterInput } from '../inferenceRouter';
+import { routeInference, type RouterInput } from '../inferenceRouter';
 
 describe('inferenceRouter', () => {
   describe('routeInference', () => {
@@ -16,7 +16,7 @@ describe('inferenceRouter', () => {
         brandClassifierConfidence: 0.85,
         sku: 'afia-1.5l',
       };
-      
+
       expect(routeInference(input)).toBe('local');
     });
 
@@ -29,7 +29,7 @@ describe('inferenceRouter', () => {
         brandClassifierConfidence: 0.85,
         sku: 'afia-1.5l',
       };
-      
+
       expect(routeInference(input)).toBe('local');
     });
 
@@ -42,7 +42,7 @@ describe('inferenceRouter', () => {
         brandClassifierConfidence: 0.85,
         sku: 'afia-1.5l',
       };
-      
+
       expect(routeInference(input)).toBe('llm');
     });
 
@@ -55,7 +55,7 @@ describe('inferenceRouter', () => {
         brandClassifierConfidence: 0.85,
         sku: 'afia-1.5l',
       };
-      
+
       expect(routeInference(input)).toBe('llm');
     });
 
@@ -68,7 +68,7 @@ describe('inferenceRouter', () => {
         brandClassifierConfidence: 0.85,
         sku: 'afia-1.5l',
       };
-      
+
       expect(routeInference(input)).toBe('llm');
     });
 
@@ -81,7 +81,7 @@ describe('inferenceRouter', () => {
         brandClassifierConfidence: 0.79,
         sku: null,
       };
-      
+
       expect(routeInference(input)).toBe('needs-sku');
     });
 
@@ -94,7 +94,7 @@ describe('inferenceRouter', () => {
         brandClassifierConfidence: 0.79,
         sku: 'afia-1.5l',
       };
-      
+
       expect(routeInference(input)).toBe('local');
     });
 
@@ -107,7 +107,7 @@ describe('inferenceRouter', () => {
         brandClassifierConfidence: null,
         sku: null,
       };
-      
+
       expect(routeInference(input)).toBe('needs-sku');
     });
 
@@ -120,7 +120,7 @@ describe('inferenceRouter', () => {
         brandClassifierConfidence: 0.85,
         sku: 'afia-1.5l',
       };
-      
+
       expect(routeInference(input)).toBe('llm');
     });
   });

@@ -10,7 +10,7 @@ interface ErrorEvent {
   category: 'model_loading' | 'inference' | 'network' | 'storage' | 'model_update' | 'version_check' | 'unknown';
   errorType: string;
   message: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 const errorLog: ErrorEvent[] = [];
@@ -22,7 +22,7 @@ const MAX_LOG_SIZE = 100;
 export function logError(
   category: ErrorEvent['category'],
   error: Error,
-  context?: Record<string, any>
+  context?: Record<string, unknown>
 ): void {
   const event: ErrorEvent = {
     timestamp: Date.now(),
@@ -31,14 +31,14 @@ export function logError(
     message: error.message,
     context,
   };
-  
+
   errorLog.push(event);
-  
+
   // Keep log size manageable
   if (errorLog.length > MAX_LOG_SIZE) {
     errorLog.shift();
   }
-  
+
   console.error(`[ErrorTelemetry] ${category}:`, {
     type: event.errorType,
     message: event.message,
@@ -61,7 +61,7 @@ export function logError(
         headers: { 'Content-Type': 'application/json' },
         body: payload,
         keepalive: true,
-      }).catch(() => {});
+      }).catch(() => { });
     }
   } catch {
     // Never let telemetry break the app
@@ -77,11 +77,11 @@ export function getErrorStats(): {
   recent: ErrorEvent[];
 } {
   const byCategory: Record<string, number> = {};
-  
+
   for (const event of errorLog) {
     byCategory[event.category] = (byCategory[event.category] || 0) + 1;
   }
-  
+
   return {
     total: errorLog.length,
     byCategory,

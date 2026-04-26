@@ -1,7 +1,7 @@
 /**
  * R2/Supabase Storage Client
  * Story 7.7 - Admin Correction Feedback Loop
- * 
+ *
  * Provides unified interface for metadata and image storage
  * Currently uses Supabase Storage/Database (R2 migration planned)
  */
@@ -89,7 +89,7 @@ export async function putMetadata(
 ): Promise<void> {
   const supabase = getSupabase(env);
 
-  const updateData: any = {};
+  const updateData: Record<string, unknown> = {};
 
   if (metadata.trainingEligible !== undefined) {
     updateData.training_eligible = metadata.trainingEligible;

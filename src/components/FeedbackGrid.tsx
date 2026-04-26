@@ -36,8 +36,8 @@ interface FeedbackGridProps {
 const OPTION_LABEL_KEYS: Record<string, string> = {
   [FEEDBACK_CONFIG.types.ACCURATE]: 'feedback.aboutRight',
   [FEEDBACK_CONFIG.types.TOO_HIGH]: 'feedback.tooHigh',
-  [FEEDBACK_CONFIG.types.TOO_LOW]:  'feedback.tooLow',
-  [FEEDBACK_CONFIG.types.WAY_OFF]:  'feedback.wayOff',
+  [FEEDBACK_CONFIG.types.TOO_LOW]: 'feedback.tooLow',
+  [FEEDBACK_CONFIG.types.WAY_OFF]: 'feedback.wayOff',
 };
 
 export function FeedbackGrid({
@@ -47,15 +47,9 @@ export function FeedbackGrid({
   selectedType
 }: FeedbackGridProps) {
   const { t } = useTranslation();
+  // Use selectedType directly as initial state, no sync effect needed
   const [selected, setSelected] = useState<FeedbackType | null>(selectedType || null);
   const isMountedRef = useRef(true);
-
-  // Sync with prop
-  useEffect(() => {
-    if (selectedType) {
-      setSelected(selectedType);
-    }
-  }, [selectedType]);
 
   useEffect(() => {
     isMountedRef.current = true;

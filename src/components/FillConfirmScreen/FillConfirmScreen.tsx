@@ -42,6 +42,7 @@ export function FillConfirmScreen({
   const imgRef = useRef<HTMLImageElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imgDimensions, setImgDimensions] = useState({ width: 0, height: 0 });
 
   // Track container size with ResizeObserver (Safari-safe — do NOT use window.resize)
   useEffect(() => {
@@ -55,19 +56,30 @@ export function FillConfirmScreen({
     return () => ro.disconnect();
   }, []);
 
+  // Track image dimensions when loaded
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img || !imageLoaded) return;
+    setImgDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+  }, [imageLoaded]);
+
   const { width: containerW, height: containerH } = containerSize;
 
   // linePx is DERIVED — never a useState. useMemo recalculates on waterMl OR container resize.
   const linePx = useMemo(() => {
-    if (!imageLoaded || !imgRef.current || !containerW || !containerH) return 0;
+    if (!imageLoaded || !imgDimensions.width || !imgDimensions.height || !containerW || !containerH) return 0;
+    // Create a temporary image element for fillMlToPixelY
+    const tempImg = document.createElement('img');
+    tempImg.width = imgDimensions.width;
+    tempImg.height = imgDimensions.height;
     return fillMlToPixelY(
       waterMl,
       bottleCapacityMl,
-      imgRef.current,
+      tempImg,
       bottleTopPct,
       bottleBottomPct
     );
-  }, [waterMl, bottleCapacityMl, bottleTopPct, bottleBottomPct, containerW, containerH, imageLoaded]);
+  }, [waterMl, bottleCapacityMl, bottleTopPct, bottleBottomPct, containerW, containerH, imageLoaded, imgDimensions]);
 
   const handleImageLoad = useCallback(() => {
     setImageLoaded(true);

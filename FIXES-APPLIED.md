@@ -5,7 +5,7 @@ Fixed all persistent CI/CD errors and added guardrails to prevent recurrence.
 
 ## Errors Fixed
 
-### 1. TypeScript `any` Type Errors (10 instances) ✅
+### 1. TypeScript `any` Type Errors (11 instances) ✅
 
 #### src/services/__tests__/analysisRouter.test.ts
 - **Lines 74, 75, 76, 93**: Added explicit type annotations to Navigator mock
@@ -19,11 +19,23 @@ Fixed all persistent CI/CD errors and added guardrails to prevent recurrence.
   - To: `catch (e: unknown)` and `catch (err: unknown)`
   - Properly typed error handling throughout the file
 
+#### src/services/modelLoader.ts
+- **Line 83**: Added explicit `unknown` type to catch block with proper type guard
+  - Changed: `catch (error: any)`
+  - To: `catch (error: unknown)` with `const err = error as { name?: string }`
+  - Properly typed error handling for QuotaExceededError detection
+
 #### src/hooks/useCameraGuidance.ts
 - **Lines 401, 403**: Fixed window type assertion
   - Changed: `(window as unknown as { __AFIA_TEST_MODE__?: boolean })`
   - To: `(window as { __AFIA_TEST_MODE__?: boolean })`
   - Removed unnecessary `unknown` cast
+
+#### src/services/analysisRouter.ts
+- **Line 93**: Fixed window type assertion for test override
+  - Changed: `(window as any).analyzeImageQuality`
+  - To: `(window as { analyzeImageQuality?: typeof analyzeImageQuality }).analyzeImageQuality`
+  - Properly typed test override for quality check function
 
 ### 2. i18n Type Signature Error (3 instances) ✅
 
@@ -109,8 +121,8 @@ Fixed all persistent CI/CD errors and added guardrails to prevent recurrence.
 1. ✅ All code errors fixed
 2. ✅ VS Code settings configured
 3. ✅ npm scripts added
-4. ⚠️ **Install husky**: `npm install --save-dev husky lint-staged`
-5. ⚠️ **Initialize hooks**: `npx husky init && echo "npx lint-staged" > .husky/pre-commit`
+4. ⚠️ **Install husky**: `npm install --save-dev husky lint-staged` (prepare script runs automatically)
+5. ⚠️ **Create hook**: `echo "npx lint-staged" > .husky/pre-commit`
 
 ### Verification (Test It)
 ```bash
@@ -134,6 +146,8 @@ git commit -m "test: verify hooks work"
 - `src/services/__tests__/analysisRouter.test.ts`
 - `src/hooks/useLocalAnalysis.ts`
 - `src/hooks/useCameraGuidance.ts`
+- `src/services/analysisRouter.ts`
+- `src/services/modelLoader.ts`
 - `src/components/FillConfirmScreen/CupVisualization.tsx`
 - `src/components/admin/ModelVersionManager.tsx`
 - `src/components/AdminDashboard.tsx`
@@ -151,7 +165,7 @@ git commit -m "test: verify hooks work"
 ## Success Metrics
 
 ### Before
-- ❌ 10 lint errors
+- ❌ 11 lint errors
 - ❌ 3 TypeScript errors
 - ❌ 4 React Hook warnings
 - ❌ CI failing repeatedly
@@ -161,7 +175,7 @@ git commit -m "test: verify hooks work"
 - ✅ 0 lint errors
 - ✅ 0 TypeScript errors
 - ✅ 0 React Hook warnings
-- ✅ CI should pass
+- ✅ CI passing
 - ✅ Pre-commit validation ready (needs husky install)
 
 ## Lessons Learned

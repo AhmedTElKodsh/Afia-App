@@ -5,9 +5,9 @@ export class RedisClient {
   constructor(
     private url: string,
     private token: string
-  ) {}
+  ) { }
 
-  private async fetch<T>(command: any[]): Promise<T> {
+  private async fetch<T>(command: unknown[]): Promise<T> {
     const response = await fetch(this.url, {
       method: "POST",
       headers: {

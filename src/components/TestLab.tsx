@@ -67,7 +67,7 @@ export function TestLab({ isAdmin, selectedSku: propsSku, onSkuChange }: TestLab
 
   // Local state for SKU if not provided by parent (fallback)
   const [internalSku, setInternalSku] = useState<string>(ACTIVE_SKU);
-  
+
   // Use prop if available, otherwise internal
   const selectedSku = propsSku !== undefined ? propsSku : internalSku;
   const setSelectedSku = useCallback((sku: string) => {
@@ -152,7 +152,7 @@ export function TestLab({ isAdmin, selectedSku: propsSku, onSkuChange }: TestLab
   // Get selected bottle
   const selectedBottle = useMemo(() =>
     selectedSku ? getBottleBySku(selectedSku) : null
-  , [selectedSku]);
+    , [selectedSku]);
 
   const getLocalizedBottleName = useCallback((sku: string, defaultName: string) => {
     const key = `bottles.${sku}`;
@@ -222,7 +222,7 @@ export function TestLab({ isAdmin, selectedSku: propsSku, onSkuChange }: TestLab
 
       // Simulate API call with realistic delay and abort support
       const mockResult = await mockAnalyzeBottle(scenario, bottle.totalVolumeMl, abortController.signal);
-      
+
       setResult(mockResult);
       setScanState("complete");
       // F15: Indicate this is a mock result
@@ -230,7 +230,7 @@ export function TestLab({ isAdmin, selectedSku: propsSku, onSkuChange }: TestLab
         defaultValue: 'Mock scenario complete: {{name}}',
         name: t(scenario.nameKey)
       }));
-      
+
       // Track analytics
       analytics.testEntryPointSelected('mock-api', selectedSku);
     } catch (err) {
@@ -325,7 +325,7 @@ export function TestLab({ isAdmin, selectedSku: propsSku, onSkuChange }: TestLab
       val.accuracyRating,
       !!val.notes
     );
-  }, [result, updateFeedback, success, t]);
+  }, [result, updateFeedback, success, showError, t]);
 
   // Render onboarding
   if (showOnboarding) {
@@ -434,8 +434,8 @@ export function TestLab({ isAdmin, selectedSku: propsSku, onSkuChange }: TestLab
               {/* Confirmed bottle card — allow switching if multiple active */}
               {activeBottleRegistry.length > 1 ? (
                 <div className="test-lab-sku-selector" style={{ marginBottom: 'var(--space-md)', display: 'flex', justifyContent: 'center' }}>
-                  <select 
-                    value={selectedSku} 
+                  <select
+                    value={selectedSku}
                     onChange={(e) => setSelectedSku(e.target.value)}
                     style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', width: '100%', maxWidth: '320px', background: 'var(--color-surface)', color: 'var(--color-text)' }}
                   >
@@ -560,35 +560,35 @@ export function TestLab({ isAdmin, selectedSku: propsSku, onSkuChange }: TestLab
           {scanState === "error" && error && (
             <div className="test-lab-section">
               <div className="test-lab-error-card" role="alert">
-              {/* Icon badge */}
-              <div className="test-lab-error-icon-wrap" aria-hidden="true">
-                <AlertTriangle size={28} strokeWidth={2} className="test-lab-error-icon" />
-              </div>
+                {/* Icon badge */}
+                <div className="test-lab-error-icon-wrap" aria-hidden="true">
+                  <AlertTriangle size={28} strokeWidth={2} className="test-lab-error-icon" />
+                </div>
 
-              {/* Message */}
-              <div className="test-lab-error-body">
-                <h4 className="test-lab-error-title">{t('admin.testLab.errorTitle')}</h4>
-                <p className="test-lab-error-msg">{error}</p>
-              </div>
+                {/* Message */}
+                <div className="test-lab-error-body">
+                  <h4 className="test-lab-error-title">{t('admin.testLab.errorTitle')}</h4>
+                  <p className="test-lab-error-msg">{error}</p>
+                </div>
 
-              <div className="test-lab-error-actions">
-                <button
-                  className="error-retry-button"
-                  onClick={handleRetry}
-                  type="button"
-                >
-                  <RefreshCcw size={16} strokeWidth={2} />
-                  <span>{t('common.retry')}</span>
-                </button>
-                <button
-                  className="test-lab-back-button"
-                  onClick={handleNewTest}
-                  type="button"
-                >
-                  <span>{t('admin.testLab.backToTestLab')}</span>
-                </button>
+                <div className="test-lab-error-actions">
+                  <button
+                    className="error-retry-button"
+                    onClick={handleRetry}
+                    type="button"
+                  >
+                    <RefreshCcw size={16} strokeWidth={2} />
+                    <span>{t('common.retry')}</span>
+                  </button>
+                  <button
+                    className="test-lab-back-button"
+                    onClick={handleNewTest}
+                    type="button"
+                  >
+                    <span>{t('admin.testLab.backToTestLab')}</span>
+                  </button>
+                </div>
               </div>
-            </div>
             </div>
           )}
         </>
