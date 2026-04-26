@@ -1,5 +1,5 @@
 ---
-name: CI/CD Pipeline
+name: Stage1 LLM Only
 
 on:
   push:
