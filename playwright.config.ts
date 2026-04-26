@@ -105,7 +105,7 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
       stdout: 'ignore',
-      stderr: 'pipe',
+      stderr: 'ignore',
     }
   ],
 });
