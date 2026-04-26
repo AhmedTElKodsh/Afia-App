@@ -13,8 +13,8 @@ test.describe('Epic 1: Core Scan Experience', () => {
     await page.addInitScript(() => {
       window.localStorage.setItem('afia_privacy_accepted', 'true');
       (window as any).__AFIA_TEST_MODE__ = true;
-      // Prevent auto-capture from unmounting the camera view before waitForVideoReady completes
-      (window as any).__AFIA_PREVENT_CAPTURE__ = true;
+      // Manual mode only (no auto-capture)
+      (window as any).__AFIA_FORCE_MANUAL__ = true;
     });
     // Camera mock only — each test registers its own analyze route
     await mockCamera(page);
@@ -25,7 +25,7 @@ test.describe('Epic 1: Core Scan Experience', () => {
    * Privacy is pre-accepted via addInitScript so QrLanding renders the enabled button directly.
    * 
    * The mock camera draws a realistic bottle with Afia brand markers (green band, heart logo)
-   * that should trigger auto-capture when the guidance system detects good quality.
+   * for visual guidance. User must manually capture.
    */
   async function navigateToCamera(page: import('@playwright/test').Page) {
     await page.goto(`/?sku=${testBottles.afiaCorn15L.sku}`);
@@ -53,8 +53,7 @@ test('Critical Path: QR -> Privacy -> Scan -> Results', async ({ page }) => {
     await mockAnalyzeSuccess(page);
     await navigateToCamera(page);
 
-    // Auto-capture should trigger within a few seconds when guidance detects good quality
-    // The mock camera draws a realistic bottle with Afia brand markers
+    // Manual capture required - trigger analysis
     await triggerAnalyzeAndConfirm(page);
 
     await expect(page.locator('.result-metric__value').first()).toContainText(/ml/i);

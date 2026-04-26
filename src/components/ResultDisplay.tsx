@@ -7,6 +7,7 @@ import { calculateNutrition } from "../../shared/nutritionCalculator.ts";
 import { ConfidenceBadge } from "./ConfidenceBadge.tsx";
 import { FeedbackGrid } from "./FeedbackGrid.tsx";
 import { CorrectionSlider } from "./results/CorrectionSlider.tsx";
+import { ConsumptionSlider } from "./ConsumptionSlider.tsx";
 import { hapticFeedback } from "../utils/haptics.ts";
 import { useScanHistory, type StoredScan } from "../hooks/useScanHistory.ts";
 import { submitFeedback } from "../api/apiClient.ts";
@@ -27,60 +28,12 @@ const FEEDBACK_RATING_MAP: Record<FeedbackType, StoredScan["feedbackRating"]> = 
   'way-off':  'way_off',
 };
 
-// --- Cup Icon Component ---
-interface CupIconProps {
-  fill: "half" | "full" | "none";
-  size?: number;
-}
-
-function CupIcon({ fill, size = 24 }: CupIconProps) {
-  const { i18n } = useTranslation();
-  const isRTL = i18n.dir() === 'rtl';
-  
-  return (
-    <svg 
-      width={size} 
-      height={size} 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      xmlns="http://www.w3.org/2000/svg"
-      className="cup-icon"
-    >
-      {/* Cup handle */}
-      <path 
-        d={isRTL ? "M6 8C3.8 8 2 9.8 2 12C2 14.2 3.8 16 6 16" : "M18 8C20.2 8 22 9.8 22 12C22 14.2 20.2 16 18 16"} 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-      />
-      {/* Cup body */}
-      <path 
-        d={isRTL ? "M22 6V16C22 18.2 20.2 20 18 20H10C7.8 20 6 18.2 6 16V6H22Z" : "M2 6V16C2 18.2 3.8 20 6 20H14C16.2 20 18 18.2 18 16V6H2Z"} 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinejoin="round" 
-      />
-      {/* Fill level */}
-      {fill !== "none" && (
-        <path 
-          d={
-            fill === "full" 
-              ? (isRTL ? "M6 8V16C6 18.2 7.8 20 10 20H18C20.2 20 22 18.2 22 16V8H6Z" : "M2 8V16C2 18.2 3.8 20 6 20H14C16.2 20 18 18.2 18 16V8H2Z")
-              : (isRTL ? "M6 14V16C6 18.2 7.8 20 10 20H18C20.2 20 22 18.2 22 16V14H6Z" : "M2 14V16C2 18.2 3.8 20 6 20H14C16.2 20 18 18.2 18 16V14H2Z")
-          } 
-          fill="var(--color-primary)" 
-        />
-      )}
-    </svg>
-  );
-}
-
 export function ResultDisplay({ result, bottle, capturedImage, onRetake }: ResultDisplayProps) {
   const { t } = useTranslation();
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [pendingRating, setPendingRating] = useState<FeedbackType | null>(null);
   const [userFillPct, setUserFillPct] = useState(result.fillPercentage);
-  const [sliderValue, setSliderValue] = useState(0); // Value in ml to consume
+  const [consumptionUsageMl, setConsumptionUsageMl] = useState(0); // Consumption slider value
   
   // M2 FIX: Add loading state to prevent double-submission
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -120,55 +73,13 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
     }
   }, [result.confidence]);
 
-  const originalVolumes = useMemo(() => calculateVolumes(
+  const volumes = useMemo(() => calculateVolumes(
     userFillPct, // Drives real-time gauge/volume sync (Story 4.4 AC2)
     bottle.totalVolumeMl,
     bottle.geometry
   ), [userFillPct, bottle.totalVolumeMl, bottle.geometry]);
 
-  // Helper converters
-  const { mlToTablespoons, mlToCups } = useMemo(() => {
-    return {
-      mlToTablespoons: (ml: number) => ml / 14.7868,
-      mlToCups: (ml: number) => ml / 220
-    };
-  }, []);
-
-  // Update volumes based on slider (planned consumption)
-  const volumes = useMemo(() => {
-    const remainingMl = Math.max(0, originalVolumes.remaining.ml - sliderValue);
-    const consumedMl = bottle.totalVolumeMl - remainingMl;
-    
-    return {
-      remaining: {
-        ml: Math.round(remainingMl * 100) / 100,
-        tablespoons: Math.round(mlToTablespoons(remainingMl) * 10) / 10,
-        cups: Math.round(mlToCups(remainingMl) * 10) / 10,
-      },
-      consumed: {
-        ml: Math.round(consumedMl * 100) / 100,
-        tablespoons: Math.round(mlToTablespoons(consumedMl) * 10) / 10,
-        cups: Math.round(mlToCups(consumedMl) * 10) / 10,
-      }
-    };
-  }, [originalVolumes.remaining.ml, sliderValue, bottle.totalVolumeMl, mlToTablespoons, mlToCups]);
-
   const nutrition = calculateNutrition(volumes.consumed.ml, bottle.oilType);
-
-  const maxSliderValue = Math.floor(originalVolumes.remaining.ml / 55) * 55;
-  
-  // Calculate cup count based on 110ml = 1 full cup, 55ml = 1/2 cup
-  const halfCups = Math.floor(sliderValue / 55);
-  const fullCups = Math.floor(halfCups / 2);
-  const hasHalfCup = halfCups % 2 === 1;
-
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value);
-    if (val !== sliderValue) {
-      hapticFeedback.selection();
-      setSliderValue(val);
-    }
-  };
 
   return (
     <div className="result-display" data-confidence={result.confidence} aria-live="assertive">
@@ -224,55 +135,19 @@ export function ResultDisplay({ result, bottle, capturedImage, onRetake }: Resul
               }}
             >
               <div className="red-line-label">
-                {Math.round(originalVolumes.remaining.ml)}{t('common.ml', 'ml')}
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Interactive 55ml Slider */}
-          <div className="result-slider-sidebar">
-            <div className="slider-track-visual">
-              <input 
-                type="range" 
-                min="0" 
-                max={maxSliderValue} 
-                step="55" 
-                value={sliderValue} 
-                onChange={handleSliderChange}
-                className="vertical-step-slider"
-              />
-            </div>
-            
-            <div className="cup-display-area">
-              <div className="cup-stack">
-                {[...Array(fullCups)].map((_, i) => (
-                  <CupIcon key={`full-${i}`} fill="full" size={28} />
-                ))}
-                {hasHalfCup && <CupIcon fill="half" size={28} />}
-              </div>
-              <div className="slider-ml-label">
-                -{sliderValue}{t('common.ml', 'ml')}
+                {Math.round(volumes.remaining.ml)}{t('common.ml', 'ml')}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Summary Text ── */}
-      <div className="result-summary-grid">
-        <div className="summary-item consumed">
-          <span className="summary-label">{t('results.consumed')}</span>
-          <span className="summary-value">{Math.round(volumes.consumed.ml)}{t('common.ml', 'ml')}</span>
-          <span className="summary-sub">
-            {fullCups > 0 || hasHalfCup ? `${fullCups} ${hasHalfCup ? '+ 1/2' : ''} ${t('common.cups')}` : `0 ${t('common.cups')}`}
-          </span>
-        </div>
-        <div className="summary-item remaining">
-          <span className="summary-label">{t('results.remaining')}</span>
-          <span className="summary-value">{Math.round(volumes.remaining.ml)}{t('common.ml', 'ml')}</span>
-          <span className="summary-sub">{(volumes.remaining.ml / bottle.totalVolumeMl * 100).toFixed(1)}%</span>
-        </div>
-      </div>
+      {/* ── Consumption Measurement Slider (Story 3.3) ── */}
+      <ConsumptionSlider
+        remainingMl={volumes.remaining.ml}
+        usageMl={consumptionUsageMl}
+        onUsageChange={setConsumptionUsageMl}
+      />
 
       {/* ── Correction Mode UI - Story 4.4 ── */}
       {pendingRating && (

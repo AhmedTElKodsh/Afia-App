@@ -10,7 +10,7 @@ import { UploadQualityWarning } from '../UploadQualityWarning';
 // Mock i18next
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, options?: any) => {
+    t: (key: string, options?: { defaultValue?: string }) => {
       // Return English translations for test assertions
       const translations: Record<string, string> = {
         'uploadQuality.title': 'Photo Quality Warning',

@@ -51,7 +51,7 @@ describe("handleModelVersion", () => {
       from: vi.fn(() => ({
         select: vi.fn(() => ({
           eq: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({ data: mockData, error: null })),
+            maybeSingle: vi.fn(() => Promise.resolve({ data: mockData, error: null })),
           })),
         })),
       })),
@@ -80,7 +80,7 @@ describe("handleModelVersion", () => {
       from: vi.fn(() => ({
         select: vi.fn(() => ({
           eq: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({ data: null, error: null })),
+            maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null })),
           })),
         })),
       })),
@@ -101,7 +101,7 @@ describe("handleModelVersion", () => {
       from: vi.fn(() => ({
         select: vi.fn(() => ({
           eq: vi.fn(() => ({
-            single: vi.fn(() =>
+            maybeSingle: vi.fn(() =>
               Promise.resolve({
                 data: null,
                 error: { message: "Database connection failed" },

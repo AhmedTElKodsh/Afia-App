@@ -793,5 +793,12 @@
     "sliderLabel": "اضبط مستوى الزيت",
     "mlValue": "{{value}} مل",
     "confirmed": "تم تأكيد مستوى الزيت"
+  },
+  "consumption": {
+    "title": "كم ستستخدم؟",
+    "sliderLabel": "كمية الزيت المستخدمة",
+    "takingOut": "ستأخذ:",
+    "willRemain": "سيتبقى:",
+    "lessThanQuarterCup": "أقل من ¼ كوب متبقي ({{ml}}مل)"
   }
 }

@@ -134,8 +134,8 @@ describe('ModelVersionManager', () => {
 
     // Verify activate endpoint was called
     await waitFor(() => {
-      const activateCalls = mockFetch.mock.calls.filter((call: any) => 
-        call[0]?.includes('/admin/model/activate')
+      const activateCalls = mockFetch.mock.calls.filter((call: [input: RequestInfo | URL, init?: RequestInit]) => 
+        typeof call[0] === 'string' && call[0].includes('/admin/model/activate')
       );
       expect(activateCalls.length).toBeGreaterThan(0);
       const activateCall = activateCalls[0];

@@ -344,8 +344,8 @@ test.describe('QR Simulation: Full scan flow triggered from URL entry point', ()
     await page.addInitScript(() => {
       window.localStorage.setItem('afia_privacy_accepted', 'true');
       (window as any).__AFIA_TEST_MODE__ = true;
-      // Prevent auto-capture from unmounting the camera view before the capture button check
-      (window as any).__AFIA_PREVENT_CAPTURE__ = true;
+      // Manual mode only (no auto-capture)
+      (window as any).__AFIA_FORCE_MANUAL__ = true;
     });
     await mockCamera(page);
     await mockAnalyzeSuccess(page);

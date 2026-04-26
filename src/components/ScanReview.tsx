@@ -192,7 +192,7 @@ export function ScanReview({ scan, onSave, onBack }: ScanReviewProps) {
               <label>{t('admin.review.errorType')}</label>
               <select 
                 value={errorCategory} 
-                onChange={(e) => setErrorCategory(e.target.value as any)}
+                onChange={(e) => setErrorCategory(e.target.value as ScanCorrection["errorCategory"])}
               >
                 <option value="none">{t('admin.review.errorNone', { defaultValue: 'None (Correct)' })}</option>
                 <option value="lighting">{t('results.poorLighting')}</option>

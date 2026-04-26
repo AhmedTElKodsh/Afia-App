@@ -27,7 +27,7 @@ function calculateCupStates(waterMl: number) {
   return { fullCups, partialFill };
 }
 
-function formatCupText(fullCups: number, partialFill: string, t: any): string {
+function formatCupText(fullCups: number, partialFill: string, t: (key: string, options?: { count?: number; defaultValue?: string }) => string): string {
   let fraction = "";
   if (partialFill === "quarter") fraction = "1/4";
   else if (partialFill === "half") fraction = "1/2";

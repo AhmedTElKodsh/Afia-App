@@ -37,7 +37,7 @@ export async function handleFeedback(c: Context<{ Bindings: Env; Variables: Vari
     .from("scans")
     .select("llm_fallback_prediction")
     .eq("id", body.scanId)
-    .single();
+    .maybeSingle();
 
   if (fetchError || !scanRecord) {
     console.error(`[${body.scanId}] Feedback scan not found:`, fetchError);

@@ -18,7 +18,7 @@ function normalizeTimestamp(raw: string): string {
 function groupByMonth(
   scans: StoredScan[],
   locale: string,
-  t: any
+  t: (key: string, options?: { defaultValue?: string }) => string
 ): { month: string; scans: StoredScan[] }[] {
   const groups = new Map<string, StoredScan[]>();
   scans.forEach((scan) => {

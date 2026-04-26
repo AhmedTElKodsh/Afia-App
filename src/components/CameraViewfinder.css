@@ -525,46 +525,25 @@
 .bottle-guide-svg {
   width: 100%;
   height: auto;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55));
-  transition: filter var(--transition-base);
+  /* Simple static outline - no animations or effects */
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
-/* Pulse when not ready */
-.bottle-guide-wrapper:not(.ready) .bottle-guide-svg {
-  animation: bottleGuidePulse 2s ease-in-out infinite;
-}
-
-@keyframes bottleGuidePulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.60; }
-}
-
-/* Smooth color transitions for outline */
+/* Remove all animations and transitions for static display */
 .bottle-guide-svg path,
 .bottle-guide-svg rect,
 .bottle-guide-svg line,
 .bottle-guide-svg circle {
-  transition: stroke 0.4s ease-in-out, stroke-width 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  /* No transitions - static display only */
 }
 
-/* Glow when ready - GREEN state */
-.bottle-guide-wrapper.ready .bottle-guide-svg {
-  filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.7)) drop-shadow(0 0 20px rgba(16, 185, 129, 0.4));
-  animation: bottleGuideReadyPulse 1.5s ease-in-out infinite;
-}
-
-@keyframes bottleGuideReadyPulse {
-  0%, 100% { 
-    filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.7)) drop-shadow(0 0 20px rgba(16, 185, 129, 0.4));
-  }
-  50% { 
-    filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.9)) drop-shadow(0 0 28px rgba(16, 185, 129, 0.6));
-  }
-}
-
-/* Additional pulse animation class for ready state */
+/* Legacy classes kept for compatibility but with no effect */
+.bottle-guide-wrapper:not(.ready) .bottle-guide-svg,
+.bottle-guide-wrapper.ready .bottle-guide-svg,
 .bottle-guide-wrapper.bottle-guide-pulse .bottle-guide-svg {
-  animation: bottleGuideReadyPulse 1.5s ease-in-out infinite;
+  /* Static outline - no animations */
+  animation: none;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 /* Distance hint text inside the guide wrapper.
@@ -606,18 +585,14 @@
 }
 
 @keyframes hintReadyPulse {
-  0%, 100% { 
+  0%, 100% {
     transform: translateX(-50%) scale(1);
     opacity: 1;
   }
-  50% { 
+  50% {
     transform: translateX(-50%) scale(1.05);
     opacity: 0.9;
   }
-}
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  pointer-events: none;
 }
 
 /* --- Footer: hint pill above capture button --- */
@@ -625,9 +600,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-md);
-  /* sit above the 72px capture button + 48px bottom offset */
-  padding-bottom: calc(72px + var(--space-2xl) + var(--space-sm));
+  /* Secondary capture button: 44px height + var(--space-xl) bottom offset
+     + var(--space-lg) clearance buffer so the hint pill sits visibly
+     above the capture button (>= 12px gap). */
+  padding-bottom: calc(44px + var(--space-xl) + var(--space-lg));
   pointer-events: none;
 }
 
@@ -676,37 +654,6 @@
 /* ========================================
    Enhanced Guidance UI (Task 4)
    ======================================== */
-
-.onboarding-toast {
-  position: absolute;
-  top: 25%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.85);
-  color: white;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  text-align: center;
-  z-index: 150;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  animation: toastFadeIn 0.4s ease-out, toastFadeOut 0.4s ease-in 2.6s forwards;
-  pointer-events: none;
-  width: 80%;
-  max-width: 300px;
-}
-
-@keyframes toastFadeIn {
-  from { opacity: 0; transform: translate(-50%, -40%); }
-  to { opacity: 1; transform: translate(-50%, -50%); }
-}
-
-@keyframes toastFadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
 
 .tilt-guidance-container {
   position: absolute;

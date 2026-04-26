@@ -793,5 +793,12 @@
     "sliderLabel": "Adjust fill level",
     "mlValue": "{{value}} ml",
     "confirmed": "Fill level confirmed"
+  },
+  "consumption": {
+    "title": "How much are you using?",
+    "sliderLabel": "Oil usage amount",
+    "takingOut": "You're taking out:",
+    "willRemain": "Will remain:",
+    "lessThanQuarterCup": "Less than ¼ cup remaining ({{ml}}ml)"
   }
 }

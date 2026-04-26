@@ -6,7 +6,7 @@ test.describe('Camera Orientation Guide', () => {
     await context.grantPermissions(['camera']);
   });
 
-  test('orientation guide appears in viewfinder', async ({ page }) => {
+  test('orientation guide appears in viewfinder as static guidance', async ({ page }) => {
     // Navigate to QR landing page with SKU
     await page.goto('/?sku=filippo-berio-500ml');
     

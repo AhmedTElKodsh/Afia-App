@@ -9,7 +9,7 @@ test.describe('Camera Orientation Guide', () => {
     await page.addInitScript(() => {
       window.localStorage.setItem('afia_privacy_accepted', 'true');
       (window as any).__AFIA_TEST_MODE__ = true;
-      // Force manual mode to prevent auto-capture from hiding the orientation guide
+      // Manual mode is the only mode (no auto-capture)
       (window as any).__AFIA_FORCE_MANUAL__ = true;
     });
   });

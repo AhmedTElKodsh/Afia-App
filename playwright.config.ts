@@ -95,13 +95,17 @@ export default defineConfig({
       command: 'npm run dev -- --host 127.0.0.1 --port 5173 --strictPort',
       url: 'http://127.0.0.1:5173',
       reuseExistingServer: !process.env.CI,
-      timeout: 60000,
+      timeout: 120000,
+      stdout: 'ignore',
+      stderr: 'pipe',
     },
     {
-      command: 'cd worker && npx wrangler dev --config "./wrangler.toml" --port 8787 --local',
+      command: 'cd worker && npx wrangler dev --config "./wrangler.toml" --port 8787 --local --ip 127.0.0.1',
       url: 'http://127.0.0.1:8787/health',
       reuseExistingServer: !process.env.CI,
-      timeout: 60000,
+      timeout: 120000,
+      stdout: 'ignore',
+      stderr: 'pipe',
     }
   ],
 });
