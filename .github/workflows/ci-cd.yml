@@ -3,9 +3,9 @@ name: Stage1 LLM Only
 
 on:
   push:
-    branches: [master, local-model]
+    branches: [master, local-model, stage-1-llm-only]
   pull_request:
-    branches: [master, local-model]
+    branches: [master, local-model, stage-1-llm-only]
   workflow_dispatch:
     inputs:
       environment:
