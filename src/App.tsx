@@ -60,7 +60,7 @@ export default function App() {
     // M8: Enable test mode and bypasses via URL params for maximum E2E reliability
     // SECURITY: This bypass is restricted to DEV mode to prevent privacy/onboarding bypass in production.
     if (import.meta.env.DEV && params.get("test_mode") === "1") {
-      (window as any).__AFIA_TEST_MODE__ = true;
+      (window as Window & { __AFIA_TEST_MODE__?: boolean }).__AFIA_TEST_MODE__ = true;
       localStorage.setItem('afia_privacy_accepted', 'true');
       localStorage.setItem('afia_onboarding_complete', 'true');
       localStorage.setItem('afia_mock_mode', 'true');

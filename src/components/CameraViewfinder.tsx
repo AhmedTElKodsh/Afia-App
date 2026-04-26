@@ -103,6 +103,11 @@ function BottleGuide({
   return (
     <div className={`bottle-guide-wrapper${isReady ? ' ready' : ''}${manualMode ? ' manual-mode' : ''} ${pulseAnimation}`}>
       {/* Directional Hints */}
+      {!isReady && distance === 'not-detected' && (
+        <div className="bottle-guide-hint hint-align">
+          {t('camera.alignBottle')}
+        </div>
+      )}
       {!isReady && distance === 'too-far' && (
         <div className="bottle-guide-hint hint-move-closer">
           {isCentered ? t('camera.moveCloser') : t('camera.centreBottle')}
@@ -116,92 +121,141 @@ function BottleGuide({
           ✓ {t('camera.ready')}
         </div>
       )}
-      
-      {/* Precision-Calibrated SVG Outline - Based on Engineering Drawing Refined */}
+
+      {/*
+        Precision-Calibrated SVG Outline.
+        viewBox 100 × 301 maps directly to Afia 1.5L engineering spec
+        (78.1mm body width, 301mm total height — drawn in mm units, centered
+        on x=50). Silhouette split into 6 component paths (cap, neck,
+        shoulder, body, base, handle) so each region can be addressed
+        individually for future per-region animation.
+      */}
       <svg
         className="bottle-guide-svg"
-        viewBox="0 0 460 1024"
+        viewBox="0 0 100 301"
         preserveAspectRatio="xMidYMid meet"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
       >
-        <g stroke={color} strokeWidth={strokeWidth * 2.5} strokeLinejoin="round" strokeLinecap="round" opacity={opacity}>
-          {/* Main Bottle Silhouette */}
-          <path d="
-            M 195 70
-            C 195 66 198 64 202 64
-            L 258 64
-            C 262 64 265 66 265 70
-            L 265 132
-            C 265 138 268 142 272 146
-            C 278 152 282 160 282 170
-            L 282 200
-            C 282 214 288 226 298 236
-            C 330 266 360 290 390 320
-            C 410 344 422 376 422 410
-            C 422 470 410 510 405 560
-            C 400 620 400 680 405 740
-            C 410 790 415 830 412 870
-            C 408 920 396 950 380 968
-            C 376 972 372 974 366 974
-            L 94 974
-            C 88 974 84 972 80 968
-            C 64 950 52 920 48 870
-            C 45 830 50 790 55 740
-            C 60 680 60 620 55 560
-            C 50 510 38 470 38 410
-            C 38 376 50 344 70 320
-            C 100 290 130 266 162 236
-            C 172 226 178 214 178 200
-            L 178 170
-            C 178 160 182 152 188 146
-            C 192 142 195 138 195 132 Z
-          "/>
+        <g stroke={color} strokeLinejoin="round" strokeLinecap="round" opacity={opacity} fill="none">
+          {/* Cap (top closure) */}
+          <path
+            d="M 43 4 L 57 4 C 58.5 4 59 5 59 6 L 59 19 L 41 19 L 41 6 C 41 5 41.5 4 43 4 Z"
+            stroke={color}
+            strokeWidth={strokeWidth}
+            vectorEffect="non-scaling-stroke"
+          />
 
-          {/* Handle - small rounded hole on right side, upper-mid body */}
-          <path d="
-            M 388 360
-            C 398 360 404 370 404 384
-            L 404 446
-            C 404 460 398 470 388 470
-            C 378 470 372 460 372 446
-            L 372 384
-            C 372 370 378 360 388 360 Z
-          "/>
+          {/* Neck (cylindrical, ~Ø 37.3mm scaled) */}
+          <path
+            d="M 41.5 19 L 58.5 19 L 58.5 36 C 58.5 38 58 39 57.5 40 L 42.5 40 C 42 39 41.5 38 41.5 36 Z"
+            stroke={color}
+            strokeWidth={strokeWidth}
+            vectorEffect="non-scaling-stroke"
+          />
+
+          {/* Shoulder (transition neck → body) */}
+          <path
+            d="M 42.5 40 L 57.5 40 C 60 42 64 45 70 50 C 78 56 84 62 88 70 L 12 70 C 16 62 22 56 30 50 C 36 45 40 42 42.5 40 Z"
+            stroke={color}
+            strokeWidth={strokeWidth}
+            vectorEffect="non-scaling-stroke"
+          />
+
+          {/* Body (bulbous main, with subtle waist near base) */}
+          <path
+            d="M 12 70 L 88 70 C 90 80 90.5 92 90 105 C 89 130 86 155 86 180 C 86 215 87 240 86 260 L 14 260 C 13 240 14 215 14 180 C 14 155 11 130 10 105 C 9.5 92 10 80 12 70 Z"
+            stroke={color}
+            strokeWidth={strokeWidth}
+            vectorEffect="non-scaling-stroke"
+          />
+
+          {/* Base (slight flare to bottom) */}
+          <path
+            d="M 14 260 L 86 260 C 86.5 270 86 280 84 288 C 82 294 78 297 73 297 L 27 297 C 22 297 18 294 16 288 C 14 280 13.5 270 14 260 Z"
+            stroke={color}
+            strokeWidth={strokeWidth}
+            vectorEffect="non-scaling-stroke"
+          />
+
+          {/* Handle (right-side vertical capsule loop) */}
+          <path
+            d="M 84 102 C 86.5 102 88 105 88 109 L 88 132 C 88 136 86.5 139 84 139 C 81.5 139 80 136 80 132 L 80 109 C 80 105 81.5 102 84 102 Z"
+            stroke={color}
+            strokeWidth={strokeWidth}
+            vectorEffect="non-scaling-stroke"
+          />
         </g>
-        
-        {/* Label Region Indicator (Diagonal band area) */}
+
+        {/* Label Region Indicator (dashed rectangle over body) */}
         <rect
-          x="120" y="300" width="220" height="400" rx="20"
-          stroke={color} strokeWidth="4" strokeDasharray="20 10"
+          x="22" y="115" width="56" height="120" rx="6"
+          stroke={color} strokeWidth="0.8" strokeDasharray="3 1.5"
+          opacity={0.6}
+          fill="none"
+        />
+
+        {/* Brand Marker — Green Band Position (rect with dashed stroke).
+            Stroke is white (not #10b981) so it does not collide with the
+            auto-capture progress-ring selector `circle/rect[stroke="#10b981"]`. */}
+        <rect
+          x="20" y="165" width="60" height="18" rx="2"
+          stroke="#ffffff" strokeWidth="0.6" strokeDasharray="2 1"
+          opacity={0.55}
+          fill="none"
+        />
+
+        {/* Brand Marker — Heart Logo Position (circle with dashed stroke).
+            Stroke is white for the same reason as the green band marker above. */}
+        <circle
+          cx="50" cy="200" r="6"
+          stroke="#ffffff" strokeWidth="0.6" strokeDasharray="1.2 0.8"
+          opacity={0.55}
+          fill="none"
+        />
+
+        {/* Fill Level Reference Marker — 50% of bottle interior */}
+        <line
+          x1="14" y1="183" x2="86" y2="183"
+          stroke={color} strokeWidth="0.5" strokeDasharray="2 1.5"
           opacity={0.5}
         />
-        
+        <text
+          x="92" y="186"
+          fill={color}
+          fontSize="6"
+          fontWeight="bold"
+          textAnchor="end"
+          opacity={0.7}
+        >
+          50%
+        </text>
+
         {/* Auto-Capture Progress Ring (1 second hold timer) */}
         {isHolding && !manualMode && (
-          <g transform="translate(230, 500)">
-            <circle 
-              r="180" 
-              fill="none" 
-              stroke="rgba(255,255,255,0.15)" 
-              strokeWidth="15" 
+          <g transform="translate(50, 175)">
+            <circle
+              r="34"
+              fill="none"
+              stroke="rgba(255,255,255,0.15)"
+              strokeWidth="3"
             />
             <circle
-              r="180" 
-              fill="none" 
-              stroke="#10b981" 
-              strokeWidth="15" 
+              r="34"
+              fill="none"
+              stroke="#10b981"
+              strokeWidth="3"
               strokeLinecap="round"
-              strokeDasharray={`${holdProgress * 1131} 1131`}
+              strokeDasharray={`${holdProgress * 213.6} 213.6`}
               transform="rotate(-90)"
               opacity="0.95"
             />
-            <text 
-              y="15" 
-              fill="#10b981" 
-              fontSize="80" 
-              fontWeight="bold" 
+            <text
+              y="4"
+              fill="#10b981"
+              fontSize="14"
+              fontWeight="bold"
               textAnchor="middle"
               opacity="0.9"
             >
@@ -235,7 +289,7 @@ export function CameraViewfinder({
   const [torchSupported, setTorchSupported] = useState(false);
   const [shutterFlash, setShutterFlash] = useState(false);
   // Force manual mode in test environment to prevent auto-capture from hiding orientation guide
-  const [isManualMode, setIsManualMode] = useState(forceManual || (typeof window !== 'undefined' && (window as any).__AFIA_FORCE_MANUAL__));
+  const [isManualMode, setIsManualMode] = useState(forceManual || (typeof window !== 'undefined' && (window as Window & { __AFIA_FORCE_MANUAL__?: boolean }).__AFIA_FORCE_MANUAL__));
   const [photoCaptured, setPhotoCaptured] = useState(false);
 
   const isStartingRef = useRef(false);
@@ -289,7 +343,7 @@ export function CameraViewfinder({
 
   useEffect(() => {
     if (!isManualMode && guidance.state.isReady && !hasFiredRef.current && cameraState === 'active' && videoRef.current) {
-      if (typeof window !== 'undefined' && (window as any).__AFIA_PREVENT_CAPTURE__) return;
+      if (typeof window !== 'undefined' && (window as Window & { __AFIA_PREVENT_CAPTURE__?: boolean }).__AFIA_PREVENT_CAPTURE__) return;
       hasFiredRef.current = true;
       if (navigator.vibrate) navigator.vibrate([30, 40, 80]);
       handleCapture();
@@ -332,11 +386,11 @@ export function CameraViewfinder({
     try {
       const track = streamRef.current.getVideoTracks()[0];
       if (!track) return;
-      let capabilities: any = null;
-      try { capabilities = track.getCapabilities(); } catch { return; }
+      let capabilities: (MediaTrackCapabilities & { torch?: boolean }) | null = null;
+      try { capabilities = track.getCapabilities() as MediaTrackCapabilities & { torch?: boolean }; } catch { return; }
       if (!capabilities?.torch) return;
       const newTorchState = !torchOn;
-      await track.applyConstraints({ advanced: [{ torch: newTorchState } as any] });
+      await track.applyConstraints({ advanced: [{ torch: newTorchState } as MediaTrackConstraintSet & { torch?: boolean }] });
       setTorchOn(newTorchState);
     } catch (error) { console.error('Torch error:', error); }
   }, [torchOn]);

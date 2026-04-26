@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import { getBottleBySku, ACTIVE_SKU } from "../../shared/bottleRegistry.ts";
+import { getBottleBySku, ACTIVE_SKU, type CalibrationPoint } from "../../shared/bottleRegistry.ts";
 import "./BottleOverlay.css";
 
 interface BottleOverlayProps {
@@ -196,7 +196,7 @@ export function BottleOverlay({
       ctx.fillText(cupLabel, canvas.width - 15, indicatorY + 20);
     };
 
-    function interpolateCalibration(pct: number, points: any[]) {
+    function interpolateCalibration(pct: number, points: CalibrationPoint[]) {
       if (pct <= points[0].fillHeightPct) return points[0].remainingMl;
       const last = points[points.length - 1];
       if (pct >= last.fillHeightPct) return last.remainingMl;

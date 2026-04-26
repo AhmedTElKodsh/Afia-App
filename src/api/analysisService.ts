@@ -59,7 +59,7 @@ export async function analyzeBottleImage(
     { id: 'grok_fallback', type: 'grok' }
   ];
 
-  let lastError: any = null;
+  let lastError: unknown = null;
 
   for (const provider of providers) {
     try {
@@ -81,12 +81,12 @@ export async function analyzeBottleImage(
     }
   }
 
-  throw new Error(`All analysis providers failed. Last error: ${lastError?.message}`);
+  throw new Error(`All analysis providers failed. Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
 }
 
 async function callLLMProvider(
-  provider: any, 
-  image: string, 
+  provider: { id: string; type: string },
+  image: string,
   tiltAngle: number | null
 ): Promise<AnalysisResult> {
   const response = await fetch('/api/analyze', {
@@ -124,12 +124,12 @@ async function logAnalysisToSupabase(provider: string, result: AnalysisResult) {
   }
 }
 
-async function logAnalysisFailure(provider: string, error: any) {
+async function logAnalysisFailure(provider: string, error: unknown) {
   await supabase
     .from('analysis_logs')
     .insert({
       primary_provider: provider,
       status: 'failed',
-      error_message: error.message
+      error_message: error instanceof Error ? error.message : String(error)
     });
 }
