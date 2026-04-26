@@ -231,7 +231,12 @@ export default function App() {
           });
         },
       });
-      
+
+      // Stale-result guard: handleRetake clears isAnalyzingRef before the await
+      // resolves. Returning here prevents a cancelled analysis from overriding
+      // the CAMERA_ACTIVE state that retake already set.
+      if (!isAnalyzingRef.current) return;
+
       setResult(analysisResult);
 
       if (analysisResult.isUnsupportedSku) {
@@ -272,9 +277,12 @@ export default function App() {
         qualityWarningResolverRef.current = null;
         setQualityWarning(null);
       }
-      
+
+      // Stale-result guard (same reasoning as try-block guard above)
+      if (!isAnalyzingRef.current) return;
+
       const error = err as Error;
-      
+
       // Story 7.8 - AC2: Handle user cancellation
       if (error.message.startsWith('USER_CANCELLED:')) {
         handleRetake();
@@ -557,7 +565,6 @@ export default function App() {
             onError={setError}
             onPermissionDenied={() => setError(t('camera.permissionDenied'))}
             onCancel={() => setAppState("IDLE")}
-            sku={selectedSku}
           />
         </div>
       );

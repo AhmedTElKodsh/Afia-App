@@ -53,7 +53,7 @@ export async function getMetadata(
     .from("scans")
     .select("*")
     .eq("id", scanId)
-    .single();
+    .maybeSingle();
 
   if (error || !data) {
     console.error(`Failed to fetch metadata for ${scanId}:`, error);
@@ -128,7 +128,7 @@ export async function getImage(
     .from("scans")
     .select("image_url")
     .eq("id", scanId)
-    .single();
+    .maybeSingle();
 
   if (scanError || !scanData?.image_url) {
     console.error(`Failed to fetch image path for ${scanId}:`, scanError);

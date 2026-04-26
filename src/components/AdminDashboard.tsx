@@ -728,7 +728,7 @@ function ExportTab({ scans, t }: ExportTabProps) {
 }
 // -- Failures Tab -------------------------------------------------------------
 function FailuresTab({ t, isRTL }: { t: TFunction, isRTL: boolean }) {
-  const events = getAnalyticsEvents().filter((e) => e.type === "scan_failed");
+  const events = getAnalyticsEvents().filter((e) => e.eventName === "scan_failed");
 
   return (
     <div className="failures-tab">

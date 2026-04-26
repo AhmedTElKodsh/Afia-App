@@ -2,30 +2,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { CameraViewfinder } from './CameraViewfinder';
 
-// Stable mock for useCameraGuidance — returning the same object reference every call
-// prevents startCamera's useCallback from recreating on every render, which would
-// trigger the useEffect([startCamera]) to fire again and consume the queued mock value.
-let mockIsReady = true;
-vi.mock('../hooks/useCameraGuidance', () => {
-  return { 
-    useCameraGuidance: () => ({
-      state: { 
-        isReady: mockIsReady, 
-        assessment: { 
-          guidanceType: 'warning', 
-          overallScore: 50, 
-          composition: { distance: 'not-detected', isCentered: true },
-          guidanceMessage: 'camera.alignBottle'
-        },
-        holdProgress: 0,
-        isHolding: false,
-      },
-      startGuidance: vi.fn(),
-      stopGuidance: vi.fn(),
-    })
-  };
-});
-
 // Mock MediaDevices API
 const mockStream = {
   getVideoTracks: vi.fn(() => [{
@@ -39,10 +15,8 @@ const mockStream = {
 const getUserMediaSpy = vi.fn();
 
 beforeEach(() => {
-  // Mock console.error to reduce noise
   vi.spyOn(console, 'error').mockImplementation(() => {});
-  
-  // Mock canvas getContext
+
   const mockCtx = {
     drawImage: vi.fn(),
     getImageData: vi.fn(() => ({
@@ -72,7 +46,6 @@ describe('CameraViewfinder', () => {
     mockOnCapture.mockClear();
     mockOnError.mockClear();
     mockOnPermissionDenied.mockClear();
-    // Spy must be set up AFTER clearAllMocks — clearAllMocks removes spy implementations
     vi.spyOn(navigator.mediaDevices, 'getUserMedia').mockImplementation(getUserMediaSpy);
     getUserMediaSpy.mockReset();
     mockStream.getTracks.mockReset();
@@ -81,13 +54,13 @@ describe('CameraViewfinder', () => {
   describe('initialization', () => {
     it('should request camera permission on mount', async () => {
       getUserMediaSpy.mockResolvedValueOnce(mockStream);
-      
-      render(<CameraViewfinder 
+
+      render(<CameraViewfinder
         onCapture={mockOnCapture}
         onError={mockOnError}
         onPermissionDenied={mockOnPermissionDenied}
       />);
-      
+
       await waitFor(() => {
         expect(getUserMediaSpy).toHaveBeenCalledWith({
           video: {
@@ -101,14 +74,14 @@ describe('CameraViewfinder', () => {
     });
 
     it('should show loading state while requesting camera', () => {
-      getUserMediaSpy.mockImplementation(() => new Promise(() => {})); // Never resolves
-      
-      render(<CameraViewfinder 
+      getUserMediaSpy.mockImplementation(() => new Promise(() => {}));
+
+      render(<CameraViewfinder
         onCapture={mockOnCapture}
         onError={mockOnError}
         onPermissionDenied={mockOnPermissionDenied}
       />);
-      
+
       expect(screen.getByText('Starting camera…')).toBeInTheDocument();
       expect(screen.getByRole('status')).toBeInTheDocument();
     });
@@ -120,19 +93,6 @@ describe('CameraViewfinder', () => {
     });
 
     it('should render video element when camera is active', async () => {
-      render(<CameraViewfinder 
-        onCapture={mockOnCapture}
-        onError={mockOnError}
-        onPermissionDenied={mockOnPermissionDenied}
-      />);
-      
-      await waitFor(() => {
-        const video = screen.getByLabelText('Live camera feed for bottle scanning');
-        expect(video).toBeInTheDocument();
-      });
-    });
-
-    it('should render framing guide overlay', async () => {
       render(<CameraViewfinder
         onCapture={mockOnCapture}
         onError={mockOnError}
@@ -140,31 +100,59 @@ describe('CameraViewfinder', () => {
       />);
 
       await waitFor(() => {
-        // Guidance overlay is always rendered when camera is active; status pill shows "Align Bottle" when not ready
-        const overlay = document.querySelector('.camera-guidance-overlay');
-        expect(overlay).toBeInTheDocument();
+        const video = screen.getByLabelText('Live camera feed for bottle scanning');
+        expect(video).toBeInTheDocument();
       });
     });
 
-    it('should render capture button', async () => {
-      render(<CameraViewfinder 
+    it('should render guidance overlay with static bottle outline', async () => {
+      render(<CameraViewfinder
         onCapture={mockOnCapture}
         onError={mockOnError}
         onPermissionDenied={mockOnPermissionDenied}
       />);
-      
+
+      await waitFor(() => {
+        const overlay = document.querySelector('.camera-guidance-overlay');
+        expect(overlay).toBeInTheDocument();
+      });
+
+      // Verify static bottle outline is present
+      const bottleGuide = document.querySelector('.bottle-guide-wrapper');
+      expect(bottleGuide).toBeInTheDocument();
+    });
+
+    it('should render capture button with "Capture manually" label', async () => {
+      render(<CameraViewfinder
+        onCapture={mockOnCapture}
+        onError={mockOnError}
+        onPermissionDenied={mockOnPermissionDenied}
+      />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Capture manually')).toBeInTheDocument();
+      });
+    });
+
+    it('should render capture button accessible by aria-label', async () => {
+      render(<CameraViewfinder
+        onCapture={mockOnCapture}
+        onError={mockOnError}
+        onPermissionDenied={mockOnPermissionDenied}
+      />);
+
       await waitFor(() => {
         expect(screen.getByLabelText('Capture photo')).toBeInTheDocument();
       });
     });
 
     it('should have hidden canvas for image processing', async () => {
-      render(<CameraViewfinder 
+      render(<CameraViewfinder
         onCapture={mockOnCapture}
         onError={mockOnError}
         onPermissionDenied={mockOnPermissionDenied}
       />);
-      
+
       await waitFor(() => {
         const canvas = document.querySelector('canvas');
         expect(canvas).toBeInTheDocument();
@@ -185,18 +173,17 @@ describe('CameraViewfinder', () => {
       />);
 
       await waitFor(() => {
-        // permission-denied state renders "Camera Access Required" (not "Camera Unavailable")
         expect(screen.getByText('Camera Access Required')).toBeInTheDocument();
       });
     });
 
     it('should have alert role for accessibility', async () => {
-      render(<CameraViewfinder 
+      render(<CameraViewfinder
         onCapture={mockOnCapture}
         onError={mockOnError}
         onPermissionDenied={mockOnPermissionDenied}
       />);
-      
+
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
       });
@@ -208,17 +195,17 @@ describe('CameraViewfinder', () => {
       getUserMediaSpy.mockRejectedValueOnce(
         new DOMException('No camera found', 'NotFoundError')
       );
-      
-      render(<CameraViewfinder 
+
+      render(<CameraViewfinder
         onCapture={mockOnCapture}
         onError={mockOnError}
         onPermissionDenied={mockOnPermissionDenied}
       />);
-      
+
       await waitFor(() => {
         expect(screen.getByText('Camera Unavailable')).toBeInTheDocument();
       });
-      
+
       expect(mockOnError).toHaveBeenCalled();
     });
 
@@ -226,17 +213,17 @@ describe('CameraViewfinder', () => {
       getUserMediaSpy.mockRejectedValueOnce(
         new DOMException('Camera in use', 'NotReadableError')
       );
-      
-      render(<CameraViewfinder 
+
+      render(<CameraViewfinder
         onCapture={mockOnCapture}
         onError={mockOnError}
         onPermissionDenied={mockOnPermissionDenied}
       />);
-      
+
       await waitFor(() => {
         expect(screen.getByText('Camera Unavailable')).toBeInTheDocument();
       });
-      
+
       expect(mockOnError).toHaveBeenCalled();
     });
   });
@@ -244,72 +231,65 @@ describe('CameraViewfinder', () => {
   describe('image capture', () => {
     beforeEach(() => {
       getUserMediaSpy.mockResolvedValueOnce(mockStream);
-      mockIsReady = false;
     });
 
-    it('should show "Capture manually" label when live guidance is enabled', async () => {
-      render(<CameraViewfinder 
-        onCapture={mockOnCapture}
-        onError={mockOnError}
-        onPermissionDenied={mockOnPermissionDenied}
-        enableLiveGuidance={true}
-      />);
-      
-      await waitFor(() => {
-        expect(screen.getByText('Capture manually')).toBeInTheDocument();
-      });
-    });
-
-    it('should trigger onCapture when isReady becomes true (auto-capture)', async () => {
-      const { rerender } = render(<CameraViewfinder 
-        onCapture={mockOnCapture}
-        onError={mockOnError}
-        onPermissionDenied={mockOnPermissionDenied}
-        enableLiveGuidance={true}
-      />);
-      
-      await waitFor(() => {
-        expect(screen.getByLabelText('Live camera feed for bottle scanning')).toBeInTheDocument();
-      });
-
-      // Simulate guidance becoming ready
-      mockIsReady = true;
-      rerender(<CameraViewfinder 
-        onCapture={mockOnCapture}
-        onError={mockOnError}
-        onPermissionDenied={mockOnPermissionDenied}
-        enableLiveGuidance={true}
-      />);
-
-      await waitFor(() => {
-        expect(mockOnCapture).toHaveBeenCalled();
-      });
-    });
-
-    it('should have capture button available', async () => {
-      mockIsReady = true;
-      render(<CameraViewfinder 
+    it('should have capture button available when camera is active', async () => {
+      render(<CameraViewfinder
         onCapture={mockOnCapture}
         onError={mockOnError}
         onPermissionDenied={mockOnPermissionDenied}
       />);
-      
+
       await waitFor(() => {
         expect(screen.getByLabelText('Capture photo')).toBeInTheDocument();
       });
     });
 
     it('should create canvas for image processing', async () => {
-      render(<CameraViewfinder 
+      render(<CameraViewfinder
         onCapture={mockOnCapture}
         onError={mockOnError}
         onPermissionDenied={mockOnPermissionDenied}
       />);
-      
+
       await waitFor(() => {
         const canvas = document.querySelector('canvas');
         expect(canvas).toBeInTheDocument();
       });
+    });
+
+    it('should display static bottle outline as guidance', async () => {
+      render(<CameraViewfinder
+        onCapture={mockOnCapture}
+        onError={mockOnError}
+        onPermissionDenied={mockOnPermissionDenied}
+      />);
+
+      await waitFor(() => {
+        const bottleGuide = document.querySelector('.bottle-guide-wrapper');
+        expect(bottleGuide).toBeInTheDocument();
+      });
+
+      const svg = document.querySelector('.bottle-guide-svg');
+      expect(svg).toBeInTheDocument();
+    });
+
+    it('should not perform auto-detection or auto-capture', async () => {
+      render(<CameraViewfinder
+        onCapture={mockOnCapture}
+        onError={mockOnError}
+        onPermissionDenied={mockOnPermissionDenied}
+      />);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Capture photo')).toBeInTheDocument();
+      });
+
+      // Wait to ensure no auto-capture happens
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // onCapture should not be called automatically
+      expect(mockOnCapture).not.toHaveBeenCalled();
     });
   });
 
@@ -320,27 +300,27 @@ describe('CameraViewfinder', () => {
         applyConstraints: vi.fn(),
         stop: vi.fn(),
       };
-      
+
       const mockStreamWithStop = {
         ...mockStream,
         getVideoTracks: vi.fn(() => [mockTrack]),
         getTracks: vi.fn(() => [mockTrack]),
       };
-      
+
       getUserMediaSpy.mockResolvedValueOnce(mockStreamWithStop);
-      
-      const { unmount } = render(<CameraViewfinder 
+
+      const { unmount } = render(<CameraViewfinder
         onCapture={mockOnCapture}
         onError={mockOnError}
         onPermissionDenied={mockOnPermissionDenied}
       />);
-      
+
       await waitFor(() => {
         expect(screen.getByLabelText('Live camera feed for bottle scanning')).toBeInTheDocument();
       });
-      
+
       unmount();
-      
+
       expect(mockTrack.stop).toHaveBeenCalled();
     });
   });

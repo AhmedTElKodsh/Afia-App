@@ -114,7 +114,7 @@ describe("API Integration Tests", () => {
         from: vi.fn(() => ({
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              single: vi.fn(() => Promise.resolve({
+              maybeSingle: vi.fn(() => Promise.resolve({
                 data: { llm_fallback_prediction: { percentage: 75 } },
                 error: null
               })),
@@ -143,7 +143,7 @@ describe("API Integration Tests", () => {
         from: vi.fn(() => ({
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              single: vi.fn(() => Promise.resolve({ data: null, error: { message: "Not found" } })),
+              maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: { message: "Not found" } })),
             })),
           })),
         })),

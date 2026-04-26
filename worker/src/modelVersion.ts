@@ -37,7 +37,7 @@ export async function handleModelVersion(
       .from("model_versions")
       .select("version, mae, training_samples_count, r2_key, deployed_at")
       .eq("is_active", true)
-      .single();
+      .maybeSingle();
 
     if (error) {
       // Special handling for missing table (PGRST205) - common in fresh environments or tests

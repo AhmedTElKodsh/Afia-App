@@ -1,3 +1,5 @@
+we modified the workflow from the complex auto-detect, auto-cature to just using the outline like @/d:/AI Projects/Freelance/Afia-App/oil-bottle-frames/bottle-camera-outline2.png just as a static shape with no associated functionality like the text merely as guidance for the user 
+
 Local Logo Verification
    * Method: Template Matching (using OpenCV.js) or a lightweight MobileNetV2-based model (TensorFlow.js) running locally.
    * Logic: It looks for the "Afia" branding (Arabic/English) within the locked frame.
@@ -35,3 +37,17 @@ Playwright, RAG-Anything, grill-me, superpowers, Context7, Tavily, Web Artifacts
    also
       add 21stdev mcp using API = an_sk_1678b7d97bcc0d379919e05feed2a07df4a1881a7af6066bc7db6d531e32b07b 
 add 21stdev mcp using API = an_sk_1678b7d97bcc0d379919e05feed2a07df4a1881a7af6066bc7db6d531e32b07b 
+
+
+---
+
+✅ COMPLETED - Screen 4b: Fill Confirmation with Usage Tracker (2026-04-26)
+- Standard tea cup = 220ml, so 55ml = 1/4 cup
+- Slider behavior: User drags DOWN to show oil being TAKEN OUT
+- Display shows: "You're taking out: Xml = Y cups" + "Will remain: Zml = W cups"
+- Slider range: Top = current level (red line), Bottom = last 55ml mark
+- Edge case: If <55ml remaining, slider disabled with message
+- Cup visualization: Single cup icon that fills progressively, resets at each full cup
+- Real-time updates as user drags slider
+- Haptic feedback every 55ml milestone
+- See: _bmad-output/planning-artifacts/ux-design-specification.md (Screen 4b section)

@@ -1,10 +1,14 @@
 ---
 stepsCompleted: [1, 2, 3, 4, 5, 6, 7]
+lastUpdated: 2026-04-26
 inputDocuments:
   - prd.md
   - architecture.md
   - architecture-fill-confirm-screen.md
   - product-brief-Afia-Image-Analysis-2026-02-26.md
+changeLog:
+  - date: 2026-04-26
+    change: Updated Screen 4b with refined slider interaction - usage tracking model with cup visualization
 ---
 
 # UX Design Specification — Afia Oil Tracker
@@ -218,11 +222,11 @@ All interactive elements: minimum **44 × 44px** tap area (WCAG 2.1 AA).
 **Animation:** A simple bottle silhouette with a fill level that animates up and down (CSS animation, `ease-in-out`, 2s cycle).
 **Layout:** Centered vertically and horizontally. "Analyzing your bottle... This usually takes 3–8 seconds."
 
-### Screen 4b: Fill Confirmation Screen (NEW)
+### Screen 4b: Fill Confirmation Screen (Usage Tracker)
 
 ```
 ┌──────────────────────────────┐
-│  Confirm Level               │
+│  How much are you using?     │
 │  (screen title, h1)          │
 │                              │
 │  ┌────────────────────────┐  │
@@ -232,19 +236,39 @@ All interactive elements: minimum **44 × 44px** tap area (WCAG 2.1 AA).
 │  │   - - - - - - - - - -  │  │
 │  │   [RED DASHED LINE]    │  │
 │  │   (#EF4444, 2px dash)  │  │
+│  │   Marks current level  │  │
 │  │   - - - - - - - - - -  │  │
 │  │                        │  │
+│  │   [SLIDER THUMB ●]     │  │
+│  │   Starts at red line   │  │
+│  │   User drags DOWN      │  │
+│  │                        │  │
+│  │   - - - - - - - - - -  │  │
+│  │   [BOTTOM LIMIT]       │  │
+│  │   Last 55ml mark       │  │
 │  └────────────────────────┘  │
-│  Image panel                 │
-│  (right side in RTL)         │
+│  Image panel (right in RTL)  │
 │                              │
-│  [SLIDER]                    │
-│  Vertical Radix Slider       │
-│  (left side in RTL)          │
-│  55ml step increments        │
+│  ┌────────────────────────┐  │
+│  │  You're taking out:    │  │
+│  │  220ml = 1 cup         │  │
+│  │  (updates in real-time)│  │
+│  └────────────────────────┘  │
 │                              │
-│  Adjust the line to match    │
-│  your oil level.             │
+│  ┌────────────────────────┐  │
+│  │   [🥤 Cup Icon]        │  │
+│  │   Fills proportionally │  │
+│  │   based on slider      │  │
+│  └────────────────────────┘  │
+│                              │
+│  ┌────────────────────────┐  │
+│  │  Will remain:          │  │
+│  │  605ml = 2¾ cups       │  │
+│  │  (calculated)          │  │
+│  └────────────────────────┘  │
+│                              │
+│  Drag to show how much       │
+│  you're pouring out.         │
 │  caption, text-secondary     │
 │                              │
 │  ┌──────────┐ ┌──────────┐  │
@@ -254,9 +278,122 @@ All interactive elements: minimum **44 × 44px** tap area (WCAG 2.1 AA).
 └──────────────────────────────┘
 ```
 
-**Visual Marker:** A dashed horizontal line rendered as an absolutely-positioned SVG overlay. Stroke: `--color-accent-precision` (`#EF4444`).
-**Interaction:** Dragging the vertical slider repositions the red line in real-time.
-**Constraints:** Slider locked to 55ml increments. Minimum value 55ml.
+#### Measurement Standards
+
+**Tea Cup Conversion:**
+- Standard tea cup = 220ml
+- 55ml = 1/4 cup (0.25 cups)
+- 110ml = 1/2 cup (0.5 cups)
+- 165ml = 3/4 cup (0.75 cups)
+- 220ml = 1 cup (1.0 cups)
+
+#### Slider Behavior
+
+**Range Definition:**
+- **Top of slider:** Current oil level (red line position from AI analysis)
+- **Bottom of slider:** Last measurable 55ml mark
+- **Example:** If bottle has 825ml remaining, slider range is 825ml → 55ml (770ml usable range)
+
+**Interaction Model:**
+- User drags slider thumb **DOWN** from current level
+- Each 55ml movement triggers haptic feedback (if device supports)
+- Slider moves in 5ml increments for smooth dragging
+- Visual snap points every 55ml (quarter cup milestones)
+
+**Edge Case: Insufficient Oil (<55ml remaining)**
+- If AI detects <55ml remaining, slider is **disabled**
+- Display message: "Less than ¼ cup remaining. Track manually or refill bottle."
+- Only "Retake" and "Skip" buttons available
+
+#### Real-Time Display Updates
+
+**"You're taking out" Panel:**
+- Updates live as user drags slider
+- Format: `{ml}ml = {cups} cup{s}`
+- Examples:
+  - 55ml = "55ml = ¼ cup"
+  - 110ml = "110ml = ½ cup"
+  - 220ml = "220ml = 1 cup"
+  - 275ml = "275ml = 1¼ cups"
+  - 440ml = "440ml = 2 cups"
+
+**Cup Icon Visualization:**
+- Single cup icon that fills progressively
+- 0-220ml: Shows partial fill (0% → 100%)
+- 220ml+: Shows full cup + text multiplier
+  - 275ml: Full cup + "1¼ cups" text
+  - 440ml: Full cup + "2 cups" text
+  - 495ml: Full cup + "2¼ cups" text
+
+**"Will remain" Panel:**
+- Calculated: `current_level - slider_value`
+- Format: `{ml}ml = {cups} cup{s}`
+- Updates in real-time as slider moves
+
+#### Visual Marker Details
+
+**Red Dashed Line (Current Level):**
+- Stroke: `--color-accent-precision` (`#EF4444`)
+- Stroke width: 2px
+- Dash pattern: `8px 4px` (8px dash, 4px gap)
+- Rendered as absolutely-positioned SVG overlay
+- **Fixed position** — does not move with slider
+
+**Slider Thumb:**
+- 32px diameter circle
+- Fill: `--color-primary` (`#2D6A4F`)
+- Border: 3px solid white
+- Drop shadow: `0 2px 8px rgba(0, 0, 0, 0.2)`
+- Starts positioned at red line
+- Moves vertically only
+
+**Slider Track:**
+- Width: 8px
+- Background: `rgba(0, 0, 0, 0.1)` (light gray)
+- Active portion (above thumb): `--color-primary-light` (`#40916C`)
+- Inactive portion (below thumb): remains light gray
+
+#### Accessibility
+
+**Touch Target:**
+- Slider thumb: 44 × 44px minimum tap area (WCAG 2.1 AA)
+- Padding around thumb ensures easy grabbing
+
+**Screen Reader:**
+- Slider labeled: "Oil usage amount in milliliters"
+- Live region announces: "Taking out {ml}ml, {cups} cups remaining"
+- Updates announced on slider release (not during drag)
+
+**Keyboard Navigation (Desktop):**
+- Arrow keys: Move slider by 5ml
+- Shift + Arrow: Move by 55ml (quarter cup jumps)
+- Home: Reset to current level (0ml usage)
+- End: Move to bottom limit
+
+#### Constraints & Validation
+
+**Slider Constraints:**
+- Minimum value: 0ml (no usage, thumb at red line)
+- Maximum value: `current_level - 55ml` (must leave at least 55ml)
+- Step size: 5ml (smooth dragging)
+- Snap points: Every 55ml (visual/haptic feedback)
+
+**Confirmation Requirements:**
+- "Confirm" button enabled only when slider has moved (usage > 0ml)
+- If slider not moved, "Confirm" shows tooltip: "Drag slider to track usage"
+
+#### State Persistence
+
+**On Confirm:**
+- Log usage amount to user history
+- Update bottle remaining level: `new_level = current_level - usage_amount`
+- Store timestamp, bottle SKU, usage amount
+- Navigate to confirmation screen or return to dashboard
+
+**On Retake:**
+- Discard current image and slider state
+- Return to Camera Viewfinder (Screen 3)
+- Preserve bottle SKU context
 
 ### Screen 6: Result Display (Updated)
 

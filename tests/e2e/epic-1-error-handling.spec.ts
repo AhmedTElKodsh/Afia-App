@@ -55,7 +55,7 @@ test.describe('Epic 1: Error Handling', () => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
       await page.waitForLoadState('domcontentloaded');
 
-      // Trigger analyze directly — avoids timing race with auto-capture
+      // Trigger analyze directly (manual capture mode)
       await page.evaluate(() => {
         (window as any).__AFIA_TRIGGER_ANALYZE__?.();
       });
@@ -80,7 +80,7 @@ test.describe('Epic 1: Error Handling', () => {
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);
       await page.waitForLoadState('domcontentloaded');
 
-      // Trigger analyze directly — avoids timing race with auto-capture
+      // Trigger analyze directly (manual capture mode)
       await page.evaluate(() => {
         (window as any).__AFIA_TRIGGER_ANALYZE__?.();
       });
@@ -100,7 +100,7 @@ test.describe('Epic 1: Error Handling', () => {
       await page.addInitScript(() => {
         window.localStorage.setItem('afia_privacy_accepted', 'true');
         (window as any).__AFIA_TEST_MODE__ = true;
-        (window as any).__AFIA_PREVENT_CAPTURE__ = true;
+        (window as any).__AFIA_FORCE_MANUAL__ = true;
       });
       
       await page.goto(`/?sku=${testBottles.filippoBerio.sku}`);

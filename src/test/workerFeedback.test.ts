@@ -8,7 +8,7 @@ vi.mock("../../worker/src/storage/supabaseClient.ts", () => ({
     from: vi.fn().mockReturnThis(),
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({ data: { llm_fallback_prediction: { percentage: 70 } }, error: null }),
+    maybeSingle: vi.fn().mockResolvedValue({ data: { llm_fallback_prediction: { percentage: 70 } }, error: null }),
   }),
 }));
 
