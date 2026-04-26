@@ -339,7 +339,8 @@ export default function App() {
         ? "API_LOW_CONFIDENCE"
         : "API_SUCCESS",
     );
-  }, [result, bottle, selectedSku, addScan]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result, bottle, selectedSku]);
 
   const handleCapture = useCallback((imageBase64: string) => {
     // Trigger haptic feedback for camera capture
@@ -385,7 +386,8 @@ export default function App() {
     setCapturedImage(imageBase64);
     // Immediately trigger analysis
     handleAnalyze(imageBase64);
-  }, [handleAnalyze]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleStartScan = useCallback(() => {
     setAppState("CAMERA_ACTIVE");

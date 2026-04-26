@@ -66,9 +66,15 @@ export function ModelVersionManager({ t }: ModelVersionManagerProps) {
 
   useEffect(() => {
     fetchVersions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleActivate = async (version: string) => {
+    const showError = (message: string) => {
+      console.error('[ModelVersionManager] Failed to activate version:', message);
+      alert(t('admin.modelVersion.activateError', 'Failed to activate version'));
+    };
+
     try {
       const response = await fetch(`${apiUrl}/admin/model/activate`, {
         method: 'POST',
@@ -86,8 +92,7 @@ export function ModelVersionManager({ t }: ModelVersionManagerProps) {
       // Refresh the version list
       await fetchVersions();
     } catch (err) {
-      console.error('[ModelVersionManager] Failed to activate version:', err);
-      alert(t('admin.modelVersion.activateError', 'Failed to activate version'));
+      showError(err instanceof Error ? err.message : 'Unknown error');
     }
   };
 

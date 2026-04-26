@@ -71,9 +71,9 @@ describe('AnalysisRouter - Error Handling', () => {
 
   describe('Graceful LLM Fallback', () => {
     it('should fall back to LLM when model loading fails', async () => {
-      (loadModel as any).mockRejectedValue(new Error('Download failed'));
-      (isModelLoaded as any).mockReturnValue(false);
-      (analyzeBottle as any).mockResolvedValue({
+      vi.mocked(loadModel).mockRejectedValue(new Error('Download failed'));
+      vi.mocked(isModelLoaded).mockReturnValue(false);
+      vi.mocked(analyzeBottle).mockResolvedValue({
         scanId: 'llm-123',
         fillPercentage: 75,
         confidence: 'high',
@@ -90,9 +90,9 @@ describe('AnalysisRouter - Error Handling', () => {
     }, 60000);
 
     it('should fall back to LLM when inference fails', async () => {
-      (isModelLoaded as any).mockReturnValue(true);
-      (runLocalInference as any).mockRejectedValue(new Error('Inference failed'));
-      (analyzeBottle as any).mockResolvedValue({
+      vi.mocked(isModelLoaded).mockReturnValue(true);
+      vi.mocked(runLocalInference).mockRejectedValue(new Error('Inference failed'));
+      vi.mocked(analyzeBottle).mockResolvedValue({
         scanId: 'llm-456',
         fillPercentage: 80,
       });
@@ -107,9 +107,9 @@ describe('AnalysisRouter - Error Handling', () => {
     }, 60000);
 
     it('should throw error when both local and LLM fail', async () => {
-      (isModelLoaded as any).mockReturnValue(true);
-      (runLocalInference as any).mockRejectedValue(new Error('Local failed'));
-      (analyzeBottle as any).mockRejectedValue(new Error('LLM failed'));
+      vi.mocked(isModelLoaded).mockReturnValue(true);
+      vi.mocked(runLocalInference).mockRejectedValue(new Error('Local failed'));
+      vi.mocked(analyzeBottle).mockRejectedValue(new Error('LLM failed'));
 
       await expect(analyze({
         sku: 'TEST-003',
@@ -121,10 +121,10 @@ describe('AnalysisRouter - Error Handling', () => {
 
   describe('Offline Error Handling', () => {
     it('should throw clear error when offline without cached model', async () => {
-      (isModelLoaded as any).mockReturnValue(false);
+      vi.mocked(isModelLoaded).mockReturnValue(false);
       
       // Mock navigator.onLine as offline
-      global.navigator = { ...originalNavigator, onLine: false } as Navigator;
+      global.navigator = { ...originalNavigator, onLine: false } as Navigator & { onLine: boolean };
 
       await expect(analyze({
         sku: 'TEST-004',
@@ -135,9 +135,9 @@ describe('AnalysisRouter - Error Handling', () => {
 
     it('should not attempt LLM fallback when offline', async () => {
       // Mock navigator.onLine as offline
-      global.navigator = { ...originalNavigator, onLine: false } as Navigator;
-      (isModelLoaded as any).mockReturnValue(true);
-      (runLocalInference as any).mockRejectedValue(new Error('Inference failed'));
+      global.navigator = { ...originalNavigator, onLine: false } as Navigator & { onLine: boolean };
+      vi.mocked(isModelLoaded).mockReturnValue(true);
+      vi.mocked(runLocalInference).mockRejectedValue(new Error('Inference failed'));
 
       await expect(analyze({
         sku: 'TEST-005',
@@ -152,18 +152,18 @@ describe('AnalysisRouter - Error Handling', () => {
   describe('Progress Callback Errors', () => {
     it('should continue if progress callback throws', async () => {
       // Mock model as loaded
-      (isModelLoaded as any).mockReturnValue(true);
-      global.navigator = { ...originalNavigator, onLine: true } as Navigator;
+      vi.mocked(isModelLoaded).mockReturnValue(true);
+      global.navigator = { ...originalNavigator, onLine: true } as Navigator & { onLine: boolean };
       
       // Mock local inference to succeed with high confidence
-      (runLocalInference as any).mockResolvedValue({
+      vi.mocked(runLocalInference).mockResolvedValue({
         fillPercentage: 75,
         confidence: 0.85, // High confidence - will use local result
         inferenceTimeMs: 45,
         modelVersion: '1.0.0',
       });
       
-      const badCallback = () => {
+      const badCallback = (): void => {
         throw new Error('Callback error');
       };
 

@@ -44,13 +44,13 @@ export function useLocalAnalysis() {
         // ort-web v1.19.0+ uses .release() or is automatically GCed, 
         // but explicit release is safer for WASM memory.
         try {
-          if ('release' in session && typeof (session as any).release === 'function') {
-            const releaseRes = (session as any).release();
+          if ('release' in session && typeof (session as { release?: unknown }).release === 'function') {
+            const releaseRes = (session as { release: () => void | Promise<void> }).release();
             if (releaseRes instanceof Promise) {
-              releaseRes.catch(e => console.warn("[LocalModel] Async release failed:", e));
+              releaseRes.catch((e: unknown) => console.warn("[LocalModel] Async release failed:", e));
             }
           }
-        } catch (e) {
+        } catch (e: unknown) {
           console.warn("[LocalModel] Release failed:", e);
         }
         sessionRef.current = null;
@@ -92,13 +92,13 @@ export function useLocalAnalysis() {
           // H1 FIX: Release existing session before creating new one to prevent memory leak
           if (sessionRef.current) {
             try {
-              if ('release' in sessionRef.current && typeof (sessionRef.current as any).release === 'function') {
-                const releaseRes = (sessionRef.current as any).release();
+              if ('release' in sessionRef.current && typeof (sessionRef.current as { release?: unknown }).release === 'function') {
+                const releaseRes = (sessionRef.current as { release: () => void | Promise<void> }).release();
                 if (releaseRes instanceof Promise) {
-                  await releaseRes.catch(e => console.warn("[LocalModel] Release failed:", e));
+                  await releaseRes.catch((e: unknown) => console.warn("[LocalModel] Release failed:", e));
                 }
               }
-            } catch (e) {
+            } catch (e: unknown) {
               console.warn("[LocalModel] Release failed:", e);
             }
             sessionRef.current = null;

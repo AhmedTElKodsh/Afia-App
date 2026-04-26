@@ -135,6 +135,7 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
       clearInterval(interval);
       clearTimeout(timer);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {

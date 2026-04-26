@@ -398,9 +398,9 @@ export function useCameraGuidance(
         const analyze = () => {
           // Temporarily swap videoRef to satisfy analyzeFrame
           const originalVideo = videoRef.current;
-          (videoRef as any).current = element;
+          (videoRef as React.MutableRefObject<HTMLVideoElement | HTMLImageElement | null>).current = element;
           analyzeFrameRef.current();
-          (videoRef as any).current = originalVideo;
+          (videoRef as React.MutableRefObject<HTMLVideoElement | HTMLImageElement | null>).current = originalVideo;
         };
 
         if (element.complete) {

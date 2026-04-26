@@ -27,7 +27,7 @@ function calculateCupStates(waterMl: number) {
   return { fullCups, partialFill };
 }
 
-function formatCupText(fullCups: number, partialFill: string, t: (key: string, options?: { count?: number; defaultValue?: string }) => string): string {
+function formatCupText(fullCups: number, partialFill: string, t: (key: string, options?: { defaultValue?: string; count?: number }) => string): string {
   let fraction = "";
   if (partialFill === "quarter") fraction = "1/4";
   else if (partialFill === "half") fraction = "1/2";
@@ -36,12 +36,12 @@ function formatCupText(fullCups: number, partialFill: string, t: (key: string, o
   const totalValue = fullCups + (partialFill === "quarter" ? 0.25 : partialFill === "half" ? 0.5 : partialFill === "three-quarters" ? 0.75 : 0);
   
   if (fullCups === 0 && fraction) {
-    return `${fraction} ${t("common.cup", "Cup")}`;
+    return `${fraction} ${t("common.cup", { defaultValue: "Cup" })}`;
   }
   
   const cupWord = totalValue === 1 
-    ? t("common.cup", "Cup") 
-    : t("common.cups", "Cups");
+    ? t("common.cup", { defaultValue: "Cup" }) 
+    : t("common.cups", { defaultValue: "Cups" });
   
   if (fraction) {
     return `${fullCups} ${fraction} ${cupWord}`;
