@@ -111,135 +111,103 @@ function BottleGuide({
       {!isReady && distance === 'too-close' && (
         <div className="bottle-guide-hint hint-move-back">{t('camera.moveBack')}</div>
       )}
-      {!isReady && distance === 'not-detected' && (
-        <div className="bottle-guide-hint hint-align">{t('camera.alignBottle')}</div>
-      )}
       {isReady && (
         <div className="bottle-guide-hint hint-ready">
           ✓ {t('camera.ready')}
         </div>
       )}
       
-      {/* Precision-Calibrated SVG Outline - Based on Engineering Drawing */}
+      {/* Precision-Calibrated SVG Outline - Based on Engineering Drawing Refined */}
       <svg
         className="bottle-guide-svg"
-        viewBox="0 0 100 301"
+        viewBox="0 0 460 1024"
         preserveAspectRatio="xMidYMid meet"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
       >
-        {/* Neck & Cap (38mm finish, Ø 37.3mm) - Top 14.5mm + 5.5mm threads */}
-        <rect 
-          x="31.5" y="2" width="37" height="12" rx="3"
-          stroke={color} strokeWidth={strokeWidth * 0.7} opacity={opacity}
-        />
+        <g stroke={color} strokeWidth={strokeWidth * 2.5} strokeLinejoin="round" strokeLinecap="round" opacity={opacity}>
+          {/* Main Bottle Silhouette */}
+          <path d="
+            M 195 70
+            C 195 66 198 64 202 64
+            L 258 64
+            C 262 64 265 66 265 70
+            L 265 132
+            C 265 138 268 142 272 146
+            C 278 152 282 160 282 170
+            L 282 200
+            C 282 214 288 226 298 236
+            C 330 266 360 290 390 320
+            C 410 344 422 376 422 410
+            C 422 470 410 510 405 560
+            C 400 620 400 680 405 740
+            C 410 790 415 830 412 870
+            C 408 920 396 950 380 968
+            C 376 972 372 974 366 974
+            L 94 974
+            C 88 974 84 972 80 968
+            C 64 950 52 920 48 870
+            C 45 830 50 790 55 740
+            C 60 680 60 620 55 560
+            C 50 510 38 470 38 410
+            C 38 376 50 344 70 320
+            C 100 290 130 266 162 236
+            C 172 226 178 214 178 200
+            L 178 170
+            C 178 160 182 152 188 146
+            C 192 142 195 138 195 132 Z
+          "/>
+
+          {/* Handle - small rounded hole on right side, upper-mid body */}
+          <path d="
+            M 388 360
+            C 398 360 404 370 404 384
+            L 404 446
+            C 404 460 398 470 388 470
+            C 378 470 372 460 372 446
+            L 372 384
+            C 372 370 378 360 388 360 Z
+          "/>
+        </g>
         
-        {/* Neck Cylinder (Ø 37.3mm, ~20mm height) */}
-        <path
-          d="M 33 14 L 33 34 Q 33 36 35 36 L 65 36 Q 67 36 67 34 L 67 14"
-          stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" opacity={opacity}
-        />
-        
-        {/* Shoulder Transition (neck to body, ~52.5mm) */}
-        <path
-          d="M 33 34 Q 28 40 24 52"
-          stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" opacity={opacity}
-        />
-        <path
-          d="M 67 34 Q 72 40 76 52"
-          stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" opacity={opacity}
-        />
-        
-        {/* Main Body - Precise Afia 1.5L Contour (78.1mm width at base) */}
-        {/* Left side: Gradual curve from shoulder to base */}
-        <path
-          d="M 24 52 Q 20 70 18 100 Q 17 150 18 200 Q 19 240 22 270 L 22 285"
-          stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" opacity={opacity}
-        />
-        
-        {/* Right side: Mirror contour with handle cutout */}
-        <path
-          d="M 76 52 Q 80 70 82 100 Q 83 150 82 200 Q 81 240 78 270 L 78 285"
-          stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" opacity={opacity}
-        />
-        
-        {/* Base (78.1mm width, 16mm height with feet) */}
-        <path
-          d="M 22 285 Q 22 290 25 293 L 35 295 L 65 295 L 75 293 Q 78 290 78 285"
-          stroke={color} strokeWidth={strokeWidth} strokeLinejoin="round" opacity={opacity}
-        />
-        
-        {/* Handle - Integrated Right Side (Afia signature feature) */}
-        <path
-          d="M 82 100 Q 92 100 95 115 Q 97 130 95 145 Q 92 160 82 160"
-          stroke={color} strokeWidth={strokeWidth * 0.85} strokeLinecap="round" opacity={opacity * 0.9}
-        />
-        
-        {/* Label Region Indicator (Green diagonal band area) */}
+        {/* Label Region Indicator (Diagonal band area) */}
         <rect
-          x="26" y="85" width="48" height="110" rx="4"
-          stroke={color} strokeWidth="1.5" strokeDasharray="8 4"
-          opacity={0.6}
-        />
-        
-        {/* Fill Level Reference Line (50% = 880ml) */}
-        <line
-          x1="26" y1="150" x2="74" y2="150"
-          stroke={color} strokeWidth="1.2" strokeDasharray="6 3"
-          opacity={0.6}
-        />
-        <text x="76" y="152" fill={color} fontSize="8" opacity={0.7}>50%</text>
-        
-        {/* Brand Markers - Visual Anchors */}
-        {/* Green Band Position (~19% fill = 330ml) */}
-        <rect
-          x="26" y="240" width="48" height="15" rx="2"
-          stroke={color} strokeWidth="1" strokeDasharray="4 2"
-          opacity={0.5}
-        />
-        
-        {/* Heart Logo Position (~38% fill = 660ml) */}
-        <circle
-          cx="50" cy="180" r="6"
-          stroke={color} strokeWidth="1" strokeDasharray="3 2"
+          x="120" y="300" width="220" height="400" rx="20"
+          stroke={color} strokeWidth="4" strokeDasharray="20 10"
           opacity={0.5}
         />
         
         {/* Auto-Capture Progress Ring (1 second hold timer) */}
         {isHolding && !manualMode && (
-          <>
-            {/* Background ring */}
+          <g transform="translate(230, 500)">
             <circle 
-              cx="50" cy="150" r="85" 
+              r="180" 
               fill="none" 
               stroke="rgba(255,255,255,0.15)" 
-              strokeWidth="5" 
-              strokeLinecap="round" 
+              strokeWidth="15" 
             />
-            {/* Progress ring */}
             <circle
-              cx="50" cy="150" r="85" 
+              r="180" 
               fill="none" 
               stroke="#10b981" 
-              strokeWidth="5" 
+              strokeWidth="15" 
               strokeLinecap="round"
-              strokeDasharray={`${holdProgress * 534} 534`}
-              transform="rotate(-90 50 150)"
+              strokeDasharray={`${holdProgress * 1131} 1131`}
+              transform="rotate(-90)"
               opacity="0.95"
             />
-            {/* Center countdown indicator */}
             <text 
-              x="50" y="155" 
+              y="15" 
               fill="#10b981" 
-              fontSize="24" 
+              fontSize="80" 
               fontWeight="bold" 
               textAnchor="middle"
               opacity="0.9"
             >
               {Math.ceil((1 - holdProgress) * 1)}
             </text>
-          </>
+          </g>
         )}
       </svg>
     </div>
@@ -254,7 +222,6 @@ export function CameraViewfinder({
   preferBackCamera = true,
   enableLiveGuidance = true,
   forceManual = false,
-  sku: _sku,
   testImage = null,
 }: CameraViewfinderProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -267,7 +234,6 @@ export function CameraViewfinder({
   const [torchOn, setTorchOn] = useState(false);
   const [torchSupported, setTorchSupported] = useState(false);
   const [shutterFlash, setShutterFlash] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(true);
   // Force manual mode in test environment to prevent auto-capture from hiding orientation guide
   const [isManualMode, setIsManualMode] = useState(forceManual || (typeof window !== 'undefined' && (window as any).__AFIA_FORCE_MANUAL__));
   const [photoCaptured, setPhotoCaptured] = useState(false);
@@ -282,11 +248,6 @@ export function CameraViewfinder({
   }), []);
 
   const guidance = useCameraGuidance(guidanceConfig);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setShowOnboarding(false), 3000);
-    return () => clearTimeout(timer);
-  }, []);
 
   const handleCapture = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return;
@@ -488,12 +449,6 @@ export function CameraViewfinder({
 
           {/* Story 10.1: Orientation Guide - Shows "Handle on Right" instruction */}
           <OrientationGuide visible={cameraState === 'active' && !photoCaptured} />
-
-          {showOnboarding && (
-            <div className="onboarding-toast frontside-toast">
-              {t('camera.shootFrontside')}
-            </div>
-          )}
 
           <div className="guidance-center">
             <BottleGuide
