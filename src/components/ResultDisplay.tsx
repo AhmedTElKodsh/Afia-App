@@ -28,54 +28,6 @@ const FEEDBACK_RATING_MAP: Record<FeedbackType, StoredScan["feedbackRating"]> = 
   'way-off':  'way_off',
 };
 
-// --- Cup Icon Component ---
-interface CupIconProps {
-  fill: "half" | "full" | "none";
-  size?: number;
-}
-
-function CupIcon({ fill, size = 24 }: CupIconProps) {
-  const { i18n } = useTranslation();
-  const isRTL = i18n.dir() === 'rtl';
-  
-  return (
-    <svg 
-      width={size} 
-      height={size} 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      xmlns="http://www.w3.org/2000/svg"
-      className="cup-icon"
-    >
-      {/* Cup handle */}
-      <path 
-        d={isRTL ? "M6 8C3.8 8 2 9.8 2 12C2 14.2 3.8 16 6 16" : "M18 8C20.2 8 22 9.8 22 12C22 14.2 20.2 16 18 16"} 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-      />
-      {/* Cup body */}
-      <path 
-        d={isRTL ? "M22 6V16C22 18.2 20.2 20 18 20H10C7.8 20 6 18.2 6 16V6H22Z" : "M2 6V16C2 18.2 3.8 20 6 20H14C16.2 20 18 18.2 18 16V6H2Z"} 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinejoin="round" 
-      />
-      {/* Fill level */}
-      {fill !== "none" && (
-        <path 
-          d={
-            fill === "full" 
-              ? (isRTL ? "M6 8V16C6 18.2 7.8 20 10 20H18C20.2 20 22 18.2 22 16V8H6Z" : "M2 8V16C2 18.2 3.8 20 6 20H14C16.2 20 18 18.2 18 16V8H2Z")
-              : (isRTL ? "M6 14V16C6 18.2 7.8 20 10 20H18C20.2 20 22 18.2 22 16V14H6Z" : "M2 14V16C2 18.2 3.8 20 6 20H14C16.2 20 18 18.2 18 16V14H2Z")
-          } 
-          fill="var(--color-primary)" 
-        />
-      )}
-    </svg>
-  );
-}
-
 export function ResultDisplay({ result, bottle, capturedImage, onRetake }: ResultDisplayProps) {
   const { t } = useTranslation();
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);

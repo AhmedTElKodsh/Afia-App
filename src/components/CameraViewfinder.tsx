@@ -21,6 +21,8 @@ interface CameraViewfinderProps {
   onPermissionDenied: () => void;
   onCancel?: () => void;
   preferBackCamera?: boolean;
+  testImage?: string | null;
+  sku?: string;
 }
 
 type CameraState = 'idle' | 'requesting' | 'active' | 'permission-denied' | 'error';
