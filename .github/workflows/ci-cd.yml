@@ -39,10 +39,10 @@ jobs:
       cache-key: ${{ steps.cache-keys.outputs.cache-key }}
       worker-cache-key: ${{ steps.cache-keys.outputs.worker-cache-key }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
       
@@ -54,7 +54,7 @@ jobs:
       
       - name: Cache root dependencies
         id: cache-root
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: node_modules
           key: ${{ steps.cache-keys.outputs.cache-key }}
@@ -63,7 +63,7 @@ jobs:
       
       - name: Cache worker dependencies
         id: cache-worker
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: worker/node_modules
           key: ${{ steps.cache-keys.outputs.worker-cache-key }}
@@ -83,21 +83,21 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
       
       - name: Restore root dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: node_modules
           key: ${{ needs.setup.outputs.cache-key }}
       
       - name: Restore worker dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: worker/node_modules
           key: ${{ needs.setup.outputs.worker-cache-key }}
@@ -115,21 +115,21 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
       
       - name: Restore root dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: node_modules
           key: ${{ needs.setup.outputs.cache-key }}
       
       - name: Restore worker dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: worker/node_modules
           key: ${{ needs.setup.outputs.worker-cache-key }}
@@ -144,7 +144,7 @@ jobs:
       
       - name: Upload coverage reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: coverage-reports
           path: |
@@ -157,21 +157,21 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
       
       - name: Restore root dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: node_modules
           key: ${{ needs.setup.outputs.cache-key }}
       
       - name: Restore worker dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: worker/node_modules
           key: ${{ needs.setup.outputs.worker-cache-key }}
@@ -216,28 +216,28 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
       
       - name: Restore root dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: node_modules
           key: ${{ needs.setup.outputs.cache-key }}
       
       - name: Restore worker dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: worker/node_modules
           key: ${{ needs.setup.outputs.worker-cache-key }}
       
       - name: Cache Playwright browsers
         id: playwright-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
           key: playwright-browsers-${{ hashFiles('package-lock.json') }}
@@ -266,7 +266,7 @@ jobs:
       
       - name: Upload Playwright Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: playwright-report
           path: playwright-report/
@@ -274,7 +274,7 @@ jobs:
       
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-results
           path: test-results/
@@ -282,7 +282,7 @@ jobs:
       
       - name: Comment PR with test results
         if: always() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -299,10 +299,10 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
       
@@ -323,15 +323,15 @@ jobs:
       name: ${{ github.ref == 'refs/heads/master' && 'production' || 'staging' }}
       url: ${{ github.ref == 'refs/heads/local-model' && 'https://afia-worker-stage2.savola.workers.dev' || 'https://afia-worker.savola.workers.dev' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
       
       - name: Restore worker dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: worker/node_modules
           key: ${{ needs.setup.outputs.worker-cache-key }}
@@ -376,15 +376,15 @@ jobs:
       name: ${{ github.ref == 'refs/heads/master' && 'production' || 'staging' }}
       url: https://afia-app.pages.dev
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
       
       - name: Restore root dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: node_modules
           key: ${{ needs.setup.outputs.cache-key }}
