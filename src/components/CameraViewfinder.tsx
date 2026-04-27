@@ -14,6 +14,7 @@ import {
 } from "../config/camera";
 import jsQR from "jsqr";
 import { runQualityGate } from "../utils/imageQualityGate";
+import { OrientationGuide } from "./OrientationGuide";
 
 interface CameraViewfinderProps {
   onCapture: (base64: string, qrData: string | null) => void;
@@ -283,6 +284,7 @@ export function CameraViewfinder({
 
           <div className="guidance-center">
             <StaticBottleOutline />
+            <OrientationGuide visible={true} />
           </div>
         </div>
       )}
