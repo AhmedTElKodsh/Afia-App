@@ -597,7 +597,7 @@ function ExportTab({ scans, t }: ExportTabProps) {
         scanId: s.scanId,
         fillPercentage: s.fillPercentage,
         remainingMl: s.consumedMl || 0,
-        confidence: s.confidence,
+        confidence: (s.confidence || "medium") as "high" | "medium" | "low",
         aiProvider: (s.aiProvider ?? "unknown") as "gemini" | "groq",
         latencyMs: s.latencyMs ?? 0,
       },
