@@ -81,11 +81,11 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
   const validateSession = useCallback(() => {
     const token = sessionStorage.getItem(SESSION_KEY);
     const expiresAt = Number(sessionStorage.getItem(SESSION_EXPIRES_KEY) || "0");
-    
+
     if (token && expiresAt > Date.now()) {
       return true;
     }
-    
+
     sessionStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem(SESSION_EXPIRES_KEY);
     return false;
@@ -206,7 +206,7 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
       totalConsumedMl: globalScans.reduce((sum, s) => sum + (s.consumedMl || 0), 0),
       activeUsers: uniqueUserProxy,
       feedbackCount: globalScans.filter(s => s.feedbackRating).length,
-      mae: "N/A" 
+      mae: "N/A"
     };
   }, [globalScans]);
 
@@ -272,8 +272,8 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
           </div>
         </div>
 
-        <button 
-          className="mobile-menu-toggle" 
+        <button
+          className="mobile-menu-toggle"
           onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
           aria-label={t('admin.menu.toggle', 'Toggle Menu')}
         >
@@ -287,25 +287,25 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
               className={`nav-item ${activeTab === tab.id ? 'active' : ''}`}
               onClick={() => { setActiveTab(tab.id as AdminTab); setIsMobileNavOpen(false); }}
             >
-              <span className="nav-icon">{tab.icon}</span> 
+              <span className="nav-icon">{tab.icon}</span>
               <span className="nav-label">{tab.label}</span>
             </button>
           ))}
-          
+
           <div className="nav-divider"></div>
-          
+
           <button
             className="nav-item"
             onClick={() => { toggleLanguage(); setIsMobileNavOpen(false); }}
             aria-label={isRTL ? 'Switch to English' : 'التبديل للعربية'}
             title={isRTL ? 'Switch to English' : 'التبديل للعربية'}
           >
-            <span className="nav-icon"><Globe size={18} /></span> 
+            <span className="nav-icon"><Globe size={18} /></span>
             <span className="nav-label">{isRTL ? 'EN' : 'عربي'}</span>
           </button>
-          
-          <button 
-            className="nav-item text-danger" 
+
+          <button
+            className="nav-item text-danger"
             onClick={handleLogout}
           >
             <span className="nav-icon"><LogOut size={18} /></span>
@@ -316,34 +316,34 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
 
       <main id="admin-main" className="main">
         {selectedScan ? (
-          <ScanDetail 
-            scan={selectedScan} 
-            onBack={() => setSelectedScan(null)} 
+          <ScanDetail
+            scan={selectedScan}
+            onBack={() => setSelectedScan(null)}
             onCorrectionSaved={() => {
               setSelectedScan(null);
               fetchGlobalData();
-            }} 
+            }}
           />
         ) : (
           <>
             <header className="page-header">
-               <h1 className="page-title">{TABS.find(t => t.id === activeTab)?.label}</h1>
-               {isRefreshing && <div className="loading-spinner-small" />}
+              <h1 className="page-title">{TABS.find(t => t.id === activeTab)?.label}</h1>
+              {isRefreshing && <div className="loading-spinner-small" />}
             </header>
-            <div 
-              className="tab-panel-content" 
+            <div
+              className="tab-panel-content"
               role="tabpanel"
               aria-labelledby={`tab-${activeTab}`}
             >
-            {activeTab === "overview" && (
-                <OverviewTab 
-                  stats={globalStats} 
-                  scans={globalScans} 
-                  onGoToTestLab={() => window.history.back()} 
+              {activeTab === "overview" && (
+                <OverviewTab
+                  stats={globalStats}
+                  scans={globalScans}
+                  onGoToTestLab={() => window.history.back()}
                   onReview={(scan) => setSelectedScan(scan)}
-                  t={t} 
-                  isRTL={isRTL} 
-                  isLoading={isLoading} 
+                  t={t}
+                  isRTL={isRTL}
+                  isLoading={isLoading}
                 />
               )}
               {activeTab === "bottles" && <BottleManager />}
@@ -433,7 +433,7 @@ function OverviewTab({ stats, scans, onGoToTestLab, onReview, t, isRTL, isLoadin
       <div className="overview-tab">
         <div className="skeleton skeleton-sparkline" aria-hidden="true" />
         <div className="metrics-grid">
-          {[0,1,2,3,4].map(i => <div key={i} className="skeleton skeleton-metric-card" aria-hidden="true" />)}
+          {[0, 1, 2, 3, 4].map(i => <div key={i} className="skeleton skeleton-metric-card" aria-hidden="true" />)}
         </div>
         <div className="skeleton skeleton-section-block" aria-hidden="true" />
       </div>
@@ -443,9 +443,9 @@ function OverviewTab({ stats, scans, onGoToTestLab, onReview, t, isRTL, isLoadin
   return (
     <div className="overview-tab">
       <ModelVersionPanel t={t} />
-      
+
       <SparklineCard scans={scans} t={t} locale={isRTL ? 'ar-SA' : 'en-US'} />
-      
+
       <div className="metrics-grid">
         <MetricCard
           icon={<BarChart2 size={20} />}
@@ -471,8 +471,8 @@ function OverviewTab({ stats, scans, onGoToTestLab, onReview, t, isRTL, isLoadin
           icon={<TrendingUp size={20} />}
           value={stats.mae !== "N/A" ? `${stats.mae}%` : "N/A"}
           label={t('admin.overview.metrics.mae', 'Model Error (MAE)')}
-          subValue={stats.mae !== "N/A" 
-            ? (Number(stats.mae) < 5 ? t('admin.modelVersion.maeExcellent', 'Excellent') : t('admin.modelVersion.maeNeedsImprovement', 'Needs Training')) 
+          subValue={stats.mae !== "N/A"
+            ? (Number(stats.mae) < 5 ? t('admin.modelVersion.maeExcellent', 'Excellent') : t('admin.modelVersion.maeNeedsImprovement', 'Needs Training'))
             : t('admin.modelVersion.pendingReview', 'Pending Review')}
         />
       </div>
@@ -519,13 +519,13 @@ function OverviewTab({ stats, scans, onGoToTestLab, onReview, t, isRTL, isLoadin
                       </td>
                       <td>
                         <span className={`confidence-badge-${scan.confidence}`}>
-                          {scan.confidence === 'high' ? t('results.confidenceHigh') : 
-                           scan.confidence === 'medium' ? t('results.confidenceMedium') : 
-                           t('results.confidenceLow')}
+                          {scan.confidence === 'high' ? t('results.confidenceHigh') :
+                            scan.confidence === 'medium' ? t('results.confidenceMedium') :
+                              t('results.confidenceLow')}
                         </span>
                       </td>
                       <td>
-                        <button 
+                        <button
                           className="btn btn-ghost btn-xs btn-icon-text"
                           onClick={() => onReview(scan)}
                         >
@@ -537,7 +537,7 @@ function OverviewTab({ stats, scans, onGoToTestLab, onReview, t, isRTL, isLoadin
                 </tbody>
               </table>
             </div>
-            
+
             {totalPages > 1 && (
               <div className="pagination-controls">
                 <button
@@ -590,16 +590,26 @@ function ExportTab({ scans, t }: ExportTabProps) {
 
   const buildExportRecords = () =>
     filteredScans.map((s) => ({
-      ...s,
+      id: s.scanId,
+      bottleName: s.sku,
       imageName: "scan-image",
       analysisResult: {
         scanId: s.scanId,
         fillPercentage: s.fillPercentage,
-        remainingMl: s.remainingMl || 0,
+        remainingMl: s.consumedMl || 0,
         confidence: s.confidence,
         aiProvider: (s.aiProvider ?? "unknown") as "gemini" | "groq",
         latencyMs: s.latencyMs ?? 0,
       },
+      scanId: s.scanId,
+      timestamp: s.timestamp,
+      sku: s.sku,
+      fillPercentage: s.fillPercentage,
+      consumedMl: s.consumedMl,
+      confidence: s.confidence,
+      aiProvider: s.aiProvider,
+      latencyMs: s.latencyMs,
+      feedbackRating: s.feedbackRating,
     }));
 
   const handleExportJSON = () => {

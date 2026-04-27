@@ -43,8 +43,8 @@ public/test-images/*
 # Test results (generated output)
 test-results/
 
-# Claude Code worktrees (nested git repos, not submodules)
-.claude/worktrees/
+# Claude Code worktrees and settings (nested git repos, not submodules, contains secrets)
+.claude/
 
 # AI Agent directories
 .agent/

@@ -12,7 +12,7 @@ This document summarizes the existing training data and the augmentation strateg
 **Statistics:**
 - **Total frames:** 2,356 high-quality images
 - **Source:** 29 videos of oil bottles at different fill levels
-- **Quality filtering:** 
+- **Quality filtering:**
   - Total extracted: 3,464 frames
   - Blurry frames removed: 822
   - Duplicate frames removed: 286
@@ -138,6 +138,20 @@ augmented-output/
 - [x] Test with dry-run mode
 - [ ] Run full augmentation (2,356 frames × 10 variants)
 - [ ] Verify output quality
+
+### Phase 1.5: Merge Augmented Images (Optional)
+- [x] Create merge script (`scripts/merge-augmented-images.py`)
+- [ ] Run merge to consolidate `augmented-output/` into parent directories
+- [ ] Verify merged images
+
+**Usage:**
+```bash
+# Preview merge (dry run)
+python scripts/merge-augmented-images.py --dry-run
+
+# Perform merge
+python scripts/merge-augmented-images.py
+```
 
 ### Phase 2: Upload to B2 Storage (Optional)
 - [ ] Configure B2 credentials

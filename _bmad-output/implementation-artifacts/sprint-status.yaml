@@ -102,7 +102,7 @@ development_status:
   5-1-admin-dashboard-layout: done
   5-2-scan-review-interface: done
   5-3-admin-correction-flow: done
-  5-4-admin-image-upload: done
+  5-4-admin-image-upload: review  # Story file created 2026-04-27; backend implementation complete 2026-04-27
   5-5-training-data-export: done
   epic-5-retrospective: done
 

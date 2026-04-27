@@ -106,7 +106,7 @@ export async function analyze(options: AnalysisOptions): Promise<AnalysisResult>
     }
 
     // Bottle detection confidence check (separate from canvas quality)
-    if (bottleDetectionConfidence !== null && bottleDetectionConfidence < 0.5 && !isTestMode) {
+    if (bottleDetectionConfidence !== undefined && bottleDetectionConfidence !== null && bottleDetectionConfidence < 0.5 && !isTestMode) {
       if (onQualityWarning) {
         const shouldContinue = await onQualityWarning(['uploadQuality.reasons.noBottle']);
         if (!shouldContinue) {
@@ -184,7 +184,7 @@ export async function analyze(options: AnalysisOptions): Promise<AnalysisResult>
 
       // Handle "needs-sku" route (AC6)
       if (route === "needs-sku") {
-        throw new Error('NEEDS_SKU: Brand detection confidence too low. Please scan QR code or select SKU manually.');     
+        throw new Error('NEEDS_SKU: Brand detection confidence too low. Please scan QR code or select SKU manually.');
       }
 
       if (route === "local") {
