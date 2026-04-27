@@ -25,6 +25,13 @@ vi.mock('../uploadFilter', () => ({
     BOTTLE_CONF_MIN: 0.5,
   },
 }));
+// Mock imageQualityGate to prevent Image loading and async delays
+vi.mock('../../utils/imageQualityGate', () => ({
+  runQualityGateFromBase64: vi.fn(() => Promise.resolve({
+    passed: true,
+    issues: [],
+  })),
+}));
 vi.mock('../syncQueue', () => ({
   enqueueAnalyzeRequest: vi.fn().mockResolvedValue('queue-id-123'),
 }));
@@ -76,7 +83,10 @@ describe('AnalysisRouter - Error Handling', () => {
       vi.mocked(analyzeBottle).mockResolvedValue({
         scanId: 'llm-123',
         fillPercentage: 75,
+        remainingMl: 750,
         confidence: 'high',
+        aiProvider: 'openai',
+        latencyMs: 1200,
       });
 
       const result = await analyze({
@@ -95,6 +105,10 @@ describe('AnalysisRouter - Error Handling', () => {
       vi.mocked(analyzeBottle).mockResolvedValue({
         scanId: 'llm-456',
         fillPercentage: 80,
+        remainingMl: 800,
+        confidence: 'high',
+        aiProvider: 'openai',
+        latencyMs: 1100,
       });
 
       const result = await analyze({
@@ -122,7 +136,7 @@ describe('AnalysisRouter - Error Handling', () => {
   describe('Offline Error Handling', () => {
     it('should throw clear error when offline without cached model', async () => {
       vi.mocked(isModelLoaded).mockReturnValue(false);
-      
+
       // Mock navigator.onLine as offline
       global.navigator = { ...originalNavigator, onLine: false } as Navigator & { onLine: boolean };
 
@@ -154,7 +168,7 @@ describe('AnalysisRouter - Error Handling', () => {
       // Mock model as loaded
       vi.mocked(isModelLoaded).mockReturnValue(true);
       global.navigator = { ...originalNavigator, onLine: true } as Navigator & { onLine: boolean };
-      
+
       // Mock local inference to succeed with high confidence
       vi.mocked(runLocalInference).mockResolvedValue({
         fillPercentage: 75,
@@ -162,7 +176,7 @@ describe('AnalysisRouter - Error Handling', () => {
         inferenceTimeMs: 45,
         modelVersion: '1.0.0',
       });
-      
+
       const badCallback = (): void => {
         throw new Error('Callback error');
       };
@@ -174,7 +188,7 @@ describe('AnalysisRouter - Error Handling', () => {
         totalVolumeMl: 1000,
         onProgress: badCallback,
       });
-      
+
       expect(result).toBeDefined();
       expect(result.fillPercentage).toBe(75);
     }, 60000);

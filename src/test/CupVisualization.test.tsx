@@ -8,9 +8,12 @@ describe("CupVisualization — cup calibration 220ml = 1 cup", () => {
     expect(screen.getByText(/0\s*cups/i)).toBeInTheDocument();
   });
 
-  it("55ml → '1/4 Cup' (one partial icon)", () => {
-    render(<CupVisualization waterMl={55} />);
+  it("55ml → '1/4 Cup' (one cup icon, no badge)", () => {
+    const { container } = render(<CupVisualization waterMl={55} />);
     expect(screen.getByText(/1\/4\s*cup/i)).toBeInTheDocument();
+    // Single cup icon only — no count badge
+    const svgs = container.querySelectorAll("svg");
+    expect(svgs.length).toBe(1);
   });
 
   it("110ml → '1/2 Cup'", () => {
@@ -23,22 +26,37 @@ describe("CupVisualization — cup calibration 220ml = 1 cup", () => {
     expect(screen.getByText(/3\/4\s*cup/i)).toBeInTheDocument();
   });
 
-  it("220ml → '1 Cup' (one full icon)", () => {
-    render(<CupVisualization waterMl={220} />);
+  it("220ml → '1 Cup' with badge '1' + one cup icon", () => {
+    const { container } = render(<CupVisualization waterMl={220} />);
     expect(screen.getByText(/^1\s*cup$/i)).toBeInTheDocument();
+    // Badge "1" appears + one SVG cup
+    expect(screen.getByText("1", { selector: "span[aria-hidden]" })).toBeInTheDocument();
+    const svgs = container.querySelectorAll("svg");
+    expect(svgs.length).toBe(1);
   });
 
-  it("440ml → '2 cups' (two full icons)", () => {
+  it("440ml → '2 Cups' with badge '2' + one cup icon (not two)", () => {
     const { container } = render(<CupVisualization waterMl={440} />);
     expect(screen.getByText(/2\s*cups/i)).toBeInTheDocument();
+    expect(screen.getByText("2", { selector: "span[aria-hidden]" })).toBeInTheDocument();
     const svgs = container.querySelectorAll("svg");
-    expect(svgs.length).toBe(2);
+    expect(svgs.length).toBe(1);
   });
 
-  it("275ml → '1 1/4 cups' (1 full + 1 partial icon)", () => {
+  it("275ml → '1 1/4 Cups' with badge '1' + quarter-filled cup icon", () => {
     const { container } = render(<CupVisualization waterMl={275} />);
     expect(screen.getByText(/1\s*1\/4\s*cups/i)).toBeInTheDocument();
+    expect(screen.getByText("1", { selector: "span[aria-hidden]" })).toBeInTheDocument();
     const svgs = container.querySelectorAll("svg");
-    expect(svgs.length).toBe(2);
+    expect(svgs.length).toBe(1);
+  });
+
+  it("first-cup range (55–165ml) shows no count badge", () => {
+    for (const ml of [55, 110, 165]) {
+      const { container, unmount } = render(<CupVisualization waterMl={ml} />);
+      const badge = container.querySelector("span[aria-hidden]");
+      expect(badge).not.toBeInTheDocument();
+      unmount();
+    }
   });
 });

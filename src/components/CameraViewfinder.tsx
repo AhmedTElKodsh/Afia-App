@@ -12,8 +12,8 @@ import {
   getVideoConstraints,
   checkTorchSupport,
 } from "../config/camera";
-import { OrientationGuide } from "./OrientationGuide";
 import jsQR from "jsqr";
+import { runQualityGate } from "../utils/imageQualityGate";
 
 interface CameraViewfinderProps {
   onCapture: (base64: string, qrData: string | null) => void;
@@ -45,34 +45,34 @@ function StaticBottleOutline() {
           strokeWidth="2.5"
           fill="none"
         >
-          {/* Cap */}
+          {/* Cap — 38mm neck finish */}
           <path
-            d="M 43 4 L 57 4 C 58.5 4 59 5 59 6 L 59 19 L 41 19 L 41 6 C 41 5 41.5 4 43 4 Z"
+            d="M 33 3 L 67 3 C 68.5 3 69 4.5 69 6 L 69 16 L 31 16 L 31 6 C 31 4.5 31.5 3 33 3 Z"
             vectorEffect="non-scaling-stroke"
           />
-          {/* Neck */}
+          {/* Neck — tall narrow section, Ø37.3mm spec (~22% of total height) */}
           <path
-            d="M 41.5 19 L 58.5 19 L 58.5 36 C 58.5 38 58 39 57.5 40 L 42.5 40 C 42 39 41.5 38 41.5 36 Z"
+            d="M 33 16 L 67 16 L 66 44 C 66 49 63.5 52 61 53 L 39 53 C 36.5 52 34 49 34 44 Z"
             vectorEffect="non-scaling-stroke"
           />
-          {/* Shoulder */}
+          {/* Shoulder — steep flare from narrow neck to wide upper body */}
           <path
-            d="M 42.5 40 L 57.5 40 C 60 42 64 45 70 50 C 78 56 84 62 88 70 L 12 70 C 16 62 22 56 30 50 C 36 45 40 42 42.5 40 Z"
+            d="M 39 53 L 61 53 C 72 55 84 62 90 68 C 92 70 92 71 92 72 L 8 72 C 8 71 8 70 10 68 C 16 62 28 55 39 53 Z"
             vectorEffect="non-scaling-stroke"
           />
-          {/* Body */}
+          {/* Body — inverted pear: widest at ~25% into body, tapers to 78.1mm base */}
           <path
-            d="M 12 70 L 88 70 C 90 80 90.5 92 90 105 C 89 130 86 155 86 180 C 86 215 87 240 86 260 L 14 260 C 13 240 14 215 14 180 C 14 155 11 130 10 105 C 9.5 92 10 80 12 70 Z"
+            d="M 8 72 L 92 72 C 95 82 96 100 95 117 C 93 138 91 162 89 190 C 87 212 86 232 85 252 L 15 252 C 14 232 13 212 11 190 C 9 162 7 138 5 117 C 4 100 5 82 8 72 Z"
             vectorEffect="non-scaling-stroke"
           />
-          {/* Base */}
+          {/* Base — 78.1mm wide, tapered rounded bottom */}
           <path
-            d="M 14 260 L 86 260 C 86.5 270 86 280 84 288 C 82 294 78 297 73 297 L 27 297 C 22 297 18 294 16 288 C 14 280 13.5 270 14 260 Z"
+            d="M 15 252 L 85 252 C 86 264 86 274 84 282 C 82 290 78 294 73 297 L 27 297 C 22 294 18 290 16 282 C 14 274 14 264 15 252 Z"
             vectorEffect="non-scaling-stroke"
           />
-          {/* Handle */}
+          {/* Handle — SIPA D-handle loop on right side, upper body */}
           <path
-            d="M 84 102 C 86.5 102 88 105 88 109 L 88 132 C 88 136 86.5 139 84 139 C 81.5 139 80 136 80 132 L 80 109 C 80 105 81.5 102 84 102 Z"
+            d="M 93 100 C 97 100 99 107 99 128 C 99 148 97 158 93 158 C 89 158 87 155 87 150 L 87 113 C 87 106 90 100 93 100 Z"
             vectorEffect="non-scaling-stroke"
           />
         </g>
@@ -99,6 +99,8 @@ export function CameraViewfinder({
   const [torchOn, setTorchOn] = useState(false);
   const [torchSupported, setTorchSupported] = useState(false);
   const [shutterFlash, setShutterFlash] = useState(false);
+  const [qualityRejectMsg, setQualityRejectMsg] = useState<string | null>(null);
+  const qualityRejectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleCapture = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return;
@@ -116,6 +118,16 @@ export function CameraViewfinder({
       canvas.width = CAMERA_CONFIG.capture.width;
       canvas.height = CAMERA_CONFIG.capture.height;
       context.drawImage(video, 0, 0, CAMERA_CONFIG.capture.width, CAMERA_CONFIG.capture.height);
+
+      const qualityResult = runQualityGate(canvas);
+      if (!qualityResult.passed) {
+        const msgKey = qualityResult.issues[0]?.message ?? 'camera.captureError';
+        if (qualityRejectTimerRef.current) clearTimeout(qualityRejectTimerRef.current);
+        setQualityRejectMsg(t(msgKey));
+        qualityRejectTimerRef.current = setTimeout(() => setQualityRejectMsg(null), 2500);
+        return;
+      }
+
       const imageBase64 = canvas.toDataURL('image/jpeg', CAMERA_CONFIG.jpegQuality);
       const base64Only = (imageBase64 || '').replace(/^data:image\/jpeg;base64,/, '');
       setShutterFlash(true);
@@ -250,6 +262,11 @@ export function CameraViewfinder({
               </button>
             ) : <div style={{ width: 44 }} />}
 
+            <div className="guidance-header-hint">
+              <span>{t('camera.guidanceHint')}</span>
+              <span>{t('camera.guidanceHint2')}</span>
+            </div>
+
             <div style={{ width: 44, display: 'flex', justifyContent: 'flex-end' }}>
               {torchSupported && (
                 <button
@@ -264,17 +281,15 @@ export function CameraViewfinder({
             </div>
           </div>
 
-          <OrientationGuide visible={true} />
-
           <div className="guidance-center">
             <StaticBottleOutline />
           </div>
+        </div>
+      )}
 
-          <div className="guidance-footer">
-            <div className="guidance-hint-pill">
-              <span className="guidance-hint-text">{t('camera.ensureLogoVisible')}</span>
-            </div>
-          </div>
+      {qualityRejectMsg && (
+        <div className="quality-reject-toast" role="alert" aria-live="assertive">
+          {qualityRejectMsg}
         </div>
       )}
 

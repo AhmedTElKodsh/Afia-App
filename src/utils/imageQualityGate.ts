@@ -196,6 +196,31 @@ export function checkHistogramExposure(canvas: HTMLCanvasElement): QualityResult
 }
 
 /**
+ * Bridge for callers that only have a base64 image URL.
+ * Decodes the image into a canvas, then delegates to runQualityGate.
+ * Fails open (passed: true) if the image cannot be decoded.
+ */
+export function runQualityGateFromBase64(imageBase64: string): Promise<QualityGateResult> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onerror = () => resolve({ passed: true, issues: [], processingMs: 0 });
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve({ passed: true, issues: [], processingMs: 0 });
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      resolve(runQualityGate(canvas));
+    };
+    img.src = imageBase64;
+  });
+}
+
+/**
  * Run all three quality checks in sequence.
  * Stops at first failure (saves processing time).
  * Returns within < 100ms on mid-range mobile hardware.

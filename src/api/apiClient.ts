@@ -159,6 +159,8 @@ export interface AdminScan {
     inferenceTimeMs: number;
   };
   llmFallbackUsed?: boolean;
+  consumedMl?: number;
+  feedbackRating?: string;
 }
 
 export interface AdminExport {
@@ -189,11 +191,11 @@ export async function submitAdminCorrection(
   token: string,
   correction: {
     scanId: string;
-    actualFillPercentage: number;
-    errorCategory: string;
-    isTrainingEligible: boolean;
+    accuracy: string;
+    correctedFillPct?: number;
+    method?: string;
   }
-): Promise<void> {
+): Promise<{ trainingEligible: boolean }> {
   const response = await fetchWithTimeout(`${WORKER_URL}/admin/correct`, {
     method: "POST",
     headers: { 
@@ -202,7 +204,40 @@ export async function submitAdminCorrection(
     },
     body: JSON.stringify(correction),
   });
-  if (!response.ok) throw new Error("Failed to save correction");
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error((errorData as { error?: string }).error || "Failed to save correction");
+  }
+  return response.json();
+}
+
+/**
+ * Admin: Re-run LLM on existing scan
+ */
+export async function adminRerunLlm(
+  token: string,
+  scanId: string
+): Promise<{ 
+  adminLlmResult: {
+    fillPercentage: number;
+    confidence: "high" | "medium" | "low";
+    provider: string;
+    rerunAt: string;
+  }
+}> {
+  const response = await fetchWithTimeout(`${WORKER_URL}/admin/rerun-llm`, {
+    method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({ scanId }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error((errorData as { error?: string }).error || "Failed to re-run LLM");
+  }
+  return response.json();
 }
 
 /**

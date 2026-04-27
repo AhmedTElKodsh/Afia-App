@@ -6,6 +6,7 @@ import { handleAdminAuth } from "./adminAuth.ts";
 import { handleModelVersion } from "./modelVersion.ts";
 import { handleAdminCorrect } from "./adminCorrect.ts";
 import { handleAdminRerunLlm } from "./adminRerunLlm.ts";
+import { handleAdminUpload } from "./adminUpload.ts";
 import { verifyAdminSession, handleGetScans } from "./admin.ts";
 import { handleLogScan } from "./logScan.ts";
 import {
@@ -237,13 +238,7 @@ app.get("/admin/export", async (c) => {
   return c.json({ error: "Not implemented", code: "NOT_IMPLEMENTED" }, 501);
 });
 
-// Admin upload — not yet implemented
-app.post("/admin/upload", async (c) => {
-  if (!await verifyAdminSession(c)) {
-    return c.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, 401);
-  }
-  return c.json({ error: "Not implemented", code: "NOT_IMPLEMENTED" }, 501);
-});
+app.post("/admin/upload", (c) => handleAdminUpload(c));
 
 // Error telemetry
 app.post("/error", async (c) => {

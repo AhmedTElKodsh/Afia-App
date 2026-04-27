@@ -115,6 +115,8 @@
     "tiltDown": "أمل الهاتف للأسفل",
     "brandVerified": "تم التحقق من علامة عافية",
     "ensureLogoVisible": "تأكد من ظهور شعار عافية",
+    "guidanceHint": "طابق الإطار على الزجاجة بقدر الإمكان",
+    "guidanceHint2": "تأكد من ظهور شعار عافية",
     "enableMotion": "تفعيل توجيه الحركة",
     "advancedGuidanceSoon": "التوجيه المتقدم قادم قريباً",
     "captureManuallyPrompt": "يرجى التقاط الصورة يدوياً",
@@ -791,8 +793,18 @@
     "confirmButton": "تأكيد",
     "retakeButton": "إعادة التصوير",
     "sliderLabel": "اضبط مستوى الزيت",
+    "sliderLabelTakeOut": "اضبط كمية الزيت المراد أخذها",
     "mlValue": "{{value}} مل",
-    "confirmed": "تم تأكيد مستوى الزيت"
+    "confirmed": "تم تأكيد مستوى الزيت",
+    "takingOut": "ستأخذ",
+    "willRemain": "سيتبقى",
+    "lessThan55ml": "أقل من ربع كوب متبقٍّ — لا يمكن الصرف"
+  },
+  "quality": {
+    "tooFar": "اقترب أكثر — الزجاجة صغيرة جداً",
+    "tooBlurry": "ثبّت يدك — الصورة ضبابية",
+    "tooBright": "إضاءة شديدة — تجنب الضوء المباشر",
+    "tooDark": "إضاءة منخفضة — حسّن الإضاءة"
   },
   "consumption": {
     "title": "كم ستستخدم؟",

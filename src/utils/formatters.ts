@@ -1,3 +1,5 @@
+import type { TFunction } from "i18next";
+
 // Date and time formatting utilities
 
 /** Normalize any timestamp format to a JS-parseable ISO string */
@@ -64,4 +66,24 @@ export function formatTime(isoString: string): string {
 
 export function formatDateTime(isoString: string): string {
   return `${formatDate(isoString)} at ${formatTime(isoString)}`;
+}
+
+/**
+ * Format volume in ml to a human-readable "cup" string
+ */
+export function formatCupText(ml: number, t: TFunction): string {
+  if (ml === 0) return t("fillConfirm.cups.zero", "0 cups");
+  const cups = ml / 236.58; // Standard US cup
+  if (cups < 0.125) return t("fillConfirm.cups.negligible", "a splash");
+  
+  // Round to nearest 1/4 cup
+  const rounded = Math.round(cups * 4) / 4;
+  if (rounded === 0) return t("fillConfirm.cups.negligible", "a splash");
+  
+  if (rounded === 0.25) return t("fillConfirm.cups.quarter", "¼ cup");
+  if (rounded === 0.5) return t("fillConfirm.cups.half", "½ cup");
+  if (rounded === 0.75) return t("fillConfirm.cups.threeQuarters", "¾ cup");
+  if (rounded === 1) return t("fillConfirm.cups.one", "1 cup");
+  
+  return t("fillConfirm.cups.multiple", { count: rounded, defaultValue: "{{count}} cups" });
 }

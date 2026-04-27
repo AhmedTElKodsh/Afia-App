@@ -27,6 +27,7 @@ export interface ScanMetadata {
   // Story 7.6 - AC5: Separate confidence field for simplified storage
   localModelConfidence?: number | null;
   llmFallbackUsed?: boolean;
+  source?: "admin_upload" | "user_scan" | "community_contribution";
 }
 
 export interface FeedbackData {
@@ -222,7 +223,8 @@ export async function getGlobalScans(
         modelVersion: (row.local_model_version as string) ?? "unknown",
         inferenceTimeMs: (row.local_model_inference_ms as number) ?? 0,
       } : undefined,
-      llmFallbackUsed: row.llm_fallback_used as boolean
+      llmFallbackUsed: row.llm_fallback_used as boolean,
+      source: (clientMetadata?.source as string) as ScanMetadata["source"] | undefined,
     };
   });
 }
@@ -235,10 +237,79 @@ export interface TrainingSampleData {
   imageUrl: string;
   sku: string;
   confirmedFillPct: number;
-  labelSource: "admin_correction" | "admin_verified" | "user_feedback";
+  labelSource: "admin_correction" | "admin_verified" | "user_feedback" | "admin_upload";
   labelConfidence: number;
   augmented: boolean;
   split: "train" | "val" | "test";
+}
+
+function assignSplit(): "train" | "val" | "test" {
+  const r = Math.random();
+  if (r < 0.8) return "train";
+  if (r < 0.9) return "val";
+  return "test";
+}
+
+export async function storeAdminUpload(
+  env: Env,
+  scanId: string,
+  imageBuffer: ArrayBuffer,
+  sku: string,
+  fillPercentage: number,
+  augmentationType: string
+): Promise<void> {
+  const supabase = getSupabase(env);
+  const date = new Date().toISOString().split("T")[0];
+  const imagePath = `admin/${sku}/${date}/${scanId}.jpg`;
+
+  await withRetry(async () => {
+    const { error } = await supabase.storage
+      .from("scans")
+      .upload(imagePath, imageBuffer, {
+        contentType: "image/jpeg",
+        upsert: true,
+      });
+    if (error) throw error;
+  });
+
+  await withRetry(async () => {
+    const { error } = await supabase.from("scans").insert([
+      {
+        id: scanId,
+        sku,
+        image_url: imagePath,
+        local_model_result: null,
+        local_model_confidence: null,
+        local_model_version: null,
+        local_model_inference_ms: null,
+        llm_fallback_used: false,
+        local_model_prediction: {},
+        llm_fallback_prediction: {
+          percentage: fillPercentage,
+          confidence: "high",
+          provider: "admin_upload",
+        },
+        client_metadata: {
+          source: "admin_upload",
+          augmentation_type: augmentationType,
+          is_contribution: false,
+          timestamp: new Date().toISOString(),
+        },
+      },
+    ]);
+    if (error) throw error;
+  });
+
+  upsertTrainingSample(env, {
+    scanId,
+    imageUrl: imagePath,
+    sku,
+    confirmedFillPct: fillPercentage,
+    labelSource: "admin_upload",
+    labelConfidence: 1.0,
+    augmented: false,
+    split: assignSplit(),
+  }).catch((err) => console.error("[storeAdminUpload] training_samples upsert failed:", err));
 }
 
 export async function upsertTrainingSample(

@@ -10,7 +10,7 @@ import { runLocalInference } from './localInference';
 import { analyzeBottle } from '../api/apiClient';
 import { routeInference } from './inferenceRouter';
 import { isIOS, isWebGLAvailable } from '../utils/platformDetect';
-import { analyzeImageQuality, checkUploadQuality, type ImageQualitySignals } from './uploadFilter';
+import { runQualityGateFromBase64 } from '../utils/imageQualityGate';
 import { enqueueAnalyzeRequest } from './syncQueue';
 import { getBottleBySku } from '../data/bottleRegistry';
 import { calculateRemainingMl } from "../../shared/volumeCalculator.ts";
@@ -85,50 +85,41 @@ export async function analyze(options: AnalysisOptions): Promise<AnalysisResult>
     }
   };
 
-  // Story 7.8 - AC1: Quality pre-check before upload
+  // Story 10-3: Canvas-level quality gate before LLM call
   try {
     safeProgress(i18next.t('analysis.checkingQuality', 'Checking image quality...'));
 
-    // Support testing override for quality check
-    const qualityFn = (window as { analyzeImageQuality?: typeof analyzeImageQuality }).analyzeImageQuality || analyzeImageQuality;
-    const qualityMetrics = await qualityFn(imageBase64);
+    const gateResult = await runQualityGateFromBase64(imageBase64);
 
-    // M8: Ensure qualityMetrics is valid or provide dummy signals
-    const safeMetrics = (qualityMetrics && typeof qualityMetrics === 'object') ? qualityMetrics : {
-      blurScore: 0,
-      brightnessScore: 0.5,
-    };
-
-    const qualitySignals: ImageQualitySignals = {
-      ...safeMetrics,
-      bottleDetectionConfidence: bottleDetectionConfidence ?? null,
-    };
-
-    const qualityCheck = checkUploadQuality(qualitySignals);
-
-    // M1 FIX: Skip warning in test mode to avoid blocking E2E tests with synthetic images
-    if (qualityCheck.shouldWarn && !isTestMode) {
+    if (!gateResult.passed && !isTestMode) {
+      const reasons = gateResult.issues.map(issue => issue.message);
       if (onQualityWarning) {
-        const translatedReasons = qualityCheck.reasons.map(key => i18next.t(key, key));
-        console.log('[AnalysisRouter] Quality warning:', translatedReasons);
-        const shouldContinue = await onQualityWarning(qualityCheck.reasons);
-
+        const translatedReasons = reasons.map(key => i18next.t(key, key));
+        console.log('[AnalysisRouter] Quality gate failed:', translatedReasons);
+        const shouldContinue = await onQualityWarning(reasons);
         if (!shouldContinue) {
           throw new Error('USER_CANCELLED: User chose to retake photo');
         }
       } else {
-        console.warn('[AnalysisRouter] Quality warning triggered but no onQualityWarning handler provided');
+        console.warn('[AnalysisRouter] Quality gate failed but no onQualityWarning handler provided');
+      }
+    }
+
+    // Bottle detection confidence check (separate from canvas quality)
+    if (bottleDetectionConfidence !== null && bottleDetectionConfidence < 0.5 && !isTestMode) {
+      if (onQualityWarning) {
+        const shouldContinue = await onQualityWarning(['uploadQuality.reasons.noBottle']);
+        if (!shouldContinue) {
+          throw new Error('USER_CANCELLED: User chose to retake photo');
+        }
       }
     }
   } catch (error) {
     if (error instanceof Error && error.message.startsWith('USER_CANCELLED:')) {
       throw error;
     }
-    // Canvas or image decode failure — skip quality check, proceed with analysis
-    // This is intentionally fail-open: a broken quality check must not block the scan
+    // Decode failure — fail-open: a broken quality check must not block the scan
     console.warn('[AnalysisRouter] Quality check failed (non-blocking):', error);
-
-    // M8: In test mode or on failure, ensure we don't block by any missing signals
     if (isTestMode) {
       console.log('[AnalysisRouter] Test mode: Bypassing quality check block');
     }

@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
-import { useScanHistory, type StoredScan } from "../hooks/useScanHistory";
 import { exportToCSV, exportToJSON } from "../utils/exportResults";
 import { exportTrainingDataset, mapScansToTrainingRecords } from "../utils/trainingExporter";
 import { BottleManager } from "./BottleManager";
@@ -37,9 +36,9 @@ import { MetricCard } from "./MetricCard";
 import { EmptyState } from "./EmptyState";
 import { ModelVersionPanel } from "./admin/ModelVersionPanel";
 import { ModelVersionManager } from "./admin/ModelVersionManager";
+import { adminLogin, getAdminScans, type AdminScan } from "../api/apiClient";
 import "./AdminDashboard.css";
 
-const WORKER_URL = import.meta.env.VITE_PROXY_URL || "";
 const SESSION_KEY = "afia_admin_session";
 const SESSION_EXPIRES_KEY = "afia_admin_session_expires";
 
@@ -58,8 +57,10 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const [selectedScan, setSelectedScan] = useState<StoredScan | null>(null);
+  const [selectedScan, setSelectedScan] = useState<AdminScan | null>(null);
+  const [globalScans, setGlobalScans] = useState<AdminScan[]>([]);
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -74,16 +75,9 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
     };
   }, [isMobileNavOpen]);
 
-  const { scans, getStats } = useScanHistory();
-  const stats = getStats();
-
   const currentLang = i18n.language || 'en';
   const isRTL = currentLang === 'ar';
 
-  /**
-   * Story 10-1: Centralized session validation
-   * Checks for token existence and expiration
-   */
   const validateSession = useCallback(() => {
     const token = sessionStorage.getItem(SESSION_KEY);
     const expiresAt = Number(sessionStorage.getItem(SESSION_EXPIRES_KEY) || "0");
@@ -92,7 +86,6 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
       return true;
     }
     
-    // Clear invalid/expired session
     sessionStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem(SESSION_EXPIRES_KEY);
     return false;
@@ -108,6 +101,32 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
     { id: "export", label: t('admin.tabs.export'), icon: <Download size={18} /> },
   ];
 
+  const handleLogout = useCallback(() => {
+    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_EXPIRES_KEY);
+    setIsAuthenticated(false);
+    onLogout?.();
+  }, [onLogout]);
+
+  const fetchGlobalData = useCallback(async () => {
+    const token = sessionStorage.getItem(SESSION_KEY);
+    if (!token) return;
+
+    setIsRefreshing(true);
+    try {
+      const data = await getAdminScans(token);
+      setGlobalScans(data);
+    } catch (err) {
+      console.error("Failed to fetch admin scans:", err);
+      if (err instanceof Error && err.message === "UNAUTHORIZED") {
+        handleLogout();
+      }
+    } finally {
+      setIsRefreshing(false);
+      setIsLoading(false);
+    }
+  }, [handleLogout]);
+
   useEffect(() => {
     let mounted = true;
 
@@ -116,6 +135,7 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
         if (mounted) {
           setIsAuthenticated(true);
           onAuthSuccess?.();
+          fetchGlobalData();
         }
       } else {
         if (mounted) setIsAuthenticated(false);
@@ -123,65 +143,72 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
     };
 
     checkSession();
-
-    // Auto-logout check every minute
     const interval = setInterval(checkSession, 60_000);
-
-    // Brief loading gate so the overview renders data instead of zeros
-    const timer = setTimeout(() => { if (mounted) setIsLoading(false); }, 200);
 
     return () => {
       mounted = false;
       clearInterval(interval);
-      clearTimeout(timer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchGlobalData, validateSession, onAuthSuccess]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
-    if (!WORKER_URL) {
-      setError(t('errors.generic'));
-      return;
-    }
+    setIsLoading(true);
 
     try {
-      const res = await fetch(`${WORKER_URL}/admin/auth`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
-      });
-      
-      if (res.ok) {
-        const data = await res.json() as { token: string; expiresAt: number };
-        const { token, expiresAt } = data;
-        sessionStorage.setItem(SESSION_KEY, token);
-        sessionStorage.setItem(SESSION_EXPIRES_KEY, String(expiresAt));
-        setIsAuthenticated(true);
-        onAuthSuccess?.();
-      } else if (res.status === 401) {
-        setError(t('admin.login.errorInvalid'));
+      const data = await adminLogin(password);
+      const { token, expiresAt } = data;
+      sessionStorage.setItem(SESSION_KEY, token);
+      sessionStorage.setItem(SESSION_EXPIRES_KEY, String(expiresAt));
+      setIsAuthenticated(true);
+      onAuthSuccess?.();
+      fetchGlobalData();
+    } catch (err) {
+      if (err instanceof Error) {
+        if (err.message === "UNAUTHORIZED") {
+          setError(t('admin.login.errorInvalid'));
+        } else if (err.message.includes('Rate limit')) {
+          setError(err.message);
+        } else {
+          setError(t('errors.network'));
+        }
       } else {
         setError(t('errors.generic'));
       }
-    } catch {
-      setError(t('errors.network'));
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const handleLogout = () => {
-    sessionStorage.removeItem(SESSION_KEY);
-    sessionStorage.removeItem(SESSION_EXPIRES_KEY);
-    setIsAuthenticated(false);
-    onLogout?.();
   };
 
   const toggleLanguage = () => {
     const newLang = currentLang === 'en' ? 'ar' : 'en';
     i18n.changeLanguage(newLang);
   };
+
+  const globalStats = useMemo(() => {
+    if (globalScans.length === 0) {
+      return {
+        totalScans: 0,
+        totalConsumedMl: 0,
+        activeUsers: 0,
+        feedbackCount: 0,
+        mae: "N/A"
+      };
+    }
+
+    const uniqueUserProxy = new Set(
+      globalScans.map(s => s.timestamp.split('T')[0])
+    ).size;
+
+    return {
+      totalScans: globalScans.length,
+      totalConsumedMl: globalScans.reduce((sum, s) => sum + (s.consumedMl || 0), 0),
+      activeUsers: uniqueUserProxy,
+      feedbackCount: globalScans.filter(s => s.feedbackRating).length,
+      mae: "N/A" 
+    };
+  }, [globalScans]);
 
   if (!isAuthenticated) {
     return (
@@ -205,19 +232,21 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoFocus
+                disabled={isLoading}
               />
               <button
                 type="button"
                 className="password-toggle"
                 onClick={() => setShowPassword(v => !v)}
                 aria-label={showPassword ? t('admin.login.hidePassword', 'Hide password') : t('admin.login.showPassword', 'Show password')}
+                disabled={isLoading}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
             {error && <p className="error-message" role="alert">{error}</p>}
-            <button type="submit" className="btn btn-primary btn-full">
-              {t('admin.login.loginButton')}
+            <button type="submit" className="btn btn-primary btn-full" disabled={isLoading}>
+              {isLoading ? t('common.loading') : t('admin.login.loginButton')}
             </button>
           </form>
           <button className="btn btn-link" onClick={() => window.history.back()}>
@@ -291,25 +320,25 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
             scan={selectedScan} 
             onBack={() => setSelectedScan(null)} 
             onCorrectionSaved={() => {
-              // Refresh scan list or show success message
               setSelectedScan(null);
+              fetchGlobalData();
             }} 
           />
         ) : (
           <>
             <header className="page-header">
                <h1 className="page-title">{TABS.find(t => t.id === activeTab)?.label}</h1>
+               {isRefreshing && <div className="loading-spinner-small" />}
             </header>
             <div 
               className="tab-panel-content" 
-              key={activeTab}
               role="tabpanel"
               aria-labelledby={`tab-${activeTab}`}
             >
             {activeTab === "overview" && (
                 <OverviewTab 
-                  stats={stats} 
-                  scans={scans} 
+                  stats={globalStats} 
+                  scans={globalScans} 
                   onGoToTestLab={() => window.history.back()} 
                   onReview={(scan) => setSelectedScan(scan)}
                   t={t} 
@@ -321,7 +350,7 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
               {activeTab === "qrmock" && <QrMockGenerator />}
               {activeTab === "failures" && <FailuresTab t={t} isRTL={isRTL} />}
               {activeTab === "models" && <ModelVersionManager t={t} />}
-              {activeTab === "export" && <ExportTab scans={scans} t={t} />}
+              {activeTab === "export" && <ExportTab scans={globalScans} t={t} />}
               {activeTab === "upload" && <AdminUpload />}
             </div>
           </>
@@ -331,8 +360,7 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
   );
 }
 
-// ── Sparkline Card ────────────────────────────────────────────────────────────
-function SparklineCard({ scans, t, locale }: { scans: StoredScan[], t: TFunction, locale: string }) {
+function SparklineCard({ scans, t, locale }: { scans: AdminScan[], t: TFunction, locale: string }) {
   const days = useMemo(() => {
     const result = [];
     for (let i = 6; i >= 0; i--) {
@@ -349,7 +377,7 @@ function SparklineCard({ scans, t, locale }: { scans: StoredScan[], t: TFunction
     return result;
   }, [scans, locale]);
 
-  const maxCount = Math.max(...days.map((d) => d.count), 1);
+  const maxCount = Math.max(...days.map(d => d.count), 1);
 
   return (
     <div className="sparkline-card">
@@ -375,12 +403,17 @@ function SparklineCard({ scans, t, locale }: { scans: StoredScan[], t: TFunction
   );
 }
 
-// ── Overview Tab ─────────────────────────────────────────────────────────────
 interface OverviewTabProps {
-  stats: ReturnType<ReturnType<typeof useScanHistory>["getStats"]>;
-  scans: ReturnType<typeof useScanHistory>["scans"];
+  stats: {
+    totalScans: number;
+    totalConsumedMl: number;
+    activeUsers: number;
+    feedbackCount: number;
+    mae: string;
+  };
+  scans: AdminScan[];
   onGoToTestLab?: () => void;
-  onReview: (scan: StoredScan) => void;
+  onReview: (scan: AdminScan) => void;
   t: TFunction;
   isRTL: boolean;
   isLoading?: boolean;
@@ -389,32 +422,18 @@ interface OverviewTabProps {
 function OverviewTab({ stats, scans, onGoToTestLab, onReview, t, isRTL, isLoading }: OverviewTabProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const maxRecentScans = 50;
+  const maxRecentScans = 100;
 
-  // All hooks must be called before any early returns
-  const feedbackSummary = useMemo(() => {
-    const counts = { accurate: 0, too_high: 0, too_low: 0, way_off: 0 };
-    scans.forEach(s => {
-      if (s.feedbackRating && s.feedbackRating in counts) {
-        counts[s.feedbackRating as keyof typeof counts]++;
-      }
-    });
-    return counts;
-  }, [scans]);
-
-  const totalFeedback = feedbackSummary.accurate + feedbackSummary.too_high + feedbackSummary.too_low + feedbackSummary.way_off;
-  const relevantScans = scans.slice(0, maxRecentScans);
-  const totalPages = Math.ceil(relevantScans.length / itemsPerPage);
+  const totalPages = Math.ceil(Math.min(scans.length, maxRecentScans) / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedScans = relevantScans.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedScans = scans.slice(startIndex, startIndex + itemsPerPage);
 
-  // Skeleton — shown until localStorage is read (≤200ms)
   if (isLoading) {
     return (
       <div className="overview-tab">
         <div className="skeleton skeleton-sparkline" aria-hidden="true" />
         <div className="metrics-grid">
-          {[0,1,2,3].map(i => <div key={i} className="skeleton skeleton-metric-card" aria-hidden="true" />)}
+          {[0,1,2,3,4].map(i => <div key={i} className="skeleton skeleton-metric-card" aria-hidden="true" />)}
         </div>
         <div className="skeleton skeleton-section-block" aria-hidden="true" />
       </div>
@@ -440,7 +459,7 @@ function OverviewTab({ stats, scans, onGoToTestLab, onReview, t, isRTL, isLoadin
         />
         <MetricCard
           icon={<TrendingUp size={20} />}
-          value={totalFeedback}
+          value={stats.feedbackCount}
           label={t('admin.overview.metrics.feedbackCount', 'Feedback Count')}
         />
         <MetricCard
@@ -456,42 +475,6 @@ function OverviewTab({ stats, scans, onGoToTestLab, onReview, t, isRTL, isLoadin
             ? (Number(stats.mae) < 5 ? t('admin.modelVersion.maeExcellent', 'Excellent') : t('admin.modelVersion.maeNeedsImprovement', 'Needs Training')) 
             : t('admin.modelVersion.pendingReview', 'Pending Review')}
         />
-      </div>
-
-      <div className="feedback-summary-section">
-        <div className="section-header">
-          <h2>{t('admin.overview.feedbackSummary.title', 'Feedback Summary')}</h2>
-        </div>
-        <div className="feedback-stats-grid">
-          <div className="feedback-stat-item">
-            <span className="feedback-label">{t('admin.overview.feedback.accurate', 'Accurate')}</span>
-            <div className="feedback-bar-wrap">
-              <div className="feedback-bar feedback-bar--accurate" style={{ width: `${totalFeedback ? (feedbackSummary.accurate / totalFeedback) * 100 : 0}%` }} />
-            </div>
-            <span className="feedback-value">{feedbackSummary.accurate}</span>
-          </div>
-          <div className="feedback-stat-item">
-            <span className="feedback-label">{t('admin.overview.feedback.tooHigh', 'Too High')}</span>
-            <div className="feedback-bar-wrap">
-              <div className="feedback-bar feedback-bar--warning" style={{ width: `${totalFeedback ? (feedbackSummary.too_high / totalFeedback) * 100 : 0}%` }} />
-            </div>
-            <span className="feedback-value">{feedbackSummary.too_high}</span>
-          </div>
-          <div className="feedback-stat-item">
-            <span className="feedback-label">{t('admin.overview.feedback.tooLow', 'Too Low')}</span>
-            <div className="feedback-bar-wrap">
-              <div className="feedback-bar feedback-bar--warning" style={{ width: `${totalFeedback ? (feedbackSummary.too_low / totalFeedback) * 100 : 0}%` }} />
-            </div>
-            <span className="feedback-value">{feedbackSummary.too_low}</span>
-          </div>
-          <div className="feedback-stat-item">
-            <span className="feedback-label">{t('admin.overview.feedback.wayOff', 'Way Off')}</span>
-            <div className="feedback-bar-wrap">
-              <div className="feedback-bar feedback-bar--danger" style={{ width: `${totalFeedback ? (feedbackSummary.way_off / totalFeedback) * 100 : 0}%` }} />
-            </div>
-            <span className="feedback-value">{feedbackSummary.way_off}</span>
-          </div>
-        </div>
       </div>
 
       <div className="recent-scans">
@@ -517,16 +500,15 @@ function OverviewTab({ stats, scans, onGoToTestLab, onReview, t, isRTL, isLoadin
                     <th>{t('admin.overview.table.date')}</th>
                     <th>{t('admin.overview.table.bottle')}</th>
                     <th>{t('admin.overview.table.fillPercent')}</th>
-                    <th>{t('admin.overview.table.consumed')}</th>
                     <th>{t('admin.overview.table.confidence')}</th>
                     <th>{t('common.actions', 'Actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedScans.map((scan, idx) => (
-                    <tr key={scan.id ?? `row-${idx}`}>
+                  {paginatedScans.map((scan) => (
+                    <tr key={scan.scanId}>
                       <td>{new Date(scan.timestamp.replace(' ', 'T')).toLocaleDateString(isRTL ? 'ar-SA' : 'en-US')}</td>
-                      <td>{t(`bottles.${scan.sku}`, { defaultValue: scan.bottleName })}</td>
+                      <td>{t(`bottles.${scan.sku}`, { defaultValue: scan.sku })}</td>
                       <td>
                         <div className="fill-mini-bar-wrap" aria-label={`${scan.fillPercentage}% ${t('results.fillLevel')}`} title={`${scan.fillPercentage}% ${t('results.fillLevel')}`}>
                           <div className="fill-mini-bar" aria-hidden="true">
@@ -535,7 +517,6 @@ function OverviewTab({ stats, scans, onGoToTestLab, onReview, t, isRTL, isLoadin
                           <span aria-hidden="true">{scan.fillPercentage}%</span>
                         </div>
                       </td>
-                      <td>{scan.consumedMl ?? 0}{t('common.ml')}</td>
                       <td>
                         <span className={`confidence-badge-${scan.confidence}`}>
                           {scan.confidence === 'high' ? t('results.confidenceHigh') : 
@@ -585,9 +566,8 @@ function OverviewTab({ stats, scans, onGoToTestLab, onReview, t, isRTL, isLoadin
   );
 }
 
-// ── Export Tab ────────────────────────────────────────────────────────────────
 interface ExportTabProps {
-  scans: ReturnType<typeof useScanHistory>["scans"];
+  scans: AdminScan[];
   t: TFunction;
 }
 
@@ -604,7 +584,7 @@ function ExportTab({ scans, t }: ExportTabProps) {
   const filteredScans = scans.filter((scan) => {
     if (dateRange === "all") return true;
     const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - dateRange);
+    cutoff.setDate(cutoff.getDate() - (dateRange as number));
     return new Date(scan.timestamp) >= cutoff;
   });
 
@@ -613,9 +593,9 @@ function ExportTab({ scans, t }: ExportTabProps) {
       ...s,
       imageName: "scan-image",
       analysisResult: {
-        scanId: s.id,
+        scanId: s.scanId,
         fillPercentage: s.fillPercentage,
-        remainingMl: s.remainingMl,
+        remainingMl: s.remainingMl || 0,
         confidence: s.confidence,
         aiProvider: (s.aiProvider ?? "unknown") as "gemini" | "groq",
         latencyMs: s.latencyMs ?? 0,
@@ -649,7 +629,6 @@ function ExportTab({ scans, t }: ExportTabProps) {
       <h3>{t('admin.export.title')}</h3>
       <p className="text-secondary">{t('admin.export.description')}</p>
 
-      {/* Date Range Pills */}
       <div className="export-date-section">
         <span className="export-date-label">{t('admin.export.dateRange.label')}</span>
         <div className="export-date-pills" role="group" aria-label={t('admin.export.dateRange.label')}>
@@ -666,7 +645,6 @@ function ExportTab({ scans, t }: ExportTabProps) {
         </div>
       </div>
 
-      {/* Summary Box */}
       <div className="export-summary-box" aria-live="polite">
         <div>
           <div className="export-summary-count">{filteredScans.length}</div>
@@ -679,7 +657,6 @@ function ExportTab({ scans, t }: ExportTabProps) {
         <p className="error-message" role="alert">{exportError}</p>
       )}
 
-      {/* Stacked Export Buttons */}
       <div className="export-buttons-stack">
         <button
           className="export-btn-card export-btn-card--primary"
@@ -705,7 +682,8 @@ function ExportTab({ scans, t }: ExportTabProps) {
         </button>
         <button
           className="export-btn-card export-btn-card--accent"
-          onClick={() => exportTrainingDataset(mapScansToTrainingRecords(scans), "csv")}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          onClick={() => exportTrainingDataset(mapScansToTrainingRecords(scans as any), "csv")}
           disabled={scans.length === 0}
         >
           <div className="export-btn-card-icon"><Database size={22} /></div>
@@ -727,7 +705,7 @@ function ExportTab({ scans, t }: ExportTabProps) {
     </div>
   );
 }
-// -- Failures Tab -------------------------------------------------------------
+
 function FailuresTab({ t, isRTL }: { t: TFunction, isRTL: boolean }) {
   const events = getAnalyticsEvents().filter((e) => e.eventName === "scan_failed");
 

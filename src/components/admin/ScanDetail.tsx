@@ -18,11 +18,11 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import type { StoredScan } from "../../hooks/useScanHistory";
+import { type AdminScan, submitAdminCorrection, adminRerunLlm } from "../../api/apiClient";
 import "./ScanDetail.css";
 
 interface ScanDetailProps {
-  scan: StoredScan;
+  scan: AdminScan;
   onBack: () => void;
   onCorrectionSaved?: () => void;
 }
@@ -42,8 +42,6 @@ interface AdminLlmResult {
   provider: string;
   rerunAt: string;
 }
-
-const WORKER_URL = import.meta.env.VITE_PROXY_URL || "";
 
 export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps) {
   const { t, i18n } = useTranslation();
@@ -79,37 +77,14 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
 
     try {
       const token = getAuthToken();
-      const requestBody: {
-        scanId: string;
-        accuracy: AccuracyButton;
-        correctedFillPct?: number;
-        method?: string;
-      } = {
-        scanId: scan.id,
+      const correction = {
+        scanId: scan.scanId,
         accuracy,
+        correctedFillPct: accuracy !== "correct" ? fillPct : undefined,
+        method: accuracy !== "correct" ? "manual" : undefined,
       };
 
-      // AC4: Manual correction requires correctedFillPct
-      if (accuracy !== "correct" && fillPct !== undefined) {
-        requestBody.correctedFillPct = fillPct;
-        requestBody.method = "manual";
-      }
-
-      const response = await fetch(`${WORKER_URL}/admin/correct`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || t('errors.generic', 'Failed to save correction'));
-      }
-
-      const data = await response.json();
+      const data = await submitAdminCorrection(token, correction);
       setTrainingEligible(data.trainingEligible);
       
       if (accuracy === "correct") {
@@ -143,30 +118,20 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
 
     try {
       const token = getAuthToken();
-      const response = await fetch(`${WORKER_URL}/admin/rerun-llm`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ scanId: scan.id }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || t('errors.generic', "Failed to re-run LLM"));
-      }
-
-      const data = await response.json();
+      const data = await adminRerunLlm(token, scan.scanId);
       setAdminLlmResult(data.adminLlmResult);
       setSuccess(
         t(
           "admin.scanDetail.llmRerunSuccess",
-          { value: data.adminLlmResult.fillPercentage, provider: data.adminLlmResult.provider, defaultValue: `LLM re-run complete: ${data.adminLlmResult.fillPercentage}% (${data.adminLlmResult.provider})` }
+          { 
+            value: data.adminLlmResult.fillPercentage, 
+            provider: data.adminLlmResult.provider, 
+            defaultValue: `LLM re-run complete: ${data.adminLlmResult.fillPercentage}% (${data.adminLlmResult.provider})` 
+          }
         )
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('errors.generic', "Unknown error"));
+      setError(err instanceof Error ? err.message : t('errors.generic', "Failed to re-run LLM"));
     } finally {
       setIsRerunning(false);
     }
@@ -179,6 +144,10 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
   };
 
   const locale = i18n.language === 'ar' ? 'ar-SA' : 'en-US';
+
+  // In production, we would get the image from Supabase Storage or R2.
+  // For the POC/Admin panel, we might need a signed URL or public bucket.
+  const imageUrl = (scan as AdminScan & { imageUrl?: string }).imageUrl || "/test-bottle.jpg";
 
   return (
     <div className="scan-detail" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
@@ -193,7 +162,7 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
         {/* Scan Image */}
         <div className="scan-image-container card">
           <img
-            src={scan.imageUrl || "/test-bottle.jpg"}
+            src={imageUrl}
             alt={t('camera.preview')}
             className="scan-image"
           />
@@ -208,11 +177,15 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
             </div>
             <div className="metadata-row">
               <span className="label">{t("admin.scanDetail.confidence", "Confidence")}:</span>
-              <span className="value">{t(`history.confidenceLevels.${scan.confidence}`, { defaultValue: scan.confidence })}</span>
+              <span className="value">{t(`results.confidence${scan.confidence.charAt(0).toUpperCase() + scan.confidence.slice(1)}`, { defaultValue: scan.confidence })}</span>
             </div>
             <div className="metadata-row">
               <span className="label">{t("admin.scanDetail.provider", "Provider")}:</span>
               <span className="value">{scan.aiProvider || t('common.unknown', { defaultValue: 'unknown' })}</span>
+            </div>
+            <div className="metadata-row">
+              <span className="label">{t("admin.scanDetail.timestamp", "Timestamp")}:</span>
+              <span className="value">{new Date(scan.timestamp.replace(' ', 'T')).toLocaleString(locale)}</span>
             </div>
           </div>
         </div>
@@ -367,7 +340,7 @@ export function ScanDetail({ scan, onBack, onCorrectionSaved }: ScanDetailProps)
                 </div>
                 <div className="result-row">
                   <span className="label">{t("admin.scanDetail.confidence", "Confidence")}:</span>
-                  <span className="value">{t(`history.confidenceLevels.${adminLlmResult.confidence}`, { defaultValue: adminLlmResult.confidence })}</span>
+                  <span className="value">{t(`results.confidence${adminLlmResult.confidence.charAt(0).toUpperCase() + adminLlmResult.confidence.slice(1)}`, { defaultValue: adminLlmResult.confidence })}</span>
                 </div>
                 <div className="result-row">
                   <span className="label">{t("admin.scanDetail.provider", "Provider")}:</span>

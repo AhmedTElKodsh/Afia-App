@@ -59,6 +59,12 @@ export function QrMockGenerator() {
   }, [vConsoleEnabled]);
 
   const copyToClipboard = async (text: string, sku: string) => {
+    // Check if clipboard API is available (requires secure context)
+    if (!navigator.clipboard || !window.isSecureContext) {
+      console.warn("Clipboard API not available - not in secure context");
+      return;
+    }
+    
     try {
       await navigator.clipboard.writeText(text);
       setCopiedSku(sku);

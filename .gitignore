@@ -66,6 +66,7 @@ test-results/
 .windsurf/
 
 # Large data and models
+venv/
 augmented-output/
 oil-bottle-augmented/
 oil-bottle-frames/

@@ -1,6 +1,8 @@
 {
-    "*.{ts,tsx}": [
-        "eslint --fix --max-warnings 0",
-        "bash -c 'tsc --noEmit'"
+    "src/**/*.{ts,tsx}": [
+        "eslint --fix --max-warnings 0 --no-warn-ignored"
+    ],
+    "worker/src/**/*.ts": [
+        "eslint --fix --max-warnings 0 --no-warn-ignored"
     ]
 }

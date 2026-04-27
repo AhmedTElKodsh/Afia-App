@@ -430,6 +430,29 @@
   outline-offset: 2px;
 }
 
+/* Guidance hint — two-line centred text in header row */
+.guidance-header-hint {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 0 6px;
+  pointer-events: none;
+}
+
+.guidance-header-hint span {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
 /* Status pill (centre header) */
 .guidance-status-pill {
   display: flex;
@@ -523,9 +546,10 @@
 }
 
 .bottle-guide-svg {
-  width: 100%;
-  height: auto;
-  /* Simple static outline - no animations or effects */
+  width: auto;
+  height: 52vh;
+  max-width: 100%;
+  /* Constrain to viewport height so outline stays centred in camera view */
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
@@ -720,6 +744,31 @@
   height: 210px;
   border: 2px dashed rgba(255, 255, 255, 0.3);
   border-radius: 20px;
+}
+
+/* ========================================
+   Quality Reject Toast
+   ======================================== */
+
+.quality-reject-toast {
+  position: absolute;
+  bottom: calc(var(--space-xl) + 44px + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(239, 68, 68, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  z-index: 200;
+  pointer-events: none;
+  animation: hintSlideUp 0.25s ease-out both;
 }
 
 /* ========================================

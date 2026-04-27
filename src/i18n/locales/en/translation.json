@@ -115,6 +115,8 @@
     "tiltDown": "Tilt phone down",
     "brandVerified": "Afia brand verified",
     "ensureLogoVisible": "Ensure Afia logo is visible",
+    "guidanceHint": "Align the outline to the bottle as best you can",
+    "guidanceHint2": "Ensure Afia logo is visible",
     "enableMotion": "Enable Motion Guidance",
     "advancedGuidanceSoon": "Advanced guidance coming soon",
     "captureManuallyPrompt": "Please capture the photo manually",
@@ -791,8 +793,18 @@
     "confirmButton": "Confirm",
     "retakeButton": "Retake",
     "sliderLabel": "Adjust fill level",
+    "sliderLabelTakeOut": "Adjust oil to take out",
     "mlValue": "{{value}} ml",
-    "confirmed": "Fill level confirmed"
+    "confirmed": "Fill level confirmed",
+    "takingOut": "You're taking out",
+    "willRemain": "Will remain",
+    "lessThan55ml": "Less than ¼ cup remaining — cannot dispense"
+  },
+  "quality": {
+    "tooFar": "Move closer — bottle too small",
+    "tooBlurry": "Hold steady — image blurry",
+    "tooBright": "Too bright — avoid direct light",
+    "tooDark": "Too dark — improve lighting"
   },
   "consumption": {
     "title": "How much are you using?",

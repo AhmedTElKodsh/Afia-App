@@ -20,8 +20,8 @@ vars = { STAGE = "stage1", ENABLE_LOCAL_MODEL = "false", ALLOWED_ORIGINS = "http
 
 [[env.stage1.kv_namespaces]]
 binding = "RATE_LIMIT_KV"
-id = "9dc0bcc958de473199e5ded5701b932a"
-preview_id = "d6d688f5cfd04d73a42c7c979c1f1791"
+id = "9e9b81c969a6470580b048c87d92d59f"
+preview_id = "45dc48926544417da054d3abc29bfac7"
 
 # [[env.stage1.r2_buckets]]
 # binding = "AFIA_IMAGES"

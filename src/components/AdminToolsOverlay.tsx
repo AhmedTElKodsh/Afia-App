@@ -62,6 +62,13 @@ export function AdminToolsOverlay({
   const handleCopy = useCallback(async () => {
     if (isLoading) return;
     
+    // Check if clipboard API is available (requires secure context)
+    if (!navigator.clipboard || !window.isSecureContext) {
+      console.warn("Clipboard API not available - not in secure context");
+      setCopyStatus("error");
+      return;
+    }
+    
     try {
       await navigator.clipboard.writeText(JSON.stringify(result, null, 2));
       setCopyStatus("copied");

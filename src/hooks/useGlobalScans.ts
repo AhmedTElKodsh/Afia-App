@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { StoredScan } from "./useScanHistory";
 import { getBottleBySku } from "../data/bottleRegistry";
+import { getAdminScans } from "../api/apiClient";
 
-const PROXY_URL = import.meta.env.VITE_PROXY_URL || "http://localhost:8787";
 const SESSION_KEY = "afia_admin_session";
-
 const FETCH_CACHE_MS = 30_000; // skip refetch if data is fresh (prevents double-fetch on tab remount)
 
 export function useGlobalScans() {
@@ -15,7 +14,7 @@ export function useGlobalScans() {
 
   const fetchScans = useCallback(async () => {
     const token = sessionStorage.getItem(SESSION_KEY);
-    if (!token || !PROXY_URL) return;
+    if (!token) return;
 
     if (Date.now() - lastFetchRef.current < FETCH_CACHE_MS) return;
 
@@ -23,51 +22,26 @@ export function useGlobalScans() {
     setError(null);
 
     try {
-      const response = await fetch(`${PROXY_URL}/admin/scans`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch scans: ${response.statusText}`);
-      }
-
-      const data = await response.json() as {
-        scans: Array<{
-          id: string;
-          timestamp: string;
-          sku: string;
-          fill_percentage: number;
-          confidence: string;
-          ai_provider?: "gemini" | "groq" | "openrouter" | "mistral";
-          latency_ms?: number;
-          accuracy_rating?: "about_right" | "too_high" | "too_low" | "way_off";
-        }>;
-      };
+      const globalScans = await getAdminScans(token);
       
-      if (!Array.isArray(data.scans)) {
-        throw new Error('Invalid response: scans is not an array');
-      }
-
-      // Map Supabase rows to StoredScan format
-      const mappedScans: StoredScan[] = data.scans.map((s) => {
+      // Map AdminScan to StoredScan format
+      const mappedScans: StoredScan[] = globalScans.map((s) => {
         const bottle = getBottleBySku(s.sku);
         const totalVolume = bottle?.totalVolumeMl || 0;
-        const remainingMl = Math.round(totalVolume * (s.fill_percentage / 100));
+        const remainingMl = Math.round(totalVolume * (s.fillPercentage / 100));
         
         return {
-          id: s.id,
+          id: s.scanId,
           timestamp: s.timestamp,
           sku: s.sku,
           bottleName: bottle?.name || `Unknown (${s.sku})`,
-          fillPercentage: s.fill_percentage,
+          fillPercentage: s.fillPercentage,
           remainingMl,
           consumedMl: totalVolume - remainingMl,
           confidence: s.confidence as "high" | "medium" | "low",
-          aiProvider: s.ai_provider,
-          latencyMs: s.latency_ms,
-          feedbackRating: s.accuracy_rating,
+          aiProvider: s.aiProvider as StoredScan['aiProvider'],
+          latencyMs: s.latencyMs,
+          feedbackRating: s.feedbackRating as StoredScan['feedbackRating'],
         };
       });
 
@@ -76,6 +50,11 @@ export function useGlobalScans() {
     } catch (err) {
       console.error("Global scans fetch error:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch global scans");
+      
+      // If unauthorized, token might be stale
+      if (err instanceof Error && err.message === "UNAUTHORIZED") {
+        sessionStorage.removeItem(SESSION_KEY);
+      }
     } finally {
       setIsLoading(false);
     }
