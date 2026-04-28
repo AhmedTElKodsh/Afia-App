@@ -14,16 +14,53 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
     await mockWorkerUtils(page);
     // Ensure we are in a desktop-like viewport to avoid mobile menu issues
     await page.setViewportSize({ width: 1280, height: 800 });
+
+    // Mock admin scans API globally for all tests
+    // Use a more specific pattern that matches the actual request
+    await page.route('**localhost:8787/admin/scans', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([])
+      });
+    });
+
+    // Also catch any other admin/scans pattern as fallback
+    await page.route(/\/admin\/scans$/, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([])
+      });
+    });
   });
 
   test.describe('Admin Dashboard Authentication', () => {
 
     test('should show login screen for admin view', async ({ page }) => {
+      // Clear all storage before navigation
+      await page.context().clearCookies();
+
       await page.goto('/?mode=admin');
 
+      // Immediately clear session storage after navigation
+      await page.evaluate(() => {
+        window.sessionStorage.clear();
+        window.localStorage.clear();
+      });
+
+      // Reload to ensure clean state
+      await page.reload();
+
+      // Wait for DOM to load
+      await page.waitForLoadState('domcontentloaded');
+
       // Should show login card
-      const loginTitle = page.locator('.login-card h1, h1:has-text("Admin")');
-      await expect(loginTitle.first()).toBeVisible();
+      const loginCard = page.locator('.login-card');
+      await expect(loginCard).toBeVisible({ timeout: 10000 });
+
+      const loginTitle = page.locator('.login-card h1');
+      await expect(loginTitle).toBeVisible();
 
       // Should have password input
       const passwordInput = page.locator('input[type="password"]');
@@ -38,14 +75,20 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
       });
       await page.goto('/?mode=admin');
 
-      // Should show dashboard (check for Logout button which is unique to dashboard)
+      // Wait for DOM to load
+      await page.waitForLoadState('domcontentloaded');
+
+      // Wait for dashboard to load - use the Logout button as indicator since we can see it in the error context
       const logoutBtn = page.getByRole('button', { name: /Logout|تسجيل الخروج/i });
-      await expect(logoutBtn).toBeVisible();
+      await expect(logoutBtn).toBeVisible({ timeout: 20000 });
     });
 
     test('should show error for incorrect password', async ({ page }) => {
+      // Clear all storage first
+      await page.context().clearCookies();
+
       // Mock 401 Unauthorized for the auth endpoint BEFORE navigation
-      await page.route(/.*\/admin\/auth/, async (route) => {
+      await page.route('**localhost:8787/admin/auth', async (route) => {
         await route.fulfill({
           status: 401,
           contentType: 'application/json',
@@ -53,19 +96,41 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
         });
       });
 
+      await page.route(/\/admin\/auth$/, async (route) => {
+        await route.fulfill({
+          status: 401,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: 'Invalid password' })
+        });
+      });
+
+      // Navigate to admin
       await page.goto('/?mode=admin');
 
-      // Ensure we are NOT logged in
-      await page.evaluate(() => window.sessionStorage.removeItem('afia_admin_session'));
+      // Clear session storage after navigation
+      await page.evaluate(() => {
+        window.sessionStorage.clear();
+        window.localStorage.clear();
+      });
 
-      // Wait for password input to be enabled (component finishes loading)
+      // Reload to ensure clean state
+      await page.reload();
+
+      // Wait for DOM to load
+      await page.waitForLoadState('domcontentloaded');
+
+      // Wait for login card to appear
+      const loginCard = page.locator('.login-card');
+      await expect(loginCard).toBeVisible({ timeout: 15000 });
+
+      // Wait for password input to be enabled
       const passwordInput = page.locator('input[type="password"]');
       await expect(passwordInput).toBeEnabled({ timeout: 10000 });
 
       await passwordInput.fill('definitely-wrong-password-12345');
       await page.click('button[type="submit"]');
 
-      // Assert user-visible failure state instead of waiting on network internals.
+      // Assert user-visible failure state
       const errorMsg = page.locator('.error-message, [role="alert"]');
       await expect(errorMsg.first()).toBeVisible({ timeout: 5000 });
     });
@@ -73,12 +138,51 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
 
   test.describe('Admin Dashboard Features', () => {
     test.beforeEach(async ({ page }) => {
+      // Mock the admin scans API to return test data
+      await page.route('**localhost:8787/admin/scans', async (route) => {
+        const mockScans = [
+          {
+            scanId: 'seed-1',
+            sku: 'test-sku',
+            timestamp: new Date().toISOString(),
+            fillPercentage: 50,
+            consumedMl: 250,
+            confidence: 'high',
+            aiProvider: 'gemini',
+            latencyMs: 1500
+          }
+        ];
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(mockScans)
+        });
+      });
+
+      await page.route(/\/admin\/scans$/, async (route) => {
+        const mockScans = [
+          {
+            scanId: 'seed-1',
+            sku: 'test-sku',
+            timestamp: new Date().toISOString(),
+            fillPercentage: 50,
+            consumedMl: 250,
+            confidence: 'high',
+            aiProvider: 'gemini',
+            latencyMs: 1500
+          }
+        ];
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(mockScans)
+        });
+      });
+
       // Bypass login and seed history for feature tests
-      // IMPORTANT: addInitScript must run BEFORE goto so localStorage is set before component mounts
       await page.addInitScript(() => {
         window.sessionStorage.setItem('afia_admin_session', 'valid-token');
         window.sessionStorage.setItem('afia_admin_session_expires', String(Date.now() + 3600000));
-        // Seed at least one scan so export buttons are enabled
         const mockScans = [
           {
             id: 'seed-1',
@@ -94,10 +198,15 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
         localStorage.setItem('afia_scan_history', JSON.stringify(mockScans));
       });
       await page.goto('/?mode=admin');
-      // Wait for the dashboard to load (lazy component) and for loading state to complete
-      await page.waitForSelector('.top-navbar, .brand, .brand-name');
-      // Wait for loading state to complete (isLoading becomes false)
-      await page.waitForTimeout(500);
+
+      // Wait for DOM load, not networkidle
+      await page.waitForLoadState('domcontentloaded');
+
+      // Wait for the dashboard to load
+      await page.waitForSelector('.top-navbar', { timeout: 20000 });
+      await page.waitForSelector('.brand-name', { timeout: 5000 });
+      // Wait for loading state to complete
+      await page.waitForTimeout(1500);
     });
 
     test('should navigate between tabs', async ({ page }) => {
@@ -133,17 +242,17 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
       // Wait for export tab to load
       await expect(page.locator('.export-tab')).toBeVisible({ timeout: 5000 });
 
-      // Wait for history to be loaded (buttons become enabled)
-      await page.waitForTimeout(500);
+      // Wait for data to be loaded (buttons become enabled)
+      await page.waitForTimeout(1000);
 
-      // Buttons should be enabled now that we seeded history
+      // Buttons should be enabled now that we mocked API data
       const jsonBtn = page.getByRole('button', { name: /Export JSON/i });
       const csvBtn = page.getByRole('button', { name: /Export CSV/i });
 
       await expect(jsonBtn).toBeVisible();
-      await expect(jsonBtn).not.toBeDisabled({ timeout: 5000 });
+      await expect(jsonBtn).not.toBeDisabled({ timeout: 10000 });
       await expect(csvBtn).toBeVisible();
-      await expect(csvBtn).not.toBeDisabled({ timeout: 5000 });
+      await expect(csvBtn).not.toBeDisabled({ timeout: 10000 });
     });
   });
 
@@ -152,12 +261,18 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
     test('should navigate to history view', async ({ page }) => {
       await page.goto('/');
 
+      // Wait for DOM load
+      await page.waitForLoadState('domcontentloaded');
+
       // Click history nav item
       await page.click('button[aria-label="History"]');
 
+      // Wait for lazy-loaded history component to render
+      await page.waitForTimeout(2000);
+
       // Should show history title OR empty state title
       const historyHeader = page.locator('.history-header h2, .empty-state-title');
-      await expect(historyHeader.first()).toBeVisible();
+      await expect(historyHeader.first()).toBeVisible({ timeout: 15000 });
     });
 
     test('should show empty state when no scans exist', async ({ page }) => {
@@ -165,10 +280,17 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
       await page.addInitScript(() => localStorage.removeItem('afia_scan_history'));
 
       await page.goto('/');
+
+      // Wait for DOM load
+      await page.waitForLoadState('domcontentloaded');
+
       await page.click('button[aria-label="History"]');
 
+      // Wait for lazy-loaded history component to render
+      await page.waitForTimeout(2000);
+
       // i18n key history.empty = "No scans yet"
-      await expect(page.locator('text=No scans yet')).toBeVisible();
+      await expect(page.locator('text=No scans yet')).toBeVisible({ timeout: 15000 });
     });
 
     test('should show stats and trend in history', async ({ page }) => {

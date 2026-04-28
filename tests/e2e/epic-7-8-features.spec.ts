@@ -47,11 +47,13 @@ async function seedHistoryAndLogin(page: any) {
   });
 
   // Mock the /admin/scans endpoint so ExportTab receives seeded scans
-  await page.route(/localhost:8787\/admin\/scans/, async (route) => {
+  // Match both localhost and 127.0.0.1
+  await page.route(/(localhost|127\.0\.0\.1):8787\/admin\/scans/, async (route) => {
     const mockScans = [
       {
         scanId: 'export-1',
         sku: 'afia-corn-1.5l',
+        timestamp: new Date(Date.now() - 86400000).toISOString(),
         fillPercentage: 80,
         confidence: 'high',
         aiProvider: 'gemini',
@@ -60,6 +62,7 @@ async function seedHistoryAndLogin(page: any) {
       {
         scanId: 'export-2',
         sku: 'afia-corn-1.5l',
+        timestamp: new Date().toISOString(),
         fillPercentage: 55,
         confidence: 'medium',
         aiProvider: 'gemini',
@@ -134,6 +137,9 @@ test.describe('Epic 7: Single-SKU Restriction (1.5L only)', () => {
 
       await page.goto('/');
       await page.click('button[aria-label="History"]');
+
+      // Wait for the history view to load (it's lazy-loaded)
+      await expect(page.locator('.scan-history')).toBeVisible({ timeout: 5000 });
 
       await expect(page.locator('text=Afia Pure Corn Oil 1.5L')).toBeVisible({ timeout: 5000 });
 
@@ -245,8 +251,13 @@ test.describe('Epic 8: Data Export', () => {
       await page.locator('.nav-items-container').getByRole('button', { name: 'Export' }).click();
       await expect(page.locator('.export-tab')).toBeVisible({ timeout: 5000 });
 
-      // Wait for history to be loaded and buttons to be enabled
-      await page.waitForTimeout(500);
+      // Wait for scan count to be visible and greater than 0 (indicates data loaded)
+      const summaryCount = page.locator('.export-summary-count');
+      await expect(summaryCount).toBeVisible({ timeout: 5000 });
+      await page.waitForFunction(() => {
+        const countEl = document.querySelector('.export-summary-count');
+        return countEl && Number(countEl.textContent) > 0;
+      }, { timeout: 5000 });
 
       // Wait for export buttons to be enabled (history loaded)
       const csvBtn = page.locator('.export-btn-card').filter({ hasText: /CSV/i });
@@ -270,8 +281,13 @@ test.describe('Epic 8: Data Export', () => {
       await page.locator('.nav-items-container').getByRole('button', { name: 'Export' }).click();
       await expect(page.locator('.export-tab')).toBeVisible({ timeout: 5000 });
 
-      // Wait for history to be loaded and buttons to be enabled
-      await page.waitForTimeout(500);
+      // Wait for scan count to be visible and greater than 0 (indicates data loaded)
+      const summaryCount = page.locator('.export-summary-count');
+      await expect(summaryCount).toBeVisible({ timeout: 5000 });
+      await page.waitForFunction(() => {
+        const countEl = document.querySelector('.export-summary-count');
+        return countEl && Number(countEl.textContent) > 0;
+      }, { timeout: 5000 });
 
       // Wait for export buttons to be enabled (history loaded)
       const jsonBtn = page.locator('.export-btn-card').filter({ hasText: /JSON/i });
@@ -315,17 +331,16 @@ test.describe('Epic 8: Data Export', () => {
       await page.locator('.nav-items-container').getByRole('button', { name: 'Export' }).click();
       await expect(page.locator('.export-tab')).toBeVisible({ timeout: 5000 });
 
-      // Wait for history to be loaded
-      await page.waitForTimeout(500);
-
-      // Verify localStorage has the seeded data
-      const historyData = await page.evaluate(() => {
-        return localStorage.getItem('afia_scan_history');
-      });
-      expect(historyData).toBeTruthy();
-
+      // Wait for scan count to be visible and populated
       const summaryCount = page.locator('.export-summary-count');
       await expect(summaryCount).toBeVisible({ timeout: 5000 });
+
+      // Wait for the count to be updated from the API
+      await page.waitForFunction(() => {
+        const countEl = document.querySelector('.export-summary-count');
+        return countEl && Number(countEl.textContent) >= 2;
+      }, { timeout: 5000 });
+
       const countText = await summaryCount.textContent();
       expect(Number(countText)).toBeGreaterThanOrEqual(2);
     });

@@ -5,8 +5,8 @@ import { Page } from '@playwright/test';
  * Returns calibrated values matching the afia-corn-1.5l bottle
  */
 export async function mockAnalyzeSuccess(page: Page) {
-  // Match analyze endpoint regardless of configured proxy origin.
-  await page.route(/\/analyze$/, async (route) => {
+  // Match analyze endpoint regardless of configured proxy origin or path prefix
+  await page.route(/\/(api\/)?analyze$/, async (route) => {
     // Add small delay to ensure React state updates complete before test assertions
     // This prevents race conditions where tests check for analyzing overlay before state updates
     await new Promise(resolve => setTimeout(resolve, 150));
@@ -30,7 +30,7 @@ export async function mockAnalyzeSuccess(page: Page) {
  * Mock the /analyze API endpoint with low confidence response
  */
 export async function mockAnalyzeLowConfidence(page: Page) {
-  await page.route(/\/analyze$/, async (route) => {
+  await page.route(/\/(api\/)?analyze$/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -51,7 +51,7 @@ export async function mockAnalyzeLowConfidence(page: Page) {
  * Mock the /analyze API endpoint with error response
  */
 export async function mockAnalyzeError(page: Page, statusCode = 500) {
-  await page.route(/\/analyze$/, async (route) => {
+  await page.route(/\/(api\/)?analyze$/, async (route) => {
     await route.fulfill({
       status: statusCode,
       contentType: 'application/json',
@@ -69,8 +69,8 @@ export async function mockAnalyzeError(page: Page, statusCode = 500) {
  * Vite dev-server module requests like src/config/feedback.ts (port 5173).
  */
 export async function mockFeedbackSuccess(page: Page) {
-  // Match feedback endpoint regardless of configured proxy origin.
-  await page.route(/\/feedback$/, async (route) => {
+  // Match feedback endpoint regardless of configured proxy origin or path prefix
+  await page.route(/\/(api\/)?feedback$/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',

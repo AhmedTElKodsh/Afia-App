@@ -66,11 +66,8 @@ test.describe('Camera Orientation Guide', () => {
 
     await captureBtn.click();
 
-    // Wait for React state update after capture click
-    await page.waitForTimeout(500);
-
-    // Now analyzing overlay should be visible (mock API has 150ms delay)
-    await expect(page.locator('.analyzing-overlay, .result-display')).toBeVisible({ timeout: 10000 });
+    // Check for analyzing overlay immediately (before it disappears)
+    await expect(page.locator('.analyzing-overlay, .result-display')).toBeVisible({ timeout: 2000 });
 
     // Orientation guide should no longer be visible
     await expect(page.locator('.orientation-guide')).not.toBeVisible();

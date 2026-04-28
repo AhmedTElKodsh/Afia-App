@@ -36,7 +36,7 @@ test.describe('Camera Outline Matching System', () => {
    * Helper: Navigate to camera view
    */
   async function navigateToCamera(page: import('@playwright/test').Page) {
-    await page.goto('/?sku=afia-corn-1.5l');
+    await page.goto('/?sku=afia-corn-1.5l&test_mode=1');
 
     // Wait for page to be fully loaded
     await page.waitForLoadState('domcontentloaded');
@@ -171,12 +171,9 @@ test.describe('Camera Outline Matching System', () => {
       // Click to capture
       await captureBtn.click();
 
-      // Wait for React state update after capture click
-      await page.waitForTimeout(500);
-
-      // Should proceed to analyzing (mock API has 150ms delay)
+      // Should proceed to analyzing immediately (check before the mock API completes)
       const analyzingOverlay = page.locator('.analyzing-overlay');
-      await expect(analyzingOverlay).toBeVisible({ timeout: 10000 });
+      await expect(analyzingOverlay).toBeVisible({ timeout: 2000 });
     });
 
     test('should show shutter flash effect on capture', async ({ page }) => {
@@ -187,12 +184,9 @@ test.describe('Camera Outline Matching System', () => {
 
       await captureBtn.click();
 
-      // Wait for React state update after capture click
-      await page.waitForTimeout(500);
-
-      // After capture, analyzing overlay should be visible (mock API has 150ms delay)
+      // After capture, analyzing overlay should be visible immediately
       const analyzingOverlay = page.locator('.analyzing-overlay');
-      await expect(analyzingOverlay).toBeVisible({ timeout: 10000 });
+      await expect(analyzingOverlay).toBeVisible({ timeout: 2000 });
     });
   });
 

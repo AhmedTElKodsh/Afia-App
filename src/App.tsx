@@ -56,7 +56,7 @@ export default function App() {
   const [analysisProgress, setAnalysisProgress] = useState<string>("");
   const [selectedSku, setSelectedSku] = useState<string>(() => {
     const params = new URLSearchParams(window.location.search);
-    
+
     // M8: Enable test mode and bypasses via URL params for maximum E2E reliability
     // SECURITY: This bypass is restricted to DEV mode to prevent privacy/onboarding bypass in production.
     if (import.meta.env.DEV && params.get("test_mode") === "1") {
@@ -65,16 +65,16 @@ export default function App() {
       localStorage.setItem('afia_onboarding_complete', 'true');
       localStorage.setItem('afia_mock_mode', 'true');
     }
-    
+
     return params.get("sku") || "";
   });
-  
+
   // Story 7.8 - AC2: Quality warning state
   const [qualityWarning, setQualityWarning] = useState<string[] | null>(null);
   // Ref instead of state — avoids stale closure / batching issue where resolver
   // could be replaced by a concurrent re-render before the user responds.
   const qualityWarningResolverRef = useRef<((value: boolean) => void) | null>(null);
-  
+
   // Story 7.8 - AC5: Pending sync queue count
   const [, setPendingSyncCount] = useState<number>(0);
   // Prevents concurrent handleAnalyze calls (C2: double-tap guard)
@@ -85,7 +85,7 @@ export default function App() {
   // Load local model on mount (Story 7.4)
   useEffect(() => {
     if (import.meta.env.VITE_STAGE === 'stage1') return;
-    
+
     loadModel().catch(err => {
       console.warn('[App] Model preload failed:', err);
     });
@@ -99,7 +99,7 @@ export default function App() {
       try {
         const { checkModelVersion } = await import('./services/modelLoader.ts');
         const result = await checkModelVersion();
-        
+
         if (result.updateAvailable) {
           console.log('[App] Model update available:', result.latestVersion);
           // Update is triggered automatically in background
@@ -136,7 +136,7 @@ export default function App() {
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
   }, []);
-  
+
   // Story 7.8 - AC4, AC5: Process sync queue on mount and update pending count
   useEffect(() => {
     let mounted = true;
@@ -182,7 +182,8 @@ export default function App() {
   // Helper function to check if admin session is valid
   const hasValidAdminSession = (): boolean => {
     const token = sessionStorage.getItem('afia_admin_session');
-    return !!token;
+    const expiresAt = Number(sessionStorage.getItem('afia_admin_session_expires') || '0');
+    return !!token && expiresAt > Date.now();
   };
 
   // Admin mode: URL param AND valid session token required
@@ -193,6 +194,19 @@ export default function App() {
 
   // All callbacks must be declared before any early returns (Rules of Hooks)
   const bottle = selectedSku ? getBottleBySku(selectedSku) : null;
+
+  const handleRetake = useCallback(() => {
+    setCapturedImage(null);
+    // C1: resolve the pending promise before nulling, so runAnalysis can settle
+    const resolver = qualityWarningResolverRef.current;
+    if (resolver) {
+      qualityWarningResolverRef.current = null;
+      resolver(false);
+    }
+    setQualityWarning(null);
+    isAnalyzingRef.current = false;
+    setAppState("CAMERA_ACTIVE");
+  }, []);
 
   const handleAnalyze = useCallback(async (base64Override?: string) => {
     const img = typeof base64Override === "string" ? base64Override : capturedImage;
@@ -250,7 +264,7 @@ export default function App() {
         setAppState("API_SUCCESS");
         return;
       }
-      
+
       // Story 7.8 - AC3: Check if scan was queued for background sync
       if (analysisResult.queuedForSync && bottle) {
         const queuedScan = createStoredScan(
@@ -310,7 +324,7 @@ export default function App() {
     } finally {
       isAnalyzingRef.current = false;
     }
-  }, [capturedImage, selectedSku, bottle, t]);
+  }, [capturedImage, selectedSku, bottle, t, addScan, handleRetake]);
 
   const handleConfirmFill = useCallback((finalPercentage: number) => {
     if (!result || !bottle) return;
@@ -343,8 +357,7 @@ export default function App() {
         ? "API_LOW_CONFIDENCE"
         : "API_SUCCESS",
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result, bottle, selectedSku]);
+  }, [result, bottle, selectedSku, addScan]);
 
   const handleCapture = useCallback((imageBase64: string) => {
     // Trigger haptic feedback for camera capture
@@ -383,7 +396,7 @@ export default function App() {
         osc2.start(audioCtx.currentTime + 0.1);
         osc2.stop(audioCtx.currentTime + 0.15);
       }
-    } catch(e) {
+    } catch (e) {
       console.error('Audio failed', e);
     }
 
@@ -394,19 +407,6 @@ export default function App() {
   }, []);
 
   const handleStartScan = useCallback(() => {
-    setAppState("CAMERA_ACTIVE");
-  }, []);
-
-  const handleRetake = useCallback(() => {
-    setCapturedImage(null);
-    // C1: resolve the pending promise before nulling, so runAnalysis can settle
-    const resolver = qualityWarningResolverRef.current;
-    if (resolver) {
-      qualityWarningResolverRef.current = null;
-      resolver(false);
-    }
-    setQualityWarning(null);
-    isAnalyzingRef.current = false;
     setAppState("CAMERA_ACTIVE");
   }, []);
 
@@ -480,11 +480,11 @@ export default function App() {
 
   const bottleContext: BottleContext | null = bottle
     ? {
-        sku: bottle.sku,
-        name: bottle.name,
-        oilType: bottle.oilType,
-        totalVolumeMl: bottle.totalVolumeMl,
-      }
+      sku: bottle.sku,
+      name: bottle.name,
+      oilType: bottle.oilType,
+      totalVolumeMl: bottle.totalVolumeMl,
+    }
     : null;
 
   // Render non-scan views (history, test, admin) regardless of scan state
@@ -546,7 +546,7 @@ export default function App() {
     case "IDLE":
       return (
         <div className="app-with-nav">
-        <AppControls isAdminMode={isAdminMode} />
+          <AppControls isAdminMode={isAdminMode} />
           <Navigation currentView={currentView} onViewChange={setCurrentView} isAdminMode={isAdminMode} />
           {isAdminMode ? (
             <Suspense fallback={<div className="app-loading" />}>
@@ -587,8 +587,8 @@ export default function App() {
               onContinue={handleQualityContinue}
             />
           ) : (
-            <AnalyzingOverlay 
-              capturedImage={capturedImage} 
+            <AnalyzingOverlay
+              capturedImage={capturedImage}
               onCancel={handleRetake}
               progressMessage={analysisProgress}
             />

@@ -138,7 +138,10 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
           fetchGlobalData();
         }
       } else {
-        if (mounted) setIsAuthenticated(false);
+        if (mounted) {
+          setIsAuthenticated(false);
+          setIsLoading(false);
+        }
       }
     };
 
