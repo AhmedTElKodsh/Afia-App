@@ -5,16 +5,16 @@ import { TIMEOUTS } from './constants';
 
 /**
  * Camera Outline Matching System Tests
- * 
+ *
  * Comprehensive E2E tests for the static bottle guide system.
  * Tests the engineering-accurate SVG outline used as visual guidance for manual capture.
- * 
+ *
  * Based on Afia 1.5L bottle engineering specifications:
  * - Total height: 301mm (±12mm)
  * - Neck diameter: Ø 37.3mm (±0.5mm)
  * - Body width: 78.1mm at base
  * - Capacity: 1500cc
- * 
+ *
  * Note: Auto-detection and auto-capture features have been removed.
  * The outline now serves purely as static visual guidance for manual capture.
  */
@@ -37,11 +37,11 @@ test.describe('Camera Outline Matching System', () => {
    */
   async function navigateToCamera(page: import('@playwright/test').Page) {
     await page.goto('/?sku=afia-corn-1.5l');
-    
+
     // Wait for page to be fully loaded
     await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(TIMEOUTS.REACT_UPDATE);
-    
+
     // Click Start Scan button
     await page.evaluate(() => {
       const btn = document.querySelector('button.qrl-cta') as HTMLButtonElement
@@ -50,7 +50,7 @@ test.describe('Camera Outline Matching System', () => {
         ) as HTMLButtonElement;
       if (btn) btn.click();
     });
-    
+
     // Use consolidated camera ready helper
     await waitForCameraReady(page);
   }
@@ -58,30 +58,30 @@ test.describe('Camera Outline Matching System', () => {
   test.describe('Outline Geometry', () => {
     test('should render static SVG outline for visual guidance', async ({ page }) => {
       await navigateToCamera(page);
-      
+
       // Bottle guide wrapper should be visible
       const bottleGuide = page.locator('.bottle-guide-wrapper');
       await expect(bottleGuide).toBeVisible({ timeout: 5000 });
-      
+
       // SVG should exist with correct viewBox (matches engineering specs: 100 × 301)
       const svg = page.locator('.bottle-guide-svg');
       await expect(svg).toBeVisible();
-      
+
       const viewBox = await svg.getAttribute('viewBox');
       expect(viewBox).toBe('0 0 100 301');
     });
 
     test('should display all bottle components', async ({ page }) => {
       await navigateToCamera(page);
-      
+
       const svg = page.locator('.bottle-guide-svg');
       await expect(svg).toBeVisible();
-      
+
       // Check that SVG has multiple path elements (cap, neck, shoulder, body, handle, base)
       const paths = svg.locator('path');
       const pathCount = await paths.count();
       expect(pathCount).toBeGreaterThanOrEqual(5); // At least 5 major components
-      
+
       // Check for group element with stroke attributes
       const group = svg.locator('g');
       await expect(group).toHaveAttribute('stroke');
@@ -89,9 +89,9 @@ test.describe('Camera Outline Matching System', () => {
 
     test('should render as simple static outline', async ({ page }) => {
       await navigateToCamera(page);
-      
+
       const svg = page.locator('.bottle-guide-svg');
-      
+
       // Static outline has no additional markers or indicators
       // Just the basic bottle shape paths
       const paths = svg.locator('path');
@@ -101,13 +101,13 @@ test.describe('Camera Outline Matching System', () => {
 
     test('should display as simple visual reference', async ({ page }) => {
       await navigateToCamera(page);
-      
+
       const svg = page.locator('.bottle-guide-svg');
-      
+
       // Static outline serves as visual reference only
       // No brand markers or detection indicators
       await expect(svg).toBeVisible();
-      
+
       // Verify it has the basic bottle shape
       const group = svg.locator('g');
       await expect(group).toBeVisible();
@@ -115,9 +115,9 @@ test.describe('Camera Outline Matching System', () => {
 
     test('should scale responsively', async ({ page }) => {
       await navigateToCamera(page);
-      
+
       const bottleGuide = page.locator('.bottle-guide-wrapper');
-      
+
       // Check CSS properties for responsive behavior
       const styles = await bottleGuide.evaluate((el) => {
         const computed = window.getComputedStyle(el);
@@ -126,7 +126,7 @@ test.describe('Camera Outline Matching System', () => {
           maxWidth: computed.maxWidth,
         };
       });
-      
+
       // Should have percentage-based width with max-width constraint
       expect(styles.maxWidth).toBe('190px');
     });
@@ -135,10 +135,10 @@ test.describe('Camera Outline Matching System', () => {
   test.describe('Visual Guidance', () => {
     test('should display static outline with consistent styling', async ({ page }) => {
       await navigateToCamera(page);
-      
+
       const svg = page.locator('.bottle-guide-svg');
       await expect(svg).toBeVisible();
-      
+
       // Check that group element has stroke styling
       const group = svg.locator('g');
       const stroke = await group.getAttribute('stroke');
@@ -148,11 +148,11 @@ test.describe('Camera Outline Matching System', () => {
 
     test('should show guidance hint text', async ({ page }) => {
       await navigateToCamera(page);
-      
+
       // Guidance hint should be visible
-      const hint = page.locator('.guidance-hint-pill');
+      const hint = page.locator('.guidance-header-hint');
       await expect(hint).toBeVisible({ timeout: 5000 });
-      
+
       // Should have helpful text
       const hintText = await hint.textContent();
       expect(hintText).toBeTruthy();
@@ -163,14 +163,17 @@ test.describe('Camera Outline Matching System', () => {
   test.describe('Manual Capture', () => {
     test('should allow manual capture at any time', async ({ page }) => {
       await navigateToCamera(page);
-      
+
       // Manual capture button should be enabled
       const captureBtn = page.locator('.camera-capture-btn');
       await expect(captureBtn).toBeEnabled({ timeout: 5000 });
-      
+
       // Click to capture
       await captureBtn.click();
-      
+
+      // Wait for state transition to complete
+      await page.waitForTimeout(200);
+
       // Should proceed to analyzing
       const analyzingOverlay = page.locator('.analyzing-overlay');
       await expect(analyzingOverlay).toBeVisible({ timeout: 5000 });
@@ -183,6 +186,9 @@ test.describe('Camera Outline Matching System', () => {
       await expect(captureBtn).toBeVisible({ timeout: 5000 });
       await captureBtn.click();
 
+      // Wait for state transition to complete
+      await page.waitForTimeout(200);
+
       // After capture, analyzing overlay should be visible
       const analyzingOverlay = page.locator('.analyzing-overlay');
       await expect(analyzingOverlay).toBeVisible({ timeout: 5000 });
@@ -192,9 +198,9 @@ test.describe('Camera Outline Matching System', () => {
   test.describe('Accessibility', () => {
     test('should have proper ARIA attributes', async ({ page }) => {
       await navigateToCamera(page);
-      
+
       const svg = page.locator('.bottle-guide-svg');
-      
+
       // SVG should be aria-hidden (decorative)
       const ariaHidden = await svg.getAttribute('aria-hidden');
       expect(ariaHidden).toBe('true');
@@ -202,11 +208,11 @@ test.describe('Camera Outline Matching System', () => {
 
     test('should provide visual guidance through static outline', async ({ page }) => {
       await navigateToCamera(page);
-      
+
       // Static outline is always visible as visual reference
       const bottleGuide = page.locator('.bottle-guide-wrapper');
       await expect(bottleGuide).toBeVisible({ timeout: 5000 });
-      
+
       // Verify SVG is present
       const svg = page.locator('.bottle-guide-svg');
       await expect(svg).toBeVisible();
@@ -214,15 +220,15 @@ test.describe('Camera Outline Matching System', () => {
 
     test('should work with keyboard navigation', async ({ page }) => {
       await navigateToCamera(page);
-      
+
       // Capture button should be focusable
       const captureBtn = page.locator('.camera-capture-btn');
       await captureBtn.focus();
-      
+
       const isFocused = await captureBtn.evaluate((el) => {
         return document.activeElement === el;
       });
-      
+
       expect(isFocused).toBe(true);
     });
   });
@@ -230,31 +236,31 @@ test.describe('Camera Outline Matching System', () => {
   test.describe('Performance', () => {
     test('should render outline without lag', async ({ page }) => {
       const startTime = Date.now();
-      
+
       await navigateToCamera(page);
-      
+
       // Bottle guide should appear quickly
       const bottleGuide = page.locator('.bottle-guide-wrapper');
       await expect(bottleGuide).toBeVisible({ timeout: 5000 });
-      
+
       const renderTime = Date.now() - startTime;
       expect(renderTime).toBeLessThan(8000); // Should render within 8 seconds (headless startup overhead)
     });
 
     test('should handle rapid interactions without crashing', async ({ page }) => {
       await navigateToCamera(page);
-      
+
       // Wait for camera to be fully ready
       await page.waitForTimeout(1000);
-      
+
       // Verify capture button exists
       const captureBtn = page.locator('.camera-capture-btn');
       await expect(captureBtn).toBeVisible({ timeout: 5000 });
-      
+
       // Verify bottle guide is still present (camera didn't crash)
       const bottleGuide = page.locator('.bottle-guide-wrapper');
       await expect(bottleGuide).toBeVisible();
-      
+
       // Verify camera container is still active
       const cameraContainer = page.locator('.camera-container.camera-active');
       await expect(cameraContainer).toBeVisible();
@@ -262,14 +268,14 @@ test.describe('Camera Outline Matching System', () => {
 
     test('should maintain consistent visual appearance', async ({ page }) => {
       await navigateToCamera(page);
-      
+
       // Wait for ready state with animations
       await page.waitForTimeout(1000);
-      
+
       // Check that bottle guide is rendered
       const bottleGuide = page.locator('.bottle-guide-wrapper');
       await expect(bottleGuide).toBeVisible();
-      
+
       // Verify SVG is present
       const svg = page.locator('.bottle-guide-svg');
       await expect(svg).toBeVisible();
@@ -285,15 +291,15 @@ test.describe('Camera Outline Matching System', () => {
         window.localStorage.setItem('afia_privacy_accepted', 'true');
         (window as any).__AFIA_TEST_MODE__ = true;
         (window as any).__AFIA_FORCE_MANUAL__ = true;
-        
+
         // Mock getUserMedia to fail
         navigator.mediaDevices.getUserMedia = async () => {
           throw new Error('Camera not available');
         };
       });
-      
+
       await page.goto('/?sku=afia-corn-1.5l');
-      
+
       await page.evaluate(() => {
         const btn = document.querySelector('button.qrl-cta') as HTMLButtonElement
           ?? Array.from(document.querySelectorAll('button')).find(
@@ -301,7 +307,7 @@ test.describe('Camera Outline Matching System', () => {
           ) as HTMLButtonElement;
         if (btn) btn.click();
       });
-      
+
       // Should show error state
       const errorState = page.locator('.camera-error, .camera-permission-denied, .camera-state-overlay');
       await expect(errorState).toBeVisible({ timeout: 10000 });
@@ -314,45 +320,45 @@ test.describe('Camera Outline Matching System', () => {
         { width: 414, height: 896 },  // iPhone 11 Pro Max
         { width: 430, height: 932 },  // iPhone 14 Pro Max
       ];
-      
+
       for (const viewport of viewports) {
         await page.setViewportSize(viewport);
         await navigateToCamera(page);
-        
+
         const bottleGuide = page.locator('.bottle-guide-wrapper');
         await expect(bottleGuide).toBeVisible({ timeout: 5000 });
-        
+
         // Should scale appropriately
         const width = await bottleGuide.evaluate((el) => {
           return window.getComputedStyle(el).width;
         });
-        
+
         expect(width).toBeTruthy();
       }
     });
 
     test('should handle landscape orientation', async ({ page }) => {
       await page.setViewportSize({ width: 812, height: 375 });
-      
+
       await navigateToCamera(page);
-      
+
       const bottleGuide = page.locator('.bottle-guide-wrapper');
       await expect(bottleGuide).toBeVisible({ timeout: 5000 });
     });
 
     test('should work with different SKUs', async ({ page }) => {
       const skus = ['afia-corn-1.5l', 'afia-sunflower-1.5l'];
-      
+
       for (let i = 0; i < skus.length; i++) {
         const sku = skus[i];
-        
+
         // Navigate to new page for each SKU
         await page.goto(`/?sku=${sku}`);
-        
+
         // Wait for page to load
         await page.waitForLoadState('domcontentloaded');
         await page.waitForTimeout(500);
-        
+
         // Click start button
         const startBtn = page.locator('button:has-text("START SMART SCAN"), button:has-text("Start Scan")').first();
         if (await startBtn.isVisible({ timeout: 5000 })) {
@@ -363,16 +369,16 @@ test.describe('Camera Outline Matching System', () => {
               ) as HTMLButtonElement;
             if (btn) btn.click();
           });
-          
+
           // Wait for camera to be active
           await page.waitForSelector('.camera-container.camera-active', { timeout: 10000 });
-          
+
           // Wait for video to be ready
           await page.waitForFunction(() => {
             const video = document.querySelector('video');
             return video && video.videoWidth > 0 && video.videoHeight > 0;
           }, { timeout: 5000 });
-          
+
           // Verify bottle guide is visible
           const bottleGuide = page.locator('.bottle-guide-wrapper');
           await expect(bottleGuide).toBeVisible({ timeout: 5000 });
@@ -384,11 +390,11 @@ test.describe('Camera Outline Matching System', () => {
   test.describe('Static Guidance Integration', () => {
     test('should display static outline consistently', async ({ page }) => {
       await navigateToCamera(page);
-      
+
       // Bottle guide should be visible
       const bottleGuide = page.locator('.bottle-guide-wrapper');
       await expect(bottleGuide).toBeVisible();
-      
+
       // SVG outline should be present
       const svg = page.locator('.bottle-guide-svg');
       await expect(svg).toBeVisible();
@@ -396,11 +402,11 @@ test.describe('Camera Outline Matching System', () => {
 
     test('should show guidance hint text', async ({ page }) => {
       await navigateToCamera(page);
-      
+
       // Guidance hint should be visible
       const hint = page.locator('.guidance-hint-pill');
       await expect(hint).toBeVisible({ timeout: 5000 });
-      
+
       // Should have helpful text
       const hintText = await hint.textContent();
       expect(hintText).toBeTruthy();

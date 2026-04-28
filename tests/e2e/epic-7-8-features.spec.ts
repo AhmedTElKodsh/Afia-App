@@ -212,13 +212,19 @@ test.describe('Epic 8: Data Export', () => {
       await seedHistoryAndLogin(page);
       await page.goto('/?mode=admin');
       await page.waitForSelector('.top-navbar, .brand, .brand-name');
+      // Wait for loading state to complete
+      await page.waitForTimeout(500);
 
       await page.locator('.nav-items-container').getByRole('button', { name: 'Export' }).click();
       await expect(page.locator('.export-tab')).toBeVisible({ timeout: 5000 });
 
+      // Wait for export buttons to be enabled (history loaded)
+      const csvBtn = page.locator('.export-btn-card').filter({ hasText: /CSV/i });
+      await expect(csvBtn).not.toBeDisabled({ timeout: 5000 });
+
       const [download] = await Promise.all([
         page.waitForEvent('download', { timeout: 10000 }),
-        page.locator('.export-btn-card').filter({ hasText: /CSV/i }).click(),
+        csvBtn.click(),
       ]);
 
       expect(download.suggestedFilename()).toMatch(/\.csv$/i);
@@ -228,13 +234,19 @@ test.describe('Epic 8: Data Export', () => {
       await seedHistoryAndLogin(page);
       await page.goto('/?mode=admin');
       await page.waitForSelector('.top-navbar, .brand, .brand-name');
+      // Wait for loading state to complete
+      await page.waitForTimeout(500);
 
       await page.locator('.nav-items-container').getByRole('button', { name: 'Export' }).click();
       await expect(page.locator('.export-tab')).toBeVisible({ timeout: 5000 });
 
+      // Wait for export buttons to be enabled (history loaded)
+      const jsonBtn = page.locator('.export-btn-card').filter({ hasText: /JSON/i });
+      await expect(jsonBtn).not.toBeDisabled({ timeout: 5000 });
+
       const [download] = await Promise.all([
         page.waitForEvent('download', { timeout: 10000 }),
-        page.locator('.export-btn-card').filter({ hasText: /JSON/i }).click(),
+        jsonBtn.click(),
       ]);
 
       expect(download.suggestedFilename()).toMatch(/\.json$/i);
@@ -264,6 +276,8 @@ test.describe('Epic 8: Data Export', () => {
       await seedHistoryAndLogin(page);
       await page.goto('/?mode=admin');
       await page.waitForSelector('.top-navbar, .brand, .brand-name');
+      // Wait for loading state to complete
+      await page.waitForTimeout(500);
 
       await page.locator('.nav-items-container').getByRole('button', { name: 'Export' }).click();
       await expect(page.locator('.export-tab')).toBeVisible({ timeout: 5000 });

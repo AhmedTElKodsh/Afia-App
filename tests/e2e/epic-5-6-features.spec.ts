@@ -4,7 +4,7 @@ import { mockWorkerUtils } from './helpers/mockAPI';
 
 /**
  * Epics 5 & 6: Admin Dashboard & Scan History
- * 
+ *
  * Tests the administrative features and historical tracking
  */
 
@@ -17,14 +17,14 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
   });
 
   test.describe('Admin Dashboard Authentication', () => {
-    
+
     test('should show login screen for admin view', async ({ page }) => {
       await page.goto('/?mode=admin');
-      
+
       // Should show login card
       const loginTitle = page.locator('.login-card h1, h1:has-text("Admin")');
       await expect(loginTitle.first()).toBeVisible();
-      
+
       // Should have password input
       const passwordInput = page.locator('input[type="password"]');
       await expect(passwordInput).toBeVisible();
@@ -37,7 +37,7 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
         window.sessionStorage.setItem('afia_admin_session_expires', String(Date.now() + 3600000));
       });
       await page.goto('/?mode=admin');
-      
+
       // Should show dashboard (check for Logout button which is unique to dashboard)
       const logoutBtn = page.getByRole('button', { name: /Logout|تسجيل الخروج/i });
       await expect(logoutBtn).toBeVisible();
@@ -47,7 +47,7 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
       await page.goto('/?mode=admin');
       // Ensure we are NOT logged in
       await page.evaluate(() => window.sessionStorage.removeItem('afia_admin_session'));
-      
+
       // Mock 401 Unauthorized for the auth endpoint
       await page.route(/.*\/admin\/auth/, async (route) => {
         await route.fulfill({
@@ -56,10 +56,14 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
           body: JSON.stringify({ error: 'Invalid password' })
         });
       });
-      
-      await page.fill('input[type="password"]', 'definitely-wrong-password-12345');
+
+      // Wait for password input to be enabled (component finishes loading)
+      const passwordInput = page.locator('input[type="password"]');
+      await expect(passwordInput).toBeEnabled({ timeout: 5000 });
+
+      await passwordInput.fill('definitely-wrong-password-12345');
       await page.click('button[type="submit"]');
-      
+
       // Assert user-visible failure state instead of waiting on network internals.
       const errorMsg = page.locator('.error-message, [role="alert"]');
       await expect(errorMsg.first()).toBeVisible({ timeout: 5000 });
@@ -69,6 +73,7 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
   test.describe('Admin Dashboard Features', () => {
     test.beforeEach(async ({ page }) => {
       // Bypass login and seed history for feature tests
+      // IMPORTANT: addInitScript must run BEFORE goto so localStorage is set before component mounts
       await page.addInitScript(() => {
         window.sessionStorage.setItem('afia_admin_session', 'valid-token');
         window.sessionStorage.setItem('afia_admin_session_expires', String(Date.now() + 3600000));
@@ -88,23 +93,25 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
         localStorage.setItem('afia_scan_history', JSON.stringify(mockScans));
       });
       await page.goto('/?mode=admin');
-      // Wait for the dashboard to load (lazy component)
+      // Wait for the dashboard to load (lazy component) and for loading state to complete
       await page.waitForSelector('.top-navbar, .brand, .brand-name');
+      // Wait for loading state to complete (isLoading becomes false)
+      await page.waitForTimeout(500);
     });
 
     test('should navigate between tabs', async ({ page }) => {
       // Default is Overview
       const pageHeader = page.locator('.page-title, h1');
       await expect(pageHeader.first()).toContainText('Overview');
-      
+
       // Go to Bottles
       await page.getByRole('button', { name: /Bottles/i }).click();
       await expect(pageHeader.first()).toContainText('Bottles');
-      
+
       // Go to QR Codes
       await page.getByRole('button', { name: /QR Codes/i }).click();
       await expect(pageHeader.first()).toContainText('QR Codes');
-      
+
       // Go to Export
       await page.getByRole('button', { name: /Export/i }).click();
       await expect(pageHeader.first()).toContainText('Export');
@@ -113,7 +120,7 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
     test('should display overview metrics', async ({ page }) => {
       const metrics = page.locator('.metrics-grid');
       await expect(metrics).toBeVisible();
-      
+
       // Check for specific metric labels
       await expect(page.getByText('Total Scans')).toBeVisible();
       await expect(page.getByText('Scan Days')).toBeVisible();
@@ -121,11 +128,11 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
 
     test('should show export options', async ({ page }) => {
       await page.getByRole('button', { name: /Export/i }).click();
-      
+
       // Buttons should be enabled now that we seeded history
       const jsonBtn = page.getByRole('button', { name: /Export JSON/i });
       const csvBtn = page.getByRole('button', { name: /Export CSV/i });
-      
+
       await expect(jsonBtn).toBeVisible();
       await expect(jsonBtn).not.toBeDisabled();
       await expect(csvBtn).toBeVisible();
@@ -134,13 +141,13 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
   });
 
   test.describe('Scan History', () => {
-    
+
     test('should navigate to history view', async ({ page }) => {
       await page.goto('/');
-      
+
       // Click history nav item
       await page.click('button[aria-label="History"]');
-      
+
       // Should show history title OR empty state title
       const historyHeader = page.locator('.history-header h2, .empty-state-title');
       await expect(historyHeader.first()).toBeVisible();
@@ -177,11 +184,11 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
 
       await page.goto('/');
       await page.click('button[aria-label="History"]');
-      
+
       // Stats should be visible
       await expect(page.locator('text=Total Scans')).toBeVisible();
       await expect(page.locator('.mini-trend-card')).toBeVisible();
-      
+
       // Scan item should be visible
       // Small lists use TimelineGroup (.timeline-item), large use ScanVirtualizedList (.scan-history-item)
       const scanItem = page.locator('.timeline-item, .scan-history-item, .virtualized-list-item');
@@ -200,10 +207,10 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
 
       await page.goto('/');
       await page.click('button[aria-label="History"]');
-      
+
       const searchInput = page.locator('.search-input');
       await searchInput.fill('Afia');
-      
+
       await expect(page.locator('text=Afia Corn')).toBeVisible();
       await expect(page.locator('text=Sunny Oil')).not.toBeVisible();
     });

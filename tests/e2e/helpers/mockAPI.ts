@@ -7,6 +7,10 @@ import { Page } from '@playwright/test';
 export async function mockAnalyzeSuccess(page: Page) {
   // Match analyze endpoint regardless of configured proxy origin.
   await page.route(/\/analyze$/, async (route) => {
+    // Add small delay to ensure React state updates complete before test assertions
+    // This prevents race conditions where tests check for analyzing overlay before state updates
+    await new Promise(resolve => setTimeout(resolve, 150));
+
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -183,7 +187,7 @@ export async function setupDefaultMocks(page: Page) {
 
 /**
  * Mock camera getUserMedia API with auto-capture support
- * 
+ *
  * Creates a realistic mock that triggers auto-capture by:
  * 1. Drawing a bottle image that passes quality checks
  * 2. Including Afia brand markers (green band, heart logo)
@@ -202,39 +206,39 @@ export async function mockCamera(page: Page) {
     // Background - neutral gray (good lighting)
     ctx.fillStyle = '#e5e5e5';
     ctx.fillRect(0, 0, 640, 480);
-    
+
     // Bottle body - centered and properly sized for "good" distance
     ctx.fillStyle = '#f4e4c1'; // Light oil color
     ctx.fillRect(220, 120, 200, 280); // Main body
-    
+
     // Bottle neck
     ctx.fillStyle = '#d4c4a1';
     ctx.fillRect(270, 80, 100, 50);
-    
+
     // Cap
     ctx.fillStyle = '#8B4513';
     ctx.fillRect(280, 60, 80, 25);
-    
+
     // GREEN BAND - Critical for brand detection (Afia signature)
     ctx.fillStyle = '#10b981'; // Afia green
     ctx.fillRect(220, 200, 200, 40);
-    
+
     // HEART LOGO - Another brand marker
     ctx.fillStyle = '#ef4444'; // Red heart
     ctx.beginPath();
     ctx.arc(310, 220, 15, 0, Math.PI * 2);
     ctx.fill();
-    
+
     // Label text area (simulated)
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(230, 250, 180, 120);
-    
+
     // Add some text-like marks for realism
     ctx.fillStyle = '#333333';
     ctx.fillRect(240, 270, 160, 8);
     ctx.fillRect(240, 290, 140, 8);
     ctx.fillRect(240, 310, 150, 8);
-    
+
     // Handle
     ctx.strokeStyle = '#d4c4a1';
     ctx.lineWidth = 8;
@@ -245,22 +249,22 @@ export async function mockCamera(page: Page) {
     // Helper function to setup video element properties
     const setupVideoElement = (video: HTMLVideoElement) => {
       // Set video dimensions immediately
-      Object.defineProperty(video, 'videoWidth', { 
-        value: 640, 
-        writable: true, 
-        configurable: true 
+      Object.defineProperty(video, 'videoWidth', {
+        value: 640,
+        writable: true,
+        configurable: true
       });
-      Object.defineProperty(video, 'videoHeight', { 
-        value: 480, 
-        writable: true, 
-        configurable: true 
+      Object.defineProperty(video, 'videoHeight', {
+        value: 480,
+        writable: true,
+        configurable: true
       });
-      Object.defineProperty(video, 'readyState', { 
-        value: 4, 
-        writable: true, 
-        configurable: true 
+      Object.defineProperty(video, 'readyState', {
+        value: 4,
+        writable: true,
+        configurable: true
       });
-      
+
       // Override srcObject setter for this specific video element
       let _srcObject: any = null;
       Object.defineProperty(video, 'srcObject', {
@@ -273,7 +277,7 @@ export async function mockCamera(page: Page) {
             video.dispatchEvent(new Event('loadeddata'));
             video.dispatchEvent(new Event('canplay'));
             video.dispatchEvent(new Event('canplaythrough'));
-            
+
             // Use requestAnimationFrame for more reliable timing with React's render cycle
             // This ensures events fire after the browser has had a chance to update the DOM
             requestAnimationFrame(() => {
@@ -286,9 +290,9 @@ export async function mockCamera(page: Page) {
         },
         configurable: true
       });
-      
+
       // Override play method
-      video.play = async function() {
+      video.play = async function () {
         video.dispatchEvent(new Event('playing'));
         requestAnimationFrame(() => {
           video.dispatchEvent(new Event('playing'));
@@ -299,13 +303,13 @@ export async function mockCamera(page: Page) {
 
     // Mock video element creation
     const originalCreateElement = document.createElement.bind(document);
-    document.createElement = function(tagName: string, options?: any) {
+    document.createElement = function (tagName: string, options?: any) {
       const element = originalCreateElement(tagName, options);
-      
+
       if (tagName.toLowerCase() === 'video') {
         setupVideoElement(element as HTMLVideoElement);
       }
-      
+
       return element;
     };
 
@@ -328,7 +332,7 @@ export async function mockCamera(page: Page) {
 
     const stream = canvas.captureStream(30);
     const videoTrack = stream.getVideoTracks()[0];
-    
+
     // Mock getCapabilities for torch check
     if (videoTrack) {
       videoTrack.getCapabilities = () => ({
@@ -337,9 +341,9 @@ export async function mockCamera(page: Page) {
         exposureMode: ['continuous', 'manual', 'single-shot'],
         focusMode: ['continuous', 'manual', 'single-shot'],
       } as any);
-      
-      videoTrack.applyConstraints = async () => {};
-      
+
+      videoTrack.applyConstraints = async () => { };
+
       // Mock getSettings for quality checks
       videoTrack.getSettings = () => ({
         width: 640,
