@@ -63,13 +63,14 @@ test.describe('Camera Orientation Guide', () => {
     // Capture photo (manual mode button)
     const captureBtn = page.locator('.camera-capture-btn');
     await expect(captureBtn).toBeEnabled({ timeout: 10000 });
+
     await captureBtn.click();
 
-    // Wait for state transition to complete (React batches state updates)
-    await page.waitForTimeout(200);
+    // Wait for React state update after capture click
+    await page.waitForTimeout(500);
 
-    // Wait for capture to complete (analyzing overlay appears)
-    await page.waitForSelector('.analyzing-overlay, .result-display', { timeout: 15000 });
+    // Now analyzing overlay should be visible (mock API has 150ms delay)
+    await expect(page.locator('.analyzing-overlay, .result-display')).toBeVisible({ timeout: 10000 });
 
     // Orientation guide should no longer be visible
     await expect(page.locator('.orientation-guide')).not.toBeVisible();

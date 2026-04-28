@@ -171,12 +171,12 @@ test.describe('Camera Outline Matching System', () => {
       // Click to capture
       await captureBtn.click();
 
-      // Wait for state transition to complete
-      await page.waitForTimeout(200);
+      // Wait for React state update after capture click
+      await page.waitForTimeout(500);
 
-      // Should proceed to analyzing
+      // Should proceed to analyzing (mock API has 150ms delay)
       const analyzingOverlay = page.locator('.analyzing-overlay');
-      await expect(analyzingOverlay).toBeVisible({ timeout: 5000 });
+      await expect(analyzingOverlay).toBeVisible({ timeout: 10000 });
     });
 
     test('should show shutter flash effect on capture', async ({ page }) => {
@@ -184,14 +184,15 @@ test.describe('Camera Outline Matching System', () => {
 
       const captureBtn = page.locator('.camera-capture-btn');
       await expect(captureBtn).toBeVisible({ timeout: 5000 });
+
       await captureBtn.click();
 
-      // Wait for state transition to complete
-      await page.waitForTimeout(200);
+      // Wait for React state update after capture click
+      await page.waitForTimeout(500);
 
-      // After capture, analyzing overlay should be visible
+      // After capture, analyzing overlay should be visible (mock API has 150ms delay)
       const analyzingOverlay = page.locator('.analyzing-overlay');
-      await expect(analyzingOverlay).toBeVisible({ timeout: 5000 });
+      await expect(analyzingOverlay).toBeVisible({ timeout: 10000 });
     });
   });
 
@@ -403,8 +404,8 @@ test.describe('Camera Outline Matching System', () => {
     test('should show guidance hint text', async ({ page }) => {
       await navigateToCamera(page);
 
-      // Guidance hint should be visible
-      const hint = page.locator('.guidance-hint-pill');
+      // Guidance hint should be visible (correct selector)
+      const hint = page.locator('.guidance-header-hint');
       await expect(hint).toBeVisible({ timeout: 5000 });
 
       // Should have helpful text

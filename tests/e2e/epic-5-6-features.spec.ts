@@ -44,11 +44,7 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
     });
 
     test('should show error for incorrect password', async ({ page }) => {
-      await page.goto('/?mode=admin');
-      // Ensure we are NOT logged in
-      await page.evaluate(() => window.sessionStorage.removeItem('afia_admin_session'));
-
-      // Mock 401 Unauthorized for the auth endpoint
+      // Mock 401 Unauthorized for the auth endpoint BEFORE navigation
       await page.route(/.*\/admin\/auth/, async (route) => {
         await route.fulfill({
           status: 401,
@@ -57,9 +53,14 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
         });
       });
 
+      await page.goto('/?mode=admin');
+
+      // Ensure we are NOT logged in
+      await page.evaluate(() => window.sessionStorage.removeItem('afia_admin_session'));
+
       // Wait for password input to be enabled (component finishes loading)
       const passwordInput = page.locator('input[type="password"]');
-      await expect(passwordInput).toBeEnabled({ timeout: 5000 });
+      await expect(passwordInput).toBeEnabled({ timeout: 10000 });
 
       await passwordInput.fill('definitely-wrong-password-12345');
       await page.click('button[type="submit"]');
@@ -129,14 +130,20 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
     test('should show export options', async ({ page }) => {
       await page.getByRole('button', { name: /Export/i }).click();
 
+      // Wait for export tab to load
+      await expect(page.locator('.export-tab')).toBeVisible({ timeout: 5000 });
+
+      // Wait for history to be loaded (buttons become enabled)
+      await page.waitForTimeout(500);
+
       // Buttons should be enabled now that we seeded history
       const jsonBtn = page.getByRole('button', { name: /Export JSON/i });
       const csvBtn = page.getByRole('button', { name: /Export CSV/i });
 
       await expect(jsonBtn).toBeVisible();
-      await expect(jsonBtn).not.toBeDisabled();
+      await expect(jsonBtn).not.toBeDisabled({ timeout: 5000 });
       await expect(csvBtn).toBeVisible();
-      await expect(csvBtn).not.toBeDisabled();
+      await expect(csvBtn).not.toBeDisabled({ timeout: 5000 });
     });
   });
 

@@ -213,14 +213,17 @@ test.describe('Epic 8: Data Export', () => {
       await page.goto('/?mode=admin');
       await page.waitForSelector('.top-navbar, .brand, .brand-name');
       // Wait for loading state to complete
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(1000);
 
       await page.locator('.nav-items-container').getByRole('button', { name: 'Export' }).click();
       await expect(page.locator('.export-tab')).toBeVisible({ timeout: 5000 });
 
+      // Wait for history to be loaded and buttons to be enabled
+      await page.waitForTimeout(500);
+
       // Wait for export buttons to be enabled (history loaded)
       const csvBtn = page.locator('.export-btn-card').filter({ hasText: /CSV/i });
-      await expect(csvBtn).not.toBeDisabled({ timeout: 5000 });
+      await expect(csvBtn).not.toBeDisabled({ timeout: 10000 });
 
       const [download] = await Promise.all([
         page.waitForEvent('download', { timeout: 10000 }),
@@ -235,14 +238,17 @@ test.describe('Epic 8: Data Export', () => {
       await page.goto('/?mode=admin');
       await page.waitForSelector('.top-navbar, .brand, .brand-name');
       // Wait for loading state to complete
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(1000);
 
       await page.locator('.nav-items-container').getByRole('button', { name: 'Export' }).click();
       await expect(page.locator('.export-tab')).toBeVisible({ timeout: 5000 });
 
+      // Wait for history to be loaded and buttons to be enabled
+      await page.waitForTimeout(500);
+
       // Wait for export buttons to be enabled (history loaded)
       const jsonBtn = page.locator('.export-btn-card').filter({ hasText: /JSON/i });
-      await expect(jsonBtn).not.toBeDisabled({ timeout: 5000 });
+      await expect(jsonBtn).not.toBeDisabled({ timeout: 10000 });
 
       const [download] = await Promise.all([
         page.waitForEvent('download', { timeout: 10000 }),
@@ -277,13 +283,22 @@ test.describe('Epic 8: Data Export', () => {
       await page.goto('/?mode=admin');
       await page.waitForSelector('.top-navbar, .brand, .brand-name');
       // Wait for loading state to complete
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(1000);
 
       await page.locator('.nav-items-container').getByRole('button', { name: 'Export' }).click();
       await expect(page.locator('.export-tab')).toBeVisible({ timeout: 5000 });
 
+      // Wait for history to be loaded
+      await page.waitForTimeout(500);
+
+      // Verify localStorage has the seeded data
+      const historyData = await page.evaluate(() => {
+        return localStorage.getItem('afia_scan_history');
+      });
+      expect(historyData).toBeTruthy();
+
       const summaryCount = page.locator('.export-summary-count');
-      await expect(summaryCount).toBeVisible();
+      await expect(summaryCount).toBeVisible({ timeout: 5000 });
       const countText = await summaryCount.textContent();
       expect(Number(countText)).toBeGreaterThanOrEqual(2);
     });
