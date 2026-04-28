@@ -13,7 +13,7 @@ async function fetchWithTimeout(
   signal?: AbortSignal
 ): Promise<Response> {
   const controller = new AbortController();
-  
+
   // Link provided signal to our controller
   if (signal) {
     signal.addEventListener('abort', () => controller.abort());
@@ -49,8 +49,8 @@ export async function analyzeBottle(
   const response = await fetchWithTimeout(`${WORKER_URL}/analyze`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ 
-      sku, 
+    body: JSON.stringify({
+      sku,
       imageBase64,
       localModelResult,
     }),
@@ -181,7 +181,8 @@ export async function getAdminScans(token: string): Promise<AdminScan[]> {
     headers: { "Authorization": `Bearer ${token}` }
   });
   if (!response.ok) throw new Error("Failed to fetch scans");
-  return response.json();
+  const data = await response.json();
+  return data.scans || [];
 }
 
 /**
@@ -198,7 +199,7 @@ export async function submitAdminCorrection(
 ): Promise<{ trainingEligible: boolean }> {
   const response = await fetchWithTimeout(`${WORKER_URL}/admin/correct`, {
     method: "POST",
-    headers: { 
+    headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`
     },
@@ -217,7 +218,7 @@ export async function submitAdminCorrection(
 export async function adminRerunLlm(
   token: string,
   scanId: string
-): Promise<{ 
+): Promise<{
   adminLlmResult: {
     fillPercentage: number;
     confidence: "high" | "medium" | "low";
@@ -227,7 +228,7 @@ export async function adminRerunLlm(
 }> {
   const response = await fetchWithTimeout(`${WORKER_URL}/admin/rerun-llm`, {
     method: "POST",
-    headers: { 
+    headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`
     },
