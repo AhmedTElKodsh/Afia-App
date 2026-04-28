@@ -72,7 +72,7 @@ async function seedHistoryAndLogin(page: any) {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(mockScans),
+      body: JSON.stringify({ scans: mockScans }),
     });
   });
 }
@@ -136,7 +136,12 @@ test.describe('Epic 7: Single-SKU Restriction (1.5L only)', () => {
       });
 
       await page.goto('/');
-      await page.click('button[aria-label="History"]');
+
+      // Wait for navigation to be visible
+      await page.waitForSelector('.main-navigation', { timeout: 5000 });
+
+      // Click the History button (second nav item)
+      await page.locator('.main-navigation .nav-item').nth(1).click();
 
       // Wait for the history view to load (it's lazy-loaded)
       await expect(page.locator('.scan-history')).toBeVisible({ timeout: 5000 });

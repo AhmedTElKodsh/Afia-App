@@ -139,7 +139,7 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
   test.describe('Admin Dashboard Features', () => {
     test.beforeEach(async ({ page }) => {
       // Mock the admin scans API to return test data
-      await page.route('**localhost:8787/admin/scans', async (route) => {
+      await page.route('**/admin/scans', async (route) => {
         const mockScans = [
           {
             scanId: 'seed-1',
@@ -155,27 +155,7 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify(mockScans)
-        });
-      });
-
-      await page.route(/\/admin\/scans$/, async (route) => {
-        const mockScans = [
-          {
-            scanId: 'seed-1',
-            sku: 'test-sku',
-            timestamp: new Date().toISOString(),
-            fillPercentage: 50,
-            consumedMl: 250,
-            confidence: 'high',
-            aiProvider: 'gemini',
-            latencyMs: 1500
-          }
-        ];
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify(mockScans)
+          body: JSON.stringify({ scans: mockScans })
         });
       });
 
@@ -242,10 +222,12 @@ test.describe('Epic 5 & 6: Admin & History Features', () => {
       // Wait for export tab to load
       await expect(page.locator('.export-tab')).toBeVisible({ timeout: 5000 });
 
-      // Wait for data to be loaded (buttons become enabled)
-      await page.waitForTimeout(1000);
+      // Wait for data to be loaded by checking the summary count is non-zero
+      const summaryCount = page.locator('.export-summary-count');
+      await expect(summaryCount).toBeVisible({ timeout: 5000 });
+      await expect(summaryCount).not.toHaveText('0', { timeout: 10000 });
 
-      // Buttons should be enabled now that we mocked API data
+      // Buttons should be enabled now that we have data
       const jsonBtn = page.getByRole('button', { name: /Export JSON/i });
       const csvBtn = page.getByRole('button', { name: /Export CSV/i });
 

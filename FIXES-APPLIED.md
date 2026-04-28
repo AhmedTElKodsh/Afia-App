@@ -70,6 +70,81 @@ BRANCH="${{ (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/stag
 
 ---
 
+## 4. E2E Test Failure: Export Buttons Disabled
+
+**Problem:** Test `should show export options` failing - export buttons (JSON/CSV) remained disabled when they should be enabled.
+
+**Root Causes:**
+1. API mock returned array directly: `[{...}]` instead of wrapped object: `{scans: [{...}]}`
+2. Duplicate route mocks causing confusion
+3. Test used fixed timeout instead of waiting for actual data load
+
+**Solution:**
+1. ✅ Fixed API mock to return `{scans: [...]}` matching actual API response structure
+2. ✅ Removed duplicate route mock, kept single pattern: `**/admin/scans`
+3. ✅ Updated test to wait for `.export-summary-count` to show non-zero value instead of fixed timeout
+
+**Files Changed:**
+- `tests/e2e/epic-5-6-features.spec.ts` (lines 140-180, 239-257)
+
+**Changes:**
+```typescript
+// Before: Duplicate mocks returning wrong structure
+await page.route('**localhost:8787/admin/scans', async (route) => {
+  await route.fulfill({ body: JSON.stringify(mockScans) });
+});
+await page.route(/\/admin\/scans$/, async (route) => {
+  await route.fulfill({ body: JSON.stringify(mockScans) });
+});
+
+// After: Single mock with correct structure
+await page.route('**/admin/scans', async (route) => {
+  await route.fulfill({ body: JSON.stringify({ scans: mockScans }) });
+});
+
+// Test wait logic improved
+await expect(summaryCount).not.toHaveText('0', { timeout: 10000 });
+```
+
+**Result:** Export buttons now properly enabled when data is loaded.
+
+---
+
+## 5. E2E Test Failures: Epic 7 & 8 Features
+
+**Problem:** 4 tests failing in `epic-7-8-features.spec.ts`:
+1. History view not loading - `.scan-history` element not found
+2. Export summary count showing 0 (3 tests)
+
+**Root Causes:**
+1. Test used hardcoded `button[aria-label="History"]` selector - translation-dependent and unreliable
+2. API mock in `seedHistoryAndLogin` returned array directly instead of `{scans: [...]}`
+
+**Solution:**
+1. ✅ Changed History button selector to use position-based selector: `.main-navigation .nav-item:nth(1)`
+2. ✅ Fixed API mock to return `{scans: [...]}` structure
+3. ✅ Added wait for navigation to be visible before clicking
+
+**Files Changed:**
+- `tests/e2e/epic-7-8-features.spec.ts` (lines 50-75, 122-145)
+
+**Changes:**
+```typescript
+// Before: Translation-dependent selector
+await page.click('button[aria-label="History"]');
+
+// After: Position-based selector
+await page.waitForSelector('.main-navigation', { timeout: 5000 });
+await page.locator('.main-navigation .nav-item').nth(1).click();
+
+// API mock fix
+body: JSON.stringify({ scans: mockScans })  // Was: JSON.stringify(mockScans)
+```
+
+**Result:** All 4 tests now pass - History view loads correctly and export data populates.
+
+---
+
 ## Summary
 
 All critical issues resolved:
@@ -77,7 +152,10 @@ All critical issues resolved:
 2. ✅ Admin authentication working
 3. ✅ Frontend connects to correct worker URL
 4. ✅ Admin dashboard loads successfully (empty state is expected)
+5. ✅ E2E test for export buttons fixed (epic-5-6-features.spec.ts)
+6. ✅ E2E tests for Epic 7 & 8 fixed (epic-7-8-features.spec.ts)
 
 **Next Steps:**
+- Run full E2E test suite to verify all fixes
 - Scan some bottles using the app to populate data
 - Admin dashboard will show scan history and analytics
