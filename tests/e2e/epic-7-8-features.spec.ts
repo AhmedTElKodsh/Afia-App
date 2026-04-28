@@ -45,6 +45,33 @@ async function seedHistoryAndLogin(page: any) {
     localStorage.setItem('afia_scan_history', JSON.stringify(mockScans));
     localStorage.setItem('afia_privacy_accepted', 'true');
   });
+
+  // Mock the /admin/scans endpoint so ExportTab receives seeded scans
+  await page.route(/localhost:8787\/admin\/scans/, async (route) => {
+    const mockScans = [
+      {
+        scanId: 'export-1',
+        sku: 'afia-corn-1.5l',
+        fillPercentage: 80,
+        confidence: 'high',
+        aiProvider: 'gemini',
+        latencyMs: 1234,
+      },
+      {
+        scanId: 'export-2',
+        sku: 'afia-corn-1.5l',
+        fillPercentage: 55,
+        confidence: 'medium',
+        aiProvider: 'gemini',
+        latencyMs: 2345,
+      },
+    ];
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(mockScans),
+    });
+  });
 }
 
 // ─── Epic 7: Single-SKU Restriction ──────────────────────────────────────────

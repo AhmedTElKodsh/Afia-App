@@ -244,7 +244,7 @@ export function AdminDashboard({ onAuthSuccess, onLogout }: AdminDashboardProps 
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            {error && <p className="error-message" role="alert">{error}</p>}
+            {error && <p className="error-message" role="alert" aria-live="assertive">{error}</p>}
             <button type="submit" className="btn btn-primary btn-full" disabled={isLoading}>
               {isLoading ? t('common.loading') : t('admin.login.loginButton')}
             </button>
