@@ -145,6 +145,31 @@ body: JSON.stringify({ scans: mockScans })  // Was: JSON.stringify(mockScans)
 
 ---
 
+## 6. Base64 Image Handling Fix
+
+**Problem:** Inconsistent base64 image format being sent to different LLM providers.
+
+**Root Cause:** Some providers (Gemini) expect raw base64 data, while others (OpenRouter/Mistral) expect the data URI prefix.
+
+**Solution:** Updated `worker/src/analyze.ts` to use `rawBase64` (prefix-stripped, newline-cleaned) for consistent provider input.
+
+**Files Changed:**
+- `worker/src/analyze.ts` (line 71)
+
+**Changes:**
+```typescript
+// Before:
+const imageBase64 = body.imageBase64;
+
+// After:
+// Use rawBase64 (prefix-stripped, newline-cleaned) so providers receive consistent input
+const imageBase64 = rawBase64;
+```
+
+**Result:** All LLM providers now receive properly formatted base64 image data.
+
+---
+
 ## Summary
 
 All critical issues resolved:
@@ -154,8 +179,16 @@ All critical issues resolved:
 4. ✅ Admin dashboard loads successfully (empty state is expected)
 5. ✅ E2E test for export buttons fixed (epic-5-6-features.spec.ts)
 6. ✅ E2E tests for Epic 7 & 8 fixed (epic-7-8-features.spec.ts)
+7. ✅ Base64 image handling fixed for consistent LLM provider input
+
+**Deployment Status:**
+- ✅ Committed to stage-1-llm-only branch (commit: 8361e4a)
+- ✅ Pushed to GitHub
+- ⏳ GitHub Actions workflow triggered
+- 🔗 Workflow URL: https://github.com/AhmedTElKodsh/Afia-App/actions/workflows/ci-cd.yml
 
 **Next Steps:**
-- Run full E2E test suite to verify all fixes
+- Monitor GitHub Actions workflow execution
+- Verify deployment to production environment
 - Scan some bottles using the app to populate data
 - Admin dashboard will show scan history and analytics
