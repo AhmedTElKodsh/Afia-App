@@ -68,7 +68,9 @@ export async function handleAnalyze(c: Context<{ Bindings: Env; Variables: Varia
     }
 
     // Extract as typed consts so TypeScript preserves string narrowing inside closures
-    const imageBase64 = body.imageBase64;
+    // Use rawBase64 (prefix-stripped, newline-cleaned) so providers receive consistent input:
+    // Gemini inline_data.data requires raw base64; OpenRouter/Mistral prepend the prefix themselves.
+    const imageBase64 = rawBase64;
     const sku = body.sku;
     
     // Story 7.6 - AC5: Extract local model metadata if provided
