@@ -267,7 +267,65 @@ In the Cloudflare Dashboard screenshot, `GEMINI_API_Key3` is set as **Plaintext*
 
 ---
 
-## 8. Camera Outline SVG ViewBox Scaling Fix
+## 8. Secrets Management Documentation and Verification
+
+**Problem:** Need to ensure LLM provider API keys and Admin password are always properly configured in all Cloudflare environments.
+
+**Solution:** Created comprehensive documentation and automated verification scripts.
+
+**Files Created:**
+- `docs/SECRETS-MANAGEMENT.md` - Complete secrets management guide
+- `scripts/verify-and-set-secrets.ps1` - Windows PowerShell verification script
+- `scripts/verify-and-set-secrets.sh` - Linux/Mac Bash verification script
+- `SECRETS-CHECKLIST.md` - Quick reference checklist
+
+**Key Features:**
+1. **Three Environment Coverage:**
+   - DEFAULT environment (used by stage-1-llm-only branch)
+   - STAGE1 environment (explicit stage1 configuration)
+   - STAGE2 environment (testing with local model)
+
+2. **Required Secrets:**
+   - `ADMIN_PASSWORD` - Admin dashboard authentication
+   - `GEMINI_API_KEY` - Primary Gemini API key
+   - `GEMINI_API_KEY2` - Fallback Gemini key #1
+   - `GEMINI_API_KEY3` - Fallback Gemini key #2
+   - `GROQ_API_KEY` - Groq API fallback
+
+3. **Automated Scripts:**
+   - List current secrets in all environments
+   - Interactive setup wizard
+   - Verification checklist
+   - Quick command reference
+
+4. **GitHub Actions Integration:**
+   - Documents required GitHub repository secrets
+   - Explains how CI/CD uses secrets
+   - Clarifies that GitHub Actions does NOT set Cloudflare secrets
+
+**Usage:**
+```bash
+# Windows
+cd worker
+.\scripts\verify-and-set-secrets.ps1
+
+# Linux/Mac
+cd worker
+chmod +x scripts/verify-and-set-secrets.sh
+./scripts/verify-and-set-secrets.sh
+```
+
+**Important Notes:**
+- DEFAULT environment is critical (stage-1-llm-only deploys here)
+- Secrets must be set for ALL three environments
+- GitHub Actions does NOT set Cloudflare Worker secrets
+- Use encrypted secrets, not plaintext variables
+
+**Result:** Comprehensive documentation ensures API keys and admin password are always properly configured across all environments.
+
+---
+
+## 9. Camera Outline SVG ViewBox Scaling Fix
 
 **Problem:** E2E tests failing with viewBox dimension mismatch:
 - Expected: `"0 0 100 301"` (engineering specs for Afia 1.5L bottle)
