@@ -14,6 +14,7 @@ import { TIMEOUTS } from './constants';
  * - Neck diameter: Ø 37.3mm (±0.5mm)
  * - Body width: 78.1mm at base
  * - Capacity: 1500cc
+ * - SVG: 2 paths (outer contour + handle inner aperture), viewBox 280 970 815 1780
  *
  * Note: Auto-detection and auto-capture features have been removed.
  * The outline now serves purely as static visual guidance for manual capture.
@@ -63,12 +64,12 @@ test.describe('Camera Outline Matching System', () => {
       const bottleGuide = page.locator('.bottle-guide-wrapper');
       await expect(bottleGuide).toBeVisible({ timeout: 5000 });
 
-      // SVG should exist with correct viewBox (matches high-fidelity extraction: 460 x 1024)
+      // SVG should exist with correct viewBox (high-fidelity extraction from real bottle scan)
       const svg = page.locator('.bottle-guide-svg');
       await expect(svg).toBeVisible();
 
       const viewBox = await svg.getAttribute('viewBox');
-      expect(viewBox).toBe('0 0 460 1024');
+      expect(viewBox).toBe('280 970 815 1780');
     });
 
     test('should display major bottle components', async ({ page }) => {
@@ -77,10 +78,10 @@ test.describe('Camera Outline Matching System', () => {
       const svg = page.locator('.bottle-guide-svg');
       await expect(svg).toBeVisible();
 
-      // Check that SVG has the 6 bottle component paths: Cap, Neck, Shoulder, Body, Handle, Base
+      // Check that SVG has the 2 bottle component paths: outer contour + handle inner aperture
       const paths = svg.locator('path');
       const pathCount = await paths.count();
-      expect(pathCount).toBe(6);
+      expect(pathCount).toBe(2);
 
       // Check for group element with stroke attributes
       const group = svg.locator('g');
@@ -93,10 +94,10 @@ test.describe('Camera Outline Matching System', () => {
       const svg = page.locator('.bottle-guide-svg');
 
       // Static outline has no additional markers or indicators
-      // Just the basic bottle shape paths (6 components: Cap, Neck, Shoulder, Body, Handle, Base)
+      // Just the basic bottle shape paths (2 components: outer contour + handle inner aperture)
       const paths = svg.locator('path');
       const pathCount = await paths.count();
-      expect(pathCount).toBe(6);
+      expect(pathCount).toBe(2);
     });
 
     test('should display as simple visual reference', async ({ page }) => {
@@ -104,7 +105,7 @@ test.describe('Camera Outline Matching System', () => {
 
       const svg = page.locator('.bottle-guide-svg');
 
-      // Static outline serves as visual reference only
+      // Static outline serves as visual reference only (2 paths: contour + handle aperture)
       // No brand markers or detection indicators
       await expect(svg).toBeVisible();
 
