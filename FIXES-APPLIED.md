@@ -554,3 +554,59 @@ Begin implementing Task 1.1 - Interactive Oil Level Slider
 **Result:** Task 1.1 is complete. No additional work needed. Proceed to Task 1.2.
 
 ---
+
+
+## 13. Stage 1 UI/UX Improvements - Camera Interface
+
+**Date:** 2026-04-29
+
+**Purpose:** Enhanced camera capture interface for better usability and visual clarity.
+
+**Changes Made:**
+
+1. **Camera Capture Button Improvements:**
+   - Increased button size from 72px to 84px for easier touch targets
+   - Added subtle background fill (rgba(255, 255, 255, 0.08))
+   - Enhanced border visibility (rgba(255, 255, 255, 0.95))
+   - Added multi-layer shadow for better depth perception
+   - Improved inner button styling with inset shadow
+   - Better positioning with 8px additional bottom spacing
+
+2. **Bottle Guide Enhancements:**
+   - Increased guide width from 52% to 78% for better visibility
+   - Increased guide height from 52vh to 70vh for clearer alignment
+   - Enhanced drop shadow for better contrast (0 2px 8px rgba(0, 0, 0, 0.55))
+
+3. **Guidance Text Improvements:**
+   - Increased main hint font size from 13px to 15px
+   - Added backdrop blur effect for better readability
+   - Added pill-shaped background with border
+   - Improved text shadows for better contrast
+   - Updated sub-hint styling with better color and spacing
+
+4. **Bottle Outline Refinements:**
+   - Refined handle inner aperture path for more accurate D-loop representation
+   - Updated path comment for clarity
+
+**Files Changed:**
+- `src/components/CameraViewfinder.css` - Camera UI styling improvements
+- `src/assets/BottleOutline.tsx` - Bottle outline path refinement
+
+**Commit Details:**
+- Commit: `9158894`
+- Branch: `stage-1-llm-only`
+- Pushed: 2026-04-29
+
+**CI/CD Pipeline:**
+- ✅ Committed and pushed to GitHub
+- ⏳ GitHub Actions workflow triggered
+- 🔗 Workflow URL: https://github.com/AhmedTElKodsh/Afia-App/actions/workflows/ci-cd.yml
+
+**Expected Deployment:**
+- Worker URL: https://afia-worker.savola.workers.dev
+- Pages URL: https://afia-app.pages.dev
+- Environment: Production (stage1)
+
+**Result:** Camera interface now provides better visual guidance and easier interaction for users capturing bottle images.
+
+---
