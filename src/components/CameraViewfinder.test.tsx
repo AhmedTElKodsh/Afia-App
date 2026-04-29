@@ -15,7 +15,7 @@ const mockStream = {
 const getUserMediaSpy = vi.fn();
 
 beforeEach(() => {
-  vi.spyOn(console, 'error').mockImplementation(() => {});
+  vi.spyOn(console, 'error').mockImplementation(() => { });
 
   const mockCtx = {
     drawImage: vi.fn(),
@@ -74,7 +74,7 @@ describe('CameraViewfinder', () => {
     });
 
     it('should show loading state while requesting camera', () => {
-      getUserMediaSpy.mockImplementation(() => new Promise(() => {}));
+      getUserMediaSpy.mockImplementation(() => new Promise(() => { }));
 
       render(<CameraViewfinder
         onCapture={mockOnCapture}
@@ -122,7 +122,7 @@ describe('CameraViewfinder', () => {
       expect(bottleGuide).toBeInTheDocument();
     });
 
-    it('should render capture button with "Capture manually" label', async () => {
+    it('should render capture button with camera icon', async () => {
       render(<CameraViewfinder
         onCapture={mockOnCapture}
         onError={mockOnError}
@@ -130,7 +130,9 @@ describe('CameraViewfinder', () => {
       />);
 
       await waitFor(() => {
-        expect(screen.getByText('Capture manually')).toBeInTheDocument();
+        const captureButton = screen.getByLabelText('Capture photo');
+        expect(captureButton).toBeInTheDocument();
+        expect(captureButton).toHaveClass('camera-capture-btn');
       });
     });
 
