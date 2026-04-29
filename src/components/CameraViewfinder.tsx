@@ -33,7 +33,7 @@ function StaticBottleOutline() {
     <div className="bottle-guide-wrapper">
       <svg
         className="bottle-guide-svg"
-        viewBox="0 0 100 301"
+        viewBox="0 0 460 1024"
         preserveAspectRatio="xMidYMid meet"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -43,37 +43,15 @@ function StaticBottleOutline() {
           stroke="rgba(255,255,255,0.85)"
           strokeLinejoin="round"
           strokeLinecap="round"
-          strokeWidth="2.5"
+          strokeWidth="8"
           fill="none"
         >
-          {/* Cap — 38mm neck finish */}
           <path
-            d="M 33 3 L 67 3 C 68.5 3 69 4.5 69 6 L 69 16 L 31 16 L 31 6 C 31 4.5 31.5 3 33 3 Z"
+            d="M 223 327 L 197 334 L 192 363 L 196 383 L 148 422 L 137 438 L 129 460 L 137 509 L 136 565 L 128 605 L 100 694 L 98 763 L 110 829 L 130 887 L 143 903 L 168 912 L 260 913 L 298 910 L 312 903 L 324 889 L 337 858 L 358 776 L 362 700 L 352 680 L 362 668 L 363 610 L 350 498 L 323 432 L 277 384 L 280 339 L 274 331 Z"
             vectorEffect="non-scaling-stroke"
           />
-          {/* Neck — tall narrow section, Ø37.3mm spec (~22% of total height) */}
           <path
-            d="M 33 16 L 67 16 L 66 44 C 66 49 63.5 52 61 53 L 39 53 C 36.5 52 34 49 34 44 Z"
-            vectorEffect="non-scaling-stroke"
-          />
-          {/* Shoulder — steep flare from narrow neck to wide upper body */}
-          <path
-            d="M 39 53 L 61 53 C 72 55 84 62 90 68 C 92 70 92 71 92 72 L 8 72 C 8 71 8 70 10 68 C 16 62 28 55 39 53 Z"
-            vectorEffect="non-scaling-stroke"
-          />
-          {/* Body — inverted pear: widest at ~25% into body, tapers to 78.1mm base */}
-          <path
-            d="M 8 72 L 92 72 C 95 82 96 100 95 117 C 93 138 91 162 89 190 C 87 212 86 232 85 252 L 15 252 C 14 232 13 212 11 190 C 9 162 7 138 5 117 C 4 100 5 82 8 72 Z"
-            vectorEffect="non-scaling-stroke"
-          />
-          {/* Base — 78.1mm wide, tapered rounded bottom */}
-          <path
-            d="M 15 252 L 85 252 C 86 264 86 274 84 282 C 82 290 78 294 73 297 L 27 297 C 22 294 18 290 16 282 C 14 274 14 264 15 252 Z"
-            vectorEffect="non-scaling-stroke"
-          />
-          {/* Handle — SIPA D-handle loop on right side, upper body */}
-          <path
-            d="M 93 100 C 97 100 99 107 99 128 C 99 148 97 158 93 158 C 89 158 87 155 87 150 L 87 113 C 87 106 90 100 93 100 Z"
+            d="M 264 333 L 277 343 L 274 387 L 316 428 L 335 467 L 336 477 L 325 497 L 298 515 L 285 535 L 279 612 L 282 638 L 292 653 L 344 674 L 358 696 L 354 784 L 326 876 L 308 901 L 270 909 L 167 908 L 143 898 L 133 884 L 112 825 L 100 753 L 104 689 L 138 573 L 141 514 L 133 458 L 151 424 L 198 386 L 201 375 L 195 369 L 199 337 L 230 331 Z"
             vectorEffect="non-scaling-stroke"
           />
         </g>
@@ -264,8 +242,9 @@ export function CameraViewfinder({
             ) : <div style={{ width: 44 }} />}
 
             <div className="guidance-header-hint">
-              <span>{t('camera.guidanceHint')}</span>
-              <span>{t('camera.guidanceHint2')}</span>
+              <span className="hint-main">{t('camera.shootFrontside')}</span>
+              <span className="hint-sub">{t('camera.guidanceHint')}</span>
+              <span className="hint-sub">{t('camera.guidanceHint2')}</span>
             </div>
 
             <div style={{ width: 44, display: 'flex', justifyContent: 'flex-end' }}>
@@ -297,12 +276,14 @@ export function CameraViewfinder({
 
       {cameraState === 'active' && (
         <button
-          className="camera-capture-btn secondary"
+          className="camera-capture-btn"
           onClick={handleCapture}
           type="button"
           aria-label={t('camera.capturePhotoAriaLabel')}
         >
-          <span className="capture-btn-label">{t('camera.captureManually')}</span>
+          <div className="capture-btn-inner">
+            <Camera size={32} color="black" fill="black" />
+          </div>
         </button>
       )}
     </div>
