@@ -11,7 +11,7 @@
     "grepInvert": null,
     "maxFailures": 0,
     "metadata": {
-      "actualWorkers": 8
+      "actualWorkers": 1
     },
     "preserveOutput": "always",
     "projects": [
@@ -20,7 +20,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 8
+          "actualWorkers": 1
         },
         "id": "chromium",
         "name": "chromium",
@@ -66,27 +66,27 @@
   },
   "suites": [
     {
-      "title": "epic-7-8-features.spec.ts",
-      "file": "epic-7-8-features.spec.ts",
+      "title": "camera-outline-matching.spec.ts",
+      "file": "camera-outline-matching.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Epic 7: Single-SKU Restriction (1.5L only)",
-          "file": "epic-7-8-features.spec.ts",
-          "line": 82,
+          "title": "Camera Outline Matching System",
+          "file": "camera-outline-matching.spec.ts",
+          "line": 22,
           "column": 6,
           "specs": [],
           "suites": [
             {
-              "title": "Active SKU via URL",
-              "file": "epic-7-8-features.spec.ts",
-              "line": 84,
+              "title": "Outline Geometry",
+              "file": "camera-outline-matching.spec.ts",
+              "line": 58,
               "column": 8,
               "specs": [
                 {
-                  "title": "should display the 1.5L Corn Oil bottle details",
+                  "title": "should render as simple static outline",
                   "ok": true,
                   "tags": [],
                   "tests": [
@@ -101,12 +101,12 @@
                           "workerIndex": 0,
                           "parallelIndex": 0,
                           "status": "passed",
-                          "duration": 15013,
+                          "duration": 13554,
                           "errors": [],
                           "stdout": [],
                           "stderr": [],
                           "retry": 0,
-                          "startTime": "2026-04-28T20:00:55.338Z",
+                          "startTime": "2026-04-29T13:23:10.148Z",
                           "annotations": [],
                           "attachments": []
                         }
@@ -114,584 +114,9 @@
                       "status": "expected"
                     }
                   ],
-                  "id": "c15252e0339fd019be74-adb29bc5e16ae6dd63c6",
-                  "file": "epic-7-8-features.spec.ts",
-                  "line": 86,
-                  "column": 5
-                },
-                {
-                  "title": "legacy sunflower SKUs fall back gracefully (no crash)",
-                  "ok": true,
-                  "tags": [],
-                  "tests": [
-                    {
-                      "timeout": 60000,
-                      "annotations": [],
-                      "expectedStatus": "passed",
-                      "projectId": "chromium",
-                      "projectName": "chromium",
-                      "results": [
-                        {
-                          "workerIndex": 1,
-                          "parallelIndex": 1,
-                          "status": "passed",
-                          "duration": 24747,
-                          "errors": [],
-                          "stdout": [],
-                          "stderr": [],
-                          "retry": 0,
-                          "startTime": "2026-04-28T20:00:55.321Z",
-                          "annotations": [],
-                          "attachments": []
-                        }
-                      ],
-                      "status": "expected"
-                    }
-                  ],
-                  "id": "c15252e0339fd019be74-25ec3d5d013de1301f79",
-                  "file": "epic-7-8-features.spec.ts",
-                  "line": 95,
-                  "column": 5
-                },
-                {
-                  "title": "root URL (no SKU) renders the landing page",
-                  "ok": true,
-                  "tags": [],
-                  "tests": [
-                    {
-                      "timeout": 60000,
-                      "annotations": [],
-                      "expectedStatus": "passed",
-                      "projectId": "chromium",
-                      "projectName": "chromium",
-                      "results": [
-                        {
-                          "workerIndex": 2,
-                          "parallelIndex": 2,
-                          "status": "passed",
-                          "duration": 14768,
-                          "errors": [],
-                          "stdout": [],
-                          "stderr": [],
-                          "retry": 0,
-                          "startTime": "2026-04-28T20:00:55.410Z",
-                          "annotations": [],
-                          "attachments": []
-                        }
-                      ],
-                      "status": "expected"
-                    }
-                  ],
-                  "id": "c15252e0339fd019be74-69e60a4b091cf50696e1",
-                  "file": "epic-7-8-features.spec.ts",
-                  "line": 113,
-                  "column": 5
-                }
-              ]
-            },
-            {
-              "title": "Scan history (localStorage)",
-              "file": "epic-7-8-features.spec.ts",
-              "line": 120,
-              "column": 8,
-              "specs": [
-                {
-                  "title": "should store scan in history for the active SKU",
-                  "ok": false,
-                  "tags": [],
-                  "tests": [
-                    {
-                      "timeout": 60000,
-                      "annotations": [],
-                      "expectedStatus": "passed",
-                      "projectId": "chromium",
-                      "projectName": "chromium",
-                      "results": [
-                        {
-                          "workerIndex": 3,
-                          "parallelIndex": 3,
-                          "status": "failed",
-                          "duration": 19347,
-                          "error": {
-                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.scan-history')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.scan-history')\u001b[22m\n",
-                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.scan-history')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.scan-history')\u001b[22m\n\n    at D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts:142:51",
-                            "location": {
-                              "file": "D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts",
-                              "column": 51,
-                              "line": 142
-                            },
-                            "snippet": "\u001b[0m \u001b[90m 140 |\u001b[39m\n \u001b[90m 141 |\u001b[39m       \u001b[90m// Wait for the history view to load (it's lazy-loaded)\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 142 |\u001b[39m       \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'.scan-history'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                                   \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 143 |\u001b[39m\n \u001b[90m 144 |\u001b[39m       \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'text=Afia Pure Corn Oil 1.5L'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 145 |\u001b[39m\u001b[0m"
-                          },
-                          "errors": [
-                            {
-                              "location": {
-                                "file": "D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts",
-                                "column": 51,
-                                "line": 142
-                              },
-                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.scan-history')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.scan-history')\u001b[22m\n\n\n\u001b[0m \u001b[90m 140 |\u001b[39m\n \u001b[90m 141 |\u001b[39m       \u001b[90m// Wait for the history view to load (it's lazy-loaded)\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 142 |\u001b[39m       \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'.scan-history'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                                                   \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 143 |\u001b[39m\n \u001b[90m 144 |\u001b[39m       \u001b[36mawait\u001b[39m expect(page\u001b[33m.\u001b[39mlocator(\u001b[32m'text=Afia Pure Corn Oil 1.5L'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m 145 |\u001b[39m\u001b[0m\n\u001b[2m    at D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts:142:51\u001b[22m"
-                            }
-                          ],
-                          "stdout": [],
-                          "stderr": [],
-                          "retry": 0,
-                          "startTime": "2026-04-28T20:00:55.447Z",
-                          "annotations": [],
-                          "attachments": [
-                            {
-                              "name": "screenshot",
-                              "contentType": "image/png",
-                              "path": "D:\\AI Projects\\Freelance\\Afia-App\\test-results\\epic-7-8-features-Epic-7-S-45d8c--history-for-the-active-SKU-chromium\\test-failed-1.png"
-                            },
-                            {
-                              "name": "video",
-                              "contentType": "video/webm",
-                              "path": "D:\\AI Projects\\Freelance\\Afia-App\\test-results\\epic-7-8-features-Epic-7-S-45d8c--history-for-the-active-SKU-chromium\\video.webm"
-                            },
-                            {
-                              "name": "error-context",
-                              "contentType": "text/markdown",
-                              "path": "D:\\AI Projects\\Freelance\\Afia-App\\test-results\\epic-7-8-features-Epic-7-S-45d8c--history-for-the-active-SKU-chromium\\error-context.md"
-                            }
-                          ],
-                          "errorLocation": {
-                            "file": "D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts",
-                            "column": 51,
-                            "line": 142
-                          }
-                        }
-                      ],
-                      "status": "unexpected"
-                    }
-                  ],
-                  "id": "c15252e0339fd019be74-b889a6963db0c1ed556c",
-                  "file": "epic-7-8-features.spec.ts",
-                  "line": 122,
-                  "column": 5
-                },
-                {
-                  "title": "QR landing sparkline counts only scans for the active SKU",
-                  "ok": true,
-                  "tags": [],
-                  "tests": [
-                    {
-                      "timeout": 60000,
-                      "annotations": [],
-                      "expectedStatus": "passed",
-                      "projectId": "chromium",
-                      "projectName": "chromium",
-                      "results": [
-                        {
-                          "workerIndex": 4,
-                          "parallelIndex": 4,
-                          "status": "passed",
-                          "duration": 17028,
-                          "errors": [],
-                          "stdout": [],
-                          "stderr": [],
-                          "retry": 0,
-                          "startTime": "2026-04-28T20:00:55.386Z",
-                          "annotations": [],
-                          "attachments": []
-                        }
-                      ],
-                      "status": "expected"
-                    }
-                  ],
-                  "id": "c15252e0339fd019be74-a927b1fce073527f1fe6",
-                  "file": "epic-7-8-features.spec.ts",
-                  "line": 153,
-                  "column": 5
-                }
-              ]
-            },
-            {
-              "title": "Bottle Selector (Admin mode)",
-              "file": "epic-7-8-features.spec.ts",
-              "line": 181,
-              "column": 8,
-              "specs": [
-                {
-                  "title": "admin TestLab is reachable in admin mode",
-                  "ok": true,
-                  "tags": [],
-                  "tests": [
-                    {
-                      "timeout": 60000,
-                      "annotations": [],
-                      "expectedStatus": "passed",
-                      "projectId": "chromium",
-                      "projectName": "chromium",
-                      "results": [
-                        {
-                          "workerIndex": 5,
-                          "parallelIndex": 5,
-                          "status": "passed",
-                          "duration": 16582,
-                          "errors": [],
-                          "stdout": [],
-                          "stderr": [],
-                          "retry": 0,
-                          "startTime": "2026-04-28T20:00:55.445Z",
-                          "annotations": [],
-                          "attachments": []
-                        }
-                      ],
-                      "status": "expected"
-                    }
-                  ],
-                  "id": "c15252e0339fd019be74-b026cd7682cf17b94960",
-                  "file": "epic-7-8-features.spec.ts",
-                  "line": 183,
-                  "column": 5
-                },
-                {
-                  "title": "bottle selector shows the 1.5L Corn Oil as the default selected option",
-                  "ok": true,
-                  "tags": [],
-                  "tests": [
-                    {
-                      "timeout": 60000,
-                      "annotations": [],
-                      "expectedStatus": "passed",
-                      "projectId": "chromium",
-                      "projectName": "chromium",
-                      "results": [
-                        {
-                          "workerIndex": 6,
-                          "parallelIndex": 6,
-                          "status": "passed",
-                          "duration": 21498,
-                          "errors": [],
-                          "stdout": [],
-                          "stderr": [],
-                          "retry": 0,
-                          "startTime": "2026-04-28T20:00:55.522Z",
-                          "annotations": [],
-                          "attachments": []
-                        }
-                      ],
-                      "status": "expected"
-                    }
-                  ],
-                  "id": "c15252e0339fd019be74-9888af45e66313cad8c4",
-                  "file": "epic-7-8-features.spec.ts",
-                  "line": 195,
-                  "column": 5
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "title": "Epic 8: Data Export",
-          "file": "epic-7-8-features.spec.ts",
-          "line": 235,
-          "column": 6,
-          "specs": [],
-          "suites": [
-            {
-              "title": "CSV Export",
-              "file": "epic-7-8-features.spec.ts",
-              "line": 237,
-              "column": 8,
-              "specs": [
-                {
-                  "title": "should trigger CSV download from admin Export tab",
-                  "ok": false,
-                  "tags": [],
-                  "tests": [
-                    {
-                      "timeout": 60000,
-                      "annotations": [],
-                      "expectedStatus": "passed",
-                      "projectId": "chromium",
-                      "projectName": "chromium",
-                      "results": [
-                        {
-                          "workerIndex": 7,
-                          "parallelIndex": 7,
-                          "status": "failed",
-                          "duration": 36197,
-                          "error": {
-                            "message": "TimeoutError: page.waitForFunction: Timeout 15000ms exceeded.",
-                            "stack": "TimeoutError: page.waitForFunction: Timeout 15000ms exceeded.\n    at D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts:257:18",
-                            "location": {
-                              "file": "D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts",
-                              "column": 18,
-                              "line": 257
-                            },
-                            "snippet": "\u001b[0m \u001b[90m 255 |\u001b[39m       \u001b[36mconst\u001b[39m summaryCount \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'.export-summary-count'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 256 |\u001b[39m       \u001b[36mawait\u001b[39m expect(summaryCount)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 257 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForFunction(() \u001b[33m=>\u001b[39m {\n \u001b[90m     |\u001b[39m                  \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 258 |\u001b[39m         \u001b[36mconst\u001b[39m countEl \u001b[33m=\u001b[39m document\u001b[33m.\u001b[39mquerySelector(\u001b[32m'.export-summary-count'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 259 |\u001b[39m         \u001b[36mreturn\u001b[39m countEl \u001b[33m&&\u001b[39m \u001b[33mNumber\u001b[39m(countEl\u001b[33m.\u001b[39mtextContent) \u001b[33m>\u001b[39m \u001b[35m0\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 260 |\u001b[39m       }\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m"
-                          },
-                          "errors": [
-                            {
-                              "location": {
-                                "file": "D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts",
-                                "column": 18,
-                                "line": 257
-                              },
-                              "message": "TimeoutError: page.waitForFunction: Timeout 15000ms exceeded.\n\n\u001b[0m \u001b[90m 255 |\u001b[39m       \u001b[36mconst\u001b[39m summaryCount \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'.export-summary-count'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 256 |\u001b[39m       \u001b[36mawait\u001b[39m expect(summaryCount)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 257 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForFunction(() \u001b[33m=>\u001b[39m {\n \u001b[90m     |\u001b[39m                  \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 258 |\u001b[39m         \u001b[36mconst\u001b[39m countEl \u001b[33m=\u001b[39m document\u001b[33m.\u001b[39mquerySelector(\u001b[32m'.export-summary-count'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 259 |\u001b[39m         \u001b[36mreturn\u001b[39m countEl \u001b[33m&&\u001b[39m \u001b[33mNumber\u001b[39m(countEl\u001b[33m.\u001b[39mtextContent) \u001b[33m>\u001b[39m \u001b[35m0\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 260 |\u001b[39m       }\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts:257:18\u001b[22m"
-                            }
-                          ],
-                          "stdout": [],
-                          "stderr": [],
-                          "retry": 0,
-                          "startTime": "2026-04-28T20:00:55.414Z",
-                          "annotations": [],
-                          "attachments": [
-                            {
-                              "name": "screenshot",
-                              "contentType": "image/png",
-                              "path": "D:\\AI Projects\\Freelance\\Afia-App\\test-results\\epic-7-8-features-Epic-8-D-52ff2-nload-from-admin-Export-tab-chromium\\test-failed-1.png"
-                            },
-                            {
-                              "name": "video",
-                              "contentType": "video/webm",
-                              "path": "D:\\AI Projects\\Freelance\\Afia-App\\test-results\\epic-7-8-features-Epic-8-D-52ff2-nload-from-admin-Export-tab-chromium\\video.webm"
-                            },
-                            {
-                              "name": "error-context",
-                              "contentType": "text/markdown",
-                              "path": "D:\\AI Projects\\Freelance\\Afia-App\\test-results\\epic-7-8-features-Epic-8-D-52ff2-nload-from-admin-Export-tab-chromium\\error-context.md"
-                            }
-                          ],
-                          "errorLocation": {
-                            "file": "D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts",
-                            "column": 18,
-                            "line": 257
-                          }
-                        }
-                      ],
-                      "status": "unexpected"
-                    }
-                  ],
-                  "id": "c15252e0339fd019be74-2240fec7c637903d9cb9",
-                  "file": "epic-7-8-features.spec.ts",
-                  "line": 244,
-                  "column": 5
-                },
-                {
-                  "title": "should trigger JSON download from admin Export tab",
-                  "ok": false,
-                  "tags": [],
-                  "tests": [
-                    {
-                      "timeout": 60000,
-                      "annotations": [],
-                      "expectedStatus": "passed",
-                      "projectId": "chromium",
-                      "projectName": "chromium",
-                      "results": [
-                        {
-                          "workerIndex": 2,
-                          "parallelIndex": 2,
-                          "status": "failed",
-                          "duration": 25601,
-                          "error": {
-                            "message": "TimeoutError: page.waitForFunction: Timeout 15000ms exceeded.",
-                            "stack": "TimeoutError: page.waitForFunction: Timeout 15000ms exceeded.\n    at D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts:287:18",
-                            "location": {
-                              "file": "D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts",
-                              "column": 18,
-                              "line": 287
-                            },
-                            "snippet": "\u001b[0m \u001b[90m 285 |\u001b[39m       \u001b[36mconst\u001b[39m summaryCount \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'.export-summary-count'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 286 |\u001b[39m       \u001b[36mawait\u001b[39m expect(summaryCount)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 287 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForFunction(() \u001b[33m=>\u001b[39m {\n \u001b[90m     |\u001b[39m                  \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 288 |\u001b[39m         \u001b[36mconst\u001b[39m countEl \u001b[33m=\u001b[39m document\u001b[33m.\u001b[39mquerySelector(\u001b[32m'.export-summary-count'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 289 |\u001b[39m         \u001b[36mreturn\u001b[39m countEl \u001b[33m&&\u001b[39m \u001b[33mNumber\u001b[39m(countEl\u001b[33m.\u001b[39mtextContent) \u001b[33m>\u001b[39m \u001b[35m0\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 290 |\u001b[39m       }\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m"
-                          },
-                          "errors": [
-                            {
-                              "location": {
-                                "file": "D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts",
-                                "column": 18,
-                                "line": 287
-                              },
-                              "message": "TimeoutError: page.waitForFunction: Timeout 15000ms exceeded.\n\n\u001b[0m \u001b[90m 285 |\u001b[39m       \u001b[36mconst\u001b[39m summaryCount \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'.export-summary-count'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 286 |\u001b[39m       \u001b[36mawait\u001b[39m expect(summaryCount)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 287 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForFunction(() \u001b[33m=>\u001b[39m {\n \u001b[90m     |\u001b[39m                  \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 288 |\u001b[39m         \u001b[36mconst\u001b[39m countEl \u001b[33m=\u001b[39m document\u001b[33m.\u001b[39mquerySelector(\u001b[32m'.export-summary-count'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 289 |\u001b[39m         \u001b[36mreturn\u001b[39m countEl \u001b[33m&&\u001b[39m \u001b[33mNumber\u001b[39m(countEl\u001b[33m.\u001b[39mtextContent) \u001b[33m>\u001b[39m \u001b[35m0\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 290 |\u001b[39m       }\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts:287:18\u001b[22m"
-                            }
-                          ],
-                          "stdout": [],
-                          "stderr": [],
-                          "retry": 0,
-                          "startTime": "2026-04-28T20:01:10.987Z",
-                          "annotations": [],
-                          "attachments": [
-                            {
-                              "name": "screenshot",
-                              "contentType": "image/png",
-                              "path": "D:\\AI Projects\\Freelance\\Afia-App\\test-results\\epic-7-8-features-Epic-8-D-81747-nload-from-admin-Export-tab-chromium\\test-failed-1.png"
-                            },
-                            {
-                              "name": "video",
-                              "contentType": "video/webm",
-                              "path": "D:\\AI Projects\\Freelance\\Afia-App\\test-results\\epic-7-8-features-Epic-8-D-81747-nload-from-admin-Export-tab-chromium\\video.webm"
-                            },
-                            {
-                              "name": "error-context",
-                              "contentType": "text/markdown",
-                              "path": "D:\\AI Projects\\Freelance\\Afia-App\\test-results\\epic-7-8-features-Epic-8-D-81747-nload-from-admin-Export-tab-chromium\\error-context.md"
-                            }
-                          ],
-                          "errorLocation": {
-                            "file": "D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts",
-                            "column": 18,
-                            "line": 287
-                          }
-                        }
-                      ],
-                      "status": "unexpected"
-                    }
-                  ],
-                  "id": "c15252e0339fd019be74-3fcc4c8b8935bf9f7c29",
-                  "file": "epic-7-8-features.spec.ts",
-                  "line": 274,
-                  "column": 5
-                },
-                {
-                  "title": "export buttons are disabled when scan history is empty",
-                  "ok": true,
-                  "tags": [],
-                  "tests": [
-                    {
-                      "timeout": 60000,
-                      "annotations": [],
-                      "expectedStatus": "passed",
-                      "projectId": "chromium",
-                      "projectName": "chromium",
-                      "results": [
-                        {
-                          "workerIndex": 0,
-                          "parallelIndex": 0,
-                          "status": "passed",
-                          "duration": 9183,
-                          "errors": [],
-                          "stdout": [],
-                          "stderr": [],
-                          "retry": 0,
-                          "startTime": "2026-04-28T20:01:11.012Z",
-                          "annotations": [],
-                          "attachments": []
-                        }
-                      ],
-                      "status": "expected"
-                    }
-                  ],
-                  "id": "c15252e0339fd019be74-4c7d2ad16175e6adcd1f",
-                  "file": "epic-7-8-features.spec.ts",
-                  "line": 304,
-                  "column": 5
-                },
-                {
-                  "title": "export tab shows scan count summary",
-                  "ok": false,
-                  "tags": [],
-                  "tests": [
-                    {
-                      "timeout": 60000,
-                      "annotations": [],
-                      "expectedStatus": "passed",
-                      "projectId": "chromium",
-                      "projectName": "chromium",
-                      "results": [
-                        {
-                          "workerIndex": 5,
-                          "parallelIndex": 5,
-                          "status": "failed",
-                          "duration": 23868,
-                          "error": {
-                            "message": "TimeoutError: page.waitForFunction: Timeout 15000ms exceeded.",
-                            "stack": "TimeoutError: page.waitForFunction: Timeout 15000ms exceeded.\n    at D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts:339:18",
-                            "location": {
-                              "file": "D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts",
-                              "column": 18,
-                              "line": 339
-                            },
-                            "snippet": "\u001b[0m \u001b[90m 337 |\u001b[39m\n \u001b[90m 338 |\u001b[39m       \u001b[90m// Wait for the count to be updated from the API\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 339 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForFunction(() \u001b[33m=>\u001b[39m {\n \u001b[90m     |\u001b[39m                  \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 340 |\u001b[39m         \u001b[36mconst\u001b[39m countEl \u001b[33m=\u001b[39m document\u001b[33m.\u001b[39mquerySelector(\u001b[32m'.export-summary-count'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 341 |\u001b[39m         \u001b[36mreturn\u001b[39m countEl \u001b[33m&&\u001b[39m \u001b[33mNumber\u001b[39m(countEl\u001b[33m.\u001b[39mtextContent) \u001b[33m>=\u001b[39m \u001b[35m2\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 342 |\u001b[39m       }\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m"
-                          },
-                          "errors": [
-                            {
-                              "location": {
-                                "file": "D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts",
-                                "column": 18,
-                                "line": 339
-                              },
-                              "message": "TimeoutError: page.waitForFunction: Timeout 15000ms exceeded.\n\n\u001b[0m \u001b[90m 337 |\u001b[39m\n \u001b[90m 338 |\u001b[39m       \u001b[90m// Wait for the count to be updated from the API\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 339 |\u001b[39m       \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mwaitForFunction(() \u001b[33m=>\u001b[39m {\n \u001b[90m     |\u001b[39m                  \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 340 |\u001b[39m         \u001b[36mconst\u001b[39m countEl \u001b[33m=\u001b[39m document\u001b[33m.\u001b[39mquerySelector(\u001b[32m'.export-summary-count'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 341 |\u001b[39m         \u001b[36mreturn\u001b[39m countEl \u001b[33m&&\u001b[39m \u001b[33mNumber\u001b[39m(countEl\u001b[33m.\u001b[39mtextContent) \u001b[33m>=\u001b[39m \u001b[35m2\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 342 |\u001b[39m       }\u001b[33m,\u001b[39m { timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts:339:18\u001b[22m"
-                            }
-                          ],
-                          "stdout": [],
-                          "stderr": [],
-                          "retry": 0,
-                          "startTime": "2026-04-28T20:01:12.695Z",
-                          "annotations": [],
-                          "attachments": [
-                            {
-                              "name": "screenshot",
-                              "contentType": "image/png",
-                              "path": "D:\\AI Projects\\Freelance\\Afia-App\\test-results\\epic-7-8-features-Epic-8-D-dbad5-ab-shows-scan-count-summary-chromium\\test-failed-1.png"
-                            },
-                            {
-                              "name": "video",
-                              "contentType": "video/webm",
-                              "path": "D:\\AI Projects\\Freelance\\Afia-App\\test-results\\epic-7-8-features-Epic-8-D-dbad5-ab-shows-scan-count-summary-chromium\\video.webm"
-                            },
-                            {
-                              "name": "error-context",
-                              "contentType": "text/markdown",
-                              "path": "D:\\AI Projects\\Freelance\\Afia-App\\test-results\\epic-7-8-features-Epic-8-D-dbad5-ab-shows-scan-count-summary-chromium\\error-context.md"
-                            }
-                          ],
-                          "errorLocation": {
-                            "file": "D:\\AI Projects\\Freelance\\Afia-App\\tests\\e2e\\epic-7-8-features.spec.ts",
-                            "column": 18,
-                            "line": 339
-                          }
-                        }
-                      ],
-                      "status": "unexpected"
-                    }
-                  ],
-                  "id": "c15252e0339fd019be74-d174f7425b89865f16db",
-                  "file": "epic-7-8-features.spec.ts",
-                  "line": 324,
-                  "column": 5
-                }
-              ]
-            },
-            {
-              "title": "Scan History Export (User-facing)",
-              "file": "epic-7-8-features.spec.ts",
-              "line": 349,
-              "column": 8,
-              "specs": [
-                {
-                  "title": "history page has export/download option when scans exist",
-                  "ok": true,
-                  "tags": [],
-                  "tests": [
-                    {
-                      "timeout": 60000,
-                      "annotations": [],
-                      "expectedStatus": "passed",
-                      "projectId": "chromium",
-                      "projectName": "chromium",
-                      "results": [
-                        {
-                          "workerIndex": 4,
-                          "parallelIndex": 4,
-                          "status": "passed",
-                          "duration": 6663,
-                          "errors": [],
-                          "stdout": [],
-                          "stderr": [],
-                          "retry": 0,
-                          "startTime": "2026-04-28T20:01:12.942Z",
-                          "annotations": [],
-                          "attachments": []
-                        }
-                      ],
-                      "status": "expected"
-                    }
-                  ],
-                  "id": "c15252e0339fd019be74-ba5878ecd6d14d02acbd",
-                  "file": "epic-7-8-features.spec.ts",
-                  "line": 351,
+                  "id": "777a149b66d8d669a672-3d6c7091a6cd9ad30ddb",
+                  "file": "camera-outline-matching.spec.ts",
+                  "line": 90,
                   "column": 5
                 }
               ]
@@ -703,11 +128,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-04-28T20:00:33.204Z",
-    "duration": 64350.143,
-    "expected": 8,
+    "startTime": "2026-04-29T13:22:49.322Z",
+    "duration": 36328.05,
+    "expected": 1,
     "skipped": 0,
-    "unexpected": 4,
+    "unexpected": 0,
     "flaky": 0
   }
 }

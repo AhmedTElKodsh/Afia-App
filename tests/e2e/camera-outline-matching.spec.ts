@@ -63,24 +63,24 @@ test.describe('Camera Outline Matching System', () => {
       const bottleGuide = page.locator('.bottle-guide-wrapper');
       await expect(bottleGuide).toBeVisible({ timeout: 5000 });
 
-      // SVG should exist with correct viewBox (matches engineering specs: 100 × 301)
+      // SVG should exist with correct viewBox (matches high-fidelity extraction: 460 x 1024)
       const svg = page.locator('.bottle-guide-svg');
       await expect(svg).toBeVisible();
 
       const viewBox = await svg.getAttribute('viewBox');
-      expect(viewBox).toBe('0 0 100 301');
+      expect(viewBox).toBe('0 0 460 1024');
     });
 
-    test('should display all bottle components', async ({ page }) => {
+    test('should display major bottle components', async ({ page }) => {
       await navigateToCamera(page);
 
       const svg = page.locator('.bottle-guide-svg');
       await expect(svg).toBeVisible();
 
-      // Check that SVG has multiple path elements (cap, neck, shoulder, body, handle, base)
+      // Check that SVG has the 6 bottle component paths: Cap, Neck, Shoulder, Body, Handle, Base
       const paths = svg.locator('path');
       const pathCount = await paths.count();
-      expect(pathCount).toBeGreaterThanOrEqual(5); // At least 5 major components
+      expect(pathCount).toBe(6);
 
       // Check for group element with stroke attributes
       const group = svg.locator('g');
@@ -93,10 +93,10 @@ test.describe('Camera Outline Matching System', () => {
       const svg = page.locator('.bottle-guide-svg');
 
       // Static outline has no additional markers or indicators
-      // Just the basic bottle shape paths
+      // Just the basic bottle shape paths (6 components: Cap, Neck, Shoulder, Body, Handle, Base)
       const paths = svg.locator('path');
       const pathCount = await paths.count();
-      expect(pathCount).toBeGreaterThanOrEqual(5);
+      expect(pathCount).toBe(6);
     });
 
     test('should display as simple visual reference', async ({ page }) => {

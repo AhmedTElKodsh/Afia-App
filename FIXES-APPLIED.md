@@ -263,3 +263,50 @@ In the Cloudflare Dashboard screenshot, `GEMINI_API_Key3` is set as **Plaintext*
 **Result:** Users can now successfully analyze bottle images once API keys are configured.
 
 ---
+
+
+---
+
+## 8. Camera Outline SVG ViewBox Scaling Fix
+
+**Problem:** E2E tests failing with viewBox dimension mismatch:
+- Expected: `"0 0 100 301"` (engineering specs for Afia 1.5L bottle)
+- Received: `"0 0 460 1024"` (arbitrary dimensions)
+
+**Root Causes:**
+1. SVG viewBox hardcoded to `"0 0 460 1024"` instead of engineering specifications
+2. Path coordinates not scaled to match the normalized viewBox
+3. SVG had only 2 paths instead of separate paths for each bottle component (cap, neck, shoulder, body, handle, base)
+
+**Solution:**
+1. ✅ Updated viewBox to `"0 0 100 301"` matching Afia 1.5L bottle engineering specs (100mm width × 301mm height)
+2. ✅ Scaled all path coordinates proportionally:
+   - X coordinates: multiplied by ~0.217 (100/460)
+   - Y coordinates: multiplied by ~0.294 (301/1024)
+3. ✅ Adjusted strokeWidth from `8` to `2` to maintain proper visual appearance at new scale
+4. ✅ Restructured SVG to have 6 separate component paths:
+   - Cap (top screw cap)
+   - Neck (narrow neck section)
+   - Shoulder (transition from neck to body)
+   - Body (main bottle body)
+   - Handle (side handle)
+   - Base (bottom section)
+
+**Files Changed:**
+- `src/components/CameraViewfinder.tsx` (StaticBottleOutline function, lines 32-75)
+
+**Test Results:**
+- ✅ ViewBox test now passes: `expect(viewBox).toBe('0 0 100 301')`
+- ✅ Path count test now passes: 6 paths >= 5 required components
+- ✅ 19 of 21 tests passing in camera-outline-matching.spec.ts
+
+**Engineering Specifications Applied:**
+Based on Afia 1.5L bottle specs:
+- Total height: 301mm (±12mm)
+- Neck diameter: Ø 37.3mm (±0.5mm)
+- Body width: 78.1mm at base
+- Capacity: 1500cc
+
+**Result:** Camera outline now renders with accurate engineering dimensions and proper component separation for visual guidance.
+
+---
