@@ -355,6 +355,25 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+      - name: Sync worker secrets (bulk)
+        run: |
+          ENVIRONMENT="${{ github.ref == 'refs/heads/local-model' && 'stage2' || 'stage1' }}"
+          cd worker
+          cat > /tmp/secrets.json << EOF
+          {
+            "ADMIN_PASSWORD": ${{ toJSON(secrets.VITE_ADMIN_PASSWORD) }},
+            "GEMINI_API_KEY": ${{ toJSON(secrets.GEMINI_API_KEY) }},
+            "GEMINI_API_KEY2": ${{ toJSON(secrets.GEMINI_API_KEY2) }},
+            "GEMINI_API_KEY3": ${{ toJSON(secrets.GEMINI_API_KEY3) }},
+            "GROQ_API_KEY": ${{ toJSON(secrets.GROQ_API_KEY) }}
+          }
+          EOF
+          npx wrangler secret bulk /tmp/secrets.json --env $ENVIRONMENT
+          rm /tmp/secrets.json
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Verify worker deployment
         run: |
           WORKER_URL="${{ github.ref == 'refs/heads/local-model' && 'https://afia-worker-stage2.savola.workers.dev' || 'https://afia-worker.savola.workers.dev' }}"
