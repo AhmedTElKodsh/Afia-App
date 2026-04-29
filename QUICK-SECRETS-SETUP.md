@@ -43,8 +43,8 @@ chmod +x scripts/verify-and-set-secrets.sh
 If you prefer to set secrets manually:
 
 ```powershell
-# Make sure you're in the worker directory
-cd worker
+# IMPORTANT: Navigate to the worker directory first!
+cd D:\AI Projects\Freelance\Afia-App\worker
 
 # For DEFAULT environment (stage-1-llm-only production)
 echo "YOUR_ADMIN_PASSWORD" | npx wrangler secret put ADMIN_PASSWORD
@@ -70,8 +70,11 @@ echo "YOUR_GROQ_KEY" | npx wrangler secret put GROQ_API_KEY --env stage2
 
 ## 🔍 Verify Secrets
 
+**IMPORTANT: You MUST be in the `worker` directory to run wrangler commands!**
+
 ```powershell
-cd worker
+# First, navigate to the worker directory
+cd D:\AI Projects\Freelance\Afia-App\worker
 
 # Check DEFAULT environment
 npx wrangler secret list
