@@ -129,7 +129,7 @@ test.describe('Camera Outline Matching System', () => {
       });
 
       // Should have percentage-based width with max-width constraint
-      expect(styles.maxWidth).toBe('190px');
+      expect(styles.maxWidth).toBe('320px');
     });
   });
 

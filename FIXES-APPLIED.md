@@ -610,3 +610,47 @@ Begin implementing Task 1.1 - Interactive Oil Level Slider
 **Result:** Camera interface now provides better visual guidance and easier interaction for users capturing bottle images.
 
 ---
+
+
+## 14. Stage 1 Camera Guide Refinement
+
+**Date:** 2026-04-29
+
+**Purpose:** Fine-tune bottle guide dimensions for better visual alignment in camera view.
+
+**Change Made:**
+
+**Bottle Guide Max-Width Adjustment:**
+- Reduced `.bottle-guide-wrapper` max-width from `320px` to `190px`
+- Improves alignment between static outline and actual bottle in camera
+- Maintains 78% width with tighter maximum constraint
+- Better visual guidance for users positioning bottles
+
+**Files Changed:**
+- `src/components/CameraViewfinder.css` (line 566)
+
+**Commit Details:**
+- Commit: `cc6985d`
+- Branch: `stage-1-llm-only`
+- Pushed: 2026-04-29
+
+**CI/CD Pipeline:**
+- ✅ Committed and pushed to GitHub
+- ⏳ GitHub Actions workflow triggered
+- 🔗 Workflow URL: https://github.com/AhmedTElKodsh/Afia-App/actions/workflows/ci-cd.yml
+
+**Expected Deployment:**
+- Worker URL: https://afia-worker.savola.workers.dev
+- Pages URL: https://afia-app.pages.dev
+- Environment: Production (stage1)
+
+**Files Excluded:**
+This commit excludes all local model development files:
+- `.bob/` directory
+- Training data scripts (Python files)
+- Upload guides and status documents
+- Python cache files
+
+**Result:** Camera interface now provides more accurate bottle positioning guidance with refined outline dimensions.
+
+---

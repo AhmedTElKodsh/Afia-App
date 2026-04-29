@@ -274,10 +274,12 @@ export async function handleAnalyze(c: Context<{ Bindings: Env; Variables: Varia
     if (!succeeded) {
       const latencyMs = Date.now() - startTime;
       await logger.error("All AI providers failed", { errors: providerErrors, sku, latencyMs });
-      return c.json({ 
-        error: "Image analysis temporarily unavailable. Please try again.", 
+      return c.json({
+        error: "Image analysis temporarily unavailable. Please try again.",
         code: "SERVICE_UNAVAILABLE",
-        requestId: c.get("requestId")
+        requestId: c.get("requestId"),
+        // TEMP DEBUG - remove after diagnosis
+        debug_providerErrors: providerErrors,
       }, 503);
     }
 
