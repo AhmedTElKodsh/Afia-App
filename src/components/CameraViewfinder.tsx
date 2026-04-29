@@ -15,6 +15,7 @@ import {
 import jsQR from "jsqr";
 import { runQualityGate } from "../utils/imageQualityGate";
 import { OrientationGuide } from "./OrientationGuide";
+import BottleOutline from "../assets/BottleOutline";
 
 interface CameraViewfinderProps {
   onCapture: (base64: string, qrData: string | null) => void;
@@ -27,60 +28,6 @@ interface CameraViewfinderProps {
 }
 
 type CameraState = 'idle' | 'requesting' | 'active' | 'permission-denied' | 'error';
-
-function StaticBottleOutline() {
-  return (
-    <div className="bottle-guide-wrapper">
-      <svg
-        className="bottle-guide-svg"
-        viewBox="0 0 100 301"
-        preserveAspectRatio="xMidYMid meet"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-      >
-        <g
-          stroke="rgba(255,255,255,0.85)"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          strokeWidth="2"
-          fill="none"
-        >
-          {/* Cap */}
-          <path
-            d="M 48.5 96 L 42.8 98.2 L 41.7 106.7 L 42.6 112.5 L 57.4 112.5 L 59.6 106.7 L 59.6 97.3 Z"
-            vectorEffect="non-scaling-stroke"
-          />
-          {/* Neck */}
-          <path
-            d="M 42.6 112.5 L 32.2 124 L 29.8 128.7 L 28 135.3 L 29.8 149.6 L 43 113.4 L 43.7 110.2 L 42.4 108.5 L 43.3 99 L 50 97.3 L 57.4 97.8 L 60.2 101 L 59.6 113.8 L 68.7 125.9 L 72.8 137.3 L 73 140.2 L 70.7 146.1"
-            vectorEffect="non-scaling-stroke"
-          />
-          {/* Shoulder */}
-          <path
-            d="M 29.8 149.6 L 29.6 166 L 27.8 177.8 L 30 168.4 L 30.7 151.1 L 28.9 134.6 L 32.8 124.6 L 70.7 146.1 L 64.8 151.4 L 62 157.2 L 60.7 179.9"
-            vectorEffect="non-scaling-stroke"
-          />
-          {/* Body */}
-          <path
-            d="M 27.8 177.8 L 21.7 204 L 21.3 224.3 L 23.9 243.7 L 22.6 202.5 L 60.7 179.9 L 61.3 187.6 L 63.5 192 L 74.8 198.1 L 77.8 204.6 L 76.9 230.4 L 78.7 196.3 L 78.9 179.3 L 76.1 146.4"
-            vectorEffect="non-scaling-stroke"
-          />
-          {/* Handle */}
-          <path
-            d="M 70.2 127 L 76.1 146.4 L 78.9 179.3 L 78.7 196.3 L 76.5 199.9 L 78.7 205.7 L 77.8 228 L 73.3 252.2"
-            vectorEffect="non-scaling-stroke"
-          />
-          {/* Base */}
-          <path
-            d="M 23.9 243.7 L 28.3 260.6 L 31.1 265.4 L 36.5 268.1 L 56.5 268.4 L 64.8 267.4 L 67.8 265.4 L 70.4 261.3 L 73.3 252.2 L 70.8 257.5 L 67 264.9 L 58.7 267.2 L 36.3 266.9 L 31.1 264 L 28.9 259.8 L 24.3 242.5"
-            vectorEffect="non-scaling-stroke"
-          />
-        </g>
-      </svg>
-    </div>
-  );
-}
 
 export function CameraViewfinder({
   onCapture,
@@ -284,7 +231,9 @@ export function CameraViewfinder({
           </div>
 
           <div className="guidance-center">
-            <StaticBottleOutline />
+            <div className="bottle-guide-wrapper">
+              <BottleOutline className="bottle-guide-svg" aria-hidden="true" />
+            </div>
             <OrientationGuide visible={true} />
           </div>
         </div>
