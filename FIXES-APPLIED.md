@@ -368,3 +368,131 @@ Based on Afia 1.5L bottle specs:
 **Result:** Camera outline now renders with accurate engineering dimensions and proper component separation for visual guidance.
 
 ---
+
+
+---
+
+## 10. Stage 1 Test Updates - Camera Outline Matching
+
+**Date:** 2026-04-29
+
+**Problem:** Camera outline matching tests needed updates after implementing the static bottle outline guidance feature.
+
+**Changes Made:**
+1. ✅ Updated `test-results.json` with latest test execution data
+2. ✅ Modified `tests/e2e/camera-outline-matching.spec.ts` to improve test reliability
+3. ✅ Excluded local model development changes from this commit
+
+**Files Changed:**
+- `test-results.json` - Updated with latest test execution results
+- `tests/e2e/camera-outline-matching.spec.ts` - Improved test reliability
+
+**Commit Details:**
+- Commit: `2cb8540a06ccab2399bcf8deda2407fe87ee1e06`
+- Branch: `stage-1-llm-only`
+- Pushed: 2026-04-29T17:47:47Z
+
+**CI/CD Pipeline Status:**
+- ⏳ GitHub Actions workflow triggered
+- 🔗 Workflow URL: https://github.com/AhmedTElKodsh/Afia-App/actions/workflows/ci-cd.yml
+- 📋 Pipeline includes:
+  - Setup & Cache Dependencies
+  - Lint & Code Quality
+  - Unit Tests
+  - Integration Tests
+  - E2E Tests
+  - Security Scan
+  - Deploy Worker (to stage1 environment)
+  - Deploy Pages (to production)
+
+**Expected Deployment:**
+- Worker URL: https://afia-worker.savola.workers.dev
+- Pages URL: https://afia-app.pages.dev
+- Environment: Production (stage1)
+
+**Next Steps:**
+1. Monitor GitHub Actions workflow execution
+2. Verify deployment completes successfully
+3. Test the deployed application
+4. Review workflow.txt for next implementation tasks
+
+---
+
+
+## 11. Stage 1 Workflow Analysis & Action Plan
+
+**Date:** 2026-04-29
+
+**Purpose:** Comprehensive analysis of the complete Afia App workflow and creation of actionable implementation plan for Stage 1 completion.
+
+**Documents Created:**
+
+1. **WORKFLOW-ANALYSIS.md**
+   - Complete workflow breakdown from QR scanning to oil measurement
+   - Implementation status for each stage
+   - Technical requirements and current state
+   - Priority next steps identified
+
+2. **STAGE-1-ACTION-PLAN.md**
+   - Detailed action plan for Stage 1 completion
+   - 5 priority levels with time estimates
+   - Implementation timeline (3 weeks)
+   - Success criteria and risk management
+
+**Key Findings:**
+
+**✅ Completed Features:**
+- QR code landing and routing
+- Camera with static bottle outline (100mm × 301mm engineering specs)
+- Image quality gates (brightness, blur, contrast)
+- LLM analysis with multi-provider fallback (Gemini + Groq)
+- Admin dashboard with scan history
+- Export functionality (JSON/CSV)
+- Manual correction and LLM re-analysis
+- Training data upload
+- CI/CD pipeline with automated testing
+
+**❌ Missing Critical Features:**
+1. **Interactive Slider** (55ml increments + cup visualization)
+   - User can adjust oil level measurement
+   - Visual feedback with cup fill indicator
+   - Priority: 🔴 CRITICAL
+
+2. **Logo Detection** (Afia brand verification)
+   - Local browser-based detection
+   - Template matching or TensorFlow.js
+   - Confidence scoring and flagging
+   - Priority: 🟡 HIGH
+
+3. **Distinct QR Codes** (1.5L vs 2.5L bottles)
+   - Size-specific parameters
+   - Correct bottle geometry loading
+   - Priority: 🟢 MEDIUM
+
+4. **Enhanced Quality Guidance** (specific messages)
+   - Lighting adjustment instructions
+   - Position guidance
+   - Real-time feedback
+   - Priority: 🟡 HIGH
+
+**Implementation Timeline:**
+- **Week 1:** Interactive Slider + Logo Detection + Quality Guidance
+- **Week 2:** QR Size Management + Complete E2E Tests + Performance
+- **Week 3:** Bug Fixes + Documentation + Final Deployment
+
+**Stage 2 Preparation:**
+- Training data collection pipeline
+- Local model architecture development
+- Browser deployment strategy
+- Hybrid analysis system (local + LLM fallback)
+
+**Next Immediate Action:**
+Begin implementing Task 1.1 - Interactive Oil Level Slider
+
+**Files Created:**
+- `WORKFLOW-ANALYSIS.md` - Complete workflow documentation
+- `STAGE-1-ACTION-PLAN.md` - Detailed implementation plan
+
+**Result:** Clear roadmap for Stage 1 completion with prioritized tasks, time estimates, and success criteria.
+
+---
