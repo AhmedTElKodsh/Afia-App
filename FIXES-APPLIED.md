@@ -192,3 +192,74 @@ All critical issues resolved:
 - Verify deployment to production environment
 - Scan some bottles using the app to populate data
 - Admin dashboard will show scan history and analytics
+
+
+---
+
+## 7. Analysis Failed - API Keys Environment Mismatch
+
+**Problem:** Mobile app shows "Analysis Failed" error when trying to analyze bottle images, even after setting API keys.
+
+**Root Cause:** API keys were set with `--env stage1` flag, but the deployed worker uses the **default environment**. The keys need to be set for the default environment (without the `--env` flag).
+
+**Solution:** Created comprehensive setup scripts and documentation to configure API keys.
+
+**Files Created:**
+- `scripts/setup-api-keys.sh` - Bash script for Linux/Mac
+- `scripts/setup-api-keys.ps1` - PowerShell script for Windows
+- `docs/API-KEYS-SETUP.md` - Complete API keys setup guide
+- `QUICK-START-API-KEYS.md` - Quick 5-minute setup guide
+
+**Critical Fix - Remove `--env stage1` flag:**
+```bash
+cd worker
+# Set for DEFAULT environment (no --env flag!)
+echo "YOUR_GEMINI_KEY" | npx wrangler secret put GEMINI_API_KEY
+echo "YOUR_GEMINI_KEY_2" | npx wrangler secret put GEMINI_API_KEY2
+echo "YOUR_GROQ_KEY" | npx wrangler secret put GROQ_API_KEY
+```
+
+**Automated Fix:**
+```powershell
+# Windows - Sets keys for DEFAULT environment
+.\scripts\fix-keys-default-env.ps1
+```
+
+**Get Free API Keys:**
+- Gemini: https://aistudio.google.com/app/apikey (Required)
+- Groq: https://console.groq.com/keys (Recommended fallback)
+- OpenRouter: https://openrouter.ai/keys (Optional)
+- Mistral: https://console.mistral.ai/api-keys/ (Optional)
+
+**Fallback Strategy:**
+The system tries providers in order: Gemini → Groq → OpenRouter → Mistral
+
+**Rate Limits (Free Tier):**
+- Gemini: 15 req/min, 1,500 req/day per key
+- Groq: 30 req/min, 14,400 req/day
+- Use multiple Gemini keys to multiply limits
+
+**Testing:**
+Enable mock mode for testing without API keys:
+```bash
+cd worker
+echo "true" | npx wrangler secret put ENABLE_MOCK_LLM --env stage1
+```
+
+**Verification:**
+```bash
+cd worker
+# List secrets for DEFAULT environment
+npx wrangler secret list
+
+# Should show: GEMINI_API_KEY, GEMINI_API_KEY2, etc.
+```
+
+**Security Issue Found:**
+In the Cloudflare Dashboard screenshot, `GEMINI_API_Key3` is set as **Plaintext** instead of **Secret**. This exposes the API key publicly. Fix:
+1. Delete the plaintext variable from Cloudflare Dashboard
+2. Set it as a secret: `echo "YOUR_KEY" | npx wrangler secret put GEMINI_API_KEY3`
+
+**Result:** Users can now successfully analyze bottle images once API keys are configured.
+
+---
