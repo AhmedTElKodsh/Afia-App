@@ -10,18 +10,14 @@
     "grep": {},
     "grepInvert": null,
     "maxFailures": 0,
-    "metadata": {
-      "actualWorkers": 1
-    },
+    "metadata": {},
     "preserveOutput": "always",
     "projects": [
       {
         "outputDir": "D:/AI Projects/Freelance/Afia-App/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 1
-        },
+        "metadata": {},
         "id": "chromium",
         "name": "chromium",
         "testDir": "D:/AI Projects/Freelance/Afia-App/tests/e2e",
@@ -64,73 +60,17 @@
     "workers": 8,
     "webServer": null
   },
-  "suites": [
+  "suites": [],
+  "errors": [
     {
-      "title": "camera-outline-matching.spec.ts",
-      "file": "camera-outline-matching.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "Camera Outline Matching System",
-          "file": "camera-outline-matching.spec.ts",
-          "line": 22,
-          "column": 6,
-          "specs": [],
-          "suites": [
-            {
-              "title": "Outline Geometry",
-              "file": "camera-outline-matching.spec.ts",
-              "line": 58,
-              "column": 8,
-              "specs": [
-                {
-                  "title": "should render as simple static outline",
-                  "ok": true,
-                  "tags": [],
-                  "tests": [
-                    {
-                      "timeout": 60000,
-                      "annotations": [],
-                      "expectedStatus": "passed",
-                      "projectId": "chromium",
-                      "projectName": "chromium",
-                      "results": [
-                        {
-                          "workerIndex": 0,
-                          "parallelIndex": 0,
-                          "status": "passed",
-                          "duration": 13554,
-                          "errors": [],
-                          "stdout": [],
-                          "stderr": [],
-                          "retry": 0,
-                          "startTime": "2026-04-29T13:23:10.148Z",
-                          "annotations": [],
-                          "attachments": []
-                        }
-                      ],
-                      "status": "expected"
-                    }
-                  ],
-                  "id": "777a149b66d8d669a672-3d6c7091a6cd9ad30ddb",
-                  "file": "camera-outline-matching.spec.ts",
-                  "line": 90,
-                  "column": 5
-                }
-              ]
-            }
-          ]
-        }
-      ]
+      "message": "Error: No tests found.\nMake sure that arguments are regular expressions matching test files.\nYou may need to escape symbols like \"$\" or \"*\" and quote the arguments.",
+      "stack": "Error: No tests found.\nMake sure that arguments are regular expressions matching test files.\nYou may need to escape symbols like \"$\" or \"*\" and quote the arguments."
     }
   ],
-  "errors": [],
   "stats": {
-    "startTime": "2026-04-29T13:22:49.322Z",
-    "duration": 36328.05,
-    "expected": 1,
+    "startTime": "2026-04-29T13:39:23.491Z",
+    "duration": 19449.055,
+    "expected": 0,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0
