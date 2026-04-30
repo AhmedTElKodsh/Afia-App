@@ -1,0 +1,345 @@
+/* ── Demo root ── */
+.demo-root {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Camera ── */
+.demo-camera-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+.demo-camera-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+/* Top instruction banner — sits above video, below controls */
+.demo-camera-banner {
+  position: absolute;
+  top: env(safe-area-inset-top, 0px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 14px 20px 12px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.75) 0%, transparent 100%);
+  color: #fff;
+  font-size: 16px;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+/* Bottle outline — centered, doesn't block capture button */
+.demo-bottle-outline-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -52%); /* shift up slightly so btn visible */
+  z-index: 2;
+  pointer-events: none;
+  max-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.demo-bottle-outline {
+  height: 55vh;
+  max-height: 55vh;
+  width: auto;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 6px rgba(255,255,255,0.4));
+}
+
+/* Capture button — bottom-center, above safe area */
+.demo-capture-btn {
+  position: absolute;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 11;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  border: 3px solid #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.demo-capture-btn:active {
+  transform: translateX(-50%) scale(0.93);
+}
+
+.demo-capture-btn--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.demo-capture-btn-inner {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fff;
+  display: block;
+}
+
+/* Analyzing overlay */
+.demo-analyzing-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: rgba(0,0,0,0.72);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.demo-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255,255,255,0.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.demo-analyzing-text {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Error banner */
+.demo-error-banner {
+  position: absolute;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 110px);
+  left: 16px;
+  right: 16px;
+  z-index: 15;
+  background: rgba(220, 38, 38, 0.9);
+  color: #fff;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Camera permission error */
+.demo-camera-error {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-align: center;
+  padding: 32px;
+  gap: 8px;
+  font-size: 18px;
+}
+
+/* ── Result ── */
+.demo-result-root {
+  position: fixed;
+  inset: 0;
+  background: #111;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: env(safe-area-inset-top, 0px) 0 calc(env(safe-area-inset-bottom, 0px) + 16px);
+}
+
+.demo-result-header {
+  display: flex;
+  justify-content: space-around;
+  padding: 16px 20px 12px;
+  background: #1a1a1a;
+  border-bottom: 1px solid #333;
+  flex-shrink: 0;
+}
+
+.demo-result-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.demo-stat-label {
+  font-size: 12px;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.demo-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.demo-result-body {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 12px 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Vertical slider */
+.demo-slider-track {
+  position: relative;
+  width: 44px;
+  flex-shrink: 0;
+  align-self: stretch;
+  min-height: 240px;
+  max-height: 440px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 22px;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+
+.demo-slider-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-radius: 22px;
+  background: linear-gradient(to top, #f59e0b, #fbbf24);
+  transition: height 0.05s;
+  pointer-events: none;
+}
+
+.demo-slider-tick {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  height: 1px;
+  background: rgba(255,255,255,0.2);
+  pointer-events: none;
+}
+
+.demo-slider-thumb {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #f59e0b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  transition: bottom 0.05s;
+  z-index: 2;
+}
+
+.demo-slider-thumb-label {
+  font-size: 8px;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+  line-height: 1.1;
+}
+
+/* Bottle image */
+.demo-bottle-img-wrapper {
+  position: relative;
+  flex: 1;
+  max-width: 260px;
+  align-self: flex-start;
+}
+
+.demo-bottle-img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+  max-height: 440px;
+  object-fit: contain;
+}
+
+/* Red oil level line */
+.demo-oil-line {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  height: 3px;
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.8);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* Cup section */
+.demo-cup-section {
+  padding: 12px 20px 8px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.demo-cup-label {
+  font-size: 14px;
+  color: #999;
+  margin: 0 0 10px;
+}
+
+.demo-cup-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* Retake button */
+.demo-retake-btn {
+  display: block;
+  margin: 8px auto 0;
+  padding: 14px 32px;
+  border-radius: 40px;
+  border: 2px solid rgba(255,255,255,0.3);
+  background: transparent;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+
+.demo-retake-btn:active {
+  background: rgba(255,255,255,0.1);
+}
