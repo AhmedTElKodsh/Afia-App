@@ -361,14 +361,14 @@ jobs:
           cd worker
           cat > /tmp/secrets.json << EOF
           {
-            "ADMIN_PASSWORD": ${{ toJSON(secrets.VITE_ADMIN_PASSWORD) }},
-            "GEMINI_API_KEY": ${{ toJSON(secrets.GEMINI_API_KEY) }},
-            "GEMINI_API_KEY2": ${{ toJSON(secrets.GEMINI_API_KEY2) }},
-            "GEMINI_API_KEY3": ${{ toJSON(secrets.GEMINI_API_KEY3) }},
-            "GEMINI_API_KEY4": ${{ toJSON(secrets.GEMINI_API_KEY4) }},
-            "GROQ_API_KEY": ${{ toJSON(secrets.GROQ_API_KEY) }},
-            "OPENROUTER_API_KEY": ${{ toJSON(secrets.OPENROUTER_API_KEY) }},
-            "MISTRAL_API_KEY": ${{ toJSON(secrets.MISTRAL_API_KEY) }}
+            "ADMIN_PASSWORD": ${{ toJSON(secrets.VITE_ADMIN_PASSWORD || '') }},
+            "GEMINI_API_KEY": ${{ toJSON(secrets.GEMINI_API_KEY || '') }},
+            "GEMINI_API_KEY2": ${{ toJSON(secrets.GEMINI_API_KEY2 || '') }},
+            "GEMINI_API_KEY3": ${{ toJSON(secrets.GEMINI_API_KEY3 || '') }},
+            "GEMINI_API_KEY4": ${{ toJSON(secrets.GEMINI_API_KEY4 || '') }},
+            "GROQ_API_KEY": ${{ toJSON(secrets.GROQ_API_KEY || '') }},
+            "OPENROUTER_API_KEY": ${{ toJSON(secrets.OPENROUTER_API_KEY || '') }},
+            "MISTRAL_API_KEY": ${{ toJSON(secrets.MISTRAL_API_KEY || '') }}
           }
           EOF
           npx wrangler secret bulk /tmp/secrets.json --env $ENVIRONMENT
