@@ -49,21 +49,39 @@ test-results/
 # AI Agent directories
 .agent/
 .agents/
+.bob/
 .cline/
 .clinerules/
 .codebuddy/
+.codestudio/
+.cortex/
 .cursor/
+.factory/
 .gemini/
+.goose/
 .iflow/
 .kilocode/
 .kiro/
 .ona/
 .opencode/
 .pi/
+.pochi/
 .qwen/
 .roo/
 .trae/
 .windsurf/
+
+# AI tooling output
+_bmad-output/
+skills/
+skills-lock.json
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Local command scratch file
+npx
 
 # Large data and models
 venv/
