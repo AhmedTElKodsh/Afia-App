@@ -1,24 +1,13 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './i18n/config.ts'
-import './index.css'
 import App from './App.tsx'
-import { DemoApp } from './demo/DemoApp.tsx'
-import { ErrorBoundary } from './components/ErrorBoundary.tsx'
-import { ToastProvider } from './components/Toast.tsx'
-
-const isDemo = window.location.pathname.startsWith('/demo')
+import { ErrorBoundary } from './ErrorBoundary.tsx'
+import './app.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      {isDemo ? (
-        <DemoApp />
-      ) : (
-        <ToastProvider>
-          <App />
-        </ToastProvider>
-      )}
+      <App />
     </ErrorBoundary>
   </StrictMode>,
 )

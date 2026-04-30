@@ -5,7 +5,7 @@ interface Props {
   disabled: boolean;
 }
 
-export function DemoCamera({ onCapture, disabled }: Props) {
+export function CameraScreen({ onCapture, disabled }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);

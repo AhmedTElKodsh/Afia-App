@@ -45,7 +45,7 @@ function CupSVG({ fraction }: { fraction: 0 | 0.25 | 0.5 | 0.75 | 1 }) {
   );
 }
 
-export function DemoResult({ capturedImage, result, onRetake }: Props) {
+export function ResultScreen({ capturedImage, result, onRetake }: Props) {
   const maxStep = Math.floor(result.remainingMl / STEP_ML);
   const [stepCount, setStepCount] = useState(0);
 
