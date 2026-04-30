@@ -70,9 +70,9 @@ export function DemoCamera({ onCapture, disabled }: Props) {
 
       {/* Top instruction banner */}
       <div className="demo-camera-banner">
-        <span>📸 Point camera at the</span>
-        <strong> FRONT </strong>
-        <span>of the bottle</span>
+        <div className="demo-camera-banner-main">Shoot the frontside with handle on the right →</div>
+        <div className="demo-camera-banner-sub">Align the outline to the bottle as best you can</div>
+        <div className="demo-camera-banner-sub">Ensure Afia logo is visible</div>
       </div>
 
       {/* Bottle outline overlay — static guidance only */}

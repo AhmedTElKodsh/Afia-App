@@ -34,31 +34,41 @@
   left: 0;
   right: 0;
   z-index: 10;
-  padding: 14px 20px 12px;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.75) 0%, transparent 100%);
+  padding: 12px 20px 16px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.55) 75%, transparent 100%);
   color: #fff;
-  font-size: 16px;
   text-align: center;
-  letter-spacing: 0.01em;
 }
 
-/* Bottle outline — centered, doesn't block capture button */
+.demo-camera-banner-main {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin-bottom: 4px;
+}
+
+.demo-camera-banner-sub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.80);
+  line-height: 1.5;
+}
+
+/* Bottle outline — centered, clear of banner top and capture btn bottom */
 .demo-bottle-outline-wrapper {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -52%); /* shift up slightly so btn visible */
+  transform: translate(-50%, -57%); /* shift up to keep clear of capture btn */
   z-index: 2;
   pointer-events: none;
-  max-height: 60vh;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .demo-bottle-outline {
-  height: 55vh;
-  max-height: 55vh;
+  height: 48vh;
+  max-height: 48vh;
   width: auto;
   opacity: 0.85;
   filter: drop-shadow(0 0 6px rgba(255,255,255,0.4));
