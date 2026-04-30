@@ -3,9 +3,9 @@ name: Stage1 LLM Only
 
 on:
   push:
-    branches: [master, local-model, stage-1-llm-only, stage-1-demo]
+    branches: [master, stage-1-llm-only]
   pull_request:
-    branches: [master, local-model, stage-1-llm-only, stage-1-demo]
+    branches: [master, stage-1-llm-only]
   workflow_dispatch:
     inputs:
       environment:
@@ -255,9 +255,9 @@ jobs:
       - name: Build for E2E
         run: npm run build
         env:
-          VITE_PROXY_URL: ${{ github.ref == 'refs/heads/local-model' && 'https://afia-worker-stage2.savola.workers.dev' || 'https://afia-worker.savola.workers.dev' }}
+          VITE_PROXY_URL: https://afia-worker.savola.workers.dev
           VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD }}
-          VITE_STAGE: ${{ github.ref == 'refs/heads/local-model' && 'stage2' || 'stage1' }}
+          VITE_STAGE: stage1
 
       - name: Run E2E tests
         run: npx playwright test tests/e2e/
@@ -321,10 +321,10 @@ jobs:
     name: Deploy Worker
     needs: [setup, lint, unit-tests, integration-tests, e2e-tests, security-scan]
     runs-on: ubuntu-latest
-    if: (github.event_name == 'push' || github.event_name == 'pull_request') && (github.ref_name == 'master' || github.ref_name == 'local-model' || github.ref_name == 'stage-1-llm-only' || github.ref_name == 'stage-1-demo' || github.ref_name == 'update-cicd-pipeline' || github.base_ref == 'master' || github.base_ref == 'local-model' || github.base_ref == 'stage-1-llm-only' || github.base_ref == 'stage-1-demo')
+    if: (github.event_name == 'push' || github.event_name == 'pull_request') && (github.ref_name == 'master' || github.ref_name == 'stage-1-llm-only' || github.base_ref == 'master' || github.base_ref == 'stage-1-llm-only')
     environment:
       name: ${{ github.ref == 'refs/heads/master' && 'production' || 'staging' }}
-      url: ${{ github.ref == 'refs/heads/local-model' && 'https://afia-worker-stage2.savola.workers.dev' || 'https://afia-worker.savola.workers.dev' }}
+      url: https://afia-worker.savola.workers.dev
     steps:
       - uses: actions/checkout@v5
 
@@ -348,16 +348,14 @@ jobs:
       - name: Deploy Worker
         id: deploy-worker
         run: |
-          ENVIRONMENT="${{ github.ref == 'refs/heads/local-model' && 'stage2' || 'stage1' }}"
-          echo "Deploying to environment: $ENVIRONMENT"
-          cd worker && npx wrangler deploy --env $ENVIRONMENT
+          echo "Deploying to Stage 1 environment"
+          cd worker && npx wrangler deploy --env stage1
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Sync worker secrets (bulk)
         run: |
-          ENVIRONMENT="${{ github.ref == 'refs/heads/local-model' && 'stage2' || 'stage1' }}"
           cd worker
           cat > /tmp/secrets.json << EOF
           {
@@ -371,7 +369,7 @@ jobs:
             "MISTRAL_API_KEY": ${{ toJSON(secrets.MISTRAL_API_KEY || '') }}
           }
           EOF
-          npx wrangler secret bulk /tmp/secrets.json --env $ENVIRONMENT
+          npx wrangler secret bulk /tmp/secrets.json --env stage1
           rm /tmp/secrets.json
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -379,10 +377,9 @@ jobs:
 
       - name: Verify worker deployment
         run: |
-          WORKER_URL="${{ github.ref == 'refs/heads/local-model' && 'https://afia-worker-stage2.savola.workers.dev' || 'https://afia-worker.savola.workers.dev' }}"
-          echo "Verifying worker at: $WORKER_URL/health"
+          echo "Verifying worker at: https://afia-worker.savola.workers.dev/health"
           for i in {1..5}; do
-            if curl -sf "$WORKER_URL/health" > /dev/null 2>&1; then
+            if curl -sf "https://afia-worker.savola.workers.dev/health" > /dev/null 2>&1; then
               echo "Worker is healthy!"
               exit 0
             fi
@@ -396,7 +393,7 @@ jobs:
     name: Deploy Pages
     needs: [setup, deploy-worker]
     runs-on: ubuntu-latest
-    if: (github.event_name == 'push' || github.event_name == 'pull_request') && (github.ref_name == 'master' || github.ref_name == 'local-model' || github.ref_name == 'stage-1-llm-only' || github.ref_name == 'stage-1-demo' || github.ref_name == 'update-cicd-pipeline' || github.base_ref == 'master' || github.base_ref == 'local-model' || github.base_ref == 'stage-1-llm-only' || github.base_ref == 'stage-1-demo')
+    if: (github.event_name == 'push' || github.event_name == 'pull_request') && (github.ref_name == 'master' || github.ref_name == 'stage-1-llm-only' || github.base_ref == 'master' || github.base_ref == 'stage-1-llm-only')
     environment:
       name: ${{ github.ref == 'refs/heads/master' && 'production' || 'staging' }}
       url: https://afia-app.pages.dev
@@ -417,14 +414,14 @@ jobs:
       - name: Build application
         run: npm run build
         env:
-          VITE_PROXY_URL: ${{ github.ref == 'refs/heads/local-model' && 'https://afia-worker-stage2.savola.workers.dev' || 'https://afia-worker.savola.workers.dev' }}
+          VITE_PROXY_URL: https://afia-worker.savola.workers.dev
           VITE_ADMIN_PASSWORD: ${{ secrets.VITE_ADMIN_PASSWORD }}
-          VITE_STAGE: ${{ github.ref == 'refs/heads/local-model' && 'stage2' || 'stage1' }}
+          VITE_STAGE: stage1
 
       - name: Deploy to Cloudflare Pages
         id: deploy-pages
         run: |
-          BRANCH="${{ (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/stage-1-llm-only') && 'master' || github.ref_name }}"
+          BRANCH="${{ github.ref == 'refs/heads/master' && 'master' || github.ref_name }}"
           echo "Deploying to branch: $BRANCH"
           npx wrangler pages deploy dist --project-name=afia-app --branch=$BRANCH
         env:
@@ -435,8 +432,8 @@ jobs:
         run: |
           echo "### 🚀 Deployment Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Environment:** ${{ (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/stage-1-llm-only') && 'Production (stage1)' || 'Staging (stage2)' }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Worker URL:** ${{ github.ref == 'refs/heads/local-model' && 'https://afia-worker-stage2.savola.workers.dev' || 'https://afia-worker.savola.workers.dev' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ github.ref == 'refs/heads/master' && 'Production (stage1)' || 'Staging (stage1)' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Worker URL:** https://afia-worker.savola.workers.dev" >> $GITHUB_STEP_SUMMARY
           echo "**Pages URL:** https://afia-app.pages.dev" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
