@@ -3,9 +3,9 @@ name: Stage1 LLM Only
 
 on:
   push:
-    branches: [master, local-model, stage-1-llm-only]
+    branches: [master, local-model, stage-1-llm-only, stage-1-demo]
   pull_request:
-    branches: [master, local-model, stage-1-llm-only]
+    branches: [master, local-model, stage-1-llm-only, stage-1-demo]
   workflow_dispatch:
     inputs:
       environment:
@@ -321,7 +321,7 @@ jobs:
     name: Deploy Worker
     needs: [setup, lint, unit-tests, integration-tests, e2e-tests, security-scan]
     runs-on: ubuntu-latest
-    if: (github.event_name == 'push' || github.event_name == 'pull_request') && (github.ref_name == 'master' || github.ref_name == 'local-model' || github.ref_name == 'stage-1-llm-only' || github.ref_name == 'update-cicd-pipeline' || github.base_ref == 'master' || github.base_ref == 'local-model' || github.base_ref == 'stage-1-llm-only')
+    if: (github.event_name == 'push' || github.event_name == 'pull_request') && (github.ref_name == 'master' || github.ref_name == 'local-model' || github.ref_name == 'stage-1-llm-only' || github.ref_name == 'stage-1-demo' || github.ref_name == 'update-cicd-pipeline' || github.base_ref == 'master' || github.base_ref == 'local-model' || github.base_ref == 'stage-1-llm-only' || github.base_ref == 'stage-1-demo')
     environment:
       name: ${{ github.ref == 'refs/heads/master' && 'production' || 'staging' }}
       url: ${{ github.ref == 'refs/heads/local-model' && 'https://afia-worker-stage2.savola.workers.dev' || 'https://afia-worker.savola.workers.dev' }}
@@ -365,7 +365,10 @@ jobs:
             "GEMINI_API_KEY": ${{ toJSON(secrets.GEMINI_API_KEY) }},
             "GEMINI_API_KEY2": ${{ toJSON(secrets.GEMINI_API_KEY2) }},
             "GEMINI_API_KEY3": ${{ toJSON(secrets.GEMINI_API_KEY3) }},
-            "GROQ_API_KEY": ${{ toJSON(secrets.GROQ_API_KEY) }}
+            "GEMINI_API_KEY4": ${{ toJSON(secrets.GEMINI_API_KEY4) }},
+            "GROQ_API_KEY": ${{ toJSON(secrets.GROQ_API_KEY) }},
+            "OPENROUTER_API_KEY": ${{ toJSON(secrets.OPENROUTER_API_KEY) }},
+            "MISTRAL_API_KEY": ${{ toJSON(secrets.MISTRAL_API_KEY) }}
           }
           EOF
           npx wrangler secret bulk /tmp/secrets.json --env $ENVIRONMENT
@@ -393,7 +396,7 @@ jobs:
     name: Deploy Pages
     needs: [setup, deploy-worker]
     runs-on: ubuntu-latest
-    if: (github.event_name == 'push' || github.event_name == 'pull_request') && (github.ref_name == 'master' || github.ref_name == 'local-model' || github.ref_name == 'stage-1-llm-only' || github.ref_name == 'update-cicd-pipeline' || github.base_ref == 'master' || github.base_ref == 'local-model' || github.base_ref == 'stage-1-llm-only')
+    if: (github.event_name == 'push' || github.event_name == 'pull_request') && (github.ref_name == 'master' || github.ref_name == 'local-model' || github.ref_name == 'stage-1-llm-only' || github.ref_name == 'stage-1-demo' || github.ref_name == 'update-cicd-pipeline' || github.base_ref == 'master' || github.base_ref == 'local-model' || github.base_ref == 'stage-1-llm-only' || github.base_ref == 'stage-1-demo')
     environment:
       name: ${{ github.ref == 'refs/heads/master' && 'production' || 'staging' }}
       url: https://afia-app.pages.dev
