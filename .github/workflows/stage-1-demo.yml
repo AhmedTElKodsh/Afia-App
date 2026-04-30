@@ -1,4 +1,4 @@
-name: stage-1-demo
+name: Stage 1 Demo
 
 on:
   push:
