@@ -218,14 +218,11 @@
   min-height: 0;
 }
 
-/* Vertical slider */
+/* Vertical slider — height & marginTop set via inline style to align with oil region */
 .demo-slider-track {
   position: relative;
   width: 44px;
   flex-shrink: 0;
-  align-self: stretch;
-  min-height: 240px;
-  max-height: 440px;
   background: rgba(255,255,255,0.08);
   border-radius: 22px;
   cursor: pointer;
@@ -235,11 +232,11 @@
 
 .demo-slider-fill {
   position: absolute;
-  bottom: 0;
+  top: 0;
   left: 0;
   right: 0;
   border-radius: 22px;
-  background: linear-gradient(to top, #f59e0b, #fbbf24);
+  background: linear-gradient(to bottom, #f59e0b, #fbbf24);
   transition: height 0.05s;
   pointer-events: none;
 }
@@ -256,7 +253,7 @@
 .demo-slider-thumb {
   position: absolute;
   left: 50%;
-  transform: translate(-50%, 50%);
+  transform: translate(-50%, -50%);
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -266,7 +263,7 @@
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  transition: bottom 0.05s;
+  transition: top 0.05s;
   z-index: 2;
 }
 
@@ -320,11 +317,18 @@
   margin: 0 0 10px;
 }
 
-.demo-cup-row {
+.demo-cup-display {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  align-items: flex-end;
   justify-content: center;
+  gap: 6px;
+}
+
+.demo-cup-number {
+  font-size: 40px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
 }
 
 /* Retake button */
