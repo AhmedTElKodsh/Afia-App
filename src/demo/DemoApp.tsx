@@ -17,6 +17,63 @@ interface AnalysisResult {
   redLineYNormalized: number | null;
 }
 
+interface WorkerError {
+  error?: string;
+  code?: string;
+  details?: { retryAfter?: number };
+  debug_providerErrors?: string[];
+}
+
+function parseWorkerError(body: WorkerError, httpStatus: number): string {
+  const { code, details, debug_providerErrors } = body;
+
+  if (code === 'RATE_LIMIT_EXCEEDED') {
+    const wait = details?.retryAfter ?? 60;
+    return `Rate limit reached — wait ${wait}s then retry`;
+  }
+  if (code === 'IMAGE_TOO_LARGE') {
+    return 'Image too large (max 4MB) — retake with less zoom';
+  }
+  if (code === 'INVALID_REQUEST') {
+    return `Invalid request — ${body.error ?? 'check image and retry'}`;
+  }
+  if (code === 'SERVICE_UNAVAILABLE') {
+    if (debug_providerErrors && debug_providerErrors.length > 0) {
+      const providerLines = debug_providerErrors.map(e => {
+        if (/gemini/i.test(e)) return `• Gemini: ${extractReason(e)}`;
+        if (/groq/i.test(e)) return `• Groq: ${extractReason(e)}`;
+        if (/openrouter/i.test(e)) return `• OpenRouter: ${extractReason(e)}`;
+        if (/mistral/i.test(e)) return `• Mistral: ${extractReason(e)}`;
+        return `• ${e}`;
+      });
+      return `All AI providers failed:\n${providerLines.join('\n')}`;
+    }
+    return 'All AI providers unavailable — check API keys in GitHub Secrets';
+  }
+
+  if (httpStatus === 401 || httpStatus === 403) {
+    return 'API key rejected (401/403) — verify keys in GitHub Secrets';
+  }
+  if (httpStatus === 429) {
+    return 'API quota exhausted — add more Gemini keys or wait';
+  }
+  if (httpStatus >= 500) {
+    return `Server error (${httpStatus}) — worker may be down`;
+  }
+
+  return body.error ?? `Request failed (HTTP ${httpStatus})`;
+}
+
+function extractReason(providerError: string): string {
+  if (/401|unauthorized|api.?key|invalid.?key/i.test(providerError)) return 'Invalid or missing API key';
+  if (/429|quota|rate.?limit/i.test(providerError)) return 'Quota / rate limit exceeded';
+  if (/timeout|timed.?out/i.test(providerError)) return 'Request timed out';
+  if (/network|fetch|ECONNREFUSED/i.test(providerError)) return 'Network error';
+  if (/500|503|service.?unavailable/i.test(providerError)) return 'Provider service down';
+  // Trim to keep UI readable
+  return providerError.length > 80 ? `${providerError.slice(0, 80)}…` : providerError;
+}
+
 export function DemoApp() {
   const [screen, setScreen] = useState<Screen>('CAMERA');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -36,8 +93,8 @@ export function DemoApp() {
       });
 
       if (!response.ok) {
-        const err = await response.json().catch(() => ({ error: 'Request failed' }));
-        throw new Error((err as { error?: string }).error || `HTTP ${response.status}`);
+        const body: WorkerError = await response.json().catch(() => ({}));
+        throw new Error(parseWorkerError(body, response.status));
       }
 
       const data = await response.json() as {
@@ -59,7 +116,8 @@ export function DemoApp() {
       });
       setScreen('RESULT');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analysis failed');
+      const msg = err instanceof Error ? err.message : 'Analysis failed';
+      setError(msg);
       setScreen('CAMERA');
     }
   };
